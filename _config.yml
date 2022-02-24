@@ -1,0 +1,185 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+#
+# If you need help with YAML syntax, here are some quick references for you: 
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+
+lang: en-US
+title: /|Outerspace|\ ~=The gamE=~
+name: Outerspace-The_gamE
+author: &site_author
+  name: MBCrypto
+  email: welcome@outerspacethegame.app
+  uri: "http://www.outerspacethegame.app"
+email: welcome@outerspacethegame.app
+description: >- # this means to ignore newlines until "baseurl:"
+  Outerspace The-gamE is a social enabled, mass multi player, democratic décentralised NFT game.  
+  It's probably the very first strategic real-time blockchain game and possibly one of the very few "real" metaverse game.  
+  Explore, harvest and conquer: $FUEL your ambitions!  
+webrick:
+  headers:
+    OuterSpacePreSaleContract: 100|( +|-|!5 53|2(|23+ |-|34|)3|2 14+3|2 0|\\|
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "http://www.outerspacethegame.app" 
+logo: "/assets/logo.png"
+twitter_username: MBettucci
+github_username:  martinobettucci
+color_scheme: dark
+
+
+# Content configuration
+nav_sort: case_sensitive
+defaults:
+  -
+    scope:
+      path: "" # an empty string here means all files in the project
+    values:
+      lang: en
+      nav_order: 0
+      search_exclude: false
+      nav_exclude: false
+      has_children: false
+      grand_parent:
+      parent:
+      layout: home
+      sitemap: true
+      last_modified_date: 2022-01-03 08:32:00 +1
+      last_modified_at: 2022-01-03 08:32:00 +1
+      feed:
+        excerpt_only: true
+      author: *site_author
+      authors:
+
+# General post config
+back_to_top: true
+back_to_top_text: "Back to top page"
+
+# Heading H1 min H6 max pour le SEO
+h_min: 1
+h_max: 6
+
+# Footer config
+footer_content:
+aux_links_new_tab: false
+aux_links:
+  "Home": 
+    - "http://localhost:4000/"
+  "About":
+    - "http://localhost:4000/about"
+
+# ATOM Feed config
+feed: &feed_config
+  posts_limit: 20
+  excerpt_only: true
+  collections:
+    - posts
+
+collections:
+  posts:
+    output: true
+
+just_the_docs:
+  # Define which collections are used in just-the-docs
+  collections:
+    posts:
+      # Give the collection a name
+      name: Blog
+      # Exclude the collection from the navigation
+      nav_exclude: false
+      # Exclude the collection from the search
+      search_exclude: false
+
+# Build settings
+search_enabled: true
+lsi: true
+strict_front_matter: true
+show_excerpts: true
+permalink: /:collection/:year-:month-:day-:title:output_ext
+theme: just-the-docs
+#liquid:
+#  error_mode: strict
+#  strict_variables: true
+#  strict_filters: true
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-haml-markup
+  - jekyll-admin
+  - jekyll-hyperstack
+
+# Exclude from processing.
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - engine/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - "*.bak"
+
+# Search feature configuration
+search_tokenizer_separator: /[\s\-/]+/
+search:
+  # Split pages into sections that can be searched individually
+  # Supports 1 - 6, default: 2
+  heading_level: 2
+  # Maximum amount of previews per search result
+  # Default: 3
+  previews: 2
+  # Maximum amount of words to display before a matched word in the preview
+  # Default: 5
+  preview_words_before: 3
+  # Maximum amount of words to display after a matched word in the preview
+  # Default: 10
+  preview_words_after: 3
+  # Set the search token separator
+  # Default: /[\s\-/]+/
+  # Example: enable support for hyphenated search words
+  tokenizer_separator: /[\s/]+/
+  # Display the relative url in search results
+  # Supports true (default) or false
+  rel_url: true
+  # Enable or disable the search button that appears in the bottom right corner of every page
+  # Supports true or false (default)
+  button: false
+
+# Enable or disable heading anchors
+heading_anchors: true
+
+# Footer last edited timestamp
+last_edit_timestamp: true
+last_edit_time_format: "%b %e %Y at %I:%M %p" # uses ruby's time format: https://ruby-doc.org/stdlib-2.7.0/libdoc/time/rdoc/Time.html
+
+# Github pages configuration
+gh_edit_link: false
+
+# Soe building optimisations
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  startings: []
+  blanklines: false
+  profile: false
+  ignore:
+    envs: all
