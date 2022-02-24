@@ -19,7 +19,9 @@ group :jekyll_plugins do
   gem 'jekyll-haml-markup'
   gem 'classifier-reborn'
   gem 'just-the-docs'
-  gem 'jekyll-admin'
+  gem 'liquid_pluralize'
+  
+  # In house plugins
   gem 'jekyll-hyperstack', path: 'engine/jekyll-hyperstack'
 end
 

@@ -1,0 +1,13 @@
+---
+layout: default
+---
+
+<p class="meta">
+    <h1>{{ page.title }}</h1>
+	<sub>
+		{% assign words = content | strip_html | number_of_words %}
+		Estimated time to read: {{ words | divided_by: 180 | plus: 1 | pluralize: "minute" }}
+	</sub>
+</p>
+
+{{ content }}

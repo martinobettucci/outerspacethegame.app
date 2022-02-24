@@ -55,7 +55,7 @@ defaults:
       has_children: false
       grand_parent:
       parent:
-      layout: home
+      layout: post
       sitemap: true
       last_modified_date: 2022-01-03 08:32:00 +1
       last_modified_at: 2022-01-03 08:32:00 +1
@@ -63,6 +63,7 @@ defaults:
         excerpt_only: true
       author: *site_author
       authors:
+        - <<: *site_author
 
 # General post config
 back_to_top: true
@@ -79,7 +80,7 @@ aux_links:
   "Home": 
     - "http://localhost:4000/"
   "About":
-    - "http://localhost:4000/about"
+    - "http://localhost:4000/README"
 
 # ATOM Feed config
 feed: &feed_config
@@ -119,7 +120,6 @@ plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
   - jekyll-haml-markup
-  - jekyll-admin
   - jekyll-hyperstack
 
 # Exclude from processing.

@@ -1,6 +1,6 @@
 /_site
 *.yml.bam
-
+*.bak
 *.gem
 *.rbc
 .bundle
