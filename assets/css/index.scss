@@ -1,0 +1,113 @@
+---
+---
+
+$stars: 3840;
+$depth: 150;
+$speed: 45s;
+$width: 3840;
+$height: 2160;
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html {
+  background: url("https://www.outerspacethegame.app/assets/backgrounds/background2.png") no-repeat center center fixed;
+  background-size: cover;
+}
+
+body {
+  perspective: ($depth * 2 + px);
+}
+
+.logowrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.logo {
+  max-width:60vw;
+  width: auto;
+  height: auto;
+}
+
+.starfield {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  $box-shadow: ();
+  @for $i from 0 through $stars {
+    $box-shadow: $box-shadow, (random($width) - $width/2 + px) (random($height) - $height/2 + px) hsl(200 + random(120),random(25),75 + random(25));
+  }
+  box-shadow: $box-shadow;
+  animation: fly $speed linear infinite;
+  transform-style: preserve-3d;
+
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    box-shadow: inherit;
+  }
+  &:before {
+    transform: translateZ(-$depth + px);
+    animation: fade1 $speed linear infinite;
+  }
+  &:after {
+    transform: translateZ(-$depth * 2 + px);
+    animation: fade2 $speed linear infinite;
+  }
+}
+
+@keyframes fly {
+  from {
+    transform: translateZ(0px);
+  }
+  to {
+    transform: translateZ($depth + px);
+  }
+}
+
+@keyframes fade1 {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade2 {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+.slit-in-horizontal {
+	animation: slit-in-horizontal 42s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+}
+
+@keyframes slit-in-horizontal {
+  0% {
+    transform: translateZ(-800px) rotateX(90deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateZ(-160px) rotateX(75deg);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateZ(0) rotateX(0);
+    opacity: 1;
+  }
+}

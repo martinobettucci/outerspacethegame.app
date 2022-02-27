@@ -1,23 +1,4 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
-#
-# If you need help with YAML syntax, here are some quick references for you: 
-# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
-# https://learnxinyminutes.com/docs/yaml/
-#
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
-
+# General static application configuration
 lang: en-US
 title: /|Outerspace|\ ~=The gamE=~
 name: Outerspace-The_gamE
@@ -44,7 +25,7 @@ color_scheme: dark
 # Content configuration
 nav_sort: case_sensitive
 defaults:
-  -
+  - 
     scope:
       path: "" # an empty string here means all files in the project
     values:
@@ -55,7 +36,6 @@ defaults:
       has_children: false
       grand_parent:
       parent:
-      layout: post
       sitemap: true
       last_modified_date: 2022-01-03 08:32:00 +1
       last_modified_at: 2022-01-03 08:32:00 +1
@@ -64,6 +44,68 @@ defaults:
       author: *site_author
       authors:
         - <<: *site_author
+#  - 
+#    scope
+#      path: ""
+#      type: posts
+#    values
+#      layout: post
+# Music assets
+  - 
+    scope:
+      path: "assets/tunes"
+    values:
+      music: true
+# Script assets
+  - 
+    scope:
+      path: "assets/js"
+    values:
+      script: true
+# Images for background
+  - 
+    scope:
+      path: "assets/backgrounds"
+    values:
+      music: true
+# All planets assets (with small, medium, large property)
+  - 
+    scope:
+      path: "assets/icons/planets"
+    values:
+      planet: true
+  - 
+    scope:
+      path: "assets/icons/planets/16x"
+    values:
+      small: true
+  - 
+    scope:
+      path: "assets/icons/planets/32x"
+    values:
+      medium: true
+  - 
+    scope:
+      path: "assets/icons/planets/128x"
+    values:
+      large: true
+  - 
+    scope:
+      path: "assets/icons/planets/stars"
+    values:
+      star: true
+# Flags assets
+  - 
+    scope:
+      path: "assets/icons/factions"
+    values:
+      flag: true
+# Ships assets
+  - 
+    scope:
+      path: "assets/icons/ships"
+    values:
+      ship: true
 
 # General post config
 back_to_top: true
@@ -111,8 +153,8 @@ strict_front_matter: true
 show_excerpts: true
 permalink: /:collection/:year-:month-:day-:title:output_ext
 theme: just-the-docs
-#liquid:
-#  error_mode: strict
+liquid:
+  error_mode: strict
 #  strict_variables: true
 #  strict_filters: true
 plugins:
@@ -136,6 +178,7 @@ exclude:
   - vendor/gems/
   - vendor/ruby/
   - "*.bak"
+  - "*.orig"
 
 # Search feature configuration
 search_tokenizer_separator: /[\s\-/]+/
@@ -172,6 +215,11 @@ last_edit_time_format: "%b %e %Y at %I:%M %p" # uses ruby's time format: https:/
 
 # Github pages configuration
 gh_edit_link: false
+
+sass:
+  sass_dir: _sass
+  sourcemap: never
+  style: compressed
 
 # Soe building optimisations
 compress_html:

@@ -1,0 +1,25 @@
+---
+title: site.title
+layout: none
+---
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ site.title }}</title>
+    <link rel="stylesheet" href="/assets/css/index.css">
+  </head>
+  <body> 
+    <div class="starfield"></div>
+    <div class="logowrapper">
+      <img class="logo slit-in-horizontal" src="/assets/title5.png"/>
+    </div>
+    <iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
+    <audio autoplay loop>
+       <source src="/assets/tunes/theme.mp3" type="audio/mp3">
+       Your browser does not support the audio element.
+    </audio>
+  </body>
+</html>
