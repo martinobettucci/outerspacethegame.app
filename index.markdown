@@ -10,6 +10,6 @@ You just landed in the right place, just a bit too soon ;)
 The landing page is under construction, please come back later. 
 
 You can subscribe to the new official community: 
-- [reddit](https://www.reddit.com/r/outerspacethegame)  
+- [reddit]()  
 - [discord]()  
 
