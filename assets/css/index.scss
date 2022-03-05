@@ -35,6 +35,13 @@ body {
   height: auto;
 }
 
+.alert {
+  font: 14px Arial, sans-serif;
+  background: white;
+  border: 1px solid lightgray;
+  box-shadow: 3px 3px 12px lightgray;
+}
+
 .starfield {
   position: absolute;
   top: 50%;
@@ -94,7 +101,7 @@ body {
 }
 
 .slit-in-horizontal {
-	animation: slit-in-horizontal 42s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+  animation: slit-in-horizontal 42s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
 }
 
 @keyframes slit-in-horizontal {

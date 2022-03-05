@@ -11,15 +11,52 @@ layout: none
     <title>{{ site.title }}</title>
     <link rel="stylesheet" href="/assets/css/index.css">
   </head>
-  <body> 
+  <body>
     <div class="starfield"></div>
     <div class="logowrapper">
-      <img class="logo slit-in-horizontal" src="/assets/title5.png"/>
+      <div class="alert">
+        <p>Please allow this page to play background music and sounds</p>
+        <p style="float: right; margin: auto;">
+          <button value="0">Block</button>
+          <button value="1">Allow</button>
+        </p>
+      </div>
+      <img id="logo" class="logo slit-in-horizontal" src="/assets/title5.png" hidden/>
     </div>
     <iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
-    <audio autoplay loop>
+    <audio id="theme" loop>
        <source src="/assets/tunes/theme.mp3" type="audio/mp3">
        Your browser does not support the audio element.
     </audio>
+    <script defer>
+      const audio = document.getElementById( 'theme' );
+      const logo = document.getElementById( 'logo' );
+      //audio.muted = true;
+
+      // Ask for audio permission
+      const alert_elem = document.querySelector( '.alert' );
+      audio.play().then( () => {
+        // Audio is allowed and playing
+        alert_elem.remove();
+        logo.hidden = false;
+        audio.muted = false;
+      } ).catch( () => {
+        // Forbidden, need user interaction
+        alert_elem.addEventListener( 'click', ({ target }) => {
+          if( target.matches('button') ) {
+            const allowed = target.value === "1";
+            if( allowed ) {
+              audio.play();
+              audio.muted = false;
+            } else {
+              // Remove intro animation if no sound :'(
+              logo.classList.remove('slit-in-horizontal');
+            }
+            alert_elem.remove();
+            logo.hidden = false;
+          }
+        } );
+      } );
+    </script>
   </body>
 </html>
