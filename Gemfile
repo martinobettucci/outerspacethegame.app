@@ -17,10 +17,12 @@ group :jekyll_plugins do
   gem 'jekyll-seo-tag'
   gem 'jekyll-sitemap'
   gem 'jekyll-haml-markup'
+  gem 'jekyll-compose'
+  gem 'jekyll-spaceship'
   gem 'classifier-reborn'
   gem 'just-the-docs'
   gem 'liquid_pluralize'
-  
+
   # In house plugins
   gem 'jekyll-hyperstack', path: 'engine/jekyll-hyperstack'
 end

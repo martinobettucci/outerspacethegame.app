@@ -8,14 +8,14 @@ author: &site_author
   uri: "http://www.outerspacethegame.app"
 email: welcome@outerspacethegame.app
 description: >- # this means to ignore newlines until "baseurl:"
-  Outerspace The-gamE is a social enabled, mass multi player, democratic décentralised NFT game.  
-  It's probably the very first strategic real-time blockchain game and possibly one of the very few "real" metaverse game.  
-  Explore, harvest and conquer: $FUEL your ambitions!  
+  Outerspace The-gamE is a social enabled, mass multi player, democratic décentralised NFT game.
+  It's probably the very first strategic real-time blockchain game and possibly one of the very few "real" metaverse game.
+  Explore, harvest and conquer: $FUEL your ambitions!
 webrick:
   headers:
     OuterSpacePreSaleContract: 100|( +|-|!5 53|2(|23+ |-|34|)3|2 14+3|2 0|\\|
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://www.outerspacethegame.app" 
+url: "http://www.outerspacethegame.app"
 logo: "/assets/logo.png"
 twitter_username: MBettucci
 github_username:  martinobettucci
@@ -25,7 +25,7 @@ color_scheme: dark
 # Content configuration
 nav_sort: case_sensitive
 defaults:
-  - 
+  -
     scope:
       path: "" # an empty string here means all files in the project
     values:
@@ -44,64 +44,64 @@ defaults:
       author: *site_author
       authors:
         - <<: *site_author
-#  - 
+#  -
 #    scope
 #      path: ""
 #      type: posts
 #    values
 #      layout: post
 # Music assets
-  - 
+  -
     scope:
       path: "assets/tunes"
     values:
       music: true
 # Script assets
-  - 
+  -
     scope:
       path: "assets/js"
     values:
       script: true
 # Images for background
-  - 
+  -
     scope:
       path: "assets/backgrounds"
     values:
       music: true
 # All planets assets (with small, medium, large property)
-  - 
+  -
     scope:
       path: "assets/icons/planets"
     values:
       planet: true
-  - 
+  -
     scope:
       path: "assets/icons/planets/16x"
     values:
       small: true
-  - 
+  -
     scope:
       path: "assets/icons/planets/32x"
     values:
       medium: true
-  - 
+  -
     scope:
       path: "assets/icons/planets/128x"
     values:
       large: true
-  - 
+  -
     scope:
       path: "assets/icons/planets/stars"
     values:
       star: true
 # Flags assets
-  - 
+  -
     scope:
       path: "assets/icons/factions"
     values:
       flag: true
 # Ships assets
-  - 
+  -
     scope:
       path: "assets/icons/ships"
     values:
@@ -119,10 +119,14 @@ h_max: 6
 footer_content:
 aux_links_new_tab: false
 aux_links:
-  "Home": 
-    - "http://localhost:4000/"
-  "About":
-    - "http://localhost:4000/README"
+  "Home":
+    - "/"
+  "Whitepaper":
+    - "/whitepaper"
+  "Credits":
+    - "/credits"
+  "Contact":
+    - "/contact"
 
 # ATOM Feed config
 feed: &feed_config
@@ -130,14 +134,28 @@ feed: &feed_config
   excerpt_only: true
   collections:
     - posts
+    - economics
+    - mechanics
 
 collections:
   posts:
+    output: true
+  economics:
+    output: true
+  mechanics:
     output: true
 
 just_the_docs:
   # Define which collections are used in just-the-docs
   collections:
+    mechanics:
+      name: Game mechanics
+      nav_exclude: false
+      search_exclude: false
+    economics:
+      name: Tokenomics
+      nav_exclude: false
+      search_exclude: false
     posts:
       # Give the collection a name
       name: Blog
@@ -145,6 +163,7 @@ just_the_docs:
       nav_exclude: false
       # Exclude the collection from the search
       search_exclude: false
+
 
 # Build settings
 search_enabled: true
@@ -163,6 +182,8 @@ plugins:
   - jekyll-seo-tag
   - jekyll-haml-markup
   - jekyll-hyperstack
+  - jekyll-compose
+  - jekyll-spaceship
 
 # Exclude from processing.
 exclude:

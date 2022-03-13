@@ -12,6 +12,7 @@ layout: none
     <link rel="stylesheet" href="/assets/css/index.css">
   </head>
   <body>
+    <span class="menu" onclick="openNav()">&#9776; About</span>
     <div class="starfield"></div>
     <div class="logowrapper">
       <div class="alert">
@@ -22,6 +23,14 @@ layout: none
         </p>
       </div>
       <img id="logo" class="logo slit-in-horizontal" src="/assets/title5.png" hidden/>
+    </div>
+    <div id="navbar" class="overlay">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+      <div class="overlay-content">
+        <a href="/whitepaper">Whitepaper</a>
+        <a href="/credits">Credits</a>
+        <a href="/contacts">Contacts</a>
+      </div>
     </div>
     <iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
     <audio id="theme" loop>
@@ -57,6 +66,14 @@ layout: none
           }
         } );
       } );
+
+      function openNav() {
+        document.getElementById("navbar").style.display = "block";
+      }
+
+      function closeNav() {
+        document.getElementById("navbar").style.display = "none";
+      }
     </script>
   </body>
 </html>
