@@ -28,9 +28,10 @@ layout: none
     <div id="navbar" class="overlay">
       <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
       <div class="overlay-content">
-        <a href="/whitepaper">Whitepaper</a>
-        <a href="/credits">Credits</a>
-        <a href="/contact">Contact</a>
+        <a class="umami--click--read-whitepaper" href="/whitepaper">Whitepaper</a>
+        <a class="umami--click--read-credits" href="/credits">Credits</a>
+        <a class="umami--click--read-contact" href="/contact">Contact</a>
+        <a class="umami--click--read-hype" href="https://analytics.outerspacethegame.app/share/FjvWyxQd/Outerspace%20The%20gamE">How much hype?</a>
       </div>
     </div>
     <iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
@@ -58,9 +59,11 @@ layout: none
             if( allowed ) {
               audio.play();
               audio.muted = false;
+              umami.trackEvent('Homepage Audio', 'play');
             } else {
               // Remove intro animation if no sound :'(
               logo.classList.remove('slit-in-horizontal');
+              umami.trackEvent('Homepage Audio', 'mute');
             }
             alert_elem.remove();
             logo.hidden = false;
