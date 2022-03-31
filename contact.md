@@ -8,4 +8,8 @@ last_modified_date: 2022-01-07 02:19:00 +1
 last_modified_at: 2022-01-07 02:19:00 +1
 ---
 
-## Coming soon :)
+## How to contact us
+
+Plase mail us to contact@outerspacethegame.app.  
+
+Use your business adress or any easy to identify real adress or your mail will be flagged as spam.  
