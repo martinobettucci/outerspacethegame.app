@@ -29,15 +29,15 @@ That being said, we choose to monetize the game development using an innovative 
 
 Once you are entitled to play, you are free to play and collect ressources for your expension and conqueral needs.  
 Should you have spare resources you do not need anymore, you can put on the second-market store for others (new?) players to enjoy or forfeit your game and let new players join by buying back what was once yours.  
-You are also entitled to reclaim royalities on every sell for the assets you minted (forever) or bought (with some limitations and for a limited time) in your playtrought should they reach the public second-market store: 
+You are also entitled to reclaim royalities on every sell for the assets you minted (forever) or bought (with some limitations and for a limited time) in your playthrough should they reach the public second-market store: 
  - even if they are sold not by you.
  - even if you are not a player anymore.
 [Read about how the second-market store here](/economics/game-economics-store.html)
   
 # How the game is founded
 
-Initially, there will be a closed whitelist selling of generated assets for each and new universe.  
-The initially minted list of assets is meant to fund the game commitee with some treasury: just like when you buy a game from an on-line platform, we take the credits to refund our develpment investment in that universe.  
+Excepted for the very first universe ever which will be sold with a different [procedure and schedule described here](/economics/game-economics-presale.html), there will be a closed whitelist selling of generated assets for each and new universe.  
+The initially minted list of assets is meant to fund the game commitee with treasury: just like when you buy a game from an on-line platform, we take the credits to refund our research and develpment in the game.  
 There will be **only one** initial mint of generated assets from us for each new universe and we will *never* mint new assets for a universe *ever* again: *we want the players to mint the rest of the universe by playing*.  
 We will ensure we won't be able to mint a batch of assets no more then one-time per universe by publicly available smart-contract code who will effectively locks us out the possibility to do otherwise.  
 There are also some fees that goes to the game commitee concerning the second-market stores in/out, read the details on the dedicated page.
