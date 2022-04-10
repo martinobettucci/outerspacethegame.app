@@ -19,7 +19,7 @@ To whitelist, several tasks will be given throught this very website or the disc
 ## How will it work
 
 In this pre-sale, we will allows wallets (either by whitelist and public sale) to mint the very first batch of EGA (external-game-assets).  
-EGA are standard ERC-1155 NFT: users having minted them are free to trade them on public platforms like OpenSea or Rarible.  
+EGA are standard ERC-721 NFT: users having minted them are free to trade them on public platforms like OpenSea or Rarible.  
 
 How the presale EGA are meant to be used depends on two major epochs:
 1. Before the game launch date.
@@ -29,10 +29,10 @@ The game **launch date will be enforced by smart-contract** and we won't be able
 
 ## Before the game launch
 
-During the pre-launch phase, EGA are normal ERC-1155 NFTs that users are able to trade freely on the NFT platform of their preference.  
+During the pre-launch phase, EGA are normal ERC-721 NFTs that users are able to trade freely on the NFT platform of their preference.  
 Pre-launch EGA differs from post-launch EGA as royalties from presale goes fully to the OSTG game commitee and have a base value.  
 Post-launch EGA split royalties between the OSTG commitee, the minter and a limited number of players having interacted with the equivalent IGA (internal-game-assets) during gameplay ([more details on the second-market store](/economics/game-economics-store.html)) and have not a base value.  
-During the pre-launch phase, there are not any possible use-cases for those NFT.  
+During the pre-launch phase, there are not other possible use-cases for those NFT.  
 
 ## After the game launch
 
@@ -57,5 +57,57 @@ Outcome 3:
 # Resume
 
 ```plantuml!
-Bob -> Alice : hello world
-```
+@startuml
+
+title OSTG pre-sale
+
+state "Pre-launch date" as BeforeLaunch {
+  state "Stage 0" as S0 {
+    Contract: +Availables ERC-721 OSTG Pre-sale\n+Launch date\n+Stage 1 open/close date\n+Stages 2 open/close dates\n+Price % increase ratio for each stage
+    [*] --> Contract: publish pre-sale
+  }
+  state "Stage 1: private sell" as S1 {
+    [*] --> Whitelist: invited
+    [*] --> Discord: join
+    [*] --> Twitter: follow
+    
+    Users: +invite counter\n+retweets impressions
+    Discord --> Users: add new
+    Twitter --> Users: retweet, follows
+    
+    Users --> Whitelist: wins
+    Mint: /ERC-721 OSTG Presale EGA\n/ERC-721 Base Value
+    Whitelist --> Mint: are allowed to 
+    Mint --> [*]
+  }
+  state "Stage 2: public sell" as S2 {
+    [*] --> Mint: NFT availables
+    [*] --> [*]: NFT exhausted
+  }
+  note top of S2
+    Mint prices are increased accordingly
+    the pre-sale contract for each iteraction
+  end note
+  S0 --> S1
+  S1 --> S2
+  S2 --> S2: for each planned open-list\nstage 2 date range
+  
+  state markets <<fork>>
+  [*] --> markets: freely trade ERC-721 OSTG Presale
+  markets --> OpenSea
+  markets --> Rarible
+  markets --> ...
+}
+
+state "Post-lanch date" as AfterLaunch {
+  state action <<fork>>
+  IGA: +ERC-1155 OSTG
+  [*] --> action: ERC-721 OSTG Presale EGA\n and receives either
+  action --> IGA: Game assets and start to play
+  action --> Airdrop: base value of ERC-721 OSTG Presale EGA
+  
+  Airdrop: +Base value of burned ERC-721 OSTG Presale EGA
+}
+
+BeforeLaunch --> AfterLaunch
+@enduml```
