@@ -31,8 +31,9 @@ Once you are entitled to play, you are free to play and collect ressources for y
 Should you have spare resources you do not need anymore, you can put on the second-market store for others (new?) players to enjoy or forfeit your game and let new players join by buying back what was once yours.  
 You are also entitled to reclaim royalities on every sell for the assets you minted (forever) or bought (with some limitations and for a limited time) in your playthrough should they reach the public second-market store: 
  - even if they are sold not by you.
- - even if you are not a player anymore.
-[Read about how the second-market store here](/economics/game-economics-store.html)
+ - even if you are not a player anymore.  
+
+[Read about how the second-market store here](/economics/game-economics-stores.html)
   
 # How the game is founded
 
