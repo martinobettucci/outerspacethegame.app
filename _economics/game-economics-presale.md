@@ -1,3 +1,10 @@
+---
+layout: post
+title: Game economics pre-sale
+date: 2022-04-10 17:07 +0100
+last_modified_date: 2022-06-10 17:07:00 +1
+last_modified_at: 2022-04-10 17:07:00 +1
+---
 # The OSTG presale
 
 The game commitee have organised a pre-sale, just like others on-line games selling platforms.  
