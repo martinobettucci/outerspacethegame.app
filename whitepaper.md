@@ -81,3 +81,5 @@ We recommend users to (familiarize with the game mechanics)[] prior reading the 
 If you read so far, thank you for your interest on our efforts to make the block chain game space a better and more enjoyable environnement: you can follow us on the social network via the [contact page](/contact).  
 
 ##### The founders
+
+Footnote: _OSTG est une propriété intélléctuelle de P2Enjoy Studio_
