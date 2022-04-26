@@ -65,7 +65,7 @@ Current generation block-chain game is so simplistic that they seam to be meant 
 
 ## Future for P2E games
 
-Here at OSTG we believe games should be played for fun.  
+Here at P2Enjoy Studio we believe games should be played for fun.  
 As simplistic as this might seems, play to enjoy the gameplay should be the first element of choice for a game to be played.  
 
 > We created the new _hashtag_ #P2Enjoy to replace the infamous play-to-earn.  
@@ -74,11 +74,10 @@ As simplistic as this might seems, play to enjoy the gameplay should be the firs
 In order to remove the induced problems of the token economics behind a game, we decided to **remove the token entirely** and focus on a new economic mechanic to backup the game tresory.  
   
 
-If you're interested about how we achieved sustainability wihtout a token, (read the game economics introduction)[].  
+If you're interested about how we achieved sustainability wihtout a token, follow our site and read the game economics introduction as soon as this will be disclosed.
 **We have made our game conception from bottom-up where the fundations of OSTG are its mechanics and its gameplay, economic was built on top of that (not the other way around!)**  
-We recommend users to (familiarize with the game mechanics)[] prior reading the game economics to fully understand how it works.  
 
-If you read so far, thank you for your interest on our efforts to make the block chain game space a better and more enjoyable environnement: you can follow us on the social network via the [contact page](/contact).  
+If you read so far, *thank you for your interest on our efforts* to make the block-chain game space a better and more enjoyable environnement: you can follow us on the social network via the [contact page](/contact).  
 
 ##### The founders
 
