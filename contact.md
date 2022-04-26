@@ -15,7 +15,7 @@ Use your business address or any easy to identify real adress or your mail will 
 
 You can reach to us via social network:  
 - [LinkedIn](https://linkedin.p2enjoy.com)
-- [Twitter](https://twitter.p2ejoy.com)
+- [Twitter](https://twitter.p2enjoy.com)
 
 ## About the site analytics
 
