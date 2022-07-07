@@ -21,6 +21,6 @@ You can reach to us via social network:
 
 We use UMAMI to collect our analytics. UMAMI does not use any cookie for its work (no cookie banner to be displayed) nor collect any personal data from our visitors (no need to consent any d&ata usage).  
 
-If you want to see exactly what kind of data usage we are collecting, we like transparency and we invite you to visit the [public website analytics dashboard here](https://analytics.outerspacethegame.app/share/FjvWyxQd/Outerspace%20The%20gamE)  
+If you want to see exactly what kind of data usage we are collecting, we like transparency and we invite you to visit the [public website analytics dashboard here](https://analytics.p2enjoy.studio/share/FjvWyxQd/Outerspace%20The%20gamE)  
 
 For more infos about the tool we use: https://umami.is/docs/faq  
