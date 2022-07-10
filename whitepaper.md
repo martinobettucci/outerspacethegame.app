@@ -5,7 +5,7 @@ date: 2022-02-05 13:11 +0100
 last_modified_date: 2022-02-05 13:11:00 +1
 last_modified_at: 2022-04-05 23:25
 ---
-
+    
 # Outerspace, The gamE
 
 This is the main and general white-paper of the project.   
