@@ -8,8 +8,8 @@ last_modified_at: 2022-04-05 23:25
 
 # Outerspace, The gamE
 
-This is the main and general whitepaper of the project.   
-**Please remember, this whitepaper is still WIP.**
+This is the main and general white-paper of the project.   
+**Please remember, this white-paper is still WIP.**
 
 ## Why another block-chain game
 There are several block chain games out there, there will be even more in the next few years, so you may wonder why we decided to create our own: what will you find in this game that we think you won't find elsewhere?   
@@ -81,4 +81,4 @@ If you read so far, *thank you for your interest on our efforts* to make the blo
 
 ##### The founders
 
-Footnote: _OSTG est une propriété intélléctuelle de P2Enjoy Studio_
+Footnote: _OSTG is an intellectual property of "P2Enjoy Studio"_

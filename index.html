@@ -1,83 +1,71 @@
 ---
-title: site.title
-layout: none
+title: Homepage
+layout: html
 ---
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ site.title }}</title>
-    <link rel="stylesheet" href="/assets/css/index.css">
-    <script async defer data-website-id="5c1507c1-6db0-44f2-8c1f-73fce10c967c" src="https://analytics.p2enjoy.studio/umami.js"></script>
-  </head>
-  <body>
-    <span class="menu" onclick="openNav()">&#9776; About</span>
-    <div class="starfield"></div>
-    <div class="logowrapper">
-      <div class="alert">
-        <p>Please allow this page to play background music and sounds</p>
-        <p style="float: right; margin: auto;">
-          <button value="0">Block</button>
-          <button value="1">Allow</button>
-        </p>
-      </div>
-      <img id="logo" class="logo slit-in-horizontal" src="/assets/title5.png" hidden/>
-    </div>
-    <div id="navbar" class="overlay">
-      <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-      <div class="overlay-content">
-        <a class="umami--click--read-whitepaper" href="/whitepaper">Whitepaper</a>
-        <a class="umami--click--read-credits" href="/credits">Credits</a>
-        <a class="umami--click--read-contact" href="/contact">Contact</a>
-        <a class="umami--click--read-hype" href="https://analytics.outerspacethegame.app/share/FjvWyxQd/Outerspace%20The%20gamE">How much hype?</a>
-      </div>
-    </div>
-    <iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
-    <audio id="theme" loop>
-       <source src="/assets/tunes/theme.mp3" type="audio/mp3">
-       Your browser does not support the audio element.
-    </audio>
-    <script defer>
-      const audio = document.getElementById( 'theme' );
-      const logo = document.getElementById( 'logo' );
-      //audio.muted = true;
+<link rel="stylesheet" href="{{ '/assets/css/index.css' | relative_url }}">
+<span class="menu" onclick="openNav()">&#9776; About</span>
+<div class="starfield"></div>
+<div class="logowrapper">
+  <div class="alert">
+    <p>Please allow this page to play background music and sounds</p>
+    <p style="float: right; margin: auto;">
+      <button value="0">Block</button>
+      <button value="1">Allow</button>
+    </p>
+  </div>
+  <img id="logo" class="logo slit-in-horizontal" src="/assets/title5.png" hidden/>
+</div>
+<div id="navbar" class="overlay">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <div class="overlay-content">
+    <a class="umami--click--read-whitepaper" href="/whitepaper">Whitepaper</a>
+    <a class="umami--click--read-credits" href="/credits">Credits</a>
+    <a class="umami--click--read-contact" href="/contact">Contact</a>
+    <a class="umami--click--read-hype" href="https://analytics.outerspacethegame.app/share/FjvWyxQd/Outerspace%20The%20gamE">How much hype?</a>
+  </div>
+</div>
+<iframe src="assets/tunes/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
+<audio id="theme" loop>
+   <source src="/assets/tunes/theme.mp3" type="audio/mp3">
+   Your browser does not support the audio element.
+</audio>
+<script defer>
+  const audio = document.getElementById( 'theme' );
+  const logo = document.getElementById( 'logo' );
+  //audio.muted = true;
 
-      // Ask for audio permission
-      const alert_elem = document.querySelector( '.alert' );
-      audio.play().then( () => {
-        // Audio is allowed and playing
+  // Ask for audio permission
+  const alert_elem = document.querySelector( '.alert' );
+  audio.play().then( () => {
+    // Audio is allowed and playing
+    alert_elem.remove();
+    logo.hidden = false;
+    audio.muted = false;
+  } ).catch( () => {
+    // Forbidden, need user interaction
+    alert_elem.addEventListener( 'click', ({ target }) => {
+      if( target.matches('button') ) {
+        const allowed = target.value === "1";
+        if( allowed ) {
+          audio.play();
+          audio.muted = false;
+          umami.trackEvent('Homepage Audio', 'play');
+        } else {
+          // Remove intro animation if no sound :'(
+          logo.classList.remove('slit-in-horizontal');
+          umami.trackEvent('Homepage Audio', 'mute');
+        }
         alert_elem.remove();
         logo.hidden = false;
-        audio.muted = false;
-      } ).catch( () => {
-        // Forbidden, need user interaction
-        alert_elem.addEventListener( 'click', ({ target }) => {
-          if( target.matches('button') ) {
-            const allowed = target.value === "1";
-            if( allowed ) {
-              audio.play();
-              audio.muted = false;
-              umami.trackEvent('Homepage Audio', 'play');
-            } else {
-              // Remove intro animation if no sound :'(
-              logo.classList.remove('slit-in-horizontal');
-              umami.trackEvent('Homepage Audio', 'mute');
-            }
-            alert_elem.remove();
-            logo.hidden = false;
-          }
-        } );
-      } );
-
-      function openNav() {
-        document.getElementById("navbar").style.display = "block";
       }
+    } );
+  } );
 
-      function closeNav() {
-        document.getElementById("navbar").style.display = "none";
-      }
-    </script>
-  </body>
-</html>
+  function openNav() {
+    document.getElementById("navbar").style.display = "block";
+  }
+
+  function closeNav() {
+    document.getElementById("navbar").style.display = "none";
+  }
+</script>
