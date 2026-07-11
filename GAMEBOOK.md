@@ -163,6 +163,17 @@ instructions** (the §15 engine). Capability is gated by building type:
 - **Workshop** → enables repair of ships/accessories.
 - **Mining / industry** → mint materials from the planet or transform them.
 
+**Construction vs. minting — two different acts:**
+- **Constructing a building** = pay its resource cost from resources available on
+  the planet, and consume one free tile (§18). Any *discovered/unlocked* building
+  can be built as soon as you can pay. You may **convey resources from your other
+  owned planets** (via freighters) to accelerate the planet you're focused on.
+- **An industry mints exactly one thing.** Each industry building has a single
+  recipe: it consumes exactly its required inputs and produces its one output
+  **every time the inputs are available** (throttled by its efficiency %). To
+  produce three different outputs you need **three industries** = three tiles —
+  another reason large planets matter for diversity (§18).
+
 Per-building configuration includes:
 - **Mining/industry:** the **% of current efficiency level** to run at (you
   deliberately run below max — see §10).
@@ -434,6 +445,9 @@ The engine of specialization, progression and production-balancing.
   know how much fuel remains**, so over-harvesting is a blind, *shared* risk — a
   natural tragedy-of-the-commons around rich stars (generates diplomacy,
   sabotage, and high-yield/high-danger star-adjacent real estate).
+- **The free starter planet is never generated within any star's supernova
+  destruction radius** — it is guaranteed safe. Bought/discovered/conquered
+  planets carry the risk.
 
 **Black holes — a special star, the clean junk sink.**
 - A black hole lets you **dump space junk with no consequences**.
@@ -449,9 +463,9 @@ The engine of specialization, progression and production-balancing.
   reshapes navigation afterward.
 
 **(OPEN):** exact fuel-type travel effects; whether black holes share the star
-fuel/supernova mechanics or are purely a sink; whether **owned planets** get any
-mitigation against an unwarned supernova (thematically brutal, commercially
-sensitive since planets can be bought with real money, §19).
+fuel/supernova mechanics or are purely a sink. (The free starter planet is
+already guaranteed supernova-safe; whether *other* owned/purchased planets get
+any mitigation is still open.)
 
 ---
 
