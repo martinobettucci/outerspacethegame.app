@@ -259,3 +259,26 @@ inherited ship-catalog reconciliation · isometric renderer choice.
   holes/junk; folded manual-first + stacking into §15; fuel types into §8;
   knowledge-vs-production + 1-tile into §18; starter guarantee into §19;
   promoted §21 to canon; Open questions → §23.
+
+---
+
+## 2026-07-11 — Session 4 (industry/construction, starter safety; ships opened)
+
+### Industry & construction — SETTLED
+- **An industry mints exactly one thing** (single recipe): consumes its exact
+  inputs and produces its one output whenever inputs are available (throttled by
+  efficiency %). Three outputs ⇒ three industries ⇒ three tiles.
+- **Constructing a building** = pay its resource cost from on-planet resources +
+  one free tile; any discovered/unlocked building can be built once payable.
+  **Resources may be conveyed from other owned planets** (freighters) to
+  accelerate the focused planet.
+
+### Starter safety — SETTLED
+- The **free starter planet is never within any supernova destruction radius** —
+  guaranteed safe. Other owned/bought/conquered planets keep the risk.
+
+### Ships — DISCUSSION OPENED (not yet canon)
+- **Fuel types require engine optimizations or accessories.** Each engine
+  optimization / accessory publishes how each fuel type (cold/hot/gas) modifies
+  the ship's stats → build your ship for the fuel you can source. Details being
+  brainstormed; §14 reconciliation pending.
