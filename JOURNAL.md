@@ -357,3 +357,46 @@ inherited ship-catalog reconciliation · isometric renderer choice.
   HTTP header. Naming: OS-PLANET/SHIP/BUILDING, OS-CRISTAL/FUEL/MATERIAL.
 - Two dangling unwritten pages referenced but never authored: a mechanics-side
   "stores" doc.
+
+---
+
+## 2026-07-11 — Session 5 (post-archaeology triage → canon)
+
+### Ship taxonomy — SETTLED → canon (§14)
+- **`Category {Combat, Harvest, Civil} × Size {S,M,L}`.** Old named ships become
+  roles/loadouts. Ship = hull+slots+tanks+crew+cargo; **range derived** (fuel ×
+  fuel-type efficiency − weight); fuel × engine matrix; survival caps crewed trip.
+
+### Planet acquisition & expansion — SETTLED → canon (§19, §3)
+- **Buy = fast pass** (fiat, spawns near you). **Colonize** uninhabited planets
+  with **colony ships (very costly → mid-game)** = explorer's payoff. **Planets
+  are tradeable between players**; also won by conquest. All non-buy paths free.
+- **Uninhabited planet** added as a distinct body type (§3).
+
+### Harvest accessory — SETTLED → canon (§14, §22)
+- Harvesting needs the **harvest accessory** on a **Harvest-category** ship.
+  **Closer = more yield + more hull damage**, with a **zero-damage / low-reward
+  standoff distance**. Pairs with the star's unknowable fuel + supernova risk.
+
+### Landing — SETTLED → canon (§14)
+- Personal ship always; **small Combat ships land anywhere**; **colony ships land
+  on wild/uninhabited planets** (bootstrap); everyone else needs a spaceport/dock.
+
+### Factions — SETTLED → canon (§23)
+- Players **collectively mint a faction**; **minter decides members** + grants
+  **moderators** (invite/ban). Factions are **pingable**. **Affiliation shown on
+  every player & planet.** **Rules are player lore, NOT game-enforced** (may
+  demand tribute / threaten attack-and-ban, but the game only enables + displays).
+
+### Dropped
+- **Newcomer price bands** — dead mechanic.
+- **One-click liquidation exit** — skipped.
+
+### Still pending owner go/no-go (recovered, recommended)
+- **Planet climate axis** (cold/hot/exo/radio) unifying climate ↔ shields ↔ fuel.
+- **Physical co-location trade** (must own the planet the resource sits on).
+- **Planet rarity Class A–F** (quality band orthogonal to size).
+
+### Docs
+- GAMEBOOK: rewrote §14 (ships), expanded §3 (body types) & §19 (expansion),
+  added harvest gradient to §14/§22 refs, added §23 Factions, Open questions → §24.
