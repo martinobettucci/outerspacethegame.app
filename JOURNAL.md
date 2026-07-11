@@ -435,3 +435,56 @@ inherited ship-catalog reconciliation · isometric renderer choice.
 ### Docs
 - GAMEBOOK: §3 climate+quality+depletion, §8 climate→advanced + depletion, §13
   goods-local + remote-management; trimmed §24.
+
+---
+
+## 2026-07-11 — Session 7 (characters/settlers new canon + 2021 art-brief archaeology)
+
+### NEW canon (owner's own words) — SETTLED
+- **Characters = human / robot / humanoid alien; he / she / androgynous** (§12).
+- **Pilot is dual-role:** can be **ship crew** OR **governor** (§12).
+- **Civil pilots:** crew → reduce population/settler trip accidents; governor →
+  safer landing & leaving for you and visitors (§12).
+- **Colonization needs settlers:** move population from an existing planet to the
+  new colony (Civil transport), with **accident risk** mitigated by a Civil pilot
+  (§19).
+
+### ARCHAEOLOGY — 2021/2022 concept-art briefs (RECOVERED; some pending forks)
+
+**Salvageable design facts:**
+- **Modular upgrade sprites:** ship upgrades are **visual overlays composited onto
+  emplacements on the base ship sprite** (engine/armor/cargo/fuel, 2 levels each)
+  — confirms the hull+slots model visually. Ships **512×256 px, 16-bit**.
+- **Buildings: 3 levels — basic / normal / advanced** (= building stats/tech-tree
+  depth), each with **climate-adaptation art variants**. Isometric **512×256,
+  16-bit**. Icons **256×256**.
+- **Refinery chain:** planets extract **crystals** (color-coded by planet type:
+  blue/white/violet/black) → refinery outputs **"fuel cells," a universal
+  resource ("the spice, à la Dune")**. Refinery drawn in 3 levels × 3 planet
+  types.
+- **Poison planets: NO buildings can be built, BUT they yield poison crystals** →
+  implies **unbuildable / harvest-only** planet climates.
+- **Concrete RESOURCE MASTER LIST (first real one):**
+  - *Low-level (12):* oxygen, carbon, hydrogen, ore, lithium, sulfur, gold,
+    uranium, deuterium, aluminium, phosphor, silicon.
+  - *Special (combination or events):* water (normal, heavy), food (×3 types),
+    medicine (×3 types), steel (light, heavy).
+  - *Crystals:* per planet type — hot, cold, poison, oxygen (colored).
+  - *Fuel cells:* single universal card.
+- **Market/lore:** city markets with humans/robots/aliens trading crystals,
+  spices, scrap metals, scattered spaceship parts; **social classes** (poor & rich
+  humans/robots); **aliens are ALWAYS very rich**. Futuristic look; official
+  artwork style is the reference.
+
+**FORKS raised to owner (need decision before promoting to canon):**
+1. **Planet climate taxonomy conflict:** this session set **cold/hot/exo/radio**;
+   2021 briefs use **hot/cold/temperate/poison** (+ "oxygen" for crystals). Need
+   one canonical set (+ whether poison = unbuildable/harvest-only).
+2. **Fuel cells vs star-fuel:** 2021 = refinery(crystals)→fuel cells = universal
+   "spice"; current canon = fuel from stars (cold/hot/gas). Coexist (star-fuel =
+   propulsion; fuel cells = universal reserve resource) or one supersedes?
+3. **Adopt the 2021 resource master list** as the canonical starting set?
+
+**Superseded / art-pipeline only:** exact 512×256 / 256×256 / 16-bit sprite specs
+and delivery cadences are asset-production notes, not game rules (kept for the art
+pipeline doc, not GAMEBOOK).

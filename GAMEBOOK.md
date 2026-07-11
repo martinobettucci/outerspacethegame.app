@@ -236,10 +236,19 @@ Per-building configuration includes:
 
 ---
 
-## 12. NPCs
+## 12. NPCs & characters
 
 - NPCs are obtained by **loot boxes** or by **burning an NFT**. Loot boxes yield
   **only NPCs** — nothing else.
+- **Characters can be human, robot, or humanoid alien**, and are **he / she /
+  androgynous**.
+- **A character's role is flexible** — a **pilot** can serve either as **ship
+  crew** or as a **governor**. (Roles determine which hosts an NPC can bind to.)
+- **Civil pilots** specifically:
+  - in a ship's **crew** → **reduce the accident risk of population/settler
+    trips** (§19);
+  - as a **governor** → enable **safer landing & leaving**, both for you and for
+    your planet's visitors.
 - **Binding is permanent and shares the host's fate.** Once an NPC is installed
   on a resource, building, planet or ship, it is attached to it. If the building
   explodes, the ship is destroyed or stranded, or the planet is conquered, the
@@ -451,7 +460,10 @@ The engine of specialization, progression and production-balancing.
   1. **Buy** a planet (fiat) — the **fast pass**, spawns near you (§ spawn rule).
   2. **Colonize** an **uninhabited planet** (§3) with a **colony ship** — the
      explorer's payoff. **Colony ships are very costly → a mid-game mechanic**,
-     not an early one.
+     not an early one. Establishing the colony requires **moving population as
+     settlers** from an existing planet (via **Civil** transport), and the trip
+     carries an **accident risk**; a **Civil pilot** in the crew reduces it
+     (§12). This ties expansion to your population economy (§10).
   3. **Trade** — **planets can be traded between players** (like any non-fungible
      asset, §13), and are also won by **conquest**.
 - **Not pay-to-win:** you buy *board presence and more rolls of tech DNA*, not
