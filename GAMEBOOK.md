@@ -56,7 +56,7 @@ produce.** Scarcity, logistics and diplomacy are the game.
 - **Three landable planet classes: small, medium, large.** Class is intrinsic to
   the planet (it is *not* derived from tile count).
 - **Giants are stars, not planets.** They cannot be landed on or conquered.
-  Their role is **(OPEN)**.
+  They are finite fuel distributors — see §22.
 - Sprite sizes `128 / 256 / 512 / 2048` px are **art assets only**, not game
   classes.
 - **Tile count is rolled at discovery/mint time**, within the planet's class:
@@ -147,6 +147,9 @@ Three material tiers:
 - **Non-fungible entities:** derived materials, items, NPCs, planets.
 - **Fungible = numbers, never touch the chain.** Non-fungibles are the entire
   mint/burn surface (§16).
+- **Fuel** is a distinct fungible consumable with **three types — cold, hot,
+  gas — sourced from stars (§22); each alters how ships travel.** Ships also burn
+  **survival** stock (water / food / oxygen, §6).
 
 ---
 
@@ -271,6 +274,13 @@ object*: **an entity + a declarative ruleset + a tick evaluator.**
 - MVP ships a **library of predefined strategies** (escort, patrol-and-engage,
   trade-loop-every-N-days, support-fleet…) rather than full free-form
   programming.
+- **Manual-first:** automation is always optional. A player can directly order a
+  hovering ship to attack a planet or a ship in range *right now*, with no policy
+  at all. Instructions merely automate what you could do by hand.
+- **Stackable conditions:** rules compose. Defensive postures range from *attack
+  everything in range* → *only unknowns* → *respond to attack only*, and stack
+  (e.g. *attack unknowns in orbit* **+** *respond to attack* — the latter
+  retaliates even against a friend who fires first).
 - The **simulation is tick-based** with on-demand catch-up when a player loads;
   the client interpolates for a real-time feel. This is what makes the world
   live while players are offline.
@@ -320,17 +330,24 @@ The engine of specialization, progression and production-balancing.
     - required **governor politics** (e.g. anything military ⇒ military politics);
     - required **industry present** on the planet.
   - **placement cost** — resources per placed instance.
-  - **tile cost** — free tiles consumed per instance.
+  - **tile cost** — **always exactly one tile** per building (so large planets
+    are valuable for *diversity* of discovery, not just quantity).
 - **Per-planet seed → availability mask.** Each planet's seed deterministically
   (a) selects *which branches exist* on that planet — some are **never**
   available — and (b) caps *how deep* you can go per branch. Availability is a
   pure function of `(global DAG, seed)`: recomputable, reproducible, no per-planet
   tree stored.
+- **Telescope and probe are never gated.** They sit at the **very first level of
+  every planet's tree**, always available — this underwrites the starter
+  guarantee (§19).
 - **Two phases:**
   1. **Unlock** (once per planet): meet all prerequisites + pay the unlock
      resource cost → the card becomes available on that planet. **Unlock is
-     permanent knowledge** — if a prerequisite building is later destroyed, the
-     node stays unlocked.
+     permanent knowledge** — a later loss of a prerequisite building does **not**
+     re-lock the node. **But usage can be capped by lost infrastructure:** if the
+     industry that *mints* an accessory (e.g. beam lasers) is destroyed, you keep
+     your existing stock yet cannot produce more until you rebuild that industry.
+     *Knowledge is permanent; production depends on live infrastructure.*
   2. **Place** (repeatable): pay the placement resource cost, consume free
      tile(s). Limited only by tiles and the governor mask.
 - **Consequences:** seed → forced specialization → mandatory trade; governor
@@ -345,6 +362,13 @@ The engine of specialization, progression and production-balancing.
 
 - **Every player starts free** with **one random planet** + a few **lower-bound
   random resources** to begin building.
+- **Starter guarantee (canon):** a planet's minimum *extractable* resource total
+  is always **≥ the price of a telescope + a probe + some spare**, and
+  **telescope + probe are never gated** (first level of every tree, §18). Every
+  player can therefore always bootstrap toward exploration.
+- **Planet spawn:** the free first planet and bought planets alike spawn **as near
+  to the player as possible** — but placement is random, so you sometimes draw a
+  **distant** planet (bad luck or good luck; the game never tells you which).
 - **Buying planets is the business model** and **the only place real money enters
   the game** (fiat, via Stripe). A purchase **mints a new random planet** entity
   for the buyer. Indicative pricing: **€2.99** (one random planet) / **€9.99**
@@ -352,12 +376,9 @@ The engine of specialization, progression and production-balancing.
 - **Not pay-to-win:** you buy *board presence and more rolls of tech DNA*, not
   power — every planet is still gated by tiles, efficiency caps and management,
   and planets are also won by conquest or bought from players for resources.
-- **Guardrail (canon):** buying must **never be the only escape** from a stuck
-  start. Every planet seed guarantees *some* minimal path to a telescope/probe so
-  a patient free player can always eventually reach the network and trade out.
-  Buying is the *fast* escape, not the *only* one.
-- **(OPEN):** where a purchased planet spawns — reachable near the buyer, or a
-  fresh (possibly isolated) pocket.
+- **Guardrail (canon):** buying is the *fast* escape from a stuck start, **never
+  the only one** — the starter guarantee above ensures a patient free player can
+  always eventually reach the network and trade out.
 
 ---
 
@@ -373,26 +394,28 @@ The engine of specialization, progression and production-balancing.
   value (intel has a shelf life); **ship speed buys certainty** (less time for
   the target to change); feints, reinforcement-in-transit and bluffing emerge for
   free; no save-scumming.
-- **(OPEN):** whether the defender detects an incoming attack (detection radius /
-  telescope warning) — decides ambush vs. visible race.
+- **Detection is telescope-gated intel (not binary).** Depending on telescope
+  level a defender reads an incoming ship's **heading, destination and
+  equipment** — an unknown ship loaded with beam lasers on a course for you
+  forces a judgement call on intent. You can also **ping a ship** and read how it
+  reacts. Better telescopes = earlier, richer warning (telescopes are scope +
+  combat-intel + defense, all at once).
+- **Manual override always available:** drop all automation and order an attack
+  (a ship in range, or a planet) by hand at any moment (§15).
 
 ---
 
-## 21. Personal ship (PROPOSAL — undecided)
-
-> Not canon yet. Author is weighing keep-reframed vs. remove.
+## 21. Personal ship
 
 - The **player incarnated**: movable only between planets you own or ally
   planets. **Invulnerable** — cannot be attacked, stranded, or die; consumes
-  nothing.
-- Recommended **reframe so it earns its place** (drop the "purely cosmetic"
-  framing) — three functions:
+  nothing. (Not cosmetic — it earns its place through three functions.)
   1. **Identity:** you choose a governor archetype ("politics") at game start;
      the personal ship is that avatar.
   2. **New-player governance bootstrap:** lends *your* politics to the planet it's
      parked on, so a player with no spare governor NPC can still access
-     politics-gated tech on a starter planet. (This answers the planet-opening
-     bootstrap question.)
+     politics-gated tech on a starter planet. (This is the planet-opening
+     bootstrap.)
   3. **Governance preview instrument (§11):** park it to see, live, what a
      governor of your type would unlock — *before* committing a permanent one.
 - Its value naturally fades as you acquire real governors (you can only be one
@@ -400,13 +423,43 @@ The engine of specialization, progression and production-balancing.
 
 ---
 
-## 22. Open questions (not yet canon)
+## 22. Stars, black holes & space junk
 
-- **Personal ship** — keep-reframed (§21) or remove.
-- Role/nature of **giant stars** (§3).
+**Giant stars — fuel distributors.**
+- A star holds an **enormous but finite** supply of fuel across **three types —
+  cold, hot, gas** — each of which **alters how ships travel** (§8).
+- Harvesting a star requires a **special accessory**.
+- **Supernova:** when a star's fuel runs out it **supernovas, annihilating
+  everything within a radius** — ships, planets, anything. There is **no way to
+  know how much fuel remains**, so over-harvesting is a blind, *shared* risk — a
+  natural tragedy-of-the-commons around rich stars (generates diplomacy,
+  sabotage, and high-yield/high-danger star-adjacent real estate).
+
+**Black holes — a special star, the clean junk sink.**
+- A black hole lets you **dump space junk with no consequences**.
+
+**Space junk.**
+- **Dumping junk in open space creates a small hazard radius** that inflicts
+  **hull damage** on anyone whose trajectory crosses it — junk is therefore also
+  a **weapon / area-denial tool**. Black holes are the only consequence-free
+  disposal.
+- **Junk is recoverable** with the correct equipment (feeds the recycler/salvage
+  economy, §6).
+- **Destroyed ships become space junk** — combat litters the battlefield and
+  reshapes navigation afterward.
+
+**(OPEN):** exact fuel-type travel effects; whether black holes share the star
+fuel/supernova mechanics or are purely a sink; whether **owned planets** get any
+mitigation against an unwarned supernova (thematically brutal, commercially
+sensitive since planets can be bought with real money, §19).
+
+---
+
+## 23. Open questions (not yet canon)
+
 - Full **landing permission** option list (§9).
-- **Purchased-planet spawn location** (§19).
-- **Defender attack detection** (§20).
+- Fuel-type **travel effects** & black-hole fuel/supernova behaviour (§22).
+- Supernova vs. **owned/purchased planets** — mitigation or not (§22).
 - **Route decay / Stargate destruction** edge cases beyond destination-death.
 - **Loot box randomness** source & rarity tables.
 - **Server language** for the tick worker (client is JS/TS).
