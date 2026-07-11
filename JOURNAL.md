@@ -282,3 +282,78 @@ inherited ship-catalog reconciliation · isometric renderer choice.
   optimization / accessory publishes how each fuel type (cold/hot/gas) modifies
   the ship's stats → build your ship for the fuel you can source. Details being
   brainstormed; §14 reconciliation pending.
+
+---
+
+## 2026-07-11 — Archaeology sweep (ALL branches, all 3 repos) — RECOVERED, pending triage
+
+> Recovered from old branches; NONE of this is canon yet. Marked for owner triage.
+> Sources: `.app` (Updates-ETHCC & martinobettucci-economics-1 `_economics/*`,
+> whitepaper, `_config.yml`, asset trees), `.blockchain` (`src/*.sol`, tests),
+> `.presale` (`PresaleNft.sol`, scripts, server).
+
+**Contradicts current canon (already superseded by owner's newer decisions):**
+- Old vision was a **multiverse**: many universes; a "too-balanced" universe
+  spawns a fresh one; newcomers go to the newest, veterans keep the old; no
+  cross-universe migration. → Superseded by single global universe + Fermi
+  isolation. *Underlying concern survives: how does one global universe avoid
+  stagnation once balanced?*
+- Old vision was **fully on-chain, no server, open-source client**. → Superseded
+  by Postgres-authoritative.
+- Old **dual EGA(ERC721 external)/IGA(ERC1155 internal) economy with in-game
+  tokens** + claim bridge. → Superseded by no-currency + opt-in NFT bridge.
+- Old entry path **MATIC/Polygon + OpenSea/Rarible**; whitelist-mint funds the
+  per-universe treasury. → Superseded by fiat/Stripe planet purchases.
+
+**Recovered mechanics worth ADOPTING (recommend):**
+- **Planet CLIMATE axis: cold / hot / exo / radio**, with named archetypes
+  (iceage, swamp, ocean, desert, venus-like, high-CO2, extreme-radioactive,
+  giga-one-continent, close-sun…). Ties planet type ↔ ship shields (hot/cold/
+  radiation, old gamebook) ↔ fuel types (cold/hot/gas). Stars are cold vs hot in
+  art. *This unifies three disconnected systems — highest-value recovery.*
+- **Trade requires physical co-location:** to list a resource in a private store
+  it must physically be on a planet the seller owns. Geography-gated markets →
+  reinforces freighter logistics. Fits our model cleanly.
+- **Ship model `Category {Combat, Harvest, Civil} × Size {S,M,L}`** (from
+  `Ship.sol`). "Harvest" category = star-harvest/mining/salvage answer.
+- **"Uninhabited Planet"** distinct object type (`Type{STAR,UNINHABITED_PLANET,
+  PLANET}`) = the colonizable/explorer-payoff planet; buying = the fast lane.
+- **Planet rarity `Class A–F`** orthogonal to Size (quality band: deposits /
+  population ceiling / tech-DNA depth). We only have Size.
+- **Premium purchase floors minimum rarity** (+10/20/40/100% → F→B), but top
+  class never buyable (always luck) — a non-pay-to-win premium option for §19.
+
+**Recovered ideas to DECIDE on:**
+- **Factions / banners** layer (flag art exists: banners1/2, simpleflags; tagged
+  `flag:true`) — never written up. Alliance/faction system?
+- **Regulated price band** (economy min/max caps) on fixed-price stores "to
+  encourage fair trades and a mastered curve for newcomers" — newcomer
+  protection vs free AMM/auction pricing.
+- **One-click liquidation exit:** burn licence → auto-list ALL your assets on the
+  market → reclaim proceeds. (Reframe for no-currency: liquidate extracted NFTs.)
+- **Perpetual creator royalties** on future sales of assets you minted (forever)
+  or bought (limited) — could live on the NFT-bridge layer only.
+- **One-mint-ever guarantee** per universe (contract locks the team out of ever
+  minting more) — a trust/anti-inflation commitment; reconcile with fiat planet
+  sales (which mint new planets continuously).
+- **Fuel as de-facto reserve currency** — old code made Fuel the only freely
+  transferable token; tagline "$FUEL your ambitions." Lean into it?
+
+**Concrete old numbers (mostly obsolete, logged for reference):**
+- Presale: base 100 MATIC (later 0.01 test), +10%/wave, premium tiers
+  [0,+10,+20,+40,+100]% → min class [F,E,D,C,B]; supply caps ~2500 across 4
+  waves; 10% royalty to treasury; burn-refund 90%; AAVE yield on funds; VRF
+  randomness + stored `dna` word (origin of our tech-DNA seed).
+- Old on-chain Planet traits: cristal/material capacity 5k–100k, production 1–10,
+  block-based **linear** regen with `// for now linear` TODO (our efficiency
+  curve is the intended non-linear successor).
+
+**Lore / branding to preserve:**
+- Studio **P2Enjoy**, hashtag **#P2Enjoy** (anti "play-to-earn" / "gamified
+  Ponzi"); treasury = the **"game committee."** Tagline **"Explore, harvest and
+  conquer: $FUEL your ambitions!"** Credits roster (Geppilihp, mbCrypto, Batuhan
+  Karagol, mt_dev, Anna Gombos, av_grash). Reserved sci-fi font shortlist
+  (Orbitron, Kepler-452b, Spacefrey, Dune Rise, Cryptex…). Easter-egg leetspeak
+  HTTP header. Naming: OS-PLANET/SHIP/BUILDING, OS-CRISTAL/FUEL/MATERIAL.
+- Two dangling unwritten pages referenced but never authored: a mechanics-side
+  "stores" doc.
