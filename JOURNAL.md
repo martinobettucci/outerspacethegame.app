@@ -201,3 +201,61 @@ inherited ship-catalog reconciliation · isometric renderer choice.
 ### Docs
 - GAMEBOOK: added §18 Tech tree, §19 Starting & monetization, §20 Combat, §21
   Personal ship (proposal), renumbered Open questions → §22.
+
+---
+
+## 2026-07-11 — Session 3 (stars/junk, detection, starter guarantee, tech nuances)
+
+### Starter guarantee — SETTLED
+- A planet's minimum **extractable** resource total is always **≥ price of
+  telescope + probe + spare**. **Telescope & probe are never gated** — first
+  level of *every* tech tree. Makes the anti-paywall guardrail enforceable.
+
+### Planet spawn — SETTLED (resolves prior OPEN)
+- Free-first and bought planets spawn **as near to the player as possible**, but
+  random → sometimes distant. Game never reveals whether it was luck.
+
+### Defender detection — SETTLED (resolves §20 OPEN)
+- **Telescope-gated intel**: by telescope level, defender reads incoming ship's
+  **heading, destination, equipment**. Can also **ping a ship** to gauge intent.
+  Telescopes = scope + combat-intel + defense.
+
+### Tech tree nuances — SETTLED
+- **Knowledge vs production:** unlock is permanent, but production of an accessory
+  needs the live industry that mints it. Lose the beam-laser foundry → keep
+  stock, can't mint more until rebuilt.
+- **All buildings = exactly 1 tile.** Large planets valuable for *diversity*, not
+  quantity.
+
+### Personal ship — SETTLED → canon
+- Author accepted the reframe. Promoted GAMEBOOK §21 from proposal to canon
+  (identity + governance bootstrap + governance preview; invulnerable).
+
+### Stars, black holes & space junk — SETTLED (resolves giant-stars OPEN)
+- **Giant stars = finite fuel distributors.** Three fuel types **cold / hot /
+  gas**, each alters ship travel. Harvest needs a **special accessory**.
+- **Supernova on fuel-end**: annihilates everything in a radius; **remaining fuel
+  is unknowable** → blind shared risk (tragedy of the commons).
+- **Black hole = special star = clean junk sink** (dump junk, no consequences).
+- **Space junk:** dumping in open space makes a **hull-damage hazard radius**
+  (weapon / area denial); **recoverable** with right equipment; **destroyed ships
+  become junk**. Black holes are the only consequence-free disposal.
+
+### Control principle — SETTLED
+- **Manual-first:** automation optional. Can manually order a hovering ship to
+  attack a planet/ship in range now. **Stackable defensive conditions** (attack
+  all-in-range / only-unknowns / respond-to-attack; stack e.g. attack-unknowns-
+  in-orbit + respond-to-attack — retaliates even vs a friend who fires first).
+
+### Deferred
+- Stripe wiring left to development time.
+
+### New opens
+- Fuel-type travel effects; black-hole fuel/supernova behaviour; supernova vs
+  owned/purchased planets (mitigation?).
+
+### Docs
+- GAMEBOOK: resolved giant-stars/spawn/detection opens; added §22 Stars/black
+  holes/junk; folded manual-first + stacking into §15; fuel types into §8;
+  knowledge-vs-production + 1-tile into §18; starter guarantee into §19;
+  promoted §21 to canon; Open questions → §23.
