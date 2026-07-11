@@ -54,7 +54,8 @@ produce.** Scarcity, logistics and diplomacy are the game.
 ## 3. Celestial bodies
 
 - **Body types:** **inhabited planets** (owned/colonized), **uninhabited planets**
-  (wild — must be **colonized** to become yours, §19), and **stars/giants**.
+  (wild — must be **colonized** to become yours, §19), **stars/giants** (§22), and
+  **artificial planets** (player-built, mobile space stations, §25).
 - **Three landable planet classes: small, medium, large.** Class is intrinsic to
   the planet (it is *not* derived from tile count).
 - **Giants are stars, not planets.** They cannot be landed on or conquered.
@@ -119,6 +120,9 @@ produce.** Scarcity, logistics and diplomacy are the game.
   ceases to exist, its Stargate disappears; entering from the origin then drops
   you at a **fixed void coordinate** (empty space). This is fine — void travel is
   allowed and encouraged.
+- **A Stargate endpoint can move:** an **artificial planet / space station**
+  (§25) carries its own Stargate and drifts **slowly**, so that Stargate's exit
+  coordinate moves with it — mobile network infrastructure.
 - **Tolls are hard gates:** no resources to pay ⇒ you cannot take that Stargate.
   Full stop.
 - **Two depletion clocks per ship in transit:**
@@ -300,15 +304,17 @@ Per-building configuration includes:
 
 ## 14. Ships
 
-**Taxonomy = `Category × Size`** (recovered from the old `Ship.sol`):
+**Taxonomy = `Category × Size`** (confirmed by the produced 2022 art & the repo's
+`assets/icons/ships/`):
 
-- **Categories:** **Combat**, **Harvest**, **Civil**.
-- **Sizes:** **Small**, **Medium**, **Large**.
+- **Categories:** **Combat**, **Cargo**, **Civil**.
+- **Sizes:** **Small**, **Medium**, **Large** → the season-1 set of 9 hulls.
 
-The old named ships are **roles/loadouts within a category**, not separate hull
-types: freighters & civilian transporters = **Civil**; fighters (bee/bird/star
-crusader) = **Combat**; probes, recyclers, mining/star-harvest & lab/scanner
-ships = **Harvest** (and scanning/exploration variants).
+Old named ships are **roles/loadouts within a category**, not separate hulls:
+freighters = **Cargo**; civilian/settler transporters = **Civil**; fighters
+(bee/bird/star crusader) = **Combat**. **Harvesting is not a hull category — it is
+an accessory role:** mount the **harvest accessory** (and probe/recycler/scanner
+accessories) to mine stars, collect junk, or scan (§ harvest accessory below).
 
 **Every ship is one entity = hull + slots + tanks + crew + cargo:**
 - **Hull** (category × size): base stats + the **slot layout** (how many
@@ -316,7 +322,12 @@ ships = **Harvest** (and scanning/exploration variants).
   allowed).
 - **Modules:** engine optimizations, fuel tanks, armor, OBS, weapons, cargo
   containers, and **special accessories** (star-harvester, junk-collector,
-  terraformer, scanner, shields…).
+  terraformer, scanner, shields…). Rendered as **overlay layers composited on the
+  base hull sprite** (§26).
+- **Upgrade slots** (2 levels each): **engine, armor, cargo capacity, fuel tank,
+  primary weapon (air-to-air), secondary weapon (air-to-ground)**. Business
+  rules: **only Combat ships carry weapons; only Cargo ships carry cargo-capacity
+  upgrades.**
 - **Tanks:** fuel **by type** (cold/hot/gas) + **survival** stock
   (water/food/oxygen).
 - **Crew:** NPC(s), permanently bound, share the ship's fate (§12).
@@ -341,14 +352,15 @@ logistics driver, like tech DNA is for planets).
 - **Everyone else** — needs a **spaceport** (or a dock of the right size).
 
 **Harvest accessory (stars & remote resources):** harvesting requires the
-**harvest accessory** on a Harvest-category ship. Yield scales with proximity —
-**the closer you harvest, the more you extract, but the more hull damage you
-take** — with a **zero-damage / low-reward standoff distance** at the safe edge.
-This is the moment-to-moment risk dial that pairs with the star's *unknowable*
-remaining fuel and supernova risk (§22).
+**harvest accessory** (any hull with a free accessory slot; Cargo hulls suit it
+best for storage). Yield scales with proximity — **the closer you harvest, the
+more you extract, but the more hull damage you take** — with a **zero-damage /
+low-reward standoff distance** at the safe edge. This is the moment-to-moment risk
+dial that pairs with the star's *unknowable* remaining fuel and supernova risk
+(§22).
 
-**Salvage:** **Harvest** ships (recyclers) collect **space junk** and claim
-ownership-stripped dead ships (§6, §22).
+**Salvage:** ships fitted with the **junk-collector accessory** (recyclers)
+collect **space junk** and claim ownership-stripped dead ships (§6, §22).
 
 ---
 
@@ -596,8 +608,9 @@ any mitigation is still open.)
   (§22) — *distinct from fuel cells*.
 - Survival stock (water / food / oxygen, §6) draws from the above.
 
-*To refine:* the exact recipe graph, which specials are fungible-refined vs
-per-unit, and crystal→fuel-cell yields.
+**Tier split confirmed:** *fungible-refined* (steel / water / food / medicine /
+fuel cells) vs *per-unit derived items* (rare crafted accessories). *To refine:*
+the exact recipe graph and crystal→fuel-cell yields.
 
 ---
 
@@ -615,10 +628,16 @@ per-unit, and crystal→fuel-cell yields.
 - **Ground units** (planet defense, ~10, each in 2–3 levels/variants): light
   turret, heavy turret, cannons, ground tank, anti-air tank, combined ground+air
   tank. Air-to-air / air-to-ground targeting ties to OBS (§14, §20).
-- **Two build layers (RECOVERED — pending scope decision, §27):** a **ground
-  layer** (standalone buildings on land tiles) and a **space/orbital layer** —
-  a central **space station** with **modules** on fixed Y-branch anchor points
-  (small station = 2 modules, large = 6), assembled dynamically at runtime.
+- **Space stations = artificial planets (endgame).** A space station is a
+  **player-manufactured planet**: it reuses the planet model (land tiles,
+  buildings, population) but is **built from scratch in empty space** for
+  **tremendous resources and time** — the ultimate sink. It can be placed at an
+  **arbitrary coordinate**, **moves slowly**, and **carries its own Stargate**
+  (which moves with it, §6). Artificial planets have **no natural deposits or
+  climate crystals** — they live on imports — so they are **strategic
+  infrastructure** (positioning, population, a mobile Stargate anchor), not
+  resource sources. *(The 2022 Y-branch modular-station concept survives only as
+  visual reference, §26.)*
 
 ---
 
@@ -637,13 +656,8 @@ per-unit, and crystal→fuel-cell yields.
 
 ## 27. Open questions (not yet canon)
 
-- **Ship categories:** produced 2022 art is **Combat / Cargo / Civil** (9
-  season-1 ships) vs. `Ship.sol`'s **Combat / Harvest / Civil**. Reconcile —
-  recommend **Combat / Cargo / Civil hulls + harvest-as-accessory** (§14).
-- **Orbital space-station build layer** (§25) — in scope for 2026, or defer and
-  ship the planet-surface layer first?
-- **Resource tier nuance** (§24) — fungible-refined (steel/water/food/fuel cells)
-  vs. per-unit derived items; confirm the split.
+- **Artificial planets** (§25) — do they have population caps/quality like natural
+  planets? Are they conquerable/attackable as planets? Movement speed & fuel cost?
 - **Climate ↔ ship shields** — whether operating in a hostile climate (poison,
   extreme hot/cold) requires shielded ships/buildings (climate → advanced
   resources is already canon, §3; the shield tie is not).

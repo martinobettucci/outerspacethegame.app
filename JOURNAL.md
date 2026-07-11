@@ -537,3 +537,36 @@ pipeline doc, not GAMEBOOK).
 ### Docs
 - GAMEBOOK: §3/§8 climate+fuel; new §24 Resources, §25 Content catalogue, §26
   Visual direction; Open questions → §27 (+3 forks).
+
+---
+
+## 2026-07-11 — Session 9 (ship categories, artificial planets, tier split)
+
+### Ship categories — SETTLED → canon (§14)
+- **Combat / Cargo / Civil × Small/Medium/Large** = the 9 season-1 hulls
+  (confirmed by produced art + `assets/icons/ships/`). **Harvest is NOT a hull
+  category — it's an accessory role** (harvest/junk-collector/scanner accessories
+  on any hull; Cargo best for storage).
+- **Upgrade slots** (2 levels each): engine, armor, cargo capacity, fuel tank,
+  primary a2a weapon, secondary a2g weapon. **Only Combat carries weapons; only
+  Cargo carries cargo-capacity upgrades.**
+
+### Artificial planets / space stations — SETTLED → canon (§3, §6, §25)
+- **A space station = an artificial planet.** Reuses the planet model (tiles,
+  buildings, population) but **built from scratch in empty space for tremendous
+  resources + time** (ultimate sink). **Arbitrary placement, moves slowly, and
+  carries its own Stargate that moves with it** (mobile network infrastructure).
+- **No natural deposits/climate crystals** → lives on imports; it's strategic
+  infrastructure, not a resource source.
+- 2022 Y-branch modular-station concept → kept as *visual* reference only.
+- Sub-opens (§27): population/quality caps? conquerable? movement speed/fuel cost?
+
+### Resource tier split — CONFIRMED (§24)
+- Fungible-refined (steel/water/food/medicine/fuel cells) vs per-unit derived
+  items (rare accessories). Locked.
+
+### Docs
+- GAMEBOOK: rewrote §14 (Combat/Cargo/Civil + harvest-accessory + upgrade rules);
+  §3 body types + artificial planets; §6 mobile Stargate; §25 station=artificial
+  planet; §24 tier split confirmed; §27 trimmed (3 forks resolved, station
+  sub-opens added).
