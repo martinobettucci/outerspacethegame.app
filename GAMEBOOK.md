@@ -53,6 +53,8 @@ produce.** Scarcity, logistics and diplomacy are the game.
 
 ## 3. Celestial bodies
 
+- **Body types:** **inhabited planets** (owned/colonized), **uninhabited planets**
+  (wild — must be **colonized** to become yours, §19), and **stars/giants**.
 - **Three landable planet classes: small, medium, large.** Class is intrinsic to
   the planet (it is *not* derived from tile count).
 - **Giants are stars, not planets.** They cannot be landed on or conquered.
@@ -258,18 +260,57 @@ Per-building configuration includes:
 
 ---
 
-## 14. Ships (inherited catalog — to be reconciled)
+## 14. Ships
 
-The original gamebook ship taxonomy stands as canon until revised: **Freighters**
-(small/medium/large), **Civilian Transporters**, **Warclass Fighters**
-(small "bee" / medium "bird" / large "star crusader"), **Labs/Research ships**,
-**Colony/Terraforming ships**, **Probes**, **Recyclers**. Each is a **unique
-instanced entity** (built, crewed, refueled, repaired, upgraded individually).
-Key axes: upgrade slots (engine/fuel/armor/cargo/OBS/etc.), range, life-support,
-cargo, weaponry, landing capability.
+**Taxonomy = `Category × Size`** (recovered from the old `Ship.sol`):
 
-> Reconciliation needed against the new model (continuous space ranges, the
-> policy engine, hovering, salvage). Tracked as **(OPEN)**.
+- **Categories:** **Combat**, **Harvest**, **Civil**.
+- **Sizes:** **Small**, **Medium**, **Large**.
+
+The old named ships are **roles/loadouts within a category**, not separate hull
+types: freighters & civilian transporters = **Civil**; fighters (bee/bird/star
+crusader) = **Combat**; probes, recyclers, mining/star-harvest & lab/scanner
+ships = **Harvest** (and scanning/exploration variants).
+
+**Every ship is one entity = hull + slots + tanks + crew + cargo:**
+- **Hull** (category × size): base stats + the **slot layout** (how many
+  engine / fuel / armor / OBS / weapon / accessory / cargo slots, and which are
+  allowed).
+- **Modules:** engine optimizations, fuel tanks, armor, OBS, weapons, cargo
+  containers, and **special accessories** (star-harvester, junk-collector,
+  terraformer, scanner, shields…).
+- **Tanks:** fuel **by type** (cold/hot/gas) + **survival** stock
+  (water/food/oxygen).
+- **Crew:** NPC(s), permanently bound, share the ship's fate (§12).
+- **Cargo:** fungible tons in containers + non-fungible items.
+
+**Range is derived, not a fixed stat:** reach ≈ fuel capacity × fuel-type
+efficiency (from the installed engine build) − weight penalties (weapons / armor
+/ cargo slow the ship and raise consumption). **Survival capacity** separately
+caps how long a *crewed* trip lasts before the crew-death clock trips (§6). Old
+parsec figures are now "typical reach for a typical build," not rules.
+
+**Fuel × engine matrix:** each engine optimization / accessory publishes, for
+cold / hot / gas fuel, its modifiers to speed, maneuverability and efficiency —
+so you build a ship for the fuel your local stars provide (a specialization &
+logistics driver, like tech DNA is for planets).
+
+**Landing rules (who can land without a spaceport):**
+- **Personal ship** — always (§21).
+- **Small Combat ships** — land anywhere, no dock needed.
+- **Colony ships** — can land on a **wild/uninhabited planet** (the colonization
+  bootstrap, §19).
+- **Everyone else** — needs a **spaceport** (or a dock of the right size).
+
+**Harvest accessory (stars & remote resources):** harvesting requires the
+**harvest accessory** on a Harvest-category ship. Yield scales with proximity —
+**the closer you harvest, the more you extract, but the more hull damage you
+take** — with a **zero-damage / low-reward standoff distance** at the safe edge.
+This is the moment-to-moment risk dial that pairs with the star's *unknowable*
+remaining fuel and supernova risk (§22).
+
+**Salvage:** **Harvest** ships (recyclers) collect **space junk** and claim
+ownership-stripped dead ships (§6, §22).
 
 ---
 
@@ -384,9 +425,16 @@ The engine of specialization, progression and production-balancing.
   the game** (fiat, via Stripe). A purchase **mints a new random planet** entity
   for the buyer. Indicative pricing: **€2.99** (one random planet) / **€9.99**
   (pack of 5). The first planet is always kept.
+- **Three ways to expand your holdings:**
+  1. **Buy** a planet (fiat) — the **fast pass**, spawns near you (§ spawn rule).
+  2. **Colonize** an **uninhabited planet** (§3) with a **colony ship** — the
+     explorer's payoff. **Colony ships are very costly → a mid-game mechanic**,
+     not an early one.
+  3. **Trade** — **planets can be traded between players** (like any non-fungible
+     asset, §13), and are also won by **conquest**.
 - **Not pay-to-win:** you buy *board presence and more rolls of tech DNA*, not
   power — every planet is still gated by tiles, efficiency caps and management,
-  and planets are also won by conquest or bought from players for resources.
+  and colonization/trade/conquest are all fully non-paid paths.
 - **Guardrail (canon):** buying is the *fast* escape from a stuck start, **never
   the only one** — the starter guarantee above ensures a patient free player can
   always eventually reach the network and trade out.
@@ -469,15 +517,41 @@ any mitigation is still open.)
 
 ---
 
-## 23. Open questions (not yet canon)
+## 23. Factions
 
-- Full **landing permission** option list (§9).
+- Players can **collectively mint a faction** (a non-fungible faction entity).
+  The **minter owns it and decides its members**, and may grant **moderators**
+  who can **invite or ban** other members.
+- A faction is **pingable**, like a planet or a player.
+- **Affiliation is visible:** every player and every planet displays the faction
+  it belongs to (badges / banners — the art already exists).
+- **Faction rules are player-authored lore, NOT enforced by the game.** A faction
+  may *demand* tribute and threaten to attack/ban non-payers, but the game only
+  **enables and displays** membership — it never enforces a faction's rules. Same
+  philosophy as tolls and diplomacy: the game supplies the levers, players supply
+  the politics.
+
+---
+
+## 24. Open questions (not yet canon)
+
+*Recovered from old branches, awaiting the owner's go/no-go:*
+- **Planet climate axis** — cold / hot / exo / radio — wiring
+  **climate ↔ ship shields ↔ fuel types** into one thermal/radiation system
+  (recommended).
+- **Physical co-location trade** — a resource must sit on a planet you own to be
+  listed for sale (recommended).
+- **Planet rarity `Class A–F`** orthogonal to size (quality band).
+
+*Still undecided:*
+- Full **landing permission** option list — self/friends/neighbours grief cases
+  (§9).
 - Fuel-type **travel effects** & black-hole fuel/supernova behaviour (§22).
 - Supernova vs. **owned/purchased planets** — mitigation or not (§22).
+- **Anti-stagnation** — what keeps a mature, balanced single universe fresh.
 - **Route decay / Stargate destruction** edge cases beyond destination-death.
 - **Loot box randomness** source & rarity tables.
 - **Server language** for the tick worker (client is JS/TS).
-- Reconciliation of the **inherited ship catalog** (§14) with the new model.
 - Isometric planet **renderer** choice (§17).
 
 ---
