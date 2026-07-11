@@ -654,21 +654,42 @@ the exact recipe graph and crystal→fuel-cell yields.
 
 ---
 
-## 27. Open questions (not yet canon)
+## 27. Open questions & unspecified mechanics
 
-- **Artificial planets** (§25) — do they have population caps/quality like natural
-  planets? Are they conquerable/attackable as planets? Movement speed & fuel cost?
-- **Climate ↔ ship shields** — whether operating in a hostile climate (poison,
-  extreme hot/cold) requires shielded ships/buildings (climate → advanced
-  resources is already canon, §3; the shield tie is not).
-- Full **landing permission** option list — self/friends/neighbours grief cases
+**A. Tracked design opens (tuning — do not block a build):**
+- **Artificial planets** (§25) — population/quality caps, conquerable/attackable?,
+  movement speed & fuel cost.
+- **Climate ↔ ship shields** — do hostile climates (poison, extreme hot/cold)
+  require shielded ships/buildings? (climate → advanced resources is canon, §3;
+  the shield tie is not).
+- Full **landing-permission** option list — self/friends/neighbours grief cases
   (§9).
 - Fuel-type **travel effects** & black-hole fuel/supernova behaviour (§22).
 - Supernova vs. **owned/purchased planets** — mitigation or not (§22).
-- **Anti-stagnation** — planet depletion (§3) partially answers it; what else
-  keeps a mature single universe fresh (new regions, discovery cycles)?
+- **Anti-stagnation** beyond depletion — new regions, discovery cycles.
 - **Route decay / Stargate destruction** edge cases beyond destination-death.
-- **Loot box randomness** source & rarity tables.
+- **Loot-box randomness** source & rarity tables.
+
+**B. Mechanics still conceptual — need concrete rules (or explicit placeholders)
+to build:**
+- **Efficiency curve** — the actual inputs & formula behind the per-domain /
+  per-resource right-shifted bell (§10).
+- **Population** — growth/decline, illness, what sets the cap (size vs. quality),
+  and how population is carried as settlers (§10, §12, §19).
+- **Deposit depletion** — the extraction → run-dry rate model (§3).
+- **AMM liquidity** — where pool liquidity comes from in a no-currency economy;
+  who seeds each pair (§13).
+- **Combat resolution** — the stat → outcome/damage formula; and **conquest &
+  hijacking** flows are not yet expressed in new-model canon (§20, gamebook).
+- **Tick cadence & time** — tick interval, mission scheduling, real-time ↔
+  game-time mapping (§15).
+- **Tech-tree content** — the actual node graph, prereqs and costs (model exists
+  §18; content does not).
+- **NFT bridge specifics** — target chain; whether a **faction** is an on-chain
+  mint or a DB entity (§16, §23).
+- **Dock / spaceport sizing** — the size-matching rules for landing (§14).
+
+**C. Build/tooling choices:**
 - **Server language** for the tick worker (client is JS/TS).
 - Isometric planet **renderer** choice (§17).
 
