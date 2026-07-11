@@ -66,7 +66,8 @@ produce.** Scarcity, logistics and diplomacy are the game.
   - (Ranges overlap by design; class comes first, tiles are rolled within it.)
 - **Tech DNA:** at discovery each planet rolls a *partial* subtree of the global
   tech tree. Some cards can **never** be unlocked on a given planet. No planet is
-  self-sufficient — this is the primary driver of the trade economy.
+  self-sufficient — this is the primary driver of the trade economy. Full model
+  in §18.
 - Each planet has **finite natural resource deposits** and a **maximum
   population** feeding the efficiency curve (§10).
 
@@ -304,13 +305,108 @@ object*: **an entity + a declarative ruleset + a tick evaluator.**
 
 ---
 
-## 18. Open questions (not yet canon)
+## 18. Tech tree
 
+The engine of specialization, progression and production-balancing.
+
+- **One global tech DAG.** Nodes are capabilities/cards (buildings primarily).
+  Each node carries:
+  - `category` — mining · industry · commerce · residential · military ·
+    research · …
+  - `prerequisites` — parent nodes (the DAG edges).
+  - **unlock requirements** (to *reach* the node, once per planet):
+    - resource cost;
+    - required **buildings present** + minimum building **stats**;
+    - required **governor politics** (e.g. anything military ⇒ military politics);
+    - required **industry present** on the planet.
+  - **placement cost** — resources per placed instance.
+  - **tile cost** — free tiles consumed per instance.
+- **Per-planet seed → availability mask.** Each planet's seed deterministically
+  (a) selects *which branches exist* on that planet — some are **never**
+  available — and (b) caps *how deep* you can go per branch. Availability is a
+  pure function of `(global DAG, seed)`: recomputable, reproducible, no per-planet
+  tree stored.
+- **Two phases:**
+  1. **Unlock** (once per planet): meet all prerequisites + pay the unlock
+     resource cost → the card becomes available on that planet. **Unlock is
+     permanent knowledge** — if a prerequisite building is later destroyed, the
+     node stays unlocked.
+  2. **Place** (repeatable): pay the placement resource cost, consume free
+     tile(s). Limited only by tiles and the governor mask.
+- **Consequences:** seed → forced specialization → mandatory trade; governor
+  politics gate whole branches, so on a **large planet a node needs *all 3*
+  governors to permit it** (intersection mask, §11) — one off-politics governor
+  forecloses a branch permanently; resources spent at both unlock and placement
+  form a **double sink**.
+
+---
+
+## 19. Starting the game & monetization
+
+- **Every player starts free** with **one random planet** + a few **lower-bound
+  random resources** to begin building.
+- **Buying planets is the business model** and **the only place real money enters
+  the game** (fiat, via Stripe). A purchase **mints a new random planet** entity
+  for the buyer. Indicative pricing: **€2.99** (one random planet) / **€9.99**
+  (pack of 5). The first planet is always kept.
+- **Not pay-to-win:** you buy *board presence and more rolls of tech DNA*, not
+  power — every planet is still gated by tiles, efficiency caps and management,
+  and planets are also won by conquest or bought from players for resources.
+- **Guardrail (canon):** buying must **never be the only escape** from a stuck
+  start. Every planet seed guarantees *some* minimal path to a telescope/probe so
+  a patient free player can always eventually reach the network and trade out.
+  Buying is the *fast* escape, not the *only* one.
+- **(OPEN):** where a purchased planet spawns — reachable near the buyer, or a
+  fresh (possibly isolated) pocket.
+
+---
+
+## 20. Combat resolution
+
+- **Pure stats, fully deterministic, no RNG.**
+- **Resolved at effective range** using the target's state **at the moment of
+  arrival** — not at launch. Because travel takes real time (days), the target
+  may have changed by the time the attacker arrives. **The risk is temporal, not
+  random:** stale intel and slow ships lose battles that looked winnable at
+  launch.
+- **Design consequences (intended):** telescopes / fresh shares gain military
+  value (intel has a shelf life); **ship speed buys certainty** (less time for
+  the target to change); feints, reinforcement-in-transit and bluffing emerge for
+  free; no save-scumming.
+- **(OPEN):** whether the defender detects an incoming attack (detection radius /
+  telescope warning) — decides ambush vs. visible race.
+
+---
+
+## 21. Personal ship (PROPOSAL — undecided)
+
+> Not canon yet. Author is weighing keep-reframed vs. remove.
+
+- The **player incarnated**: movable only between planets you own or ally
+  planets. **Invulnerable** — cannot be attacked, stranded, or die; consumes
+  nothing.
+- Recommended **reframe so it earns its place** (drop the "purely cosmetic"
+  framing) — three functions:
+  1. **Identity:** you choose a governor archetype ("politics") at game start;
+     the personal ship is that avatar.
+  2. **New-player governance bootstrap:** lends *your* politics to the planet it's
+     parked on, so a player with no spare governor NPC can still access
+     politics-gated tech on a starter planet. (This answers the planet-opening
+     bootstrap question.)
+  3. **Governance preview instrument (§11):** park it to see, live, what a
+     governor of your type would unlock — *before* committing a permanent one.
+- Its value naturally fades as you acquire real governors (you can only be one
+  place at once), which is acceptable — training-wheels + preview tool.
+
+---
+
+## 22. Open questions (not yet canon)
+
+- **Personal ship** — keep-reframed (§21) or remove.
 - Role/nature of **giant stars** (§3).
 - Full **landing permission** option list (§9).
-- **Personal-ship / planet-opening bootstrap:** how you first land on a planet
-  that has no spaceport yet (personal ship presumably always lands).
-- **Combat resolution** model (stats + policy → outcome).
+- **Purchased-planet spawn location** (§19).
+- **Defender attack detection** (§20).
 - **Route decay / Stargate destruction** edge cases beyond destination-death.
 - **Loot box randomness** source & rarity tables.
 - **Server language** for the tick worker (client is JS/TS).

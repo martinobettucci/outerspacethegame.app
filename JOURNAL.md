@@ -141,3 +141,63 @@ Giant stars' role · full landing-permission list · planet-opening bootstrap
 (no-spaceport first landing) · combat resolution · Stargate destruction edge
 cases · loot-box randomness/rarity tables · tick-worker server language ·
 inherited ship-catalog reconciliation · isometric renderer choice.
+
+---
+
+## 2026-07-11 — Session 2 (personal ship, starter/monetization, combat, tech tree)
+
+### Personal ship — PROPOSAL, undecided
+- Player incarnated; moves only between owned/ally planets; **invulnerable**
+  (can't be attacked/stranded/die), consumes nothing.
+- Author unsure — "maybe cosmetic and should be dropped."
+- **Recommendation: keep but reframe** (drop "does nothing" framing). Three real
+  jobs: (1) identity — pick governor archetype/politics at game start;
+  (2) new-player governance bootstrap — lends your politics to the parked planet
+  so a player with no spare governor NPC can access politics-gated tech (answers
+  the planet-opening bootstrap open question); (3) governance-preview instrument
+  for §11 (park to see a governor-of-your-type's mask before committing a
+  permanent one). Value fades as real governors arrive — acceptable.
+- **Not written to canon** — awaiting author decision (kept as GAMEBOOK §21).
+
+### Starter & monetization — SETTLED
+- Free start: 1 random planet + few lower-bound random resources.
+- **Buying planets = the business model, the only fiat entry point** (via Stripe;
+  purchase mints a new random planet). €2.99 one / €9.99 pack of 5. First planet
+  always kept. Stuck starts escape by buying (but see guardrail).
+- Framed non-pay-to-win: buying = more board presence + more tech-DNA rolls, not
+  power; planets also won by conquest / bought from players for resources.
+- **Guardrail (canon):** buying must never be the *only* escape — every seed
+  guarantees a minimal telescope/probe path so a free player can always
+  eventually reach the network. Fast escape, not only escape.
+- OPEN: where a purchased planet spawns (near buyer vs fresh isolated pocket).
+
+### Combat — SETTLED
+- **Pure stats, deterministic, no RNG**, but **resolved at effective range using
+  the target's state at arrival**. Travel takes days → target may change → I can
+  win on paper at launch and lose on arrival. Risk is temporal, not random.
+- Consequences: intel has a shelf life (telescopes/shares gain military value);
+  ship speed buys certainty; feints/reinforcement-in-transit emerge; no
+  save-scumming.
+- OPEN: whether defender detects incoming attacks (ambush vs visible race).
+
+### Tech tree — SETTLED (formal model)
+- **One global tech DAG**; nodes = capability/cards (mostly buildings). Node
+  fields: category, prerequisites (parents), unlock requirements (resource cost +
+  buildings-present-with-min-stats + governor politics + industry present),
+  placement cost, tile cost.
+- **Per-planet seed deterministically masks the DAG**: which branches exist +
+  max depth per branch. Availability = f(global DAG, seed); recomputable, nothing
+  stored per planet.
+- **Two phases:** (1) **Unlock** once per planet — meet prereqs + pay unlock cost;
+  unlock is **permanent knowledge** even if a prereq building is later destroyed.
+  (2) **Place** repeatable — pay placement cost + consume free tiles; limited by
+  tiles + governor mask.
+- Consequences: seed → forced specialization → mandatory trade; governor politics
+  gate whole branches → on a large planet a node needs *all 3* governors to
+  permit it (intersection); double resource sink (unlock + placement).
+- Note: tech tree is expected to evolve during development; the model is stable,
+  the node contents are not.
+
+### Docs
+- GAMEBOOK: added §18 Tech tree, §19 Starting & monetization, §20 Combat, §21
+  Personal ship (proposal), renumbered Open questions → §22.
