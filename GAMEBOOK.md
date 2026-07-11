@@ -70,9 +70,11 @@ produce.** Scarcity, logistics and diplomacy are the game.
   tech tree. Some cards can **never** be unlocked on a given planet. No planet is
   self-sufficient — this is the primary driver of the trade economy. Full model
   in §18.
-- **Climate** — one of **cold / hot / exo / radio** — determines the **presence
-  or absence of advanced resources** on the planet (§8) and shapes what can
-  operate there. (Fuel is **not** climate-derived — fuel comes from stars, §22.)
+- **Climate** — one of **hot / cold / temperate / poison** — determines the
+  **presence or absence of advanced resources** on the planet (§8) and shapes
+  what can operate there. **Poison planets are unbuildable but still yield poison
+  crystals** — a harvest-only body. (Propulsion fuel is **not** climate-derived —
+  it comes from stars, §22; the crystals refined into *fuel cells* are, §24.)
 - **Quality** (rarity band, e.g. **Class A–F**), orthogonal to size, sets a
   planet's **caps and abundance**: how high its deposit/population ceilings are
   and how rich its deposits start.
@@ -155,17 +157,22 @@ Three material tiers:
 
 - **Derived materials are intrinsically rare** — their recipes/conditions make
   large quantities extremely hard; expect only a few units at a time.
-- **Which advanced materials a planet offers is set by its climate** (cold / hot
-  / exo / radio, §3): climate gates advanced-resource presence/absence. Basic
-  materials are always mineable regardless of climate.
+- **Which advanced materials a planet offers is set by its climate** (hot / cold
+  / temperate / poison, §3): climate gates advanced-resource presence/absence.
+  Basic materials are always mineable regardless of climate. Full v0 resource
+  list in §24.
 - **Deposits are finite and deplete with mining — planets run dry** (§3); a
   planet's **quality** sets its starting abundance and its caps.
 - **Non-fungible entities:** derived materials, items, NPCs, planets.
 - **Fungible = numbers, never touch the chain.** Non-fungibles are the entire
   mint/burn surface (§16).
-- **Fuel** is a distinct fungible consumable with **three types — cold, hot,
-  gas — sourced from stars (§22); each alters how ships travel.** Ships also burn
-  **survival** stock (water / food / oxygen, §6).
+- **Two different "fuels" — do not conflate:**
+  - **Propulsion fuel** — fungible, **star-sourced**, three types (cold / hot /
+    gas), each alters travel (§22). Burned to move.
+  - **Fuel cells** — the **universal refined resource / "spice"** (à la Dune),
+    made in a **refinery from crystals**, usable for anything, and the natural
+    **reserve** of the no-currency economy (§13, §24).
+- Ships also burn **survival** stock (water / food / oxygen, §6).
 
 ---
 
@@ -567,9 +574,77 @@ any mitigation is still open.)
 
 ---
 
-## 24. Open questions (not yet canon)
+## 24. Resources (v0 master list — extensible for 2026)
 
-- **Climate ↔ ship shields** — whether operating in a hostile climate (radio,
+> Base recovered from the 2021 briefs, adopted as the starting set. The **tier
+> mapping** below is a working proposal to refine for the 2026 version.
+
+- **Basic** (fungible, always mineable, climate-independent): **oxygen, carbon,
+  hydrogen, ore, lithium, sulfur, gold, uranium, deuterium, aluminium, phosphor,
+  silicon** (12).
+- **Crystals** (fungible, **climate-gated**, mined): one family per climate —
+  **hot / cold / temperate / poison** (color-coded). Poison crystals only from
+  (unbuildable) poison planets (§3).
+- **Refined** (fungible, industry-combined): **steel** (light, heavy), **water**
+  (normal, heavy), **food** (×3 types), **medicine** (×3 types).
+- **Fuel cells** (fungible) — the **universal refined resource / "spice"**:
+  refined from crystals in a **refinery**, usable for anything, the de-facto
+  **reserve** of the no-currency economy (§13).
+- **Derived items** (non-fungible, per-unit, rare, §8): scarce crafted
+  items/accessories (e.g. beam lasers) — a few at a time.
+- **Propulsion fuel** (fungible, **star-sourced**, cold / hot / gas): travel only
+  (§22) — *distinct from fuel cells*.
+- Survival stock (water / food / oxygen, §6) draws from the above.
+
+*To refine:* the exact recipe graph, which specials are fungible-refined vs
+per-unit, and crystal→fuel-cell yields.
+
+---
+
+## 25. Content catalogue (buildings, districts, ground units — v0)
+
+> Content seed recovered from the 2021–22 briefs; feeds the tech tree (§18). Not
+> exhaustive.
+
+- **Buildings / districts:** space station, spaceport, casino, business &
+  commerce district, diplomatic district, military district, research center,
+  industrial district / factories, **faction HQ** (§23), **refinery**
+  (crystals → fuel cells), mines, workshop, marketplace. Buildings exist in
+  **3 levels — basic / normal / advanced** (level = building stats, §18), each
+  with **climate-adaptation** art per planet type.
+- **Ground units** (planet defense, ~10, each in 2–3 levels/variants): light
+  turret, heavy turret, cannons, ground tank, anti-air tank, combined ground+air
+  tank. Air-to-air / air-to-ground targeting ties to OBS (§14, §20).
+- **Two build layers (RECOVERED — pending scope decision, §27):** a **ground
+  layer** (standalone buildings on land tiles) and a **space/orbital layer** —
+  a central **space station** with **modules** on fixed Y-branch anchor points
+  (small station = 2 modules, large = 6), assembled dynamically at runtime.
+
+---
+
+## 26. Visual direction
+
+- **Isometric**, very **colourful and bright**, **old-school**-inspired: deep
+  **blacks**, dark **purples**, vivid accents like **yellow**. Consistent with
+  Anna's space environments (backgrounds) and the existing `palette.jpeg`.
+- **Modular assets assembled dynamically by the engine:** ships and stations are
+  a **base model + overlay layers** (upgrades / modules) composited at runtime,
+  not pre-rendered per configuration.
+- Sprite sizes, colour depth, PSD sources and delivery cadence are **art-pipeline
+  notes**, not game rules.
+
+---
+
+## 27. Open questions (not yet canon)
+
+- **Ship categories:** produced 2022 art is **Combat / Cargo / Civil** (9
+  season-1 ships) vs. `Ship.sol`'s **Combat / Harvest / Civil**. Reconcile —
+  recommend **Combat / Cargo / Civil hulls + harvest-as-accessory** (§14).
+- **Orbital space-station build layer** (§25) — in scope for 2026, or defer and
+  ship the planet-surface layer first?
+- **Resource tier nuance** (§24) — fungible-refined (steel/water/food/fuel cells)
+  vs. per-unit derived items; confirm the split.
+- **Climate ↔ ship shields** — whether operating in a hostile climate (poison,
   extreme hot/cold) requires shielded ships/buildings (climate → advanced
   resources is already canon, §3; the shield tie is not).
 - Full **landing permission** option list — self/friends/neighbours grief cases

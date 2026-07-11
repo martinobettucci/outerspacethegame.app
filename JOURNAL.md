@@ -488,3 +488,52 @@ inherited ship-catalog reconciliation · isometric renderer choice.
 **Superseded / art-pipeline only:** exact 512×256 / 256×256 / 16-bit sprite specs
 and delivery cadences are asset-production notes, not game rules (kept for the art
 pipeline doc, not GAMEBOOK).
+
+---
+
+## 2026-07-11 — Session 8 (forks 1A/2A/3A settled + Silviu 2022 archaeology)
+
+### Forks resolved → canon
+- **1A Climate = hot / cold / temperate / poison** (map exo→temperate,
+  radio→poison); **poison = unbuildable / harvest-only** (yields poison crystals).
+  Updated §3, §8.
+- **2A Fuel cells & star-fuel COEXIST:** propulsion fuel = star-sourced
+  (cold/hot/gas); **fuel cells = universal refined "spice"** (crystals→refinery),
+  the de-facto reserve. Two distinct things, do not conflate. §8, §24.
+- **3A Adopt 2021 resource master list as v0 base** (extensible for 2026). New
+  §24: basic (12 low-level) / crystals (climate-gated) / refined (steel, water,
+  food, medicine) / fuel cells / derived items / star propulsion fuel.
+
+### Silviu 2022 concept-art conversation — RECOVERED
+- **Visual direction (§26):** isometric, colourful/bright, old-school; deep
+  blacks, dark purples, vivid yellow; consistent with Anna's environments +
+  `palette.jpeg`. Modular assets composited by the engine (base + overlay layers).
+- **Ships:** 3 categories × 3 sizes = 9 season-1 ships, **PRODUCED before
+  2022-06-27** (PSDs). Category set in the art = **Combat / Cargo / Civil** (repo
+  has `assets/icons/ships/` Fighter/Transport/Civilian icons confirming this) —
+  conflicts with `Ship.sol` Combat/Harvest/Civil → FORK (§27).
+- **Upgrade slots + business rules:** engine, armor, cargo capacity, fuel tank,
+  primary a2a weapon, secondary a2g weapon; **only combat ships carry weapons;
+  only cargo ships carry cargo upgrades**; 2 levels each; overlay layers.
+- **Two build layers (§25, FORK):** ground layer (standalone buildings) + space
+  layer (central space station + modules on Y-branch anchors; small=2, large=6
+  modules; dynamic runtime assembly).
+- **Building/district list (§25):** space station, spaceport, casino, business/
+  commerce, diplomatic, military, research, industrial/factories, faction HQ.
+- **Ground units (§25):** ~10 — light/heavy turrets, cannons, ground tank,
+  anti-air tank, combined ground+air tank; 2–3 levels each.
+- **Stall history:** production paused 2022 due to HQ move, company rename, bank
+  account change, treasury needs, and other tech priorities. (Not a game rule.)
+- **Assets on disk:** `assets/icons/ships/{Fighter,Transport,Civilian}` (16/32/48px
+  nav icons); `assets/icons/{planets,factions}` also present. Full 512×256 ship
+  PSDs referenced but not located in this repo — to hunt for.
+
+### New forks logged (§27)
+1. Ship categories: Combat/Cargo/Civil (art+assets) vs Combat/Harvest/Civil
+   (code) — recommend Combat/Cargo/Civil hulls + harvest-as-accessory.
+2. Orbital space-station build layer — in scope for 2026 or defer?
+3. Resource tier nuance — fungible-refined vs per-unit-derived split.
+
+### Docs
+- GAMEBOOK: §3/§8 climate+fuel; new §24 Resources, §25 Content catalogue, §26
+  Visual direction; Open questions → §27 (+3 forks).
