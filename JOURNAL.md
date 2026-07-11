@@ -400,3 +400,38 @@ inherited ship-catalog reconciliation · isometric renderer choice.
 ### Docs
 - GAMEBOOK: rewrote §14 (ships), expanded §3 (body types) & §19 (expansion),
   added harvest gradient to §14/§22 refs, added §23 Factions, Open questions → §24.
+
+---
+
+## 2026-07-11 — Session 6 (climate, quality/depletion, local-goods/remote-mgmt)
+
+### Planet climate — SETTLED → canon (§3, §8)
+- Climate = **cold / hot / exo / radio**; **determines presence/absence of
+  advanced resources** and shapes what can operate there. Basic materials always
+  mineable regardless. **Fuel is NOT climate-derived — fuel = stars** (owner:
+  "fuel is tied to the stars now, it's better game design").
+
+### Planet quality & depletion — SETTLED → canon (§3, §8)
+- **Quality** (Class A–F band, orthogonal to size) sets **caps + abundance**
+  (deposit/population ceilings + starting richness).
+- **Deposits are finite and deplete with extraction — planets run dry.** Higher
+  quality lasts longer; nothing is infinite. Drives expansion + partially answers
+  anti-stagnation.
+
+### Goods-local / management-remote — SETTLED → canon (§13)
+- **Goods are planet-local:** buildings/industry/markets act only on the resources
+  physically on their planet; haul with freighters to move value. Nothing
+  teleports.
+- **Management is remote:** you manage any owned planet from the UI **without
+  moving the personal ship** — only resources co-locate, not the player. Personal
+  ship still a governance boost when parked, never required (owner: "requiring to
+  move the personal ship to manage is too much of a hassle").
+
+### Open items closed
+- The three parked recovered items (climate / co-location / rarity Class) are now
+  all resolved into canon. Remaining climate question: whether hostile climates
+  require ship/building **shields** (left open).
+
+### Docs
+- GAMEBOOK: §3 climate+quality+depletion, §8 climate→advanced + depletion, §13
+  goods-local + remote-management; trimmed §24.

@@ -70,8 +70,17 @@ produce.** Scarcity, logistics and diplomacy are the game.
   tech tree. Some cards can **never** be unlocked on a given planet. No planet is
   self-sufficient — this is the primary driver of the trade economy. Full model
   in §18.
-- Each planet has **finite natural resource deposits** and a **maximum
-  population** feeding the efficiency curve (§10).
+- **Climate** — one of **cold / hot / exo / radio** — determines the **presence
+  or absence of advanced resources** on the planet (§8) and shapes what can
+  operate there. (Fuel is **not** climate-derived — fuel comes from stars, §22.)
+- **Quality** (rarity band, e.g. **Class A–F**), orthogonal to size, sets a
+  planet's **caps and abundance**: how high its deposit/population ceilings are
+  and how rich its deposits start.
+- Each planet has **finite natural resource deposits** that **deplete with
+  extraction — planets can run dry.** Higher quality lasts longer, but nothing is
+  infinite; exhaustion is a core driver of expansion (buy / colonize / trade /
+  conquer) and helps keep the mature economy from stagnating.
+- Each planet has a **maximum population** feeding the efficiency curve (§10).
 
 ---
 
@@ -146,6 +155,11 @@ Three material tiers:
 
 - **Derived materials are intrinsically rare** — their recipes/conditions make
   large quantities extremely hard; expect only a few units at a time.
+- **Which advanced materials a planet offers is set by its climate** (cold / hot
+  / exo / radio, §3): climate gates advanced-resource presence/absence. Basic
+  materials are always mineable regardless of climate.
+- **Deposits are finite and deplete with mining — planets run dry** (§3); a
+  planet's **quality** sets its starting abundance and its caps.
 - **Non-fungible entities:** derived materials, items, NPCs, planets.
 - **Fungible = numbers, never touch the chain.** Non-fungibles are the entire
   mint/burn surface (§16).
@@ -240,6 +254,14 @@ Per-building configuration includes:
 - **There is no currency in the game. Ever. At any moment.** All value is
   denominated in **resources available in the universe**; the seller decides
   which resource(s) they want.
+- **Goods are planet-local.** A building, industry or market operates only on
+  resources **physically present on its planet**; a market trades that planet's
+  stock. To use resources elsewhere you **haul them** with freighters (§14) —
+  value and goods never teleport.
+- **Management is remote, goods are not.** You configure and manage **any planet
+  you own from the interface, without moving your personal ship there** — only
+  *resources* must be co-located, not *you*. (The personal ship adds governance
+  capability when parked, §21, but is never required for routine management.)
 - **Fungible resources** trade via an **AMM**: a constant-product pool per
   resource pair, priced off the **planet-pair liquidity** toward "perfect
   balance" (the 50/50 ratio). Expect **N² pair fragmentation** and emergent
@@ -535,20 +557,15 @@ any mitigation is still open.)
 
 ## 24. Open questions (not yet canon)
 
-*Recovered from old branches, awaiting the owner's go/no-go:*
-- **Planet climate axis** — cold / hot / exo / radio — wiring
-  **climate ↔ ship shields ↔ fuel types** into one thermal/radiation system
-  (recommended).
-- **Physical co-location trade** — a resource must sit on a planet you own to be
-  listed for sale (recommended).
-- **Planet rarity `Class A–F`** orthogonal to size (quality band).
-
-*Still undecided:*
+- **Climate ↔ ship shields** — whether operating in a hostile climate (radio,
+  extreme hot/cold) requires shielded ships/buildings (climate → advanced
+  resources is already canon, §3; the shield tie is not).
 - Full **landing permission** option list — self/friends/neighbours grief cases
   (§9).
 - Fuel-type **travel effects** & black-hole fuel/supernova behaviour (§22).
 - Supernova vs. **owned/purchased planets** — mitigation or not (§22).
-- **Anti-stagnation** — what keeps a mature, balanced single universe fresh.
+- **Anti-stagnation** — planet depletion (§3) partially answers it; what else
+  keeps a mature single universe fresh (new regions, discovery cycles)?
 - **Route decay / Stargate destruction** edge cases beyond destination-death.
 - **Loot box randomness** source & rarity tables.
 - **Server language** for the tick worker (client is JS/TS).
