@@ -1099,3 +1099,16 @@ de stats (profondeur du gamble des pods).
 - Responsable : « ok pour un statut qui se gagne » — le sanctuaire exige
   gouverneurs full-diplo ET diplomatic_district L3 construit. GAMEBOOK §11 et
   DESIGN_GUIDE v0.9.2 amendés ; R5-5 re-fermé ; tour 8 entièrement clos.
+
+---
+
+## 2026-07-12 — Session 29 (backlog exhaustif adossé au GAMEBOOK)
+
+- Directive responsable : le backlog liste chaque mécanique/workflow du
+  GAMEBOOK et la Definition of Done de chaque unité inclut la vérification
+  contre les sections GAMEBOOK/DESIGN_GUIDE citées (réf de fonctionnement).
+- BACKLOG réécrit : règle de référence dans l'en-tête (« an item with no
+  reference may not start »), P1→P7 déroulés en ~60 unités couvrant les 27
+  sections du GAMEBOOK + blocs canon récents (warehouse, docks, sanctuaire,
+  privilèges, stacking, canal manuel, pods/stat rolls, sièges/impound,
+  NFT-bridge warehouse-only…), chacune balisée `→ GB §x; DG §y`.
