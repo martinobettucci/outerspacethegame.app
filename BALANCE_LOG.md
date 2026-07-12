@@ -630,3 +630,36 @@ survival list (no fuel); pricing = fixed-rate + house cut.
   instead of 7; the cells-star remains optimal (N−1 SLOTS, fewer tiles);
   F1/F2 conclusions hold with more headroom. No re-simulation required —
   the constraint only loosened in the already-verified direction.
+
+---
+
+## Round 8 — governance specializations (2026-07-12) — PATCHED → v0.9.1
+
+- **F1a (game-breaking, fixed):** the sanctuary read as an orbital umbrella
+  let hostile fleets park immune at third-party sanctuaries 5 pc from their
+  targets (~5.5 h surprise, nothing ever at risk). Root cause: OUR
+  over-broad interpretation — owner said "ON the planet". **Fixed: ground
+  truce + docked-with-rights only; hover band = normal space; Combat hulls
+  dock only with explicit grant; undock = normal space immediately.**
+- **F1b (verified trade-off, stated):** full-diplo mask forecloses market
+  L2+ — sanctuaries are mediation grounds/manual bazaars, never AMM hubs.
+  The asymmetry IS the balance; do-not-fix note added.
+- **F1c (accepted):** pirate fencing at neutral ground = politics.
+- **F1d (PENDING OWNER):** 1 Rare diplomat makes any mining medium
+  unconquerable forever (re-opens R5-5 plunder-proofing). Proposed: sanctuary
+  additionally requires **diplomatic_district L3** (earned status ≈ cost of a
+  defense package). Canon-level → submitted, not applied.
+- **F2 (patched):** stacking formula base × {1, 1.6, 2.0}; Militarist = rate
+  (never queues); Industrialist = durations only (never batches/day), retool
+  ≤1/24 h; Scientific intel hard-capped +1 tier; permission privileges never
+  stack.
+- **F4 (patched):** privilege magnitudes = archetype constants, never scaled
+  by the NPC's stat roll; G-term uses tier only. Stat-roll economy verified
+  sound (smooth rarity overlap; "perfect" Legendary ≈0.03% of pods; 10/day
+  cap binds wealth — not a paywall).
+- **F5 (patched):** neutral ground waives contact, never the owner's
+  blacklist; round-7 dwell/eviction unchanged.
+- **F6 (noted):** sanctuary gates indestructible but exits scatter mostly
+  outside the zone; zone defined = ground + docks.
+- **F3:** post-F1a/F1d parity plausible; **Monitor M12** — governor-install
+  shares by archetype, trigger >50% (lever: magnitudes, never masks).

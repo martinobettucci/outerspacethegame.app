@@ -1067,3 +1067,27 @@ GAMEBOOK §11/§12 ; DESIGN_GUIDE v0.9 (§4.1, §11.4). Tour 8 lancé :
 parité d'attractivité des 6 privilèges, exploits du sanctuaire (parking de
 flotte immunisé ? hub inattaquable ?), math du stacking, économie des rolls
 de stats (profondeur du gamble des pods).
+
+---
+
+## 2026-07-12 — Session 27 (tour 8 appliqué → v0.9.1 ; UNE décision soumise)
+
+- **Sanctuaire corrigé en trêve au sol** (fidèle au mot du responsable « en
+  planète ») : sol + vaisseaux dockés avec droits ; la bande de survol reste
+  espace normal ; coques Combat dockent uniquement sur permission explicite ;
+  dédocker = espace normal immédiat. Le parapluie orbital (mon
+  interprétation) créait un parking de flotte immunisé — supprimé.
+- **Trade-off constaté et gravé** : full-diplo ⇒ market L2+ forclos — les
+  sanctuaires sont des terrains de médiation et des bazars manuels, jamais
+  des hubs AMM. C'est l'équilibre, ne pas « réparer ».
+- **Stacking chiffré** : base × {1, 1.6, 2.0} ; militariste = cadence jamais
+  files ; industriel = durées jamais débits, retool ≤1/24 h ; scientifique
+  cap +1 palier ; les privilèges de permission ne stackent pas. Magnitudes =
+  constantes d'archétype (jamais multipliées par le roll du NPC).
+- **Terrain neutre** : lève l'exigence de contact, jamais la blacklist du
+  propriétaire.
+- **SOUMIS AU RESPONSABLE (F1d)** : exiger en plus un diplomatic_district L3
+  pour activer le sanctuaire — sinon un seul diplomate Rare rend n'importe
+  quelle moyenne minière inconquérable pour toujours (ré-ouvre l'anti-pillage
+  R5-5). Statut : PENDING dans le guide, pas appliqué.
+- Moniteur M12 (parts d'installation par archétype, seuil 50 %).
