@@ -5,7 +5,8 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.2** — round-1 balance patches applied (see `BALANCE_LOG.md`).
+> **Version v0.3** — round-1 + round-2 balance patches applied (see
+> `BALANCE_LOG.md`).
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
@@ -22,6 +23,7 @@
 | Time | **tick = 60 s** [TUNE] | all simulation math is per-tick; UI shows human time |
 | Game day | = **1 real day** | travel of "3 days" is 3 real days (canon: temporal combat risk) |
 | Mass | **ton (T)** | 1 container = 1 T of one fungible, or 1 large item |
+| Fuel | **unit (u), 1 u = 1 T** | propulsion fuel is haulable/tradeable like any fungible |
 | Population | persons | integer |
 | BPS_BASE | 10 000 | percentages stored in basis points (inherited convention) |
 
@@ -79,11 +81,14 @@ for anyone with scope on it [TUNE]. (The only gauge the universe ever gives.)
 1. Find a region ≥ **150 pc** [TUNE] from any *active* player asset and
    ≥ `R_nova` of every star (canon: starter is supernova-safe), such that:
    **≥1 star ≤ 40 pc**, **≥2 uninhabited planets ≤ 60 pc**, and **≥1 active
-   player asset within 150–350 pc** [TUNE] (someone to eventually find).
+   player asset within 150–240 pc** [TUNE] — inside a stock Cargo-S's fuel
+   range, so the guaranteed neighbor is always physically reachable.
 2. Generate the **starter planet**: temperate, quality D–F, small or medium,
-   **≥8 tiles**, guaranteed deposits **{ore, carbon, hydrogen, climate
-   crystal, and one of lithium|gold}** [TUNE], and the **starter guarantee**:
-   extractable value ≥ cost(telescope) + cost(probe) + 25% spare (canon).
+   **≥10 tiles** [TUNE — overrides the size roll; the full T1 chain must
+   fit], guaranteed deposits **{ore, carbon, hydrogen, oxygen, silicon,
+   climate crystal, and one of lithium|gold}** [TUNE], and the **starter
+   guarantee**: extractable value ≥ cost(telescope) + cost(probe) + 25% spare
+   (canon).
 3. Grant starter stock: `{ore 60, carbon 40, silicon 30, hydrogen 20, oxygen
    20, food 30, water 30}` T ×U(1.0, 1.3) [TUNE] + **150 u propulsion fuel
    matched to the nearest star's type** [TUNE].
@@ -100,7 +105,9 @@ usually close, occasionally far (canon: "bad luck or good luck").
 the owner's only planet**. Free accounts get exactly one starter, ever.
 Accounts **< 45 days old cannot buy recruitment pods or mint NFTs** (§11.4,
 §14). Assets of accounts **< 14 days old cannot be engaged in combat unless
-they fire first** [TUNE].
+they fire first** — but this shield **voids beyond 100 pc of the account's
+starter planet, and on any inter-account cargo transfer** [TUNE] (no
+invulnerable scouts or mules).
 
 ---
 
@@ -126,8 +133,9 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 - **Settlers:** population moves only by **Civil ship**; loading/unloading
   needs a spaceport on inhabited worlds (colonization: §12). **Trip risk**
   `= 5% base − 2% × civilPilotLevel (0–2), min 0` [TUNE]; losses are computed
-  with a **fractional accumulator per route** (deaths carry over between
-  cohorts — no free sub-20 cohorts). Deterministic, a known toll, not dice.
+  with a **fractional accumulator per route** — route = the persistent
+  (origin, destination) planet pair — so deaths carry over between cohorts
+  (no free sub-20 cohorts). Deterministic, a known toll, not dice.
 
 ### 3.3 Deposits & depletion
 Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):
@@ -246,12 +254,14 @@ seed-locked].
 - `refinery` — crystal_extractor — 60 ore, 20 steelL — **crystals → fuel cells**
 
 **T2** (politics-gating begins)
-- `spaceport_M`, `shipyard_S` (small hulls), `lab` (medicines), `obs_station`
-  (ground OBS), `turret_light` (Militarist), `market_T2` (Mercantile: AMM
-  pools + auctions), `fuelcell_plant` (2× refinery rate).
+- `spaceport_M`, **`shipyard` (common: builds S *and* M hulls)** [v0.3 — free
+  colonization must never be politics-gated], `lab` (medicines),
+  `obs_station` (ground OBS), `turret_light` (Militarist), `market_T2`
+  (Mercantile: AMM pools + auctions), `fuelcell_plant` (2× refinery rate).
+- `workshop` L2 gains the **terraform core** recipe (§6) — politics-free.
 
 **T3**
-- `shipyard_M` (Industrialist; also mints **terraform cores**),
+- `shipyard_M` (Industrialist; bulk/faster M production, prerequisite for L),
   `military_district`, `weapon_foundry`, `turret_heavy`, `tank_*`
   (Militarist), `research_center` (Scientific), `diplomatic_district`
   (Diplomatic), `casino` (Mercantile), `residential_T3` (Civic),
@@ -286,7 +296,8 @@ Unlock paid in on-planet resources (canon); scientists −5%/rarity tier [TUNE].
   - med×3 = lab: water + (lithium | sulfur | phosphor)
   - **fuel cells: 1 crystal + 1 silicon → 2 cells** [TUNE]; **Nox crystals →
     4 cells** [TUNE]
-  - terraform core (shipyard_M): 10 steelH + 5 crystal + 50 cells [TUNE]
+  - terraform core (**workshop L2 — politics-free**): 10 steelH + 5 crystal +
+    50 cells [TUNE]
   - weapon/accessory items (weapon_foundry): e.g. beamLaser = 4 steelH +
     2 Ignis + 1 gold + 20 cells [TUNE] — **per-unit derived items**
 - **Construction workflow:** unlocked card → pay from on-planet stock → tile
@@ -331,7 +342,8 @@ Slots: Engine/Armor/Fuel/OBS/Weapon/Accessory/Cargo. Upgrades: 2 levels each
 **Probes** are their own crewless class [only crewless class in the game]:
 built at probe_pad for **15 ore + 10 silicon** [TUNE], **fuel-free solar
 sail, 10 pc/day** [TUNE], unlimited endurance, built-in scanner, no cargo, no
-survival clock, no hijack value. The exploration bootstrap.
+survival clock, no hijack value. Build cap 5/day/pad [TUNE]. The exploration
+bootstrap.
 
 ### 8.2 Upgrade effects (level 1 / level 2) [TUNE]
 - Engine: speed ×1.15 / ×1.30; carries the fuel-tuning (§8.3)
@@ -400,9 +412,17 @@ loitering. Course changes any time (new segment from interpolated position).
 - **Attack radius:** attack-postured ship projects `r_engage = 3 pc × OBS
   range mult` [TUNE]. Tick worker solves segment-circle intersection per
   spatial bucket (grid hash 64 pc [TUNE]); crossing schedules a combat event.
-- **Disengage rule:** a ship whose `speedEff ≥ 1.25 ×` its attacker's exits
-  combat automatically after 3 rounds, keeping damage taken [TUNE]. Speed is
-  survival; slow heavy loads are the gamble (canon's risk/reward).
+- **Disengage rules [TUNE, v0.3]:** engagements have an **initiator** — the
+  first ship to schedule a hostile event in the group; ships responding under
+  defensive policies are non-initiators.
+  - Only the **non-initiator** may disengage; the initiator is locked in for
+    20 rounds (commitment — no zero-cost hit-and-run).
+  - Non-initiator escape round = `ceil(3 × attackerSpeedEff /
+    victimSpeedEff)`, capped at 8: fast ships slip away in 3, heavy loaded
+    haulers need armor to survive to their escape round. Armor + speed
+    *together* decide who gets away — canon's risk/reward on cargo weight.
+  - **No disengage against structures** (turrets/garrisons have speed 0 and
+    fight while a hostile is in range — no siege-salami).
 
 ### 9.3 Stargates
 - Build at `stargate_yard`: **250 cells + 400 steelH + 100 crystals** [TUNE];
@@ -410,8 +430,9 @@ loitering. Course changes any time (new segment from interpolated position).
 - Traversal instant; per-ship toll if public (any resource; hard gate, canon).
   Capacity 1 ship/tick/direction [TUNE].
 - Gate dies with either endpoint (canon). **Exit scatter:** arrivals (and
-  dead-gate exits) materialize U(0–5) pc off the fixed point [TUNE] — no
-  pinpoint camping.
+  dead-gate exits) materialize **U(0–15) pc** off the fixed point [TUNE],
+  computed as a **seeded hash(shipId, arrivalTick)** — deterministic, but
+  unpredictable to campers; beats the widest engage radius (~4.5 pc).
 - Gates on artificial planets move with them (canon).
 
 ### 9.4 Tolls & public routes
@@ -438,8 +459,9 @@ Simultaneous rounds, 1 round = 1 tick:
 ```
 dmg_to_B = max(0, ATK_A × (1 − mit_B)); armor_B −= dmg_to_B  (and vice versa)
 ```
-0 HP ⇒ destroyed ⇒ **space junk** (canon): junk mass = 20% build-mass, cargo
-salvage 30% [TUNE]. Survivor keeps damage. Both-zero: both die. Fleets:
+0 HP ⇒ destroyed ⇒ **space junk** (canon): junk mass = **15%** build-mass,
+cargo salvage **15%** [TUNE — piracy is a profession, not a printing press].
+Survivor keeps damage. Both-zero: both die. Fleets:
 policy targeting (focus-fire default); a2a hits ships, a2g hits ground/
 buildings (HP §6) only (canon).
 
@@ -453,7 +475,8 @@ buildings (HP §6) only (canon).
   dead) → hold 24 h [TUNE] → ownership transfers: buildings & population
   stay, **planet-bound governors transfer with the world** (§4.1), ship/
   building-bound NPCs die with their hosts (canon), stock plunder **25%**
-  [TUNE]. Starter-only-planet exemption (§2.2).
+  [TUNE]. Starter-only-planet exemption (§2.2). **Fresh colonies carry a
+  14-day conquest grace** (blockade legal, conquest not) [TUNE].
 - **Personal ship** unattackable/unhijackable everywhere (canon).
 
 ### 10.4 Junk fields
@@ -481,7 +504,9 @@ Landing rights gate access. Fixed-rate re-pricing ≤ 1/min [TUNE].
   Cross-denominated trades route two legs = double fee (canon).
 - **Liquidity provenance:** planetary surplus; visiting players may LP if the
   owner allows. **LP withdrawal is system-guaranteed** — landing-rights
-  revocation cannot ransom deposits [TUNE].
+  revocation cannot ransom deposits [TUNE]. **Custody:** pool reserves live
+  physically in planet stock, but LP claims are liens that survive conquest —
+  the conqueror inherits the pool *with its obligations* [TUNE].
 - **Never use AMM spot as an oracle** for any other mechanic (pods use the
   census §11.5). Self-wash trading is thereby pointless, not dangerous.
 - Expected behavior: cells emerge as the reserve leg; thin pairs = spreads =
@@ -493,9 +518,12 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
   plunder-exempt; auto-refunded on loss — the one deliberate exception to
   physicality, because escrow must be neutral) [TUNE].
 - **Winner pays max(second-highest + 5%, reserve)**; single bidder pays
-  reserve [TUNE]. Listing bond: 1% of reserve, non-refundable (anti-shill)
-  [TUNE].
-- Escrowed/auctioned assets are not extractable, not attackable-in-escrow.
+  reserve [TUNE]. Listing bond: **1% of census value, paid in cells**,
+  non-refundable (anti-shill; not gameable via a self-abundant reserve
+  resource) [TUNE]. Relist cooldown per asset: 72 h [TUNE].
+- Escrow custody applies to **movable assets only**. **Listed planets remain
+  attackable and conquerable — the sale voids on conquest.** No auction
+  vaulting.
 - Planet listings display tiles, deposits (surveyed level), **and the
   effective governance mask** (§4.1).
 
@@ -509,6 +537,8 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
 - Contents: **1 NPC** (canon). Rarity: Common 62 / Uncommon 24 / Rare 10 /
   Epic 3.4 / Legendary 0.6 (%) [TUNE]; role uniform; people 60/30/10
   human/Forged/Vess [TUNE]. Governor-grade = Rare+. Bonuses +4%/tier [TUNE].
+- **Pod-sourced NPCs are account-bound for 60 days** (no trade, auction, or
+  NFT mint until aged) [TUNE] — recruitment is a sink, not a mint.
 
 ### 11.5 Global supply census
 4×/day aggregation over planet stocks + cargo + pools + escrow → per-resource
@@ -520,8 +550,10 @@ is a feature).
 ## 12. Colonization & planet trading
 
 **Colonize (mid-game, canon):**
-1. Prereqs: `colony_program` (T3, never masked); Civil-**M or L** hull +
-   **colony fitting** (1 terraform core + **400 cells + 150 steelH** [TUNE]).
+1. Prereqs: `colony_program` (T3, never masked); Civil-**M or L** hull (T2
+   common shipyard builds both S and M) + **colony fitting** (1 terraform
+   core + **400 cells + 150 steelL** [TUNE] — civilian-grade steel; the whole
+   chain is politics-free by construction).
 2. Load ≥ **200 settlers** [TUNE] + seed stock (≥ 30 T food, 30 T water).
 3. Fly to an **uninhabited planet**; land (colony ships land wild — canon);
    72 h establishment [TUNE]; planet becomes yours: tiles/DNA roll from seed,
@@ -553,14 +585,17 @@ listings disclose the governance mask (§11.3).
 ## 14. NFT bridge (opt-in, out of the hot path)
 
 - **Extract = 48 h "packing"** [TUNE]: the asset stays in-world and
-  vulnerable; any hostile damage cancels packing; blocked while a hostile
-  event targets the asset or it sits in escrow/auction. Then: DB lock → mint
-  (chain: **Polygon PoS** [TUNE], contracts from `.blockchain` minus
-  GameEngine) → frozen in-game (canon).
+  vulnerable; **only actual damage taken cancels packing** (a hostile flyby
+  cannot deny extraction forever); blocked while the asset sits in
+  escrow/auction. Then: DB lock → mint (chain: **Polygon PoS** [TUNE],
+  contracts from `.blockchain` minus GameEngine) → frozen in-game (canon).
 - **Frozen planet = custodial mode:** population snapshot frozen, production
-  halted, **still physically present** — a supernova still annihilates it and
-  the token becomes a deed to a dead world. *The token is a deed, not a
-  bunker.*
+  halted, **still physically present — and still attackable and
+  conquerable.** Conquest rewrites the in-game deed; a burned token yields
+  the world only if its minter still controls it, else it yields nothing.
+  A supernova likewise leaves the token pointing at a dead world. *The token
+  is a deed, not a bunker — and wars rewrite deeds.* [TUNE — revisit for the
+  v2 on-chain UX.]
 - **Burn:** relayer observes → asset rematerializes at its recorded location,
   live (canon). **Burned assets credit only the minting account for 60 days**
   [TUNE]; **no minting for accounts < 45 days** (§2.2) — the bridge is a
@@ -586,8 +621,10 @@ Per canon §5/§23. Concrete:
 
 - €2.99 one random planet / €9.99 pack of 5 (canon). Stripe. Minted near
   buyer via §2.2 generator.
-- **Premium floors:** +€2 ⇒ quality ≥ E, +€5 ⇒ ≥ D, +€10 ⇒ ≥ C [TUNE].
-  **A/B never purchasable** — top grades stay luck (recovered rule).
+- **Premium floors:** +€2 ⇒ quality ≥ E, +€5 ⇒ ≥ D, +€10 ⇒ ≥ C [TUNE],
+  applied as a **clamp** (a below-floor roll becomes exactly the floor —
+  A/B odds never rise above their base rates). **A/B never purchasable** —
+  top grades stay luck (recovered rule).
 - No other real-money surface. Ever. (Canon.)
 - **Supply monitor:** each purchased planet injects deposits; if sales volume
   pushes the cells-inflation target (§19), the generator's regional deposit
@@ -652,9 +689,9 @@ left.
 ## 19. Balance targets
 
 - Time-to-first-contact (median active): **< 3 days**; first physical trade:
-  **< 5 days** [TARGET]
-- Second planet without paying (colonize or trade): **15–30 days** [TARGET]
-- Colony ship + fitting: **~30–45 days** [TARGET]
+  **< 8 days** [TARGET — v0.3: honest vs the 150–240 pc shell geometry]
+- Second planet without paying (colonize or trade): **30–45 days** [TARGET —
+  aligned with the colony chain]
 - Small-planet build-out ~2 weeks; large ~2 months [TARGET]
 - Cells inflation within ±20% of population growth [TARGET]
 - Piracy-vs-hauling ROI at chokepoints: **2–3×** (profession, not dominant

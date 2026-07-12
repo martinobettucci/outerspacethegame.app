@@ -118,8 +118,9 @@ produce.** Scarcity, logistics and diplomacy are the game.
   Stargate, **or** the price is split between the two owners.
 - **Stargates are tied to their planet endpoints.** If a destination planet
   ceases to exist, its Stargate disappears; entering from the origin then drops
-  you at a **fixed void coordinate** (empty space). This is fine — void travel is
-  allowed and encouraged.
+  you **near a fixed void coordinate** (empty space) — arrivals scatter
+  deterministically (seeded, not live RNG) within a small radius, so exits
+  cannot be pinpoint-camped. Void travel is allowed and encouraged.
 - **A Stargate endpoint can move:** an **artificial planet / space station**
   (§25) carries its own Stargate and drifts **slowly**, so that Stargate's exit
   coordinate moves with it — mobile network infrastructure.
@@ -262,8 +263,11 @@ Per-building configuration includes:
     your planet's visitors.
 - **Binding is permanent and shares the host's fate.** Once an NPC is installed
   on a resource, building, planet or ship, it is attached to it. If the building
-  explodes, the ship is destroyed or stranded, or the planet is conquered, the
-  NPC is lost with it.
+  explodes or the ship is destroyed or stranded, the NPC dies with its host.
+  If the **planet is conquered**, its bound governors are **lost to the
+  conqueror** — they serve the *world*, not the owner, so they transfer with
+  it (exactly as they do when a planet is traded). Permanence is never
+  launderable: no event un-binds a living NPC.
 - This closes an economic loop: loot boxes (a resource sink) → NPCs → bound to
   assets → lost on destruction → buy more.
 
@@ -283,9 +287,11 @@ Per-building configuration includes:
   *resources* must be co-located, not *you*. (The personal ship adds governance
   capability when parked, §21, but is never required for routine management.)
 - **Fungible resources** trade via an **AMM**: a constant-product pool per
-  resource pair, priced off the **planet-pair liquidity** toward "perfect
-  balance" (the 50/50 ratio). Expect **N² pair fragmentation** and emergent
-  reserve resources — this is intended; smart marketers exploit pair scarcity.
+  resource pair per market; **the seeder's deposit ratio sets the initial
+  price**, and the price drifts as the pool skews. Expect **N² pair
+  fragmentation** and emergent reserve resources — this is intended; smart
+  marketers exploit pair scarcity. (Auction/bid **escrow** is system-held —
+  the sole exception to physical co-location, because escrow must be neutral.)
 - **Non-fungible entities** (derived materials, items, NPCs, planets) trade via:
   - **Stop-price buy-now**, or
   - **Timed sealed max-bid auction** — buyers submit a max price; funds are
@@ -393,9 +399,11 @@ object*: **an entity + a declarative ruleset + a tick evaluator.**
 
 - **Fungibles never touch the chain.** Only **non-fungibles** (derived materials,
   items, NPCs, planets, building cards) are mintable.
-- **Extract** → the server **locks/escrows** the DB row and **mints** a matching
-  NFT. While minted, the asset is **frozen in-game** (unusable, indestructible by
-  the sim).
+- **Extract** → after a **vulnerable packing window**, the server
+  **locks/escrows** the DB row and **mints** a matching NFT. While minted, the
+  asset is **frozen in-game** (unusable, immune to routine simulation decay) —
+  but it remains **physically present**: supernovae and conquest still apply.
+  *The token is a deed, not a bunker.*
 - **Burn** → the server **credits the asset back** as live in-game state
   ("burned net as assets").
 - A **relayer/oracle** watches chain Mint/Burn events and reconciles DB lock
@@ -543,9 +551,13 @@ The engine of specialization, progression and production-balancing.
 - Harvesting a star requires a **special accessory**.
 - **Supernova:** when a star's fuel runs out it **supernovas, annihilating
   everything within a radius** — ships, planets, anything. There is **no way to
-  know how much fuel remains**, so over-harvesting is a blind, *shared* risk — a
+  read how much fuel remains**, so over-harvesting is a blind, *shared* risk — a
   natural tragedy-of-the-commons around rich stars (generates diplomacy,
-  sabotage, and high-yield/high-danger star-adjacent real estate).
+  sabotage, and high-yield/high-danger star-adjacent real estate). **One
+  exception: a nearly-spent star (last ~5%) flares visibly** to anyone with
+  scope on it — the universe's only warning, an evacuation window, never a
+  gauge. High-level telescopes can also **attribute who is harvesting** a star
+  in scope, so restraint is player-enforceable.
 - **The free starter planet is never generated within any star's supernova
   destruction radius** — it is guaranteed safe. Bought/discovered/conquered
   planets carry the risk.
