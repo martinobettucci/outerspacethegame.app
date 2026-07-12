@@ -4,6 +4,14 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Renderer : animations + passe de lumière v1 (chunk G)** : sprites GIF
+  animés (pixi.js/gif, cache d'ArrayBuffer, une source par sprite — la
+  cascade destroy ne corrompt plus les reconstructions) ; extraction des
+  sources émissives des light maps (binning ≤ 3), halos ADDITIFS qui
+  débordent sur tuiles et sprites voisins (propagation ASSET_PIPELINE §3),
+  filtre WebGL de relief bump (normale par gradient, 4 sources locales +
+  ambiante + lumière clé) ; correctif de précision GLSL (highp) trouvé en
+  interceptant le link WebGL. Décision P0.4 renderer VALIDÉE → [x].
 - **Niveaux, démolition & page stats (chunk F)** : montée de niveau en
   place (coût du palier, plafond de profondeur de l'ADN du seed, politique
   de niveau par intersection — market L2 refusé à un industrialiste,

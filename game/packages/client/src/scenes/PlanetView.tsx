@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { GifSprite } from 'pixi.js/gif';
 import { ArrowLeft, Users, Database, Mountain, BarChart3 } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
@@ -20,8 +21,12 @@ import { PlanetStats } from '../components/PlanetStats.tsx';
 import {
   buildingClimateOverlay,
   buildingSprite,
+  bumpMapOf,
+  lightMapOf,
+  loadGifSource,
   loadSpriteCanvas,
 } from './assets.ts';
+import { extractLights, makeBumpFilter, makeHaloSprite } from './lighting.ts';
 
 const TILE_W = 148;
 const TILE_H = 74;
@@ -164,6 +169,10 @@ export function PlanetView({ planetId }: { planetId: string }) {
 
     const fill = CLIMATE_TILE_FILL[planet.climate] ?? CLIMATE_TILE_FILL.temperate!;
 
+    // Couche de lumière ADDITIVE (propagation aux tuiles et sprites
+    // voisins — ASSET_PIPELINE §3), au-dessus du plateau.
+    const lightLayer = new Container();
+
     positions.forEach(({ col, row }, index) => {
       const x = isoX(col, row);
       const y = isoY(col, row);
@@ -197,14 +206,43 @@ export function PlanetView({ planetId }: { planetId: string }) {
         const container = new Container();
         container.position.set(x, y);
         board.addChild(container);
-        void loadSpriteCanvas(buildingSprite(building.key, building.level)).then(
-          (canvas) => {
-            const sprite = new Sprite(Texture.from(canvas));
+        const spritePath = buildingSprite(building.key, building.level);
+        // Sprite ANIMÉ (pixi.js/gif) — l'idle fait partie de l'identité
+        // (ASSET_PIPELINE §1bis).
+        void loadGifSource(spritePath)
+          .then(async (source) => {
+            const sprite = new GifSprite({ source, autoPlay: true });
             sprite.anchor.set(0.5, 0.72);
             sprite.width = TILE_W * 1.06;
             sprite.height = (TILE_W * 1.06) / 2;
             sprite.alpha = building.status === 'constructing' ? 0.55 : 1;
             container.addChild(sprite);
+
+            // Passe de lumière : bump (relief) + light map (sources).
+            try {
+              const [bumpCanvas, lightCanvas] = await Promise.all([
+                loadSpriteCanvas(bumpMapOf(spritePath)),
+                loadSpriteCanvas(lightMapOf(spritePath)),
+              ]);
+              const lights = extractLights(lightCanvas);
+              sprite.filters = [
+                makeBumpFilter(Texture.from(bumpCanvas), lights),
+              ];
+              for (const light of lights) {
+                const halo = makeHaloSprite(light, TILE_W * 0.55);
+                halo.position.set(
+                  x + (light.u - 0.5) * sprite.width,
+                  y + (light.v - 0.72) * sprite.height,
+                );
+                if (building.status !== 'constructing') {
+                  lightLayer.addChild(halo);
+                }
+              }
+            } catch {
+              // Companions absents : sprite rendu sans passe de lumière —
+              // jamais bloquant (contrat de swap).
+            }
+
             if (planet.climate === 'hot' || planet.climate === 'cold') {
               void loadSpriteCanvas(
                 buildingClimateOverlay(building.key, building.level, planet.climate),
@@ -225,10 +263,15 @@ export function PlanetView({ planetId }: { planetId: string }) {
               ring.stroke({ color: 0xd9cf4a, width: 2, alpha: 0.9 });
               container.addChild(ring);
             }
-          },
-        );
+          })
+          .catch((err: unknown) => {
+            console.error('Sprite bâtiment introuvable :', spritePath, err);
+          });
       }
     });
+
+    // La lumière par-dessus tout (propagation additive).
+    board.addChild(lightLayer);
 
     // Centre le plateau.
     const cols = Math.ceil(Math.sqrt(planet.tiles));

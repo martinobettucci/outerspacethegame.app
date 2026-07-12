@@ -1385,3 +1385,30 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
 - Leçon de test : les grants de test avaient dépassé 0,7 × cap → le frein
   §3.3b a écrasé les débits (le système a fonctionné contre le test) ;
   grants calibrés et fuel retiré du stock de test.
+
+---
+
+## 2026-07-12 — Session 30 (fin) : chunk G — animations & passe de lumière v1
+
+### Réalisé
+- GIF animés : pixi.js/gif (aucune dépendance nouvelle) ; cache
+  d'ArrayBuffer + GifSource NEUVE par sprite — le destroy en cascade du
+  plateau (options truthy → destroyData) détruisait la source partagée.
+- Lumière (ASSET_PIPELINE §3, réf. prototype 06) : extractLights (binning
+  16 px, ≤ 3 sources, intensité/couleur), halos additifs écrasés iso qui
+  débordent sur les tuiles et sprites voisins, filtre WebGL bump (normale
+  par gradient, 4 sources UV locales + ambiante 0,76 + lumière clé).
+- Débogage : « Could not initialize shader » sans log — interception de
+  linkProgram → « Precisions of uniform 'uInputSize' differ » → fragment en
+  highp. Étalonnage des halos (stubs light = gros amas blancs → scène brûlée
+  au 1er essai ; intensité /150, alpha 0,1–0,4).
+
+### Verdict P0.4 renderer
+PixiJS v8 VALIDÉ sur la vraie vue planète : GIF animés + filtres WebGL par
+sprite + couche additive coexistent sans heurt. Item passé à [x]. Limites
+v1 assumées : propagation portée par les halos (pas de champ de lumière
+global), relief discret sur bump plats de stubs — à réétalonner sur art réel.
+
+### Vérifications
+Captures 17 observées (avant/après étalonnage), vidéo de la scène animée ;
+suite E2E complète rejouée : 6/6, aucune régression ; typecheck vert.

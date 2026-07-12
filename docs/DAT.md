@@ -165,8 +165,11 @@ Site (current): `bundle exec jekyll serve`. Game (from `game/`):
 
 ## 11. Known compromises
 
-- Isometric renderer = PixiJS v8 (decided); final validation by the lighting
-  micro-prototype on the real planet view still pending (backlog P0.4 `[~]`).
+- Isometric renderer = PixiJS v8, VALIDATED by the lighting micro-prototype
+  on the real planet view (animated GifSprite, additive light-propagation
+  halos from light maps, WebGL bump filter). v1 approximations: halos carry
+  the propagation (no global light field yet); bump relief subtle on flat
+  stub maps — retune when real art lands.
 - Game quantities use SQL NUMERIC parsed to JS doubles; determinism relies on
   identical float operations in the single V8 runtime shared by API/worker
   (documented in `game/packages/server/src/db/pool.ts`).

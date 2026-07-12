@@ -1,10 +1,11 @@
 /**
  * Chargement des sprites du contrat d'assets (docs/ASSET_PIPELINE.md §4).
- * Les stubs GIF sont décodés en première frame via <img> + canvas — les
- * animations et la passe de lumière WebGL (bump/light maps) arrivent avec
- * le micro-prototype d'éclairage (backlog P0.4, item [~]).
+ * - GIF animés : décodés par pixi.js/gif (GifSource mis en cache par URL) ;
+ * - companions `X.bump.gif` / `X.light.gif` : décodés en canvas (frame 1)
+ *   pour la passe de lumière (scenes/lighting.ts).
  * Échange d'art sans code : remplacer le fichier au même chemin.
  */
+import { GifSource } from 'pixi.js/gif';
 
 const cache = new Map<string, Promise<HTMLCanvasElement>>();
 
@@ -48,6 +49,34 @@ export const BLACK_HOLE_SPRITE = 'stars/blackhole.gif';
 
 export function buildingSprite(key: string, level: number): string {
   return `buildings/building_${key}_l${level}.gif`;
+}
+
+export function bumpMapOf(spritePath: string): string {
+  return spritePath.replace(/\.gif$/, '.bump.gif');
+}
+
+export function lightMapOf(spritePath: string): string {
+  return spritePath.replace(/\.gif$/, '.light.gif');
+}
+
+/**
+ * Charge un GIF animé en GifSource. Le CACHE porte sur l'ArrayBuffer ;
+ * chaque appel parse une GifSource NEUVE : la cascade destroy() du plateau
+ * (options truthy → destroyData) peut alors détruire la source du sprite
+ * sans corrompre celle des reconstructions suivantes.
+ */
+const gifBufferCache = new Map<string, Promise<ArrayBuffer>>();
+export async function loadGifSource(path: string): Promise<GifSource> {
+  const url = spriteUrl(path);
+  let entry = gifBufferCache.get(url);
+  if (!entry) {
+    entry = fetch(url).then(async (res) => {
+      if (!res.ok) throw new Error(`GIF introuvable : ${url}`);
+      return res.arrayBuffer();
+    });
+    gifBufferCache.set(url, entry);
+  }
+  return GifSource.from(await entry);
 }
 
 export function buildingClimateOverlay(
