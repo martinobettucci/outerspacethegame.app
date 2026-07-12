@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.5** — rounds 1–2 system patches + round-4 content patches +
+> **Version v0.6** — warehouse/docks/crew-release (owner spec) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -152,6 +152,14 @@ Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):
 - **Trace mining** (no deposit): flat **2 T/day** [TUNE], exempt from
   efficiency — a bootstrap floor, never an industry.
 
+### 3.3b Fungible storage caps (depots) — gameplay, not bookkeeping
+The planet's **ready** stock (extracted, sellable/transformable/consumable)
+is capped by **depot capacity** (§5.1). Mines/industry slow via the storage
+bell (u = stock/cap) and **halt at hard cap** — a second floor besides the
+natural deposit total, making global supply census cheap and "leave
+headroom" physical. **Exact cap ladder & base planet allowance: TO BE SET BY
+SIMULATION (owner directive — round 6).** [TUNE]
+
 ### 3.4 Efficiency (the tilted bell) — THE formula
 Every producing/consuming unit has an efficiency `E ∈ [0.12, 1]`:
 
@@ -292,7 +300,8 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 |---|---|---|---|
 | telescope | T0 | — | scope +200 pc/level (max 3 instances); no tile |
 | probe_pad | T0 | — | builds probes; 5/day/level cap; no tile |
-| depot | T0 | — | +200/400/600 T storage |
+| depot | T0 | — | +200/400/600 T **fungible** storage (caps = gameplay: see §3.3b) |
+| warehouse | T1 | — | vehicle+item reserve: **L1 = 2 L / 4 M / 6 S vehicles + 50 items**; L2 ×2, L3 ×3 [TUNE]; allied parking configurable per warehouse; contents consume NOTHING |
 | mine | T0 | — | basic extraction 10/20/40 T/day |
 | farm | T1 | — | food 10/20/40 batches/day |
 | waterworks | T1 | — | water 10/20/40 batches/day |
@@ -317,6 +326,8 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | stargate_yard | T4 | — | builds Stargates (§9.3); 1 concurrent build/level |
 | terraformer | T4 | Civic | +1 quality grade, once per world (huge cost) |
 | artificial_planet_yard | T5 | Industrialist | builds artificial planets (§13) |
+
+**warehouse unlock: 40 ore + 20 steelL [TUNE]** (T1, common mask).
 
 **Unit-card unlocks (once per planet, Militarist mask) [TUNE]:**
 turret_light 30 ore+10 steelL; tank_ground 40 ore+20 steelL; tank_antiair
@@ -368,24 +379,40 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   active. Resources may be hauled from other owned planets (canon).
 - **BUILD ≠ INSTALL (canon, GAMEBOOK §9) — the economy's keystone.**
   Ground units, ship upgrades, weapons, accessories and derived items are
-  **manufactured as portable items** where tech/politics/industry allow
-  (military_district & unit cards = Militarist **production**), then hauled
-  (1 large item = 1 container), traded (buy-now/auction like any item) and
-  **installed anywhere** the owner has delivery + permission. Installation is
-  never politics-gated. Install/uninstall a ground unit: 6 h [TUNE];
-  uninstalled units are cargo again. Defenseless-production worlds defend by
-  **importing units** or **hovering defensive ships** — protection is a
-  market. (Supersedes round-4b's "turret_light politics-free" patch.)
-  **Siege lock [round 5]:** install & uninstall are **blocked only during an
-  ACTIVE COMBAT EVENT at the planet** — a hostile merely hovering or
-  attack-postured without a combat event does **not** lock installs (mirrors no-disengage-vs-structures) —
-  evacuate or reinforce BEFORE arrival (telescopes give days); reinforcement
-  under fire = hovering ships, as the keystone intends. Off-siege install
-  concurrency: **3 parallel installs/planet** [TUNE]. **Upkeep follows the
-  unit wherever it is** (garrison, warehouse, cargo — drawn from planet or
-  carrier stock); unpaid ⇒ unit **offline (ATK 0)** until fed — and **offline
-  units do NOT count toward garrison > 0** for building targetability (no
-  free ablative walls).
+  **manufactured as portable items** where tech/politics/industry allow, then
+  hauled, traded and **installed anywhere** (never politics-gated).
+  **Vehicle size classes: S** = turret_light; **M** = tank_ground,
+  tank_antiair; **L** = turret_heavy, cannon, tank_combined; ships use their
+  hull size. **Cargo cost: S = 1, M = 2, L = 4 containers** [TUNE].
+- **WAREHOUSE (owner spec, round 6):** stores ground AND space vehicles +
+  items in **separate balances** (§5.1 capacities). **Warehoused = zero
+  consumption** — upkeep applies ONLY to installed units (supersedes
+  round-5 "upkeep everywhere"; the capacity limit replaces the upkeep
+  anti-abuse). Offline-unfed installed units still don't count as garrison.
+  **Free ground buffer without warehouse: 2 M + 2 S vehicles + 10 items**
+  [TUNE — owner: "genre 2 2 et 10"; interpretation flagged]. **A factory
+  BLOCKS when the buffer and all warehouses are full** and the output is
+  neither installed nor listed. **Allied parking**: per-planet master switch
+  + per-warehouse config; ally = faction member or whitelist; **only the
+  owner retrieves its vehicle**; allied goods present at conquest are
+  captured with everything else (warehouses are THE spoil — ready-to-use,
+  undamaged).
+- **Allied installation:** an ally MAY install its units in your garrison —
+  they occupy YOUR slots and consume YOUR resources, but **the ally alone
+  controls their policies and movements** [owner spec].
+- **Deployment times [TUNE]:** ground unit warehouse→field: S 10 min /
+  M 1 h / L 2 h, no dock needed; ship warehouse→space: needs a **free dock**
+  + 1–6 h by hull size. **Docks = max simultaneous grounded visitors** (trade
+  throughput); docks can be **reserved** (self/allies, "ready to depart").
+  **Crew release: only while warehoused** (GAMEBOOK §12 exception) — crews
+  return to the player's hand; re-crewing happens at the warehouse too.
+  **Siege lock [round 5, extended]:** during an ACTIVE combat event at the
+  planet, install, uninstall, warehouse in/out and dock deployments are all
+  blocked — prepare before they arrive. Off-siege install concurrency: 3.
+- **Sales (owner spec):** ONE active vehicle/item listing per market building
+  [TUNE — granularity assumed] — spot buy-now OR timed auction. Continuous
+  sales: **no seller limit; the buyer is bound by what their ships can
+  physically load** (co-location canon).
 - **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
   [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
@@ -727,7 +754,7 @@ listings disclose the governance mask (§11.3).
   [TUNE]; **no minting for accounts < 45 days** (§2.2) — the bridge is a
   vault, not a teleporter.
 - Mintable: planets, ships, NPCs, derived items, building cards (canon),
-  **and ground units** (uninstalled state required; standard 48 h packing).
+  **and ground units & ships-as-vehicles** (must be **warehoused** — the only freezable state; standard 48 h packing).
   Factions: DB entities in v0; banner mint = v2 [TUNE]. Starter planet never
   mintable.
 

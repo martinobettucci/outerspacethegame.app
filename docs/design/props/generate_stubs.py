@@ -148,6 +148,7 @@ BUILDINGS = {  # key: description de l'art attendu
     "faction_hq": "faction HQ, giant banner mast", "stargate_yard": "stargate assembly yard",
     "terraformer": "terraforming facility, atmosphere processors",
     "artificial_planet_yard": "artificial-planet construction yard (endgame)",
+    "warehouse": "vehicle+item warehouse, big doors, parked tanks and crates",
 }
 for key, desc in BUILDINGS.items():
     for lvl in [1, 2, 3]:

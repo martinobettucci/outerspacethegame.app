@@ -207,6 +207,32 @@ and putting it in service are **two separate acts, everywhere**:
   tradeable (canon §9 card acquisition), but the **construction** is local —
   pay on-planet resources, consume a tile; a built building never moves.
 
+**The warehouse (canon).** A dedicated building stores the planet's
+**ready-to-deploy reserve**: ground vehicles AND space vehicles (built there,
+conveyed, or bought), plus non-fungible items. Capacity is expressed in
+**separate balances — small / medium / large vehicle slots + an item count**
+(e.g. 2 L + 4 M + 6 S + 50 items). **Warehoused vehicles consume nothing**
+(§ the capacity IS the limit). Allied parking is possible, configured **per
+planet AND per warehouse** ("ally" = faction member or per-planet whitelist —
+the player decides how to serve the lore); **only the owner may retrieve**
+their vehicle. Without warehouse space, a small free ground buffer exists;
+when buffer and warehouses are full, **factories BLOCK** until the produced
+unit is installed, sold or stored. **On conquest, warehouses are THE spoil:
+ready-to-use, undamaged materiel.** The siege lock applies to warehouses too
+— war starts, too late: prepare before they arrive in range.
+
+**Spaceport docks = trade throughput (canon).** The number of docks limits
+how many ships sit grounded WITHOUT entering a warehouse — i.e. **the max
+simultaneous traders** on the planet. Docks can be **reserved** for self and
+allies ("ready to depart"). Deploying a ship OUT of a warehouse takes time
+AND requires a free dock; ground units deploy from warehouse to field
+directly (minutes to a few hours).
+
+**Warehouse exceptions (canon):** a vehicle in a warehouse is the ONLY state
+where (a) it can be **frozen for NFT export**, and (b) **its crew can
+disembark and return to the player's hand** — everywhere else, binding holds
+(§12).
+
 **Construction vs. minting — two different acts:**
 - **Constructing a building** = pay its resource cost from resources available on
   the planet, and consume one free tile (§18). Any *discovered/unlocked* building
@@ -278,9 +304,13 @@ Per-building configuration includes:
     trips** (§19);
   - as a **governor** → enable **safer landing & leaving**, both for you and for
     your planet's visitors.
-- **Binding is permanent and shares the host's fate.** Once an NPC is installed
-  on a resource, building, planet or ship, it is attached to it. If the building
-  explodes or the ship is destroyed or stranded, the NPC dies with its host.
+- **Binding is permanent and shares the host's fate — with ONE exception.**
+  Once an NPC is installed on a resource, building, planet or ship, it is
+  attached to it. If the building explodes or the ship is destroyed or
+  stranded, the NPC dies with its host. **Exception (canon): while a vehicle
+  is stored in a warehouse, its crew may disembark and return to the player's
+  hand** — the warehouse is the only place a crew ever steps off alive.
+  Governors are never releasable (planets have no warehouse state).
   If the **planet is conquered**, its bound governors are **lost to the
   conqueror** — they serve the *world*, not the owner, so they transfer with
   it (exactly as they do when a planet is traded). Permanence is never
@@ -416,7 +446,8 @@ object*: **an entity + a declarative ruleset + a tick evaluator.**
 
 - **Fungibles never touch the chain.** Only **non-fungibles** (derived materials,
   items, NPCs, planets, building cards) are mintable.
-- **Extract** → after a **vulnerable packing window**, the server
+- **Extract** → vehicles must be **in a warehouse** (the only freezable
+  state for units/ships); then, after a **vulnerable packing window**, the server
   **locks/escrows** the DB row and **mints** a matching NFT. While minted, the
   asset is **frozen in-game** (unusable, immune to routine simulation decay) —
   but it remains **physically present**: supernovae and conquest still apply.
