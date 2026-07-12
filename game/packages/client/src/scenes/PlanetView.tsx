@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
-import { ArrowLeft, Users, Database, Mountain } from 'lucide-react';
+import { ArrowLeft, Users, Database, Mountain, BarChart3 } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
@@ -16,6 +16,7 @@ import { CardHand, type CardAction } from '../components/CardHand.tsx';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import { RecipePicker } from '../components/RecipePicker.tsx';
 import { BuildingPanel } from '../components/BuildingPanel.tsx';
+import { PlanetStats } from '../components/PlanetStats.tsx';
 import {
   buildingClimateOverlay,
   buildingSprite,
@@ -57,6 +58,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const [recipePickerFor, setRecipePickerFor] = useState<BuildingKey | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [statsOpen, setStatsOpen] = useState(false);
   const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
   const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
@@ -297,6 +299,24 @@ export function PlanetView({ planetId }: { planetId: string }) {
             {planet.size.toUpperCase()} · {planet.climate} · {planet.quality} ·{' '}
             {planet.tiles - usedTiles} {t.planet.tilesFree}
           </span>
+          <button
+            type="button"
+            onClick={() => setStatsOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'var(--bg-overlay)',
+              border: '1px solid var(--stroke-subtle)',
+              borderRadius: 'var(--radius-button)',
+              color: 'var(--text-primary)',
+              padding: '4px 10px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            <BarChart3 size={13} aria-hidden /> {t.planet.statsPage}
+          </button>
         </header>
 
         {selectedCard && (
@@ -335,6 +355,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
           </p>
         )}
 
+        {statsOpen && <PlanetStats planet={planet} onClose={() => setStatsOpen(false)} />}
         {recipePickerFor && (
           <RecipePicker
             planet={planet}
@@ -355,11 +376,31 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 building={b}
                 workforceAssignable={planet.workforceAssignable}
                 workforceAssigned={planet.workforceAssigned}
+                maxLevelBySeed={planet.tech.maxLevel[b.key] ?? 3}
                 onClose={() => setSelectedBuildingId(null)}
                 onApply={async (settings) => {
                   try {
                     await api.setBuildingSettings(planetId, b.id, settings);
                     setNotice(t.planet.settingsSaved);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+                onLevelUp={async () => {
+                  try {
+                    await api.levelUp(planetId, b.id);
+                    setNotice(t.planet.levelUpStarted);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+                onDemolish={async () => {
+                  try {
+                    await api.demolish(planetId, b.id);
+                    setNotice(t.planet.demolishStarted);
+                    setSelectedBuildingId(null);
                     await refresh();
                   } catch (err) {
                     setNotice((err as ApiError).message ?? t.errors.generic);

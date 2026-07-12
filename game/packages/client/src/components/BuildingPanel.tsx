@@ -5,29 +5,46 @@
  * facteur dominant »).
  */
 import { useState } from 'react';
-import { X } from 'lucide-react';
-import { BUILDINGS } from '@atg/shared';
+import { ChevronsUp, Trash2, X } from 'lucide-react';
+import { BUILDINGS, type CostBundle } from '@atg/shared';
 import type { PlanetBuilding } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
+
+function costText(cost: CostBundle): string {
+  return Object.entries(cost)
+    .map(([res, qty]) => `${qty} ${res === 'crystal_any' ? 'crystal' : res.replace('_', ' ')}`)
+    .join(' + ');
+}
 
 export function BuildingPanel({
   building,
   workforceAssignable,
   workforceAssigned,
+  maxLevelBySeed,
   onApply,
+  onLevelUp,
+  onDemolish,
   onClose,
 }: {
   building: PlanetBuilding;
   workforceAssignable: number;
   workforceAssigned: number;
+  maxLevelBySeed: number;
   onApply: (settings: { workforce: number; runPct: number }) => void;
+  onLevelUp: () => void;
+  onDemolish: () => void;
   onClose: () => void;
 }) {
   const [workforce, setWorkforce] = useState(building.workforce);
   const [runPct, setRunPct] = useState(building.runPct);
+  const [confirmDemolish, setConfirmDemolish] = useState(false);
   const def = BUILDINGS[building.key];
   const isIndustry = !!def.batchesPerDayByLevel;
+  const levelCap = Math.min(3, maxLevelBySeed);
+  const canLevelUp = building.status === 'active' && building.level < levelCap;
+  const levelUpCost =
+    building.level < 3 ? def.levelUpCost[(building.level - 1) as 0 | 1] : null;
 
   const limitingText = building.limiting
     ? building.limiting.startsWith('input:')
@@ -148,6 +165,68 @@ export function BuildingPanel({
           </button>
         </>
       )}
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          type="button"
+          onClick={onLevelUp}
+          disabled={!canLevelUp}
+          title={
+            !canLevelUp
+              ? building.level >= levelCap
+                ? `${t.planet.maxLevelReached} (L${levelCap})`
+                : t.planet.constructing
+              : levelUpCost
+                ? costText(levelUpCost)
+                : undefined
+          }
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            justifyContent: 'center',
+            background: canLevelUp ? 'var(--violet-500)' : 'var(--bg-overlay)',
+            color: canLevelUp ? 'var(--text-primary)' : 'var(--text-disabled)',
+            border: 'none',
+            borderRadius: 'var(--radius-button)',
+            padding: '6px 10px',
+            fontSize: 12,
+            cursor: canLevelUp ? 'pointer' : 'not-allowed',
+          }}
+        >
+          <ChevronsUp size={12} aria-hidden />
+          {building.level >= levelCap
+            ? `${t.planet.maxLevelReached} L${levelCap}`
+            : `${t.planet.levelUp} → L${building.level + 1}`}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (confirmDemolish) onDemolish();
+            else setConfirmDemolish(true);
+          }}
+          disabled={building.status === 'demolishing'}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            justifyContent: 'center',
+            background: confirmDemolish ? 'var(--danger-500)' : 'var(--danger-700)',
+            color: 'var(--text-primary)',
+            border: 'none',
+            borderRadius: 'var(--radius-button)',
+            padding: '6px 10px',
+            fontSize: 12,
+            cursor: building.status === 'demolishing' ? 'not-allowed' : 'pointer',
+            opacity: building.status === 'demolishing' ? 0.5 : 1,
+          }}
+        >
+          <Trash2 size={12} aria-hidden />
+          {confirmDemolish ? t.planet.demolishConfirm : t.planet.demolish}
+        </button>
+      </div>
     </section>
   );
 }

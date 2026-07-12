@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Niveaux, démolition & page stats (chunk F)** : montée de niveau en
+  place (coût du palier, plafond de profondeur de l'ADN du seed, politique
+  de niveau par intersection — market L2 refusé à un industrialiste,
+  production coupée pendant le chantier, re-staffing requis à L2) ;
+  démolition avec remboursement 50 % crédité au lancement (confirmation en
+  deux temps), tuile et gisement libérés à l'issue — un extracteur en
+  démolition ne réserve plus son gisement (décision documentée) ; page
+  stats planète canon §10 (chaque unité : u, E, débit, facteur limitant +
+  lignes planète/stockage). 39 tests d'intégration, 6 E2E, captures
+  observées.
 - **Boucle colonie vivante (chunk E)** : cœur de production pur et
   déterministe (extraction ×E×runPct×frein, recettes, point fixe de
   partage des intrants à sec, minage de trace exempt, consommation de

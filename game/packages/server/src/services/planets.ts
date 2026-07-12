@@ -9,6 +9,8 @@ import {
   BASIC_RESOURCES,
   BUILD_HOURS_BY_LEVEL,
   BUILDINGS,
+  DEMOLISH_HOURS,
+  DEMOLISH_REFUND_RATIO,
   CLIMATE_CRYSTAL,
   effectiveMask,
   efficiency,
@@ -57,7 +59,8 @@ export class CommandError extends Error {
       | 'unbuildable'
       | 'recipe_invalid'
       | 'deposit_taken'
-      | 'workforce_invalid',
+      | 'workforce_invalid'
+      | 'max_level',
     message: string,
   ) {
     super(message);
@@ -629,6 +632,197 @@ export async function setBuildingSettings(
     );
     await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Crédite un panier au stock (remboursements) — l'overfill est permis
+ * (physique §3.3b : seules les productions s'arrêtent au cap). */
+async function creditBundle(
+  client: pg.PoolClient,
+  bodyId: string,
+  climate: Climate,
+  bundle: CostBundle,
+  ratio: number,
+  nowMs: number,
+): Promise<ResourceBundle> {
+  const resolved = resolveCost(bundle, climate);
+  const credited: ResourceBundle = {};
+  for (const [resource, amount] of Object.entries(resolved)) {
+    if (!amount) continue;
+    const credit = Math.floor(amount * ratio * 100) / 100;
+    if (credit <= 0) continue;
+    credited[resource as ResourceId] = credit;
+    const { rows } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [bodyId, resource],
+    );
+    const current = rows[0]
+      ? evalLazy(
+          {
+            amount: rows[0].amount_t,
+            ratePerDay: rows[0].rate_t_per_day,
+            asOfMs: toMs(rows[0].as_of),
+          },
+          nowMs,
+          { min: 0 },
+        )
+      : 0;
+    await client.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))
+       ON CONFLICT (body_id, resource)
+       DO UPDATE SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)`,
+      [bodyId, resource, current + credit, nowMs],
+    );
+  }
+  return credited;
+}
+
+/** Coût total investi dans une instance (placement + montées de niveau). */
+function investedCost(def: (typeof BUILDINGS)[BuildingKey], level: number): CostBundle {
+  const out: CostBundle = { ...def.placementCost };
+  for (let l = 2; l <= level; l++) {
+    const step = def.levelUpCost[l - 2]!;
+    for (const [res, qty] of Object.entries(step)) {
+      out[res as keyof CostBundle] =
+        ((out[res as keyof CostBundle] as number | undefined) ?? 0) + (qty as number);
+    }
+  }
+  return out;
+}
+
+/**
+ * Montée de niveau sur place (GB §18, DG §5.1) : coût du palier, plafond
+ * de profondeur de l'ADN du seed, politique de niveau (intersection),
+ * chantier aux heures du niveau cible.
+ */
+export async function levelUpBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; newLevel: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = opts.timeScale ?? 1;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+    if (rows[0].status !== 'active') {
+      throw new CommandError('not_available', 'Le bâtiment doit être actif pour monter de niveau');
+    }
+    const key = rows[0].key as BuildingKey;
+    const def = BUILDINGS[key];
+    const level = rows[0].level as number;
+    if (level >= 3) {
+      throw new CommandError('max_level', 'Niveau maximal atteint (3)');
+    }
+    const targetLevel = level + 1;
+    // Plafond de profondeur roulé par le seed (GB §18).
+    const availability = planetTechAvailability(planet.seed);
+    const cap = availability.maxLevel.get(key) ?? 3;
+    if (targetLevel > cap) {
+      throw new CommandError(
+        'max_level',
+        `L'ADN tech de ce monde plafonne ${key} au niveau ${cap}`,
+      );
+    }
+    // Politique de niveau (ex. market L2+ Mercantile) : intersection —
+    // TOUS les archétypes gouvernants doivent la porter.
+    if (def.politicsFromLevel && targetLevel >= def.politicsFromLevel.level) {
+      const archetypes = await governingArchetypes(client, bodyId, playerId);
+      const required = def.politicsFromLevel.archetype;
+      if (archetypes.length === 0 || !archetypes.every((a) => a === required)) {
+        throw new CommandError(
+          'mask_denied',
+          `Le niveau ${targetLevel} de ${key} exige une gouvernance ${required}`,
+        );
+      }
+    }
+    await payCost(client, bodyId, planet.climate, def.levelUpCost[targetLevel - 2]!, nowMs);
+    const buildMs =
+      (BUILD_HOURS_BY_LEVEL[targetLevel - 1]! * 3_600_000) /
+      Math.max(timeScale, 1e-9);
+    const completesAt = new Date(nowMs + buildMs);
+    // Montée EN PLACE : la production s'interrompt pendant le chantier
+    // [TUNE interp — JOURNAL session 30].
+    await client.query(
+      `UPDATE buildings SET level = $2, status = 'constructing', completes_at = $3
+       WHERE id = $1`,
+      [buildingId, targetLevel, completesAt],
+    );
+    await enqueue(client, 'construction_complete', completesAt, { buildingId });
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { completesAt, newLevel: targetLevel };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Démolition (DG §6) : remboursement 50 % de l'investi crédité au
+ * lancement, tuile libérée à l'issue (6 h), production stoppée aussitôt.
+ */
+export async function demolishBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; refunded: ResourceBundle }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = opts.timeScale ?? 1;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+    if (rows[0].status === 'demolishing') {
+      throw new CommandError('not_available', 'Démolition déjà en cours');
+    }
+    const def = BUILDINGS[rows[0].key as BuildingKey];
+    const refunded = await creditBundle(
+      client,
+      bodyId,
+      planet.climate,
+      investedCost(def, rows[0].level),
+      DEMOLISH_REFUND_RATIO,
+      nowMs,
+    );
+    const completesAt = new Date(
+      nowMs + (DEMOLISH_HOURS * 3_600_000) / Math.max(timeScale, 1e-9),
+    );
+    await client.query(
+      `UPDATE buildings SET status = 'demolishing', completes_at = $2
+       WHERE id = $1`,
+      [buildingId, completesAt],
+    );
+    await enqueue(client, 'demolition_complete', completesAt, { buildingId });
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { completesAt, refunded };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

@@ -212,3 +212,88 @@ test('boucle colonie : mine + recette → production réelle → réglages du b�
   ).toBeVisible({ timeout: 10_000 });
   await shot(page, '12-throttled-50pct');
 });
+
+test('niveaux & démolition : mine L1→L2, page stats, démolition remboursée', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  // Compte NEUF : budget d'ore déterministe (unlock 15 + pose 8 + L2 24 ≤ 60 min.).
+  const email2 = `e2e-lvl-${runId}@test.local`;
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
+    .click();
+  await page.getByLabel('E-mail').fill(email2);
+  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Sovereign name').fill('E2E Leveler');
+  await page.getByLabel('Industrialist').check();
+  await page.getByRole('button', { name: 'Awaken' }).click();
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+
+  // Mine : unlock → recette ore → pose au centre.
+  const hand = page.getByRole('region', { name: 'Construction cards' });
+  const mineCard = hand.getByRole('article').filter({ hasText: /^mine/ }).first();
+  await mineCard.getByRole('button', { name: 'Unlock' }).click();
+  await expect(page.getByRole('status')).toContainText('Card unlocked.');
+  await mineCard.getByRole('button', { name: 'Place' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Extract ore/ }).click();
+  const canvas = page.getByTestId('planet-canvas');
+  const box = (await canvas.boundingBox())!;
+  const tileX = box.x + box.width / 2;
+  const tileY = box.y + box.height / 2 - 20;
+  await page.mouse.click(tileX, tileY);
+  await expect(page.getByRole('status')).toContainText('Construction started.');
+
+  // Attend l'activation (3 s + tick 0,5 s + polling 4 s) via le panneau.
+  const panel = page.getByRole('region', { name: 'Building settings' });
+  await expect(async () => {
+    await page.mouse.click(tileX, tileY);
+    await expect(panel.getByText('Running clean')).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 25_000 });
+
+  // Montée de niveau L1 → L2.
+  await panel.getByRole('button', { name: /Level up/ }).click();
+  await expect(page.getByRole('status')).toContainText(
+    'Level-up construction started.',
+  );
+  // L2 : chantier 24 h / 7200 = 12 s ; on attend le retour à l'actif.
+  // À L2 la workforce optimale passe à 120 : la mine à 35 est
+  // « Understaffed » — comportement canon (monter de niveau exige de
+  // re-staffer), qu'on vérifie ici.
+  await expect(async () => {
+    await page.mouse.click(tileX, tileY);
+    await expect(panel.getByText(/mine · L2/)).toBeVisible({ timeout: 2_000 });
+    await expect(
+      panel.getByText('Understaffed — assign workforce'),
+    ).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 40_000 });
+  await shot(page, '13-mine-level2');
+
+  // Page stats : chaque unité avec u, E, facteur limitant (canon GB §10).
+  await page.getByRole('button', { name: 'Planet stats' }).click();
+  const stats = page.getByRole('dialog', { name: 'Planet stats' });
+  await expect(stats.getByText('Planet (population)')).toBeVisible();
+  await expect(stats.getByText(/mine · ore/)).toBeVisible();
+  await expect(stats.getByText('L2')).toBeVisible();
+  await shot(page, '14-planet-stats');
+  await stats.getByRole('button', { name: 'Close' }).click();
+
+  // Démolition : confirmation en deux temps, remboursement 50 %.
+  await page.mouse.click(tileX, tileY);
+  await panel.getByRole('button', { name: 'Demolish' }).click();
+  await expect(
+    panel.getByRole('button', { name: /Click again to confirm/ }),
+  ).toBeVisible();
+  await shot(page, '15-demolish-confirm');
+  await panel.getByRole('button', { name: /Click again to confirm/ }).click();
+  await expect(page.getByRole('status')).toContainText(
+    'Demolition started — 50% refunded.',
+  );
+  await shot(page, '16-demolition');
+});

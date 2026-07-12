@@ -1350,3 +1350,38 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
   « Running clean », curve u=70 %). Vidéo envoyée au responsable.
 - Correctif d'infrastructure de test : base atg_test TRONQUÉE par fichier
   (l'ancrage du voisin fuyait entre fichiers de test).
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk F — niveaux, démolition, page stats
+
+### Réalisé
+- `levelUpBuilding` : actif requis, plafond absolu L3, plafond de
+  profondeur roulé par l'ADN du seed (maxLevel), politique de niveau par
+  INTERSECTION (market L2+ exige une gouvernance toute mercantile), coût du
+  palier, montée EN PLACE avec production coupée pendant le chantier
+  [TUNE interp] ; heures du niveau cible (6/24/72 h).
+- `demolishBuilding` : remboursement 50 % de l'investi (placement +
+  paliers) crédité AU LANCEMENT, overfill permis (physique §3.3b), statut
+  demolishing (production stoppée), suppression et tuile libérée à 6 h.
+- **Décision documentée** : un extracteur EN DÉMOLITION ne réserve plus son
+  gisement — le remplaçant peut être lancé sans attendre (aucune double
+  extraction possible : jamais deux extracteurs ACTIFS sur une veine,
+  vérifié par test).
+- Client : boutons Level up (coût en title, raisons de blocage : plafond
+  seed, chantier) / Demolish (confirmation en deux temps, danger ramp) ;
+  page stats planète (canon GB §10) : chaque unité avec u, E, débit,
+  facteur limitant + lignes planète (population) et stockage.
+
+### Vérifications
+- Intégration 39/39 (nouveaux : L1→L2 coût payé + production coupée +
+  débit L2 ×1,7 après re-staffing ; plafond L3 ; plafond ADN via recherche
+  déterministe d'un seed plafonné L1 ; market L2 mask_denied ; 403 des
+  commandes d'autrui ; remboursement 5 ore exact ; re-construction sur
+  tuile libérée ; un seul extracteur actif par veine).
+- E2E 6/6 (nouveau parcours compte neuf : mine → L2 « Understaffed »
+  attendu — monter de niveau exige de re-staffer —, page stats, démolition
+  confirmée remboursée). Captures 13–16 observées, conformes.
+- Leçon de test : les grants de test avaient dépassé 0,7 × cap → le frein
+  §3.3b a écrasé les débits (le système a fonctionné contre le test) ;
+  grants calibrés et fuel retiré du stock de test.

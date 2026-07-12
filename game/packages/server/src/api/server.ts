@@ -20,6 +20,8 @@ import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
 import {
   CommandError,
+  demolishBuilding,
+  levelUpBuilding,
   placeBuilding,
   planetDetail,
   setBuildingSettings,
@@ -72,6 +74,7 @@ const COMMAND_HTTP: Record<CommandError['code'], number> = {
   recipe_invalid: 400,
   deposit_taken: 409,
   workforce_invalid: 400,
+  max_level: 409,
 };
 
 /**
@@ -256,6 +259,42 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         buildingId: result.buildingId,
         completesAt: result.completesAt.toISOString(),
       };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.post('/planets/:id/buildings/:buildingId/levelup', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, buildingId } = req.params as { id: string; buildingId: string };
+    try {
+      const r = await levelUpBuilding(deps.pool, player.id, id, buildingId, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return { newLevel: r.newLevel, completesAt: r.completesAt.toISOString() };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.post('/planets/:id/buildings/:buildingId/demolish', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, buildingId } = req.params as { id: string; buildingId: string };
+    try {
+      const r = await demolishBuilding(deps.pool, player.id, id, buildingId, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return { refunded: r.refunded, completesAt: r.completesAt.toISOString() };
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

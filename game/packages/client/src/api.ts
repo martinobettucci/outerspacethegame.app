@@ -148,6 +148,16 @@ export const api = {
       `/planets/${planetId}/build`,
       { building, tileIndex, recipe },
     ),
+  levelUp: (planetId: string, buildingId: string) =>
+    call<{ newLevel: number; completesAt: string }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/levelup`,
+    ),
+  demolish: (planetId: string, buildingId: string) =>
+    call<{ refunded: Record<string, number>; completesAt: string }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/demolish`,
+    ),
   setBuildingSettings: (
     planetId: string,
     buildingId: string,
