@@ -23,6 +23,9 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Tour 6 CLOS (guide v0.7) : planchers fongibles derives par simulation
+  (franchise S 800/M 1000/L 1200 T, frein unilateral, reserves AMM comptees),
+  docks par niveau, regle d'impound, doctrine anti-raid par gate ; M9-M10.
 - WAREHOUSE (spec responsable) : entrepot vehicules+items en balances
   separees, parking allie, docks = debit de commerce, equipage liberable en
   warehouse (amendement paragraphe 12), freeze NFT en warehouse uniquement,

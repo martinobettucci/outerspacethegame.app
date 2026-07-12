@@ -930,3 +930,35 @@ proposés ; re-vérification maintenant qu'ils sont dans le guide).
 GAMEBOOK §9/§12/§16 amendés ; DESIGN_GUIDE v0.6 (§3.3b plafonds fongibles à
 définir par simulation, §5.1 warehouse, §6 refondu) ; stubs : +warehouse
 (586 assets ×3) ; tour 6 lancé (logistique warehouse + étude des planchers).
+
+---
+
+## 2026-07-12 — Session 21 (tour 6 appliqué → guide v0.7)
+
+### 6b — l'étude des planchers (directive responsable) a livré :
+- **Franchise de base obligatoire** (sans elle : starter sur-plafond au
+  spawn, mines à l'arrêt jour 0) : **S 800 / M 1 000 / L 1 200 T**.
+- Échelle des dépôts conservée (+200/400/600 T) + coûts de niveau ; la
+  vraie monnaie est la tuile ; les dépôts = endurance de siège (pression de
+  blocus : starter 24 j — rétention sauve ; hubs 4–9 j — arme à la bonne
+  échelle de temps).
+- **Frein unilatéral** : libre ≤ 0,7, branche droite de la cloche au-dessus,
+  arrêt à 1 — ne jamais punir le stock bas (spirale anti-logistique évitée).
+- Fuel partage le plafond (pas de tankage séparé) ; **réserves AMM comptées**
+  (fermes de dépôts = spécialisation mercantile) ; livraisons peuvent
+  déborder, seule la production s'arrête.
+
+### 6a — warehouse vérifié :
+- Blocage d'usine → marché (stockage ≈ 55 % de la valeur + tuile) ; docks
+  spécifiés 2S/+2M/+2L (colonie fraîche : docks S → nudge « upgrade
+  spaceport à la fondation ») ; puits de pods survit à la libération
+  d'équipage (M9) ; staging avancé accepté (M10) ; vente avec équipage =
+  libération auto ; **règle d'impound** (trahison d'allié : gel des tirs →
+  désinstallation 72 h) ; doctrine anti-raid par gate gravée (réserves
+  warehouse = seule défense réactive, 0–12 h d'alerte).
+
+### En attente du responsable
+- Buffer sans slot L : la production lourde exige-t-elle un warehouse dès la
+  première unité (statu quo, cohérent) ou faut-il 1 slot L au buffer ?
+- Interprétations antérieures toujours ouvertes : plancher « 2 2 et 10 » ;
+  « une enchère par trade centre » = par bâtiment market.

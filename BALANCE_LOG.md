@@ -539,3 +539,44 @@ guide). Monitors: M1–M8.
 
 **ROUND 5 CLOSED — CONFIRMED. BUILD ≠ INSTALL is verified canon.**
 Monitors: M1–M8. Guide at v0.5.1.
+
+---
+
+## Round 6 — warehouse & fungible caps (2026-07-12) — PATCHED → guide v0.7
+
+### 6a — Warehouse logistics & exploits
+- **Factory blocking PASS:** storage costs ≈55% of stored value + a tile —
+  hoarding >2–3 months is physically impossible; the block forces markets.
+- **Docks specified:** L1 2 S / L2 +2 M / L3 +2 L, dock accepts hulls ≤ size.
+  **Serious:** fresh colonies have S docks only → heavy-unit delivery needs
+  spaceport L2 first — M8 nudge extended ("upgrade spaceport at founding");
+  R5-2 margin shrinks but holds.
+- **Crew release vs pod sink: SURVIVES** (pilot demand −60–80%, carried by
+  governors/rarity/war churn). Monitor **M9** (pods vs NPC deaths vs governor
+  installs); tuning lever = release cost/cooldown, never revoking the canon.
+- **Forward staging on ally worlds: accepted** (FOBs are politics; the cache
+  is the ally's conquest-spoil). Monitor **M10**: allied-parked standing cost
+  0.1 cells/day IF forward-caching dominates.
+- **Crewed sales:** listing auto-releases crew to seller. **Impound rule**
+  adopted for ally betrayal (hold-fire → 72 h auto-uninstall).
+- **Gate-raid doctrine stated:** warehouse ground reserves = the only
+  reactive defense vs 0–12 h gate arrivals.
+- Buffer has no L slot → heavy production requires a warehouse [owner to
+  confirm]. Foundry vs 10-item buffer: never binds (~18–74 d).
+
+### 6b — Fungible storage caps (owner-directed study)
+- **F1 (game-breaking, fixed):** without a base allowance the starter spawns
+  OVER cap (mines halted day 0) — the owner's "plancher" is mandatory.
+  **Adopted: S 800 / M 1 000 / L 1 200 T free allowance.**
+- **F2 (game-breaking, fixed):** full-bell throttle would punish LOW stock
+  (post-pickup death spiral) — **one-sided brake** adopted (free ≤0.7,
+  right-branch above, halt at 1).
+- Depot ladder kept (200/400/600 T) + leveling costs; tile tax 5–20% ≤ 20% ✓;
+  blockade pressure: starter 24 d (retention-safe), hubs 4–9 d (weapon on
+  target timescale); depots = siege endurance.
+- Fuel shares the cap; **AMM pool reserves count against caps** (depot farms
+  = Mercantile specialization); swaps may overfill, only production halts.
+- Plunder bounded by 0.25×cap → predictable raid yields; census totals
+  bounded → pod price floors stabilized.
+
+**Verdict: warehouse + caps sound — guide v0.7. Monitors M1–M10.**
