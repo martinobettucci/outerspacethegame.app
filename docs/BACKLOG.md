@@ -33,7 +33,12 @@
 - [x] UI prototypes via OpenAI Images `gpt-image-2` (galaxy map · iso colony + card hand · market · governance) — `docs/design/prototypes/01–04`
 - [x] Visual review of prototypes (vision pass vs tokens; findings & 4 canon corrections logged in DESIGN_SYSTEM §11)
 - [x] docs/DESIGN_SYSTEM.md — **FINAL v1**: groovy-dark, darkened P2Enjoy palette, pixel-sprite identity adopted, prototype-validated
-- [ ] Sprite/asset production plan (reuse 2022 PSD set: 9 ships + upgrades; buildings 3-level × climate variants; icons 256×256)
+- [x] docs/ASSET_PIPELINE.md — sizes canon (planets 128/256/512, stars 2048, buildings & ships 512×256, portraits 512×1024, cards 512²+HTML), universal overlay-layer mechanic, bump+light companion maps, light-propagation engine requirement, naming/swap contract, desktop/tablet only
+- [x] Stub set generated (85 assets ×3 files, labeled, `generate_stubs.py`) + manifest.json
+- [x] HTML prop sheet (`docs/design/props/index.html`) — exact-size DOM contract, overlay toggles, light demo; captured headless & visually verified
+- [x] HTML-fed gpt-image-2 iteration validated (prototypes 05 card, 06 layered-lighting north-star)
+- [~] Sprite/asset production plan — manifest + specs done; artist schedule & 2022-PSD reuse audit remaining
+- [ ] Ground-unit sprite size **256×256 to confirm** by owner (assumption flagged in ASSET_PIPELINE §1)
 
 ### P0.4 Remaining design opens (GAMEBOOK §27)
 - [ ] Decide tick-worker language (TS vs Python) with documented trade-off → DAT
