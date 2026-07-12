@@ -297,3 +297,42 @@ test('niveaux & démolition : mine L1→L2, page stats, démolition remboursée'
   );
   await shot(page, '16-demolition');
 });
+
+test('mouvement : envoi d\'un vaisseau depuis la carte galaxie', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  await page.waitForTimeout(1500); // sprites + flotte
+
+  // Le starter est centré ; les vaisseaux dockés sont déployés en éventail :
+  // index 1 (le cargo, créé après le personnel) à ~(−25, −23) px du centre.
+  const canvas = page.getByTestId('galaxy-canvas');
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2 - 25, box.y + box.height / 2 - 23);
+
+  // Panneau vaisseau (marqueur prioritaire) OU panneau planète.
+  const sendBtn = page.getByRole('button', { name: 'Send ship' });
+  const probeBtn = page.getByRole('button', { name: 'Launch probe' });
+  await expect(sendBtn.or(probeBtn).first()).toBeVisible({ timeout: 5_000 });
+  if (await sendBtn.isVisible()) {
+    await sendBtn.click();
+    await expect(page.getByText('Click a destination', { exact: false })).toBeVisible();
+    await page.mouse.click(box.x + box.width / 2 + 180, box.y + box.height / 2 - 60);
+    await expect(page.getByRole('status')).toContainText('Course plotted.', {
+      timeout: 10_000,
+    });
+  } else {
+    await probeBtn.click();
+    await page.mouse.click(box.x + box.width / 2 + 180, box.y + box.height / 2 - 60);
+    await expect(page.getByRole('status')).toContainText(/Probe away|Course rejected/, {
+      timeout: 10_000,
+    });
+  }
+  await page.waitForTimeout(1200);
+  await shot(page, '18-ship-in-transit');
+});

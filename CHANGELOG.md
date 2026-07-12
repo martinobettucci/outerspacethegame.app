@@ -4,6 +4,15 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Vol libre & sondes (chunk H)** : migration missions (segment, statut
+  idle), moveShip (position interpolée pure, pré-brûlage v1 documenté,
+  auto-chargement du réservoir sur monde possédé, personnel = mondes
+  possédés seulement — refus canon testé), sondes (pad actif, cap 5/j/pad,
+  vision 60 pc à l'arrivée : la sonde LÈVE LA SILENCE, testé sur le starter
+  du voisin), vision = union planètes+télescopes+sondes+vaisseaux ; UI
+  carte : marqueurs de flotte en éventail, lignes de transit pointillées,
+  envoi au clic (ETA + fuel), lancement de sonde. 45 intégration + 7 E2E.
+
 - **Renderer : animations + passe de lumière v1 (chunk G)** : sprites GIF
   animés (pixi.js/gif, cache d'ArrayBuffer, une source par sprite — la
   cascade destroy ne corrompt plus les reconstructions) ; extraction des

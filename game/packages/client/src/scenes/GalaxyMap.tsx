@@ -5,8 +5,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Globe2, Sun, CircleDot, Rocket } from 'lucide-react';
-import { api, type GalaxyBody } from '../api.js';
+import { Globe2, Sun, CircleDot, Rocket, Send, Radar } from 'lucide-react';
+import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import {
@@ -34,18 +34,39 @@ export function GalaxyMap() {
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<GalaxyBody | null>(null);
+  const [ships, setShips] = useState<ShipView[]>([]);
+  const [selectedShip, setSelectedShip] = useState<ShipView | null>(null);
+  const [targeting, setTargeting] = useState<
+    | { kind: 'ship'; shipId: string }
+    | { kind: 'probe'; planetId: string }
+    | null
+  >(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const targetingRef = useRef<typeof targeting>(null);
+  targetingRef.current = targeting;
+  const shipsRef = useRef<ShipView[]>([]);
+  shipsRef.current = ships;
   const [labels, setLabels] = useState<
     { id: string; name: string; x: number; y: number; owned: boolean }[]
   >([]);
 
   useEffect(() => {
     let cancelled = false;
-    api
-      .galaxy()
-      .then((r) => !cancelled && setBodies(r.bodies))
-      .catch(() => !cancelled && setError(true));
+    const load = () => {
+      api
+        .galaxy()
+        .then((r) => !cancelled && setBodies(r.bodies))
+        .catch(() => !cancelled && setError(true));
+      api
+        .fleet()
+        .then((r) => !cancelled && setShips(r.ships))
+        .catch(() => undefined);
+    };
+    load();
+    const interval = setInterval(load, 5_000);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -177,7 +198,92 @@ export function GalaxyMap() {
       camera.zoom = Math.min(8, Math.max(0.15, camera.zoom * factor));
       camera.updateProjectionMatrix();
     };
+    // Flotte : marqueurs + lignes de transit, mis à jour chaque frame.
+    const fleetGroup = new THREE.Group();
+    scene.add(fleetGroup);
+    const shipMeshes = new Map<string, THREE.Mesh>();
+    const transitLines = new Map<string, THREE.Line>();
+    const syncFleet = () => {
+      const now = Date.now();
+      const current = new Set<string>();
+      // Éventail des vaisseaux stationnés au même point (lisibilité + clic).
+      const seenAt = new Map<string, number>();
+      for (const ship of shipsRef.current) {
+        current.add(ship.id);
+        let mesh = shipMeshes.get(ship.id);
+        if (!mesh) {
+          const isProbe = ship.hullCategory === 'probe';
+          mesh = new THREE.Mesh(
+            new THREE.CircleGeometry(isProbe ? 2.6 : 4, 3),
+            new THREE.MeshBasicMaterial({
+              color: isProbe ? 0x6ec6e8 : 0xd9cf4a,
+            }),
+          );
+          mesh.userData.shipId = ship.id;
+          fleetGroup.add(mesh);
+          shipMeshes.set(ship.id, mesh);
+        }
+        let px = ship.x;
+        let py = ship.y;
+        if (!ship.mission) {
+          const key = `${Math.round(px)}:${Math.round(py)}`;
+          const idx = seenAt.get(key) ?? 0;
+          seenAt.set(key, idx + 1);
+          const angle = idx * 2.4;
+          px += 9 * Math.cos(angle);
+          py += 9 * Math.sin(angle);
+        }
+        if (ship.mission) {
+          const t0 = new Date(ship.mission.departedAt).getTime();
+          const t1 = new Date(ship.mission.arrivesAt).getTime();
+          const f = Math.min(1, Math.max(0, (now - t0) / Math.max(1, t1 - t0)));
+          px = ship.mission.originX + (ship.mission.destX - ship.mission.originX) * f;
+          py = ship.mission.originY + (ship.mission.destY - ship.mission.originY) * f;
+          let line = transitLines.get(ship.id);
+          if (!line) {
+            const geo = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(ship.mission.originX, ship.mission.originY, 2),
+              new THREE.Vector3(ship.mission.destX, ship.mission.destY, 2),
+            ]);
+            line = new THREE.Line(
+              geo,
+              new THREE.LineDashedMaterial({ color: 0x6e96e8, dashSize: 4, gapSize: 3 }),
+            );
+            line.computeLineDistances();
+            fleetGroup.add(line);
+            transitLines.set(ship.id, line);
+          }
+        } else {
+          const line = transitLines.get(ship.id);
+          if (line) {
+            fleetGroup.remove(line);
+            transitLines.delete(ship.id);
+          }
+        }
+        mesh.position.set(px, py, 3);
+      }
+      for (const [id, mesh] of shipMeshes) {
+        if (!current.has(id)) {
+          fleetGroup.remove(mesh);
+          shipMeshes.delete(id);
+          const line = transitLines.get(id);
+          if (line) fleetGroup.remove(line);
+          transitLines.delete(id);
+        }
+      }
+    };
+
     const raycaster = new THREE.Raycaster();
+    const worldAt = (e: MouseEvent): { x: number; y: number } => {
+      const rect = el.getBoundingClientRect();
+      const ndc = new THREE.Vector3(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1,
+        0,
+      );
+      ndc.unproject(camera);
+      return { x: ndc.x, y: ndc.y };
+    };
     const onClick = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
       const ndc = new THREE.Vector2(
@@ -185,9 +291,56 @@ export function GalaxyMap() {
         -((e.clientY - rect.top) / rect.height) * 2 + 1,
       );
       raycaster.setFromCamera(ndc, camera);
-      const hits = raycaster.intersectObjects([...meshes.values()]);
-      const hit = hits[0]?.object.userData.bodyId as string | undefined;
-      setSelected(hit ? (bodies.find((b) => b.id === hit) ?? null) : null);
+      const bodyHits = raycaster.intersectObjects([...meshes.values()]);
+      const bodyHit = bodyHits[0]?.object.userData.bodyId as string | undefined;
+
+      // Mode ciblage : le clic désigne la destination.
+      const targetingNow = targetingRef.current;
+      if (targetingNow) {
+        const dest = bodyHit
+          ? { bodyId: bodyHit }
+          : worldAt(e);
+        const done = (msg: string) => {
+          setNotice(msg);
+          setTargeting(null);
+          void api.fleet().then((r) => setShips(r.ships));
+        };
+        if (targetingNow.kind === 'ship') {
+          api
+            .moveShip(targetingNow.shipId, dest)
+            .then((r) =>
+              done(
+                `${t.galaxy.departed} ${t.galaxy.eta} ${new Date(r.arrivesAt).toLocaleString('en-US')} · ${r.fuelBurned} u ${t.galaxy.fuelCost}`,
+              ),
+            )
+            .catch((err: ApiError) =>
+              done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+            );
+        } else {
+          const coords = 'bodyId' in dest ? worldAt(e) : dest;
+          api
+            .launchProbe(targetingNow.planetId, coords)
+            .then((r) =>
+              done(
+                `${t.galaxy.probeLaunched} ${t.galaxy.eta} ${new Date(r.arrivesAt).toLocaleString('en-US')}`,
+              ),
+            )
+            .catch((err: ApiError) =>
+              done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+            );
+        }
+        return;
+      }
+
+      const shipHits = raycaster.intersectObjects([...shipMeshes.values()]);
+      const shipHit = shipHits[0]?.object.userData.shipId as string | undefined;
+      if (shipHit) {
+        setSelectedShip(shipsRef.current.find((s) => s.id === shipHit) ?? null);
+        setSelected(null);
+        return;
+      }
+      setSelectedShip(null);
+      setSelected(bodyHit ? (bodies.find((b) => b.id === bodyHit) ?? null) : null);
     };
     el.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
@@ -199,6 +352,7 @@ export function GalaxyMap() {
     let raf = 0;
     const v = new THREE.Vector3();
     const tick = () => {
+      syncFleet();
       renderer.render(scene, camera);
       const next: { id: string; name: string; x: number; y: number; owned: boolean }[] = [];
       for (const body of bodies) {
@@ -270,6 +424,83 @@ export function GalaxyMap() {
           {l.name}
         </span>
       ))}
+      {notice && (
+        <p
+          role="status"
+          style={{
+            position: 'absolute',
+            bottom: 14,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'var(--bg-overlay)',
+            borderRadius: 'var(--radius-chip)',
+            padding: '5px 16px',
+            fontSize: 12,
+            maxWidth: '70%',
+          }}
+        >
+          {notice}
+        </p>
+      )}
+      {selectedShip && (
+        <aside
+          aria-label={selectedShip.name}
+          style={{
+            position: 'absolute',
+            left: 16,
+            top: 16,
+            width: 260,
+            background: 'var(--bg-raised)',
+            borderRadius: 'var(--radius-card)',
+            boxShadow: 'var(--elevation-raised)',
+            padding: 'var(--space-4)',
+            display: 'grid',
+            gap: 'var(--space-3)',
+          }}
+        >
+          <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Rocket size={16} color="var(--accent-400)" aria-hidden />
+            <h2 style={{ fontSize: 15 }}>
+              {selectedShip.name}
+              <span style={{ color: 'var(--text-secondary)', fontSize: 11, marginLeft: 6 }}>
+                {selectedShip.hullCategory}
+                {selectedShip.hullSize ? ` ${selectedShip.hullSize.toUpperCase()}` : ''}
+              </span>
+            </h2>
+          </header>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
+            {selectedShip.status}
+            {selectedShip.mission &&
+              ` — ${t.galaxy.eta} ${new Date(selectedShip.mission.arrivesAt).toLocaleString('en-US')}`}
+            {Object.entries(selectedShip.fuel).map(
+              ([type, u]) => ` · ${Math.floor(u)} u ${type}`,
+            )}
+          </p>
+          {['docked', 'hovering', 'idle'].includes(selectedShip.status) && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargeting({ kind: 'ship', shipId: selectedShip.id });
+                setNotice(t.galaxy.sendHint);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--primary-400)',
+                color: 'var(--text-primary)',
+                border: 'none',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <Send size={14} aria-hidden /> {t.galaxy.sendShip}
+            </button>
+          )}
+        </aside>
+      )}
       {bodies.length === 0 && (
         <p
           style={{
@@ -343,6 +574,29 @@ export function GalaxyMap() {
             <p style={{ margin: 0, fontSize: 12, color: 'var(--warning-500)' }}>
               {t.galaxy.starWarning}
             </p>
+          )}
+          {selected.owned && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargeting({ kind: 'probe', planetId: selected.id });
+                setNotice(t.galaxy.probeHint);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--violet-500)',
+                color: 'var(--text-primary)',
+                border: 'none',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <Radar size={14} aria-hidden /> {t.galaxy.launchProbe}
+            </button>
           )}
           {selected.owned && (
             <button

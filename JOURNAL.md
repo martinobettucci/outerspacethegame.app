@@ -1412,3 +1412,17 @@ global), relief discret sur bump plats de stubs — à réétalonner sur art ré
 ### Vérifications
 Captures 17 observées (avant/après étalonnage), vidéo de la scène animée ;
 suite E2E complète rejouée : 6/6, aucune régression ; typecheck vert.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk H — vol libre, sondes, vision
+
+- Migration 002 (missions), moveShip/launchProbe/fleet, handler ship_arrival,
+  vision étendue (sondes 60 pc, vaisseaux 20 pc [TUNE-GAP]). v1 documentée :
+  pré-brûlage au départ (pas de panne en vol), matrice fuel 1.0, personnel
+  restreint aux mondes possédés (canon §21 — refus vérifié par requête
+  directe ET par l'E2E, qui a d'abord cliqué le personnel superposé : les
+  marqueurs dockés sont désormais déployés en éventail).
+- Tests : 45/45 intégration (fuel exact 0,25 u/pc, interpolation 0,5 ± 0,05,
+  la sonde arrivée révèle le starter voisin, cap 5/j/pad) ; E2E 7/7 ;
+  capture 18 observée (ligne de transit, ETA/fuel).

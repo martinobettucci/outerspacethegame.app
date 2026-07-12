@@ -95,9 +95,9 @@
 ## P3 — Galaxie & mouvement
 
 - [~] Galaxy map three.js: star field 3D-style, 2D nav, fog-of-war, pixel-sprite bodies → GB §2/§17/§26 — v1 livrée (pan/zoom, sprites stubs, brouillard serveur, panneau de sélection, labels) et vérifiée E2E ; restent : intel télescopes (tiers), ceintures denses, routes
-- [ ] Telescopes: scope +200/level max 3, intel tiers L1/L2/L3 (heading/destination/manifest + junk & harvest attribution) → GB §4/§20; DG §9.2
-- [ ] Probes: solar sail 10 pc/day, crewless, scanning, build cap → GB §4/§14; DG §8.1
-- [ ] Free flight: segments, speedEff/burnEff (weight), fuel×engine matrix, derived range UI, course changes → GB §6/§14; DG §8.2–8.4/§9.1
+- [~] Telescopes: scope +200/level max 3, intel tiers L1/L2/L3 (heading/destination/manifest + junk & harvest attribution) → GB §4/§20; DG §9.2 — scope +200/niveau (union des cercles, max 3 instances) actif dans la vision ; restent : paliers d'intel L1–L3
+- [~] Probes: solar sail 10 pc/day, crewless, scanning, build cap → GB §4/§14; DG §8.1 — construction (probe_pad actif, coût, cap 5/j/pad), voile 10 pc/j, vision 60 pc à l'arrivée (lève la Silence — testé), UI de lancement ; restent : scan riche (DNA/gisements, intel scientifique)
+- [~] Free flight: segments, speedEff/burnEff (weight), fuel×engine matrix, derived range UI, course changes → GB §6/§14; DG §8.2–8.4/§9.1 — segments avec position interpolée pure, arrivée par événement, carburant pré-brûlé au départ [TUNE-v1 documenté], auto-chargement sur monde possédé, UI carte (marqueurs éventail, lignes de transit, envoi au clic, ETA/fuel) ; restent : matrice fuel×moteur (1.0 v1), poids/loadFrac, changements de cap, cercles de portée UI, horloges de mort
 - [ ] Death clocks: fuel-out=stranded (recoverable), survival-out=ownership strip; salvage claims (claim rig 2 h) → GB §6; DG §8.8/§10.3
 - [ ] Hovering: own-planet drain vs ship-stock drain, auto-trade policy bounds (3× census), survival alarm + auto-flee → GB §7; DG §3.5
 - [ ] Stars: harvest gradient (d_safe/d_max), hidden stock, flare <5 %, supernova event + annihilation radius, L-star→black hole → GB §22; DG §2.1/§8.8
