@@ -66,7 +66,7 @@ strategy for the game is defined in `CLAUDE.md` §15 and per-task in
 
 | Variable | Role | Required | Notes |
 |---|---|---|---|
-| `OPENAI_API_KEY` | Image generation for UI prototypes (preproduction only) | Optional | Never committed; absent in the current environment |
+| `OPEN_AI_KEY` | OpenAI Images key for UI prototypes (preproduction only) | Optional | Never committed; provided by the cloud-worker environment |
 
 Game-runtime variables (database, Stripe, chain relayer) will be documented in
 `docs/DAT.md` when implementation starts.
@@ -97,5 +97,5 @@ Game-runtime variables (database, Stripe, chain relayer) will be documented in
 - The Jekyll site content (whitepaper, economics pages) predates the 2026
   redesign and partially contradicts the current canon; it will be reconciled
   when the site is refreshed (see backlog P0).
-- UI prototypes are blocked until `OPENAI_API_KEY` is available in the
-  environment.
+- UI prototypes are static concept images (art direction), not running
+  screens; running-app captures replace them from P2 onward.

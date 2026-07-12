@@ -958,5 +958,5 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 - **Monétisation.** Fiat uniquement (Stripe), jamais de clé dans le dépôt ;
   variable d'environnement documentée dans le DAT au moment de l'intégration.
 - **Prototypage visuel.** Les prototypes d'interface sont générés via l'API
-  OpenAI Images (`OPENAI_API_KEY`, variable d'environnement, jamais commitée)
-  et archivés dans `docs/design/prototypes/`.
+  OpenAI Images (`OPEN_AI_KEY`, variable d'environnement du cloud worker,
+  jamais commitée) et archivés dans `docs/design/prototypes/`.

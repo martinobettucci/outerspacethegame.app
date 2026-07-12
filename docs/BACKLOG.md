@@ -30,9 +30,9 @@
 - [ ] Reconcile legacy Jekyll site content with 2026 canon (whitepaper & economics pages contradict current design)
 
 ### P0.3 Art direction & design system
-- [~] docs/DESIGN_SYSTEM.md — groovy-dark direction, darkened P2Enjoy palette (draft committed; FINAL blocked by prototypes)
-- [ ] UI prototypes via OpenAI Images (galaxy map · iso colony + card hand · market · planet stats/governance) — **BLOCKED: no `OPENAI_API_KEY` in environment (human action required)**
-- [ ] Visual review of prototypes (vision pass, contrast check vs tokens) → finalize DESIGN_SYSTEM
+- [x] UI prototypes via OpenAI Images `gpt-image-2` (galaxy map · iso colony + card hand · market · governance) — `docs/design/prototypes/01–04`
+- [x] Visual review of prototypes (vision pass vs tokens; findings & 4 canon corrections logged in DESIGN_SYSTEM §11)
+- [x] docs/DESIGN_SYSTEM.md — **FINAL v1**: groovy-dark, darkened P2Enjoy palette, pixel-sprite identity adopted, prototype-validated
 - [ ] Sprite/asset production plan (reuse 2022 PSD set: 9 ships + upgrades; buildings 3-level × climate variants; icons 256×256)
 
 ### P0.4 Remaining design opens (GAMEBOOK §27)
