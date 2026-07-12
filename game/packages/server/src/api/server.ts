@@ -27,8 +27,11 @@ import {
   undockShip,
 } from '../services/ships.js';
 import {
+  executeInnateTrade,
   executeTrade,
+  listInnateOffers,
   listMarkets,
+  setInnateOffers,
   setMarketSlot,
 } from '../services/market.js';
 import {
@@ -103,6 +106,23 @@ const tradeSchema = z.object({
   slotIndex: z.number().int().min(0).max(2),
   shipId: z.string().uuid(),
   giveT: z.number().positive(),
+});
+const innateOffersSchema = z.object({
+  offers: z
+    .array(
+      z.object({
+        sell: z.string().min(1),
+        want: z.string().min(1),
+        price: z.number().positive(),
+        keepFloorT: z.number().min(0),
+      }),
+    )
+    .max(8),
+});
+const innateTradeSchema = z.object({
+  offerIndex: z.number().int().min(0).max(7),
+  shipId: z.string().uuid(),
+  buyT: z.number().positive(),
 });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
@@ -467,6 +487,46 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     return wrap(reply, async () => ({
       markets: await listMarkets(deps.pool, player.id, id),
     }));
+  });
+
+  app.post('/planets/:id/innate-offers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = innateOffersSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      setInnateOffers(
+        deps.pool,
+        player.id,
+        id,
+        parsed.data.offers as never,
+      ),
+    );
+  });
+
+  app.get('/bodies/:id/innate-offers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      offers: await listInnateOffers(deps.pool, player.id, id),
+    }));
+  });
+
+  app.post('/bodies/:id/innate-trade', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = innateTradeSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      executeInnateTrade(
+        deps.pool,
+        player.id,
+        id,
+        parsed.data.offerIndex,
+        parsed.data.shipId,
+        parsed.data.buyT,
+      ),
+    );
   });
 
   app.post('/markets/:bid/trade', async (req, reply) => {

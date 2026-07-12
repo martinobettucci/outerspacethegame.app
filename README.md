@@ -71,7 +71,7 @@ Environment variables are documented in `game/.env.example` (copy to
 | Email | Password | Politics | Purpose |
 |---|---|---|---|
 | `demo@atg.local` | `demo-password-1` | industrialist | main demo Sovereign |
-| `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor |
+| `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor; publishes an innate hospitality offer (water @ 2 ore/T, floor 10 T) |
 
 The seed goes through the real registration flow (`registerPlayer` →
 starter spawn), is idempotent, and is recreated by `pnpm resetDb`.

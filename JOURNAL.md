@@ -1561,3 +1561,36 @@ chunk K (marché L1 taux fixe) s'appuiera sur cette fondation.
 slots=niveau, throttle, physicalité 2 côtés, limites, whitelist, refus
 directs) ; E2E 10/10 ×2 (chemin premier passage ET rerun) ; captures 30–32
 observées (formulaire de slot, offres à quai, échange réglé +0,5 T water).
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk L — l'hospitalité du monde marchand
+
+### Canon appliqué (GB §9, exception marchande)
+Sous gouvernance Mercantile, survie + carburant se vendent innément — sans
+bâtiment de marché. Périmètre EXHAUSTIF (règle de complétude) : water,
+oxygen, food_1..3, fuel_cold/hot/gas. Plancher keep-for-self par ressource,
+jamais entamé.
+
+### Décisions v1
+- **Hospitalité en SURVOL** [TUNE-v1 interp] : l'hospitalité est la nature
+  du monde marchand — elle ne demande pas de droit d'atterrissage (le canon
+  la distingue du marché « browsable by a buyer docked »). À quai OU en
+  survol du corps.
+- **La gouvernance se re-vérifie à CHAQUE lecture et achat** : si elle
+  cesse d'être toute mercantile (ex. gouverneur soldat), l'inné se tait —
+  les offres restent stockées mais ne sont plus servies.
+- **Config sur le corps** (`bodies.config`, migration 006) : c'est une
+  propriété de gouvernance, pas d'un bâtiment. Journal `trades` réutilisé
+  (market_building_id NULL, slot −1) — le census y verra tout.
+- **Seed** : le voisin mercantile publie son offre via `setInnateOffers`
+  (vraie commande, §8) ; base dev existante alignée sur le même contenu.
+
+### Vérifications
+50 unit shared (périmètre exhaustif, planchers) ; 78/78 intégration (7
+innées : gouvernance, périmètre, plancher, survol, extinction, refus
+directs) ; E2E 11/11 — publier (vue planète, section Hospitality) puis
+acheter sur place (panneau vaisseau : marché ET hospitalité côte à côte) ;
+captures 33–35 observées. L'achat trans-joueur est vérifié en intégration :
+l'autonomie v1 d'un Cargo S (240 pc) ne garantit pas le vol du couple
+seedé en E2E — annoncé au backlog.

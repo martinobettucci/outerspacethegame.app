@@ -19,6 +19,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 3 | `game/packages/server/migrations/003_pings_channels.sql` | Protocole de contact (GB §5) : `pings`, `channels` (paire canonique unique), `messages` | 001 | DROP des trois tables |
 | 4 | `game/packages/server/migrations/004_landing_cargo.sql` | Atterrissage & fret (GB §9, DG §7) : `ships.hover_body_id`, `buildings.config` (politique d'atterrissage) | 001, 002 | DROP des deux colonnes |
 | 5 | `game/packages/server/migrations/005_market_trades.sql` | Marché L1 taux fixe (GB §9/§13) : journal `trades` (limites quotidienne/absolue des slots) | 001, 004 | DROP de la table |
+| 6 | `game/packages/server/migrations/006_innate_trading.sql` | Hospitalité du monde marchand (GB §9) : `bodies.config` (offres innées), `trades.market_building_id` nullable | 001, 005 | DROP colonne + restauration NOT NULL |
 
 ## Services à déployer (au premier déploiement)
 

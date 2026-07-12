@@ -252,6 +252,33 @@ export const api = {
       `/markets/${marketBuildingId}/trade`,
       input,
     ),
+  setInnateOffers: (
+    planetId: string,
+    offers: { sell: string; want: string; price: number; keepFloorT: number }[],
+  ) =>
+    call<{ offers: unknown[] }>('POST', `/planets/${planetId}/innate-offers`, {
+      offers,
+    }),
+  innateOffers: (bodyId: string) =>
+    call<{
+      offers: {
+        offerIndex: number;
+        sell: string;
+        want: string;
+        price: number;
+        keepFloorT: number;
+        availableT: number;
+      }[];
+    }>('GET', `/bodies/${bodyId}/innate-offers`),
+  innateTrade: (
+    bodyId: string,
+    input: { offerIndex: number; shipId: string; buyT: number },
+  ) =>
+    call<{ boughtT: number; paidT: number; paidResource: string }>(
+      'POST',
+      `/bodies/${bodyId}/innate-trade`,
+      input,
+    ),
   comms: () =>
     call<{
       incoming: { id: string; fromName: string; bodyName: string; createdAt: string }[];

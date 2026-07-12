@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Hospitalité du monde marchand (chunk L)** : migration 006
+  (`bodies.config` + journal `trades` sans bâtiment) ; sous gouvernance
+  TOUTE mercantile (re-vérifiée à chaque achat), survie + carburant se
+  vendent SANS bâtiment de marché — périmètre exhaustif (eau, oxygène,
+  3 nourritures, 3 carburants), plancher keep-for-self jamais entamé,
+  hospitalité accessible EN SURVOL (pas de droit d'atterrissage requis
+  [TUNE-v1 interp]) ; seed : le voisin mercantile publie son offre via la
+  vraie commande (contrat §8). UI : section Hospitality (vue planète) +
+  achat dans le panneau vaisseau sur place. 3 unit + 7 intégration + E2E,
+  captures 33–35 observées.
 - **Marché L1 à taux fixe (chunk K)** : migration `trades` (journal des
   échanges) ; slots = niveau du marché (canon GB §9, vérifié serveur),
   slot directionnel — le marché ACHÈTE `give` et paie en `get` au taux

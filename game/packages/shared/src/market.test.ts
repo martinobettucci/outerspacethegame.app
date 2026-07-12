@@ -5,8 +5,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   fixedTradeOutput,
+  INNATE_TRADABLE,
   MARKET_SLOTS_BY_LEVEL,
   REPRICE_MIN_INTERVAL_MS,
+  tradableAboveFloor,
+  validateInnateOffer,
   validateMarketSlot,
 } from './market.js';
 
@@ -58,5 +61,29 @@ describe('fixedTradeOutput', () => {
 describe('re-tarification (DG §11.1)', () => {
   it('throttle constant : 1 minute', () => {
     expect(REPRICE_MIN_INTERVAL_MS).toBe(60_000);
+  });
+});
+
+describe('commerce inné du monde marchand (GB §9)', () => {
+  it('périmètre EXHAUSTIF : survie (eau, oxygène, 3 nourritures) + 3 carburants', () => {
+    expect([...INNATE_TRADABLE].sort()).toEqual(
+      ['water', 'oxygen', 'food_1', 'food_2', 'food_3', 'fuel_cold', 'fuel_hot', 'fuel_gas'].sort(),
+    );
+  });
+
+  it('validation : hors périmètre, paiement inconnu, prix/plancher invalides', () => {
+    const ok = { sell: 'water', want: 'ore', price: 2, keepFloorT: 10 };
+    expect(validateInnateOffer(ok)).toBeNull();
+    expect(validateInnateOffer({ ...ok, sell: 'ore' })).toContain('innément');
+    expect(validateInnateOffer({ ...ok, want: 'unobtainium' })).toContain('paiement');
+    expect(validateInnateOffer({ ...ok, want: 'water' })).toContain('prix');
+    expect(validateInnateOffer({ ...ok, price: 0 })).toContain('Prix');
+    expect(validateInnateOffer({ ...ok, keepFloorT: -1 })).toContain('Plancher');
+  });
+
+  it('plancher keep-for-self : seul le surplus se vend', () => {
+    expect(tradableAboveFloor(50, 30)).toBe(20);
+    expect(tradableAboveFloor(30, 30)).toBe(0);
+    expect(tradableAboveFloor(10, 30)).toBe(0);
   });
 });

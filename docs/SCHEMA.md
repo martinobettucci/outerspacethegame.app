@@ -84,6 +84,16 @@ code-enforced: trader's ship must be docked on the market's planet, cargo
 containers and planet storage cap both checked, planet pays only from
 evaluated stock.
 
+## 006_innate_trading (merchant-world hospitality, GB §9)
+
+- `bodies.config jsonb` — per-body configuration; today the innate offers
+  of a merchant world (`innateOffers`: sell/want/price/keepFloorT). Offers
+  are stored data but only SERVED while governance stays all-mercantile
+  (re-checked at read and trade time).
+- `trades.market_building_id` becomes nullable: innate trades journal with
+  a NULL building and `slot_index = -1` — every trade flow feeds the same
+  ledger (future census reads one table).
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

@@ -69,7 +69,7 @@ export class CommandError extends Error {
 }
 
 /** Archétypes gouvernant effectivement la planète (gouverneurs + vaisseau personnel). */
-async function governingArchetypes(
+export async function governingArchetypes(
   client: pg.PoolClient | pg.Pool,
   bodyId: string,
   ownerId: string,

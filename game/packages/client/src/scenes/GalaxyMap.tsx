@@ -67,8 +67,13 @@ export function GalaxyMap() {
     { id: string; name: string; x: number; y: number; owned: boolean }[]
   >([]);
 
-  // Offres du marché local quand le vaisseau sélectionné est à quai.
+  // Offres du marché local (à quai) + hospitalité innée (à quai OU en
+  // survol — l'hospitalité ne demande pas de droit d'atterrissage).
   const dockedAt = selectedShip?.dockedBodyId ?? null;
+  const onSiteAt = dockedAt ?? selectedShip?.hoverBodyId ?? null;
+  const [innate, setInnate] = useState<
+    Awaited<ReturnType<typeof api.innateOffers>>['offers']
+  >([]);
   useEffect(() => {
     if (!dockedAt) {
       setMarkets([]);
@@ -83,6 +88,20 @@ export function GalaxyMap() {
       cancelled = true;
     };
   }, [dockedAt]);
+  useEffect(() => {
+    if (!onSiteAt) {
+      setInnate([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .innateOffers(onSiteAt)
+      .then((r) => !cancelled && setInnate(r.offers))
+      .catch(() => !cancelled && setInnate([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [onSiteAt]);
 
   /** Rafraîchit la flotte ET le panneau du vaisseau sélectionné. */
   const refreshShips = () =>
@@ -734,6 +753,93 @@ export function GalaxyMap() {
                   </div>
                 )),
               )}
+            </section>
+          )}
+          {innate.length > 0 && onSiteAt && (
+            <section
+              aria-label={t.galaxy.hospitalityTitle}
+              style={{ display: 'grid', gap: 6, fontSize: 12 }}
+            >
+              <strong style={{ color: 'var(--accent-200)' }}>
+                {t.galaxy.hospitalityTitle}
+              </strong>
+              {innate.map((o) => (
+                <div
+                  key={o.offerIndex}
+                  style={{
+                    display: 'grid',
+                    gap: 4,
+                    background: 'var(--bg-overlay)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                  }}
+                >
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>
+                    {o.sell.replace('_', ' ')} @ {o.price} {o.want.replace('_', ' ')}/T
+                    {' · '}
+                    {o.availableT} {t.galaxy.tons} {t.galaxy.hospitalityAvailable}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      aria-label={`${t.galaxy.hospitalityBuy} ${o.sell}`}
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      value={tradeT}
+                      onChange={(e) => setTradeT(e.target.value)}
+                      style={{
+                        width: 58,
+                        background: 'var(--bg-raised)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        api
+                          .innateTrade(onSiteAt, {
+                            offerIndex: o.offerIndex,
+                            shipId: selectedShip.id,
+                            buyT: Number(tradeT),
+                          })
+                          .then((r) => {
+                            setNotice(
+                              `${t.galaxy.hospitalityBought} −${r.paidT.toFixed(1)} ${t.galaxy.tons} ${r.paidResource.replace('_', ' ')}`,
+                            );
+                            void refreshShips();
+                            void api
+                              .innateOffers(onSiteAt)
+                              .then((rr) => setInnate(rr.offers))
+                              .catch(() => undefined);
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.marketRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        background: 'var(--accent-400)',
+                        color: '#0D0D0D',
+                        border: 'none',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.galaxy.hospitalityBuy}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </section>
           )}
           {selectedShip.status === 'hovering' && selectedShip.hoverBodyId && (

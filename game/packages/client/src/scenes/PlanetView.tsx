@@ -7,12 +7,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
-import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite } from 'lucide-react';
+import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite, Store } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
-import { BUILDINGS } from '@atg/shared';
+import { ALL_RESOURCE_IDS, BUILDINGS, INNATE_TRADABLE } from '@atg/shared';
 import { CardHand, type CardAction } from '../components/CardHand.tsx';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import { RecipePicker } from '../components/RecipePicker.tsx';
@@ -64,6 +64,20 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [hospSell, setHospSell] = useState('water');
+  const [hospWant, setHospWant] = useState('ore');
+  const [hospPrice, setHospPrice] = useState('2');
+  const [hospFloor, setHospFloor] = useState('10');
+  const [hospOffers, setHospOffers] = useState<
+    Awaited<ReturnType<typeof api.innateOffers>>['offers']
+  >([]);
+  const refreshHospitality = useCallback(() => {
+    api
+      .innateOffers(planetId)
+      .then((r) => setHospOffers(r.offers))
+      .catch(() => setHospOffers([]));
+  }, [planetId]);
+  useEffect(() => refreshHospitality(), [refreshHospitality]);
   const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
   const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
@@ -652,6 +666,141 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 ))
             )}
           </section>
+
+          {/* Hospitalité (GB §9) : visible seulement sous gouvernance TOUTE
+              mercantile — l'UI est une aide, le serveur re-vérifie. */}
+          {planet.tech.governingArchetypes.length > 0 &&
+            planet.tech.governingArchetypes.every((a) => a === 'mercantile') && (
+              <section
+                aria-label={t.planet.hospitality}
+                style={{ display: 'grid', gap: 6, fontSize: 12 }}
+              >
+                <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                  <Store size={14} color="var(--accent-400)" aria-hidden />
+                  {t.planet.hospitality}
+                </span>
+                <span style={{ color: 'var(--text-disabled)', fontSize: 11 }}>
+                  {t.planet.hospitalityHint}
+                </span>
+                {hospOffers.length === 0 ? (
+                  <span style={{ color: 'var(--text-disabled)' }}>
+                    {t.planet.hospitalityNone}
+                  </span>
+                ) : (
+                  hospOffers.map((o) => (
+                    <span key={o.offerIndex} style={{ fontFamily: 'var(--font-mono)' }}>
+                      {o.sell.replace('_', ' ')} @ {o.price} {o.want.replace('_', ' ')}/T
+                      {' · '}floor {o.keepFloorT} T · {o.availableT} T{' '}
+                      {t.galaxy.hospitalityAvailable}
+                    </span>
+                  ))
+                )}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span>{t.planet.hospitalitySells}</span>
+                  <select
+                    aria-label={t.planet.hospitalitySells}
+                    value={hospSell}
+                    onChange={(e) => setHospSell(e.target.value)}
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      color: 'var(--text-primary)',
+                      padding: '4px 6px',
+                    }}
+                  >
+                    {INNATE_TRADABLE.map((r) => (
+                      <option key={r} value={r}>
+                        {r.replace('_', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                  <span>{t.planet.hospitalityFor}</span>
+                  <select
+                    aria-label={t.planet.hospitalityFor}
+                    value={hospWant}
+                    onChange={(e) => setHospWant(e.target.value)}
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      color: 'var(--text-primary)',
+                      padding: '4px 6px',
+                    }}
+                  >
+                    {ALL_RESOURCE_IDS.map((r) => (
+                      <option key={r} value={r}>
+                        {r.replace('_', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <label style={{ display: 'grid', gap: 3 }}>
+                  <span>{t.planet.hospitalityPrice}</span>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={hospPrice}
+                    onChange={(e) => setHospPrice(e.target.value)}
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      color: 'var(--text-primary)',
+                      padding: '4px 8px',
+                    }}
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: 3 }}>
+                  <span>{t.planet.hospitalityFloor}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={hospFloor}
+                    onChange={(e) => setHospFloor(e.target.value)}
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      color: 'var(--text-primary)',
+                      padding: '4px 8px',
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await api.setInnateOffers(planetId, [
+                        {
+                          sell: hospSell,
+                          want: hospWant,
+                          price: Number(hospPrice),
+                          keepFloorT: Number(hospFloor),
+                        },
+                      ]);
+                      setNotice(t.planet.hospitalityPublished);
+                      refreshHospitality();
+                    } catch (err) {
+                      setNotice((err as ApiError).message ?? t.errors.generic);
+                    }
+                  }}
+                  style={{
+                    background: 'var(--accent-400)',
+                    color: '#0D0D0D',
+                    border: 'none',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {t.planet.hospitalityPublish}
+                </button>
+              </section>
+            )}
         </aside>
       </div>
 

@@ -120,7 +120,7 @@ Playwright.
 `ATG_DB_IMAGE` for restricted-egress sandboxes), `pnpm runDev` /
 `stopDev` / `resetDb`, SQL migration runner (`schema_migrations`,
 transactional, advisory-locked), env vars documented in `game/.env.example`.
-Delivered so far (chunks A–I, see `docs/BACKLOG.md` for exact status): sim
+Delivered so far (chunks A–L, see `docs/BACKLOG.md` for exact status): sim
 core + full content catalog, spawn, auth/sessions, galaxy + isometric
 planet views, living colony loop, levels/demolition/stats, validated
 renderer lighting pass, free flight + probes + fog-of-war, the contact
@@ -130,7 +130,10 @@ physical-economy foundation (explicit landing with spaceport policy,
 docked cargo load/unload with exact DG §7 container accounting), and the
 first trading venue (fixed-rate market L1: slots = level, directional
 pair at a posted rate, 1/min repricing, daily/absolute limits + whitelist
-against the `trades` journal — all enforced server-side).
+against the `trades` journal — all enforced server-side) plus the
+merchant-world innate hospitality (GB §9: survival+fuel above a
+keep-for-self floor, all-mercantile governance re-checked per trade,
+reachable while merely hovering).
 Staging/prod Compose files: not yet written (planned with first deploy).
 
 ## 7. Recovery strategies

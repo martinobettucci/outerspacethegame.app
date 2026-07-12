@@ -67,3 +67,57 @@ export function validateMarketSlot(input: {
 export function fixedTradeOutput(giveT: number, rate: number): number {
   return giveT * rate;
 }
+
+/**
+ * Commerce inné du monde marchand (GB §9) : sous gouvernance Mercantile,
+ * survie (eau, nourriture, oxygène) ET carburant se vendent SANS bâtiment
+ * de marché. Le propriétaire fixe un plancher keep-for-self par ressource ;
+ * seul le surplus au-dessus du plancher est négociable.
+ */
+export const INNATE_TRADABLE: readonly ResourceId[] = [
+  'water',
+  'oxygen',
+  'food_1',
+  'food_2',
+  'food_3',
+  'fuel_cold',
+  'fuel_hot',
+  'fuel_gas',
+];
+
+export interface InnateOffer {
+  /** Ressource VENDUE par le monde marchand (∈ INNATE_TRADABLE). */
+  sell: ResourceId;
+  /** Ressource exigée en paiement. */
+  want: ResourceId;
+  /** T de `want` exigées par tonne de `sell` vendue. */
+  price: number;
+  /** Plancher keep-for-self en T : jamais entamé par le commerce. */
+  keepFloorT: number;
+}
+
+/** Valide une offre innée ; message d'erreur ou null. */
+export function validateInnateOffer(input: {
+  sell: string;
+  want: string;
+  price: number;
+  keepFloorT: number;
+}): string | null {
+  if (!INNATE_TRADABLE.includes(input.sell as ResourceId)) {
+    return 'Seuls survie et carburant se vendent innément (GB §9)';
+  }
+  if (!ALL_RESOURCE_IDS.includes(input.want as ResourceId)) {
+    return 'Ressource de paiement inconnue';
+  }
+  if (input.sell === input.want) return 'Vendre contre soi-même n\'est pas un prix';
+  if (!Number.isFinite(input.price) || input.price <= 0) return 'Prix invalide';
+  if (!Number.isFinite(input.keepFloorT) || input.keepFloorT < 0) {
+    return 'Plancher invalide';
+  }
+  return null;
+}
+
+/** Surplus négociable au-dessus du plancher keep-for-self. */
+export function tradableAboveFloor(stockT: number, keepFloorT: number): number {
+  return Math.max(0, stockT - keepFloorT);
+}

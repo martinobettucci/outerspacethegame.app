@@ -13,6 +13,7 @@ import { config } from '../config.js';
 import { createPool } from './pool.js';
 import { runMigrations } from './migrate.js';
 import { registerPlayer } from '../services/players.js';
+import { setInnateOffers } from '../services/market.js';
 
 export const DEMO_ACCOUNTS = [
   {
@@ -50,6 +51,14 @@ export async function seed(databaseUrl?: string): Promise<void> {
         `Seed : ${account.email} créé — starter ${result.spawn.starterPlanetId} ` +
           `@ (${result.spawn.pocketCenter.x.toFixed(0)}, ${result.spawn.pocketCenter.y.toFixed(0)})`,
       );
+      // Le monde marchand de démonstration publie son hospitalité (GB §9)
+      // via la VRAIE commande — le seed démontre chaque fonctionnalité (§8).
+      if (account.politics === 'mercantile') {
+        await setInnateOffers(pool, result.playerId, result.spawn.starterPlanetId, [
+          { sell: 'water', want: 'ore', price: 2, keepFloorT: 10 },
+        ]);
+        console.log(`Seed : ${account.email} — offre innée publiée (water @ 2 ore/T).`);
+      }
     }
   } finally {
     await pool.end();

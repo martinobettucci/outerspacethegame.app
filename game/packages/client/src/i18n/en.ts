@@ -82,6 +82,10 @@ export const t = {
     marketTraded: 'Trade settled — goods moved.',
     marketRefused: 'Trade refused',
     marketStock: 'stock',
+    hospitalityTitle: 'Hospitality',
+    hospitalityBuy: 'Buy',
+    hospitalityBought: 'Hospitality honored — hold replenished.',
+    hospitalityAvailable: 'on offer',
     emptyHint:
       'The Silence is total: nothing in scope. Build telescopes to extend your sky.',
     openPlanet: 'Open planet view',
@@ -167,6 +171,16 @@ export const t = {
     marketNoSlot: 'No offer posted yet.',
     infrastructure: 'Infrastructure',
     infrastructureNone: 'None yet — telescopes and probe pads need no tile.',
+    hospitality: 'Hospitality (Mercantile)',
+    hospitalityHint:
+      'A merchant world sells survival & fuel innately — no market building.',
+    hospitalitySells: 'Sells',
+    hospitalityFor: 'for',
+    hospitalityPrice: 'Price (want/T sold)',
+    hospitalityFloor: 'Keep-for-self floor (T)',
+    hospitalityPublish: 'Publish offer',
+    hospitalityPublished: 'Hospitality posted — the merchant world is open.',
+    hospitalityNone: 'No innate offer posted.',
   },
   comms: {
     title: 'Comms',

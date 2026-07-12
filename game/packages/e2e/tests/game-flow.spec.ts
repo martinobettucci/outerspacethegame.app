@@ -675,3 +675,76 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
   await expect(hold.getByText(/water · 0\.5 T/)).toBeVisible();
   await shot(page, '32-trade-settled');
 });
+
+test('hospitalité du monde marchand : publier → acheter sur place (GB §9)', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  // e2e-market est Mercantile (test précédent, mode série) : son monde
+  // vend survie+carburant SANS bâtiment de marché.
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill('e2e-market@test.local');
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await expect(rail).toBeVisible({ timeout: 10_000 });
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+
+  // Publie l'offre innée : vend water contre ore @ 2, plancher 10 T.
+  const hosp = page.getByRole('region', { name: 'Hospitality (Mercantile)' });
+  await expect(hosp).toBeVisible();
+  await hosp.getByLabel('Sells').selectOption('water');
+  await hosp.getByLabel('for', { exact: true }).selectOption('ore');
+  await hosp.getByLabel(/Price/).fill('2');
+  await hosp.getByLabel(/Keep-for-self/).fill('10');
+  await hosp.getByRole('button', { name: 'Publish offer' }).click();
+  await expect(page.getByRole('status')).toContainText('Hospitality posted');
+  await expect(hosp.getByText(/water @ 2 ore\/T · floor 10 T/)).toBeVisible();
+  await shot(page, '33-hospitality-published');
+
+  // Le visiteur (son propre cargo, sur place) voit l'offre et achète.
+  await rail.getByRole('button', { name: 'Galaxy' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  await page.waitForTimeout(1500);
+  const gbox = (await page.getByTestId('galaxy-canvas').boundingBox())!;
+  const hold = page.getByRole('region', { name: 'Cargo hold' });
+  await expect(async () => {
+    await page.mouse.click(
+      gbox.x + gbox.width / 2 - 25,
+      gbox.y + gbox.height / 2 - 23,
+    );
+    await expect(hold).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 20_000 });
+
+  // Normalise la soute (reruns) puis charge 2 T d'ore pour payer.
+  for (const res of ['water', 'ore']) {
+    const line = hold.getByText(new RegExp(`^${res} · `));
+    if (await line.isVisible().catch(() => false)) {
+      const tons = (await line.innerText()).match(/([\d.]+) T/)?.[1] ?? '0';
+      await hold.getByLabel('Resource').selectOption(res);
+      await hold.getByLabel('Tons').fill(tons);
+      await hold.getByRole('button', { name: 'Unload', exact: true }).click();
+      await expect(page.getByRole('status')).toContainText('Cargo transferred.');
+    }
+  }
+  await hold.getByLabel('Resource').selectOption('ore');
+  await hold.getByLabel('Tons').fill('2');
+  await hold.getByRole('button', { name: 'Load', exact: true }).click();
+  await expect(hold.getByText(/ore · 2\.0 T/)).toBeVisible();
+
+  const hospOffers = page.getByRole('region', { name: 'Hospitality', exact: true });
+  await expect(hospOffers).toBeVisible({ timeout: 10_000 });
+  await expect(hospOffers.getByText(/water @ 2 ore\/T/)).toBeVisible();
+  await shot(page, '34-hospitality-offers-on-site');
+  await hospOffers.getByLabel(/Buy water/).fill('0.5');
+  await hospOffers.getByRole('button', { name: 'Buy', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Hospitality honored');
+  await expect(hold.getByText(/water · 0\.5 T/)).toBeVisible();
+  await expect(hold.getByText(/ore · 1\.0 T/)).toBeVisible();
+  await shot(page, '35-hospitality-honored');
+});
