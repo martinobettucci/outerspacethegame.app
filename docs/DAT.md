@@ -30,10 +30,9 @@
 - **Web client** — browser game, **desktop/tablet only (no mobile)**. React +
   Vite. Two scenes: galaxy map (three.js star field, 2D navigation / 3D
   styling) and planet interior (isometric 2D tile renderer + card hand —
-  **renderer: PixiJS v8, DECIDED 2026-07-12** (JOURNAL session 30): the
-  required WebGL lighting pass (bump + emissive light maps, light propagation
-  to neighbours) rules out plain canvas; decision stays `[~]` in the backlog
-  until the lighting micro-prototype proves it on the real planet view). **Renderer
+  **renderer: PixiJS v8, DECIDED and VALIDATED 2026-07-12** (JOURNAL session
+  30): the micro-prototype ran on the real planet view — animated GifSprite,
+  additive light-propagation halos, per-sprite WebGL bump filter). **Renderer
   requirement:** a WebGL 2D lighting pass — every sprite ships with a bump
   map and an emissive light map; sprite lights spread to the environment and
   to nearby sprites (see `docs/ASSET_PIPELINE.md` §3; acceptance reference:
