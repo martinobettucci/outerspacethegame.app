@@ -56,6 +56,7 @@
 - [x] **Balance Round 5 + 5b — build≠install** : CONFIRMÉ (guide v0.5.1) — production d'unités (military_district + 6 cartes), verrou de siège (événement de combat actif seulement), pillage incluant items entreposés + escrow rendu avant pillage, upkeep suiveur (hors-ligne ≠ garnison), unités mintables ; import défense 7 j/13,7 j vs grâce 14 j ; moniteurs M1–M8
 - [x] **Balance Round 4 — content breadth**: 2 campaigns (économie + militaire), 15 constats, tous patchés → DESIGN_GUIDE v0.4 (fees en bp, cap remises −50%, coûts T2+ complets, matrice de ciblage unités, slots de garnison pondérés, HP bâtiments ×10, turret_light apolitique, règle boucliers climat) ; moniteurs M6–M7 ajoutés
 - [x] **Balance Round 6 — warehouse & planchers fongibles** : CLOS (guide v0.7) — franchise de base S 800/M 1000/L 1200 T (obligatoire : starter sur-plafond au spawn sinon), frein unilatéral (jamais punir le stock bas), docks 2S/+2M/+2L, impound trahison d'allié, ventes avec équipage auto-libéré, doctrine anti-raid par gate ; moniteurs M9–M10 ; EN ATTENTE responsable : buffer sans slot L (production lourde exige warehouse ?)
+- [x] **Balance Round 7 — topologie de marché & canal manuel** : VIABLE (guide v0.8) — étoile-cellules physiquement obligatoire, triade d'hospitalité, anti-DoS docks (dwell 24 h + browse orbital allié), rate-limit d'offres, census global uniquement
 - [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria
 

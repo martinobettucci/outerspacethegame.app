@@ -580,3 +580,31 @@ Monitors: M1–M8. Guide at v0.5.1.
   bounded → pod price floors stabilized.
 
 **Verdict: warehouse + caps sound — guide v0.7. Monitors M1–M10.**
+
+---
+
+## Round 7 — market topology & manual channel (2026-07-12) — PATCHED → v0.8
+
+- **F1 (pass):** max-hub (7 channels) fits a 20-tile large with 3 tiles spare
+  — but only ~1.4% of worlds qualify; rational hubs run 2–4 pairs; breadth
+  migrates to multi-planet networks. Fees never fund breadth (4-yr payback)
+  — margins do, per R5-2. Pair scarcity is physical, as intended.
+- **F2 (patched, 1 line):** cells-star is the ONLY feasible multi-resource
+  topology (N−1 buildings vs N(N−1)/2) — cells-as-reserve is now design
+  fact; cross non-cells trades pay 100 bp.
+- **F3 (patched):** "hospitality triad" convention (food/water/fuel vs cells)
+  + UI nudge — survival auto-trade never breaks silently (25% alarm +
+  auto-flee already prevented deaths).
+- **F4a (serious, patched):** manual-offer spam → 1 open offer/(buyer,item),
+  20/day/account, 48 h expiry.
+- **F4b (stated):** public warehouse = advertisement AND leak; war reserves
+  → private. The split is the strategic choice.
+- **F4c (patched):** census publishes GLOBAL totals only; private contents
+  never enumerated to players.
+- **F4d (accepted):** manual channel can't touch the AMM (fungibles never
+  enter warehouses); item fee-bypass ≈ the 1% bond — relationship trading.
+- **F5 (serious, patched):** dock-squat trade-DoS (6 throwaway Cargo-S lock
+  a hub) → max grounded dwell 24 h + auto-undock eviction (off-siege);
+  allies with a share grant browse from orbit (no dock); reserve 1–2 docks.
+
+**VERDICT: topology viable — guide v0.8. No prior round re-opened.**

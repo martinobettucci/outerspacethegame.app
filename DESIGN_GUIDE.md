@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.7.1** — market topology & public/private warehouses (owner) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.8** — round-7 market-topology patches + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -452,8 +452,17 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   Continuous sales: no seller limit; the buyer is bound by physical loading.
   **Manual channel (always open):** any player **docked at a commerce dock**
   may browse **public** warehouses and send a manual offer at any price;
-  resolution is manual between players. **Private warehouses:** content
-  hidden, unusable as sales stock — strategic reserve, manual in/out only.
+  resolution is manual between players. **Allies holding a share grant may
+  browse public warehouses from orbit** (no dock consumed) [round 7].
+  **Private warehouses:** content hidden, unusable as sales stock —
+  strategic reserve, manual in/out only. **Public = advertisement AND leak:**
+  anything sale-browsable is enemy-censusable — war reserves belong in
+  private warehouses; the public/private split IS the strategic choice.
+  **Anti-DoS docks [round 7]:** owner-configurable max grounded dwell,
+  default 24 h, auto-undock-to-hover eviction (off-siege only); reserving
+  1–2 docks for self is the intended floor. **Offer limits [round 7]:** max
+  1 open offer per (buyer, item), 20 open offers/day/account, auto-expire
+  48 h [TUNE].
 - **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
   [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
@@ -688,6 +697,11 @@ Landing rights gate access. Fixed-rate re-pricing ≤ 1/min [TUNE].
 ### 11.2 AMM & liquidity (the no-currency answer)
 - **Pool = one market building = ONE pair** (owner canon — pairs are
   physical: each costs a building + tile). Reserves x, y, constant product.
+  **Tile arithmetic makes the cells-star the only feasible multi-resource
+  topology** (N−1 buildings vs N(N−1)/2 all-pairs): cells-as-reserve is a
+  design fact, not merely an expectation. **Hospitality triad convention:**
+  hubs wanting visitor traffic run food/cells + water/cells + fuel/cells
+  (3 tiles) — UI nudges when no food pair exists within telescope range.
   Spot = y/x. **The owner's initial deposit ratio *is* the initial price** —
   seeding is a pricing decision, not a magic 50/50 (mispricing is the owner's
   tuition).
@@ -737,8 +751,10 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
 
 ### 11.5 Global supply census
 4×/day aggregation over planet stocks + cargo + pools + escrow → per-resource
-totals; drives pod pricing; published in-game ("market census" — transparency
-is a feature).
+totals; drives pod pricing; published in-game ("market census").
+**Publication = GLOBAL totals only — per-planet/per-warehouse breakdowns are
+never published**; private-warehouse contents count in server-side value
+computations (plunder, bonds) but are never enumerated to other players.
 
 ---
 
