@@ -376,13 +376,16 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   uninstalled units are cargo again. Defenseless-production worlds defend by
   **importing units** or **hovering defensive ships** — protection is a
   market. (Supersedes round-4b's "turret_light politics-free" patch.)
-  **Siege lock [round 5]:** install & uninstall are **blocked while any
-  hostile is engaged at the planet** (mirrors no-disengage-vs-structures) —
+  **Siege lock [round 5]:** install & uninstall are **blocked only during an
+  ACTIVE COMBAT EVENT at the planet** — a hostile merely hovering or
+  attack-postured without a combat event does **not** lock installs (mirrors no-disengage-vs-structures) —
   evacuate or reinforce BEFORE arrival (telescopes give days); reinforcement
   under fire = hovering ships, as the keystone intends. Off-siege install
   concurrency: **3 parallel installs/planet** [TUNE]. **Upkeep follows the
   unit wherever it is** (garrison, warehouse, cargo — drawn from planet or
-  carrier stock); unpaid ⇒ unit **offline (ATK 0)** until fed.
+  carrier stock); unpaid ⇒ unit **offline (ATK 0)** until fed — and **offline
+  units do NOT count toward garrison > 0** for building targetability (no
+  free ablative walls).
 - **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
   [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
@@ -642,7 +645,9 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
   resource) [TUNE]. Relist cooldown per asset: 72 h [TUNE].
 - Escrow custody applies to **movable assets only**. **Listed planets remain
   attackable and conquerable — the sale voids on conquest.** No auction
-  vaulting.
+  vaulting. **Conquest also voids the planet's outbound item listings:
+  escrowed items return to planet stock BEFORE plunder is computed** [round
+  5b — no 1%-bond vault against the 25% plunder].
 - Planet listings display tiles, deposits (surveyed level), **and the
   effective governance mask** (§4.1).
 

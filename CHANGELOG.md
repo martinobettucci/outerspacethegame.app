@@ -23,6 +23,8 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Tour 5b de CONFIRMATION passé : v0.5.1 (escrow rendu avant pillage,
+  verrou de siège = combat actif seul, hors-ligne ≠ garnison) ; tour 5 CLOS.
 - Tour 5 TERMINÉ : la clef de voûte « construire ≠ installer » tient ;
   production d'unités spécifiée (military_district), verrou de siège,
   pillage des items, upkeep suiveur → DESIGN_GUIDE v0.5 ; moniteur M8.

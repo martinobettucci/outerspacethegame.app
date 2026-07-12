@@ -521,3 +521,21 @@ swapping).
 **Verdict: BUILD ≠ INSTALL holds.** Round-5b confirmation pass pending (the
 R5-2 arithmetic used the proposed rates — re-check now that they are in the
 guide). Monitors: M1–M8.
+
+### Round 5b — confirmation (guide v0.5 → v0.5.1)
+
+- Text check: all 7 round-5 patches present, no garbles.
+- R5-2 re-run at official rates: **ex-stock 7.0 d / ex-works 13.7 d** vs the
+  14-d grace — confirmed, thin ex-works margin (~7 h): the "order defense at
+  founding" nudge is load-bearing (M8).
+- Lone-bee lock: no durable grief (garrisons kill it ≤1 round; undefended
+  worlds rotate ~1 bee/2 d and one hired escort ends it — counterplay is the
+  keystone working as intended).
+- **Two wording patches applied (v0.5.1):** (1) conquest voids outbound item
+  listings — escrowed items return to stock BEFORE plunder (closes the
+  25:1 escrow-vault dodge; upgrades monitor M5 to patched); (2) siege lock =
+  **active combat event only** (hover/posture never locks installs);
+  (+ clarifier: offline units don't count toward garrison>0).
+
+**ROUND 5 CLOSED — CONFIRMED. BUILD ≠ INSTALL is verified canon.**
+Monitors: M1–M8. Guide at v0.5.1.
