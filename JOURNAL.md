@@ -1112,3 +1112,68 @@ de stats (profondeur du gamble des pods).
   sections du GAMEBOOK + blocs canon récents (warehouse, docks, sanctuaire,
   privilèges, stacking, canal manuel, pods/stat rolls, sièges/impound,
   NFT-bridge warehouse-only…), chacune balisée `→ GB §x; DG §y`.
+
+---
+
+## 2026-07-12 — Session 30 (GO responsable : début de l'implémentation — P1)
+
+### Problème
+Le responsable a donné l'instruction explicite de **commencer la construction
+du jeu** (« start building the full game while sending me evidence of the
+progression in images and videos »). Le backlog conditionnait P1+ à ce feu
+vert ; deux décisions P0.4 restaient bloquantes : langage du tick worker et
+moteur de rendu isométrique.
+
+### Décisions
+1. **Tick worker : TypeScript (Node 22)** — DAT §2 amendé.
+   - *Pour* : l'évaluation paresseuse `(value, rate, t0)` est calculée par
+     l'API (lecture lazy) ET par le worker (matérialisation aux événements) ;
+     le canon exige un résultat bit-identique (DG §1). Un seul langage/runtime
+     élimine par construction la divergence double-implémentation. Types
+     partagés client/API/worker via `@atg/shared` ; une seule chaîne d'outils.
+   - *Contre (assumé)* : s'écarte de la préférence Python (§3 CLAUDE.md) —
+     préférence applicable « lorsque ce choix est adapté » ; ici le couplage
+     aux types du jeu domine. Python reste le choix pour d'éventuels outils
+     IA/ML annexes (ex. campagnes d'équilibrage hors-ligne).
+2. **Renderer isométrique : PixiJS v8** — DAT §2 amendé.
+   - *Pour* : l'exigence moteur (ASSET_PIPELINE §3) — bump maps, light maps
+     émissives, propagation de lumière aux sprites voisins — impose WebGL ;
+     Pixi fournit batching, shaders/filters custom et un pipeline sprite
+     mature. Un canvas 2D custom ne tient pas l'exigence d'éclairage.
+   - *Contre (assumé)* : dépendance lourde de plus ; la validation finale
+     (micro-prototype passe de lumière, backlog P0.4) sera faite sur la vraie
+     vue planète — l'item backlog reste `[~]` jusqu'à cette preuve.
+3. **Monorepo `game/` dans ce dépôt** (pnpm workspaces : `shared`, `server`,
+   `client`, `e2e`) — le site Jekyll historique reste à la racine, intact.
+4. **Auth v1 différée au chunk D** (email + mot de passe, scrypt natif Node,
+   sessions serveur) — sera documentée au DAT avant implémentation (§5).
+
+### Réalisé (chunk A — scaffolding vérifié)
+- `game/` : workspace pnpm, `docker-compose.dev.yml` (Postgres 16 conteneurisé,
+  image surchargeable `ATG_DB_IMAGE` pour egress restreint), `.env.example`
+  documenté variable par variable, scripts `runDev`/`stopDev`/`resetDb`.
+- `@atg/server` : Fastify (`/health`, `/ready`), migrateur SQL minimal
+  (transactions + verrou consultatif + `schema_migrations`), squelette tick
+  worker (heartbeat), seed placeholder honnête (pré-schéma).
+- `@atg/client` : React + Vite, tokens design system « groovy dark » en CSS
+  custom properties, polices auto-hébergées (Orbitron/Inter/JetBrains Mono),
+  textes centralisés (i18n), coquille avec états chargement/succès/erreur.
+- `@atg/e2e` : Playwright (Chromium préinstallé), 2 tests (liaison OK, état
+  d'erreur API coupée), captures JPEG observées.
+
+### Vérifications
+- `pnpm -r build` : OK (3 paquets). Tests unitaires serveur : 2/2.
+- Intégration (vraie base conteneurisée) : migrations idempotentes + `/ready`
+  → 2/2. E2E : 2/2, captures `shell-ready.jpeg` / `shell-error.jpeg`
+  observées : conformes aux tokens (fond violet-noir, panneau #111A30, titre
+  Orbitron, accent jaune, états succès vert / erreur rouge + bouton Retry).
+- Contrainte d'environnement documentée : le CDN Docker Hub est bloqué par la
+  politique d'egress de la sandbox ; miroirs `mirror.gcr.io`/ECR publics OK →
+  variable `ATG_DB_IMAGE` ajoutée au Compose.
+
+### Conséquences
+P1 est officiellement entamé sur la branche de session
+`claude/game-build-progress-i77mxo` (CLAUDE.md « Spécificités » mis à jour).
+Prochain chunk : noyau de simulation déterministe (schéma baseline, file
+d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
+`@atg/shared`.

@@ -929,10 +929,11 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 
 ## Spécificités du projet
 
-- **Nature du dépôt.** ATG / Across The Galaxies ("Outerspace, The gamE") est en
-  **préproduction** : ce dépôt contient le site Jekyll historique (vitrine) et
-  les documents de conception du jeu. Aucun code applicatif du jeu n'existe
-  encore ; ne pas en écrire sans instruction explicite.
+- **Nature du dépôt.** ATG / Across The Galaxies ("Outerspace, The gamE") :
+  ce dépôt contient le site Jekyll historique (vitrine), les documents de
+  conception du jeu et, depuis le GO du responsable (2026-07-12, session 30),
+  l'application du jeu en construction dans `game/` (monorepo pnpm :
+  `shared`, `server`, `client`, `e2e`). Phase P1 entamée.
 - **Documents de conception (à la racine, ordre de préséance) :**
   1. `GAMEBOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
   2. `GAME_BIBLE.md` — lore et univers ;
@@ -941,9 +942,10 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 - **Équivalences documentaires (§5) :** `JOURNAL.md` à la racine est
   l'équivalent officiel de `docs/JOURNAL.md` (historique préexistant conservé).
 - **Branche de travail.** Exception au §13, sur instruction du responsable via
-  l'environnement d'exécution : le travail de préproduction se fait sur la
-  branche de session dédiée (`claude/atg-architecture-brainstorm-hvqn29`),
-  jamais sur `main`. Ne pas créer d'autres branches.
+  l'environnement d'exécution : le travail se fait sur la branche de session
+  dédiée (actuellement `claude/game-build-progress-i77mxo` ; historique de
+  préproduction : `claude/atg-architecture-brainstorm-hvqn29`), jamais sur
+  `main`. Ne pas créer d'autres branches.
 - **Langues.** Documents de conception et docs techniques : anglais (continuité
   de l'existant). Messages de commit : français (§13). CLAUDE.md : français.
 - **Thème.** Exception documentée au §4 « thème clair » : le jeu utilise un

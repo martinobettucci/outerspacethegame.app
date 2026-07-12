@@ -45,8 +45,8 @@
 - [x] Formats settled by owner: **non-card props = animated GIF** (frame-synced bump/light companions); card art = PNG — pipeline + stubs regenerated (1 602 GIF + 126 PNG)
 
 ### P0.4 Remaining design opens (GAMEBOOK §27)
-- [ ] Decide tick-worker language (TS vs Python) with documented trade-off → DAT
-- [ ] Decide isometric renderer (Pixi vs canvas) via micro-prototype → DAT
+- [x] Decide tick-worker language (TS vs Python) with documented trade-off → DAT — **TypeScript (Node 22)**, JOURNAL session 30, DAT §2
+- [~] Decide isometric renderer (Pixi vs canvas) via micro-prototype → DAT — **PixiJS v8 acté sur compromis documenté** (JOURNAL session 30) ; reste `[~]` jusqu'à la preuve du micro-prototype de la passe de lumière sur la vraie vue planète
 - [x] Climate ↔ ship shields rule — SETTLED round 4 (usure déterministe sans bouclier ; temperate toujours sûr ; bâtiments exempts)
 - [ ] Full landing-permission option list (self/friends/neighbours grief cases)
 - [ ] Fuel-type travel effects table (cold/hot/gas beyond the tuning matrix)
@@ -62,9 +62,9 @@
 - [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria
 
-## P1 — Fondations techniques (requires explicit owner go)
+## P1 — Fondations techniques (**GO responsable donné le 2026-07-12** — JOURNAL session 30)
 
-- [ ] Monorepo/app scaffolding + containerized dev env (Compose: Postgres, API, worker, client; runDev/runStaging/runProd) → GB §1; DAT §2/§6
+- [~] Monorepo/app scaffolding + containerized dev env (Compose: Postgres, API, worker, client; runDev/runStaging/runProd) → GB §1; DAT §2/§6 — dev opérationnel et vérifié (build + unit + intégration + E2E + captures observées) ; **reste : Compose staging/prod** (avec le premier déploiement)
 - [ ] Migrations framework + baseline schema from docs/SCHEMA.md + PROD_MIGRATIONS.md → GB §1; DAT §3
 - [ ] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2

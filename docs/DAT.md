@@ -27,9 +27,13 @@
 
 ## 2. Components
 
-- **Web client** — browser game, **desktop/tablet only (no mobile)**. Two
-  scenes: galaxy map (three.js star field, 2D navigation / 3D styling) and
-  planet interior (isometric 2D tile renderer + card hand). **Renderer
+- **Web client** — browser game, **desktop/tablet only (no mobile)**. React +
+  Vite. Two scenes: galaxy map (three.js star field, 2D navigation / 3D
+  styling) and planet interior (isometric 2D tile renderer + card hand —
+  **renderer: PixiJS v8, DECIDED 2026-07-12** (JOURNAL session 30): the
+  required WebGL lighting pass (bump + emissive light maps, light propagation
+  to neighbours) rules out plain canvas; decision stays `[~]` in the backlog
+  until the lighting micro-prototype proves it on the real planet view). **Renderer
   requirement:** a WebGL 2D lighting pass — every sprite ships with a bump
   map and an emissive light map; sprite lights spread to the environment and
   to nearby sprites (see `docs/ASSET_PIPELINE.md` §3; acceptance reference:
@@ -44,9 +48,14 @@
 - **Tick worker** — advances the simulation (tick = 60 s): event queue
   (arrivals, interceptions, auction closes, deposit-dry, supernova, packing),
   lazy `(value, rate, t0)` evaluation, deterministic combat resolution.
-  Language decision pending (GAMEBOOK §27); candidates: TypeScript (shared
-  types with client) or Python (owner preference §3) — to be decided with a
-  documented trade-off before implementation.
+  **Language: TypeScript (Node 22) — DECIDED 2026-07-12 (JOURNAL session
+  30).** Rationale: lazy evaluation runs in BOTH the API (reads) and the
+  worker (event materialization) and must be bit-identical (DG §1); a single
+  language/runtime removes the dual-implementation divergence class, and
+  types are shared across client/API/worker via `@atg/shared`. Trade-off:
+  departs from the Python backend preference (CLAUDE.md §3, "when suited");
+  Python remains the choice for offline AI/ML tooling (e.g. balance
+  campaigns).
 - **Census jobs** — periodic (4×/day) global resource-supply aggregation;
   drives recruitment-pod pricing; published in-game.
 - **NFT relayer** — the only blockchain surface: watches Mint/Burn events,
@@ -101,7 +110,15 @@ Per CLAUDE.md §3: dev / staging / prod, containerized (Compose), documented
 Postgres in a container, recreatable database, reproducible seed
 (`DESIGN_GUIDE.md` §2.2 starter generator doubles as the seed source), local
 Stripe/webhook and chain-relayer mocks with documented contracts. E2E:
-Playwright. **None of this exists yet — implementation phase P1.**
+Playwright.
+
+**Current state (P1 in progress, 2026-07-12):** `game/` pnpm monorepo
+(`shared` / `server` / `client` / `e2e`); dev environment operational —
+`game/docker-compose.dev.yml` (Postgres 16, image overridable via
+`ATG_DB_IMAGE` for restricted-egress sandboxes), `pnpm runDev` /
+`stopDev` / `resetDb`, SQL migration runner (`schema_migrations`,
+transactional, advisory-locked), env vars documented in `game/.env.example`.
+Staging/prod Compose files: not yet written (planned with first deploy).
 
 ## 7. Recovery strategies
 
@@ -128,12 +145,29 @@ demonstrating every shipped feature (CLAUDE.md §8). To be built in P1.
 
 ## 10. Launch commands
 
-Site (current): `bundle exec jekyll serve`. Game: to be defined in P1
-(containerized; documented here when they exist).
+Site (current): `bundle exec jekyll serve`. Game (from `game/`):
+
+| Command | Effect |
+|---|---|
+| `pnpm install` | install workspace dependencies |
+| `pnpm runDev` | start DB container + migrations + seed + API + tick worker + client (Vite, http://localhost:5173) |
+| `pnpm runDev:db` | start only the dev database container |
+| `pnpm migrate` / `pnpm seed` | apply SQL migrations / reseed dev data |
+| `pnpm resetDb` | destroy + recreate + migrate + seed the dev database |
+| `pnpm build` / `pnpm typecheck` | build / typecheck all packages |
+| `pnpm test` | unit tests (all packages) |
+| `pnpm test:integration` | server integration tests (real local DB) |
+| `pnpm test:e2e` | Playwright E2E (starts API + client itself; DB must be up) |
+| `pnpm stopDev` | stop the dev database container |
 
 ## 11. Known compromises
 
-- Tick worker language undecided (TS vs Python) — blocking P1 kickoff, not P0.
-- Isometric renderer library undecided (Pixi vs custom canvas) — prototype in P0/P1.
+- Isometric renderer = PixiJS v8 (decided); final validation by the lighting
+  micro-prototype on the real planet view still pending (backlog P0.4 `[~]`).
+- Game quantities use SQL NUMERIC parsed to JS doubles; determinism relies on
+  identical float operations in the single V8 runtime shared by API/worker
+  (documented in `game/packages/server/src/db/pool.ts`).
+- Account auth scheme (email/password + server-side sessions vs OAuth) to be
+  finalized in the auth chunk; documented here before implementation (§5).
 - Artificial-planet NFT deed semantics under war need v2 UX review
   (BALANCE_LOG round-2 patch 47).

@@ -4,10 +4,10 @@ A space exploration, colony-management and inter-player commerce game by
 **P2Enjoy Studio**. Single persistent universe, no in-game currency, real game
 first (#P2Enjoy — not a "gamified Ponzi").
 
-> **Project status: PREPRODUCTION.** This repository currently holds the
-> historical Jekyll marketing site and the complete game-design corpus. There
-> is **no game application code yet** — the current deliverable is the design
-> foundation.
+> **Project status: IMPLEMENTATION (P1) since 2026-07-12** on explicit owner
+> go. This repository holds the historical Jekyll marketing site, the complete
+> game-design corpus, and the game application under construction in `game/`
+> (pnpm monorepo: shared / server / client / e2e).
 
 ## Purpose
 
@@ -32,35 +32,48 @@ first (#P2Enjoy — not a "gamified Ponzi").
 
 ## Stack
 
-- **Current (site):** Jekyll (Ruby), deployed historically on `gh-pages`.
-- **Target (game — designed, not yet built):** PostgreSQL-authoritative server
-  + tick worker; web client with three.js star field (2D navigation, 3D style)
-  and an isometric 2D planet renderer; opt-in NFT bridge (Polygon PoS, existing
-  Foundry contracts in the sibling `.blockchain` repo); Stripe for fiat planet
-  purchases. See `docs/DAT.md`.
+- **Site:** Jekyll (Ruby), deployed historically on `gh-pages`.
+- **Game (in construction, `game/`):** PostgreSQL 16 (authoritative, in
+  Docker) · TypeScript/Node 22 — Fastify API + tick worker · React + Vite
+  client (three.js star field; PixiJS v8 isometric planet renderer) ·
+  Playwright E2E. Opt-in NFT bridge (Polygon PoS, contracts in the sibling
+  `.blockchain` repo) and Stripe fiat purchases come in later phases. See
+  `docs/DAT.md`.
 
-## Prerequisites (site only)
+## Prerequisites
 
-- Ruby ≥ 3.0, Bundler.
+- Site: Ruby ≥ 3.0, Bundler.
+- Game: Node ≥ 22, pnpm ≥ 10, Docker + Compose.
 
-## Install & run (site)
+## Install & run — site
 
 ```bash
 bundle install
 bundle exec jekyll serve      # http://127.0.0.1:4000
-```
-
-## Build (site)
-
-```bash
 bundle exec jekyll build      # outputs to _site/
 ```
 
-## Tests
+## Install & run — game (from `game/`)
 
-No automated tests exist yet (preproduction; no application code). The test
-strategy for the game is defined in `CLAUDE.md` §15 and per-task in
-`docs/BACKLOG.md`.
+```bash
+pnpm install
+pnpm runDev        # DB container + migrations + seed + API + worker + client
+                   # client: http://localhost:5173 — API: http://localhost:8080
+pnpm resetDb       # recreate + migrate + seed the dev database
+pnpm stopDev       # stop the dev database container
+```
+
+Environment variables are documented in `game/.env.example` (copy to
+`game/.env` to customize; no real secret ever enters the repository).
+
+## Tests (game, from `game/`)
+
+```bash
+pnpm test               # unit tests (all packages)
+pnpm test:integration   # server integration tests (real local DB required)
+pnpm test:e2e           # Playwright E2E (starts API + client; DB must be up)
+pnpm build              # build all packages
+```
 
 ## Environment variables
 
@@ -86,16 +99,23 @@ Game-runtime variables (database, Stripe, chain relayer) will be documented in
 │   ├── BACKLOG.md       # full backlog
 │   ├── DESIGN_SYSTEM.md # UI design system
 │   └── design/prototypes/  # generated UI prototypes (art direction)
+├── game/                # THE GAME (pnpm monorepo, P1 in progress)
+│   ├── packages/shared/     # shared types, constants, design data
+│   ├── packages/server/     # Fastify API + tick worker + SQL migrations
+│   ├── packages/client/     # React + Vite (three.js galaxy, Pixi planet)
+│   ├── packages/e2e/        # Playwright E2E + visual captures
+│   └── docker-compose.dev.yml, scripts/, .env.example
 ├── _config.yml, _layouts, _includes, _posts, _economics, _mechanics
-├── assets/              # legacy art: icons (ships, planets, factions), palette
+├── assets/              # legacy art + assets/game/ sprite stubs (swap contract)
 └── engine/              # legacy jekyll-hyperstack plugin (not a game engine)
 ```
 
 ## Known limitations
 
-- No game code, no schema, no tests yet — by design (preproduction).
+- The game is under active construction; `docs/BACKLOG.md` is the source of
+  truth for what is done (`[x]`), in progress (`[~]`) and not started (`[ ]`).
 - The Jekyll site content (whitepaper, economics pages) predates the 2026
   redesign and partially contradicts the current canon; it will be reconciled
   when the site is refreshed (see backlog P0).
-- UI prototypes are static concept images (art direction), not running
-  screens; running-app captures replace them from P2 onward.
+- Staging/production Compose files and deployment do not exist yet; they
+  arrive with the first deployment (DAT §6, PROD contract per CLAUDE.md §12).

@@ -1,0 +1,44 @@
+import { defineConfig } from '@playwright/test';
+import { existsSync } from 'node:fs';
+
+/**
+ * E2E ATG. Prérequis : base Postgres de dev démarrée (pnpm runDev:db),
+ * migrations appliquées. Playwright démarre lui-même l'API et le client.
+ *
+ * Viewport 1440×900 : desktop, dans la cible ≥1280×800 (DESIGN_SYSTEM §7).
+ */
+const chromiumPath = ['/opt/pw-browsers/chromium', '/usr/bin/chromium'].find(
+  (p) => existsSync(p),
+);
+
+export default defineConfig({
+  testDir: './tests',
+  fullyParallel: false,
+  retries: 0,
+  reporter: [['list']],
+  timeout: 60_000,
+  use: {
+    baseURL: 'http://localhost:5173',
+    viewport: { width: 1440, height: 900 },
+    video: 'on',
+    ...(chromiumPath
+      ? { launchOptions: { executablePath: chromiumPath } }
+      : {}),
+  },
+  webServer: [
+    {
+      command: 'pnpm --filter @atg/server dev:api',
+      cwd: '../..',
+      url: 'http://localhost:8080/health',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+    {
+      command: 'pnpm --filter @atg/client dev',
+      cwd: '../..',
+      url: 'http://localhost:5173',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+  ],
+});

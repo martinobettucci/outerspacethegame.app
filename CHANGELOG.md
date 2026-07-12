@@ -2,6 +2,22 @@
 
 ## [Non publié]
 
+### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
+
+- Décisions P0.4 tranchées et documentées (JOURNAL session 30, DAT §2) :
+  tick worker en **TypeScript (Node 22)** ; renderer isométrique **PixiJS v8**
+  (validation micro-prototype de la passe de lumière à venir).
+- Scaffolding du monorepo `game/` (pnpm workspaces : `@atg/shared`,
+  `@atg/server`, `@atg/client`, `@atg/e2e`) : Fastify (`/health`, `/ready`),
+  migrateur SQL transactionnel (`schema_migrations`), squelette du tick
+  worker, client React+Vite avec tokens « groovy dark » et états
+  chargement/succès/erreur, E2E Playwright avec captures JPEG observées.
+- Environnement de dev conteneurisé : `docker-compose.dev.yml` (Postgres 16,
+  image surchargeable `ATG_DB_IMAGE`), scripts `runDev`/`stopDev`/`resetDb`,
+  variables documentées dans `game/.env.example`.
+- Vérifié : builds 3 paquets, tests unitaires 2/2, intégration (vraie base)
+  2/2, E2E 2/2, captures observées conformes au design system.
+
 ### Préproduction 2026 — refonte de la conception
 
 - Enregistrement de `CLAUDE.md` (conventions de travail + spécificités projet).

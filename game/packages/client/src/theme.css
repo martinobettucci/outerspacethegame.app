@@ -1,0 +1,113 @@
+/*
+ * Tokens du design system « groovy dark » — docs/DESIGN_SYSTEM.md §2–§4.
+ * Thème sombre : exception documentée à la charte claire P2Enjoy
+ * (décision du responsable, DESIGN_SYSTEM §12).
+ */
+:root {
+  /* Charte P2Enjoy (ancres) */
+  --brand-blue: #23468c;
+  --brand-green: #238c33;
+  --brand-yellow: #d9cf4a;
+  --brand-red: #f24141;
+  --brand-black: #0d0d0d;
+
+  /* Rampes sombres dérivées */
+  --bg-space: #060810;
+  --bg-base: #0d0d0d;
+  --bg-raised: #111a30;
+  --bg-overlay: #16223f;
+  --stroke-subtle: #24314f;
+  --primary-600: #23468c;
+  --primary-400: #3e6bc7;
+  --primary-300: #6e96e8;
+  --violet-700: #2a1b52;
+  --violet-500: #4a2d8c;
+  --accent-400: #d9cf4a;
+  --accent-200: #f2ec9b;
+  --success-500: #2fb544;
+  --success-700: #238c33;
+  --danger-500: #f24141;
+  --danger-700: #b32626;
+  --warning-500: #e8a33d;
+  --text-primary: #f2f4fa;
+  --text-secondary: #a9b4ce;
+  --text-disabled: #5d6883;
+
+  /* Climats (cartes uniquement — jamais pour les états UI) */
+  --climate-hot: #e86a4a;
+  --climate-cold: #6ec6e8;
+  --climate-temperate: #57c785;
+  --climate-poison: #9be84a;
+
+  /* Typographie — DESIGN_SYSTEM §3 */
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Espacements & rayons — DESIGN_SYSTEM §4 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-chip: 999px;
+  --radius-game-card: 16px;
+
+  /* Élévation sombre = glow + hairline, pas d'ombre grise */
+  --elevation-raised: 0 0 0 1px var(--stroke-subtle),
+    0 8px 24px rgba(6, 8, 16, 0.6);
+  --glow-accent: 0 0 12px rgba(217, 207, 74, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-space);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  /* Jamais de scroll horizontal du body (DESIGN_SYSTEM §7) */
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* Focus toujours visible — DESIGN_SYSTEM §6 */
+:focus-visible {
+  outline: 2px solid var(--accent-400);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
