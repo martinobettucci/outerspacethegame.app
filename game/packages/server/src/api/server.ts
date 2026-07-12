@@ -27,6 +27,11 @@ import {
   undockShip,
 } from '../services/ships.js';
 import {
+  executeTrade,
+  listMarkets,
+  setMarketSlot,
+} from '../services/market.js';
+import {
   listComms,
   listMessages,
   pingBack,
@@ -84,6 +89,20 @@ const cargoSchema = z.object({
   resource: z.string().min(1),
   tons: z.number().positive(),
   direction: z.enum(['load', 'unload']),
+});
+const marketSlotSchema = z.object({
+  slotIndex: z.number().int().min(0).max(2),
+  give: z.string().min(1),
+  get: z.string().min(1),
+  rate: z.number().positive(),
+  dailyLimitT: z.number().min(0).default(0),
+  absoluteLimitT: z.number().min(0).default(0),
+  whitelist: z.array(z.string().uuid()).max(64).default([]),
+});
+const tradeSchema = z.object({
+  slotIndex: z.number().int().min(0).max(2),
+  shipId: z.string().uuid(),
+  giveT: z.number().positive(),
 });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
@@ -425,6 +444,46 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const parsed = cargoSchema.safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
     return wrap(reply, () => transferCargo(deps.pool, player.id, id, parsed.data));
+  });
+
+  app.post('/planets/:id/buildings/:bid/market-slot', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, bid } = req.params as { id: string; bid: string };
+    const parsed = marketSlotSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    const { slotIndex, ...slot } = parsed.data;
+    return wrap(reply, () =>
+      setMarketSlot(deps.pool, player.id, id, bid, slotIndex, {
+        ...slot,
+        give: slot.give as never,
+        get: slot.get as never,
+      }),
+    );
+  });
+
+  app.get('/bodies/:id/markets', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      markets: await listMarkets(deps.pool, player.id, id),
+    }));
+  });
+
+  app.post('/markets/:bid/trade', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { bid } = req.params as { bid: string };
+    const parsed = tradeSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      executeTrade(
+        deps.pool,
+        player.id,
+        bid,
+        parsed.data.slotIndex,
+        parsed.data.shipId,
+        parsed.data.giveT,
+      ),
+    );
   });
 
   app.post('/pings', async (req, reply) => {

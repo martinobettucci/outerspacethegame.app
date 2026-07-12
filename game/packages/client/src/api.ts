@@ -79,6 +79,17 @@ export interface PlanetBuilding {
   workforceU: number | null;
   limiting: string | null;
   landing: 'self' | 'everyone' | null;
+  marketSlots: MarketSlotView[] | null;
+}
+
+export interface MarketSlotView {
+  give: string;
+  get: string;
+  rate: number;
+  dailyLimitT: number;
+  absoluteLimitT: number;
+  whitelist: string[];
+  rateUpdatedAtMs: number;
 }
 
 export interface PlanetDetail {
@@ -207,6 +218,38 @@ export const api = {
     call<{ cargo: Record<string, number> }>(
       'POST',
       `/ships/${shipId}/cargo`,
+      input,
+    ),
+  setMarketSlot: (
+    planetId: string,
+    buildingId: string,
+    input: {
+      slotIndex: number;
+      give: string;
+      get: string;
+      rate: number;
+      dailyLimitT?: number;
+      absoluteLimitT?: number;
+      whitelist?: string[];
+    },
+  ) =>
+    call<{ slots: MarketSlotView[] }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/market-slot`,
+      input,
+    ),
+  markets: (bodyId: string) =>
+    call<{
+      markets: {
+        buildingId: string;
+        level: number;
+        slots: (MarketSlotView & { slotIndex: number; payableStockT: number })[];
+      }[];
+    }>('GET', `/bodies/${bodyId}/markets`),
+  trade: (marketBuildingId: string, input: { slotIndex: number; shipId: string; giveT: number }) =>
+    call<{ gaveT: number; gotT: number; gotResource: string }>(
+      'POST',
+      `/markets/${marketBuildingId}/trade`,
       input,
     ),
   comms: () =>

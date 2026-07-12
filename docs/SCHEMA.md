@@ -72,6 +72,18 @@ channel except through the canonical pair, and the only writer of
   001; capacity is enforced in code via `containersUsed` (1 container =
   1 T of one fungible, partial tons monopolize — mirrors DG §7).
 
+## 005_market_trades (fixed-rate market L1, GB §9/§13)
+
+`trades` — append-only journal of executed swaps (`market_building_id`,
+`slot_index`, trader, gave/got resource+tons). Slot configuration lives in
+`buildings.config.slots` (jsonb from 004): a slot is DIRECTIONAL (market
+buys `give`, pays `get` at the posted rate — the rate IS the price, no
+separate fee in fixed mode [TUNE-v1]). Daily/absolute slot limits are
+enforced by summing this journal (`trades_slot_day` index); physicality is
+code-enforced: trader's ship must be docked on the market's planet, cargo
+containers and planet storage cap both checked, planet pays only from
+evaluated stock.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

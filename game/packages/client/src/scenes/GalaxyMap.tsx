@@ -55,6 +55,10 @@ export function GalaxyMap() {
   const [notice, setNotice] = useState<string | null>(null);
   const [cargoRes, setCargoRes] = useState('ore');
   const [cargoTons, setCargoTons] = useState('1');
+  const [markets, setMarkets] = useState<
+    Awaited<ReturnType<typeof api.markets>>['markets']
+  >([]);
+  const [tradeT, setTradeT] = useState('1');
   const targetingRef = useRef<typeof targeting>(null);
   targetingRef.current = targeting;
   const shipsRef = useRef<ShipView[]>([]);
@@ -62,6 +66,23 @@ export function GalaxyMap() {
   const [labels, setLabels] = useState<
     { id: string; name: string; x: number; y: number; owned: boolean }[]
   >([]);
+
+  // Offres du marché local quand le vaisseau sélectionné est à quai.
+  const dockedAt = selectedShip?.dockedBodyId ?? null;
+  useEffect(() => {
+    if (!dockedAt) {
+      setMarkets([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .markets(dockedAt)
+      .then((r) => !cancelled && setMarkets(r.markets))
+      .catch(() => !cancelled && setMarkets([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [dockedAt]);
 
   /** Rafraîchit la flotte ET le panneau du vaisseau sélectionné. */
   const refreshShips = () =>
@@ -624,6 +645,95 @@ export function GalaxyMap() {
                     ))}
                   </div>
                 )}
+            </section>
+          )}
+          {selectedShip.status === 'docked' && markets.length > 0 && (
+            <section
+              aria-label={t.galaxy.marketTitle}
+              style={{ display: 'grid', gap: 6, fontSize: 12 }}
+            >
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {t.galaxy.marketTitle}
+              </strong>
+              {markets.flatMap((m) =>
+                m.slots.map((s) => (
+                  <div
+                    key={`${m.buildingId}:${s.slotIndex}`}
+                    style={{
+                      display: 'grid',
+                      gap: 4,
+                      background: 'var(--bg-overlay)',
+                      borderRadius: 'var(--radius-button)',
+                      padding: 8,
+                    }}
+                  >
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>
+                      {s.give.replace('_', ' ')} → {s.get.replace('_', ' ')} @ {s.rate}
+                      {' · '}
+                      {s.payableStockT} {t.galaxy.tons} {t.galaxy.marketStock}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input
+                        aria-label={`${t.galaxy.marketTrade} ${s.give}`}
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={tradeT}
+                        onChange={(e) => setTradeT(e.target.value)}
+                        style={{
+                          width: 58,
+                          background: 'var(--bg-raised)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 6px',
+                          fontSize: 12,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          api
+                            .trade(m.buildingId, {
+                              slotIndex: s.slotIndex,
+                              shipId: selectedShip.id,
+                              giveT: Number(tradeT),
+                            })
+                            .then((r) => {
+                              setNotice(
+                                `${t.galaxy.marketTraded} +${r.gotT.toFixed(1)} ${t.galaxy.tons} ${r.gotResource.replace('_', ' ')}`,
+                              );
+                              void refreshShips();
+                              void api
+                                .markets(selectedShip.dockedBodyId!)
+                                .then((rr) => setMarkets(rr.markets))
+                                .catch(() => undefined);
+                            })
+                            .catch((err: ApiError) =>
+                              setNotice(
+                                `${t.galaxy.marketRefused} — ${err.message ?? err.error}`,
+                              ),
+                            )
+                        }
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          background: 'var(--accent-400)',
+                          color: '#0D0D0D',
+                          border: 'none',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 10px',
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t.galaxy.marketTrade}
+                      </button>
+                    </div>
+                  </div>
+                )),
+              )}
             </section>
           )}
           {selectedShip.status === 'hovering' && selectedShip.hoverBodyId && (

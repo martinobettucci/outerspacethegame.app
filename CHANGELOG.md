@@ -4,6 +4,20 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Marché L1 à taux fixe (chunk K)** : migration `trades` (journal des
+  échanges) ; slots = niveau du marché (canon GB §9, vérifié serveur),
+  slot directionnel — le marché ACHÈTE `give` et paie en `get` au taux
+  posté (le taux est le prix, aucun frais séparé en taux fixe [TUNE-v1]),
+  re-tarification ≤ 1/min (DG §11.1), limites quotidienne/absolue
+  vérifiées contre le journal, whitelist (propriétaire exempt),
+  consultation des offres à quai seulement ; physicalité complète : soute
+  à quai ↔ stock planétaire, cap de stockage et conteneurs vérifiés des
+  deux côtés, rebase après échange ; UI : formulaire « Trade slot » dans
+  le panneau du marché, offres + échange dans le panneau vaisseau à quai.
+  Correctif de déterminisme au passage : ordre TOTAL de la flotte
+  (personal/cargo/civil/combat puis created_at, id) — created_at seul
+  flippait l'éventail des marqueurs après un UPDATE de ligne. 6 unit +
+  12 intégration + E2E boucle complète, captures 30–32 observées.
 - **Atterrissage & fret (chunk J)** : migration `ships.hover_body_id` +
   `buildings.config` ; le survol garde le corps sous la coque et atterrir
   devient un acte EXPLICITE (GB §9) — mondes possédés toujours accueillants

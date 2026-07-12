@@ -430,6 +430,15 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     setNotice((err as ApiError).message ?? t.errors.generic);
                   }
                 }}
+                onSaveMarketSlot={async (input) => {
+                  try {
+                    await api.setMarketSlot(planetId, b.id, input);
+                    setNotice(t.planet.marketSlotSaved);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
                 onLevelUp={async () => {
                   try {
                     await api.levelUp(planetId, b.id);

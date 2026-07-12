@@ -124,6 +124,12 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   load/unload mini-form (resource select + tons + Load primary / Unload
   neutral) appears only when docked at an owned world. Spaceport building
   panel gains the landing-policy select (Self only / Everyone).
+- **Market slot & offers (implemented, chunk K)** — owner side: "Trade slot"
+  form in the market building panel (buys/pays selects, rate, daily limit,
+  accent `Post offer` button — accent = the merchant gesture); visitor side:
+  "Market offers" cards in the docked ship panel (`give → get @ rate ·
+  stock T` in mono, tons input + accent `Trade`), refusals surface the
+  server's reason verbatim in the notice bar.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

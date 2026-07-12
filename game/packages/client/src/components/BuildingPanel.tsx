@@ -5,8 +5,8 @@
  * facteur dominant »).
  */
 import { useState } from 'react';
-import { ChevronsUp, Trash2, X } from 'lucide-react';
-import { BUILDINGS, type CostBundle } from '@atg/shared';
+import { ChevronsUp, Store, Trash2, X } from 'lucide-react';
+import { ALL_RESOURCE_IDS, BUILDINGS, type CostBundle } from '@atg/shared';
 import type { PlanetBuilding } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
@@ -23,6 +23,7 @@ export function BuildingPanel({
   workforceAssigned,
   maxLevelBySeed,
   onApply,
+  onSaveMarketSlot,
   onLevelUp,
   onDemolish,
   onClose,
@@ -36,6 +37,13 @@ export function BuildingPanel({
     runPct?: number;
     landing?: 'self' | 'everyone';
   }) => void;
+  onSaveMarketSlot?: (input: {
+    slotIndex: number;
+    give: string;
+    get: string;
+    rate: number;
+    dailyLimitT: number;
+  }) => void;
   onLevelUp: () => void;
   onDemolish: () => void;
   onClose: () => void;
@@ -43,6 +51,11 @@ export function BuildingPanel({
   const [workforce, setWorkforce] = useState(building.workforce);
   const [runPct, setRunPct] = useState(building.runPct);
   const [confirmDemolish, setConfirmDemolish] = useState(false);
+  const slot0 = building.marketSlots?.[0];
+  const [slotGive, setSlotGive] = useState(slot0?.give ?? 'ore');
+  const [slotGet, setSlotGet] = useState(slot0?.get ?? 'water');
+  const [slotRate, setSlotRate] = useState(String(slot0?.rate ?? '0.5'));
+  const [slotDaily, setSlotDaily] = useState(String(slot0?.dailyLimitT ?? '0'));
   const def = BUILDINGS[building.key];
   const isIndustry = !!def.batchesPerDayByLevel;
   const levelCap = Math.min(3, maxLevelBySeed);
@@ -138,6 +151,120 @@ export function BuildingPanel({
             <option value="everyone">{t.planet.landingEveryone}</option>
           </select>
         </label>
+      )}
+
+      {building.key === 'market' && building.marketSlots && onSaveMarketSlot && (
+        <section
+          aria-label={t.planet.marketSlot}
+          style={{ display: 'grid', gap: 6, fontSize: 12 }}
+        >
+          <strong style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <Store size={13} aria-hidden /> {t.planet.marketSlot} (L
+            {building.level} = {building.level} slot{building.level > 1 ? 's' : ''})
+          </strong>
+          {!slot0 && (
+            <span style={{ color: 'var(--text-disabled)' }}>{t.planet.marketNoSlot}</span>
+          )}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span>{t.planet.marketBuys}</span>
+            <select
+              aria-label={t.planet.marketBuys}
+              value={slotGive}
+              onChange={(e) => setSlotGive(e.target.value)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 6px',
+                maxWidth: 105,
+              }}
+            >
+              {ALL_RESOURCE_IDS.map((r) => (
+                <option key={r} value={r}>
+                  {r.replace('_', ' ')}
+                </option>
+              ))}
+            </select>
+            <span>{t.planet.marketPays}</span>
+            <select
+              aria-label={t.planet.marketPays}
+              value={slotGet}
+              onChange={(e) => setSlotGet(e.target.value)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 6px',
+                maxWidth: 105,
+              }}
+            >
+              {ALL_RESOURCE_IDS.map((r) => (
+                <option key={r} value={r}>
+                  {r.replace('_', ' ')}
+                </option>
+              ))}
+            </select>
+          </div>
+          <label style={{ display: 'grid', gap: 3 }}>
+            <span>{t.planet.marketRate} ({slotGet}/T {slotGive})</span>
+            <input
+              type="number"
+              min={0.01}
+              step={0.01}
+              value={slotRate}
+              onChange={(e) => setSlotRate(e.target.value)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 8px',
+              }}
+            />
+          </label>
+          <label style={{ display: 'grid', gap: 3 }}>
+            <span>{t.planet.marketDailyLimit}</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={slotDaily}
+              onChange={(e) => setSlotDaily(e.target.value)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 8px',
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() =>
+              onSaveMarketSlot({
+                slotIndex: 0,
+                give: slotGive,
+                get: slotGet,
+                rate: Number(slotRate),
+                dailyLimitT: Number(slotDaily),
+              })
+            }
+            style={{
+              background: 'var(--accent-400)',
+              color: '#0D0D0D',
+              border: 'none',
+              borderRadius: 'var(--radius-button)',
+              padding: '6px 12px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            {t.planet.marketSaveSlot}
+          </button>
+        </section>
       )}
 
       {isIndustry && (

@@ -521,3 +521,157 @@ test('fret : charger à quai → décoller → se reposer → décharger (GB §1
   await expect(hold.getByText('Hold empty')).toBeVisible();
   await shot(page, '29-cargo-unloaded');
 });
+
+test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13)', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  // Compte FIXE : le seed du starter dérive de l'e-mail
+  // (universe:starter:email) — l'ADN de ce monde contient market (L3) et
+  // depot, vérifié hors-ligne par la fonction pure. Rerun-tolérant :
+  // inscription au premier passage, connexion ensuite.
+  const emailMkt = 'e2e-market@test.local';
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill(emailMkt);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  // Attend un état déterministe : HUD (connu) OU alerte (premier passage).
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await expect(rail.or(page.getByRole('alert')).first()).toBeVisible({
+    timeout: 10_000,
+  });
+  if (!(await rail.isVisible().catch(() => false))) {
+    await page
+      .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
+      .click();
+    await page.getByLabel('E-mail').fill(emailMkt);
+    await page.getByLabel('Password').fill(password);
+    await page.getByLabel('Sovereign name').fill('E2E Marketeer');
+    await page.getByLabel('Mercantile').check();
+    await page.getByRole('button', { name: 'Awaken' }).click();
+    await expect(rail).toBeVisible({ timeout: 10_000 });
+  }
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+  const canvas = page.getByTestId('planet-canvas');
+  const box = (await canvas.boundingBox())!;
+  const tileX = box.x + box.width / 2;
+  const tileY = box.y + box.height / 2 - 20;
+
+  // Le marché est-il déjà bâti (rerun) ? Introspection API (lecture seule,
+  // les ACTIONS restent pilotées par l'UI) — un clic-sonde sur le canvas
+  // arrive trop tôt pendant l'init Pixi.
+  const panel = page.getByRole('region', { name: 'Building settings' });
+  const me = (await page.request.get('/api/me').then((r) => r.json())) as {
+    planets: { id: string }[];
+  };
+  const detail = (await page.request
+    .get(`/api/planets/${me.planets[0]!.id}`)
+    .then((r) => r.json())) as { buildings: { key: string }[] };
+  if (!detail.buildings.some((b) => b.key === 'market')) {
+    const hand = page.getByRole('region', { name: 'Construction cards' });
+    for (const key of ['depot', 'market']) {
+      const card = hand
+        .getByRole('article')
+        .filter({ hasText: new RegExp(`^${key}`) })
+        .first();
+      // La main se re-trie après chaque unlock (re-render) : un clic peut
+      // être avalé. On re-clique jusqu'à la PREUVE d'état (bouton Place).
+      await expect(async () => {
+        const unlockBtn = card.getByRole('button', { name: 'Unlock' });
+        if (await unlockBtn.isVisible().catch(() => false)) {
+          await unlockBtn.click().catch(() => undefined);
+        }
+        await expect(card.getByRole('button', { name: 'Place' })).toBeVisible({
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: 30_000 });
+    }
+    // Pose au centre — re-tentée tant que le plateau Pixi n'est pas
+    // interactif (le succès est prouvé par la notice).
+    await expect(async () => {
+      const placeBtn = hand
+        .getByRole('article')
+        .filter({ hasText: /^market/ })
+        .first()
+        .getByRole('button', { name: 'Place' });
+      if ((await placeBtn.getAttribute('aria-pressed')) !== 'true') {
+        await placeBtn.click();
+      }
+      await page.mouse.click(tileX, tileY);
+      await expect(page.getByRole('status')).toContainText(
+        'Construction started.',
+        { timeout: 2_500 },
+      );
+    }).toPass({ timeout: 30_000 });
+  }
+  // Ouvre le panneau du marché (chantier 6 h / TIME_SCALE ≈ 3 s au premier
+  // passage ; déjà actif en rerun).
+  await expect(async () => {
+    await page.mouse.click(tileX, tileY);
+    await expect(panel.getByText(/market · L1/)).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+
+  // Poster l'offre : achète ore, paie water @ 0,5 (slot 0 — L1 = 1 slot).
+  const slotForm = panel.getByRole('region', { name: 'Trade slot' });
+  await expect(slotForm).toBeVisible();
+  await slotForm.getByLabel('Buys').selectOption('ore');
+  await slotForm.getByLabel('pays').selectOption('water');
+  await slotForm.getByLabel(/Rate/).fill('0.5');
+  await shot(page, '30-market-slot-form');
+  await expect(async () => {
+    await slotForm.getByRole('button', { name: 'Post offer' }).click();
+    await expect(page.getByRole('status')).toContainText(
+      'Offer posted on the open channel.',
+      { timeout: 2_000 },
+    );
+  }).toPass({ timeout: 30_000 });
+
+  // Côté visiteur (même Souverain, son cargo à quai) : l'offre est là.
+  await rail.getByRole('button', { name: 'Galaxy' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  await page.waitForTimeout(1500);
+  const gbox = (await page.getByTestId('galaxy-canvas').boundingBox())!;
+  // La scène se reconstruit au polling (5 s) : on re-clique le marqueur
+  // jusqu'à l'ouverture du panneau.
+  const hold = page.getByRole('region', { name: 'Cargo hold' });
+  await expect(async () => {
+    await page.mouse.click(
+      gbox.x + gbox.width / 2 - 25,
+      gbox.y + gbox.height / 2 - 23,
+    );
+    await expect(hold).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 20_000 });
+
+  // Normalise la soute (reruns) : décharge l'eau et l'ore résiduels.
+  for (const res of ['water', 'ore']) {
+    const line = hold.getByText(new RegExp(`^${res} · `));
+    if (await line.isVisible().catch(() => false)) {
+      const tons = (await line.innerText()).match(/([\d.]+) T/)?.[1] ?? '0';
+      await hold.getByLabel('Resource').selectOption(res);
+      await hold.getByLabel('Tons').fill(tons);
+      await hold.getByRole('button', { name: 'Unload', exact: true }).click();
+      await expect(page.getByRole('status')).toContainText('Cargo transferred.');
+    }
+  }
+
+  // Charge 1 T d'ore puis échange contre 0,5 T d'eau au taux posté.
+  await hold.getByLabel('Resource').selectOption('ore');
+  await hold.getByLabel('Tons').fill('1');
+  await hold.getByRole('button', { name: 'Load', exact: true }).click();
+  await expect(hold.getByText(/ore · 1\.0 T/)).toBeVisible();
+
+  const offers = page.getByRole('region', { name: 'Market offers' });
+  await expect(offers).toBeVisible({ timeout: 10_000 });
+  await expect(offers.getByText(/ore → water @ 0\.5/)).toBeVisible();
+  await shot(page, '31-market-offers-docked');
+  await offers.getByLabel(/Trade ore/).fill('1');
+  await offers.getByRole('button', { name: 'Trade', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Trade settled — goods moved.');
+  await expect(hold.getByText(/water · 0\.5 T/)).toBeVisible();
+  await shot(page, '32-trade-settled');
+});

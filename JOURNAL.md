@@ -1520,3 +1520,44 @@ chunk K (marché L1 taux fixe) s'appuiera sur cette fondation.
   observées (soute 2/3 conteneurs, Land vert en survol, formulaire à quai).
 - Correctif de test au passage : l'ordre capacité-avant-stock rendait un
   refus ambigu — test ajusté pour vérifier chaque refus isolément.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk K — marché L1 à taux fixe
+
+### Décisions v1 (documentées)
+- **Slot directionnel** : le marché ACHÈTE `give` et paie en `get` au taux
+  posté (get par 1 give). Le taux EST le prix : aucun frais séparé en taux
+  fixe [TUNE-v1] — les 25 bp/leg sont un mécanisme AMM (L2, à venir).
+- **Slots = niveau** (GB §9) : L1 = 1 slot, vérifié serveur ; la config vit
+  dans `buildings.config.slots` (le jsonb du chunk J).
+- **Re-tarification ≤ 1/min** (DG §11.1) : throttle sur (paire identique,
+  taux différent), horloge injectable pour les tests.
+- **Physicalité totale** : consultation à quai (owner OU vaisseau docké),
+  échange = soute (conteneurs vérifiés) ↔ stock planétaire (paiement sur
+  stock disponible, encaissement sous cap), journal `trades` (migration
+  005) porte les limites quotidienne/absolue. Auto-échange permis
+  (« self-wash pointless, not dangerous »).
+- **E2E déterministe par construction** : le seed d'un starter est
+  `universe:starter:email` — l'e-mail fixe `e2e-market@test.local` garantit
+  market (cap L3) dans l'ADN du monde, rerun-tolérant (login/register).
+
+### Défauts trouvés et corrigés (§18)
+- **Ordre de flotte instable** : `ORDER BY created_at` seul — personnel et
+  cargo naissent dans la même transaction (même timestamp) ; après un
+  UPDATE (trade → cargo réécrit), l'ordre du tas flippait et l'éventail des
+  marqueurs échangeait personnel/cargo à l'écran. Correctif : ordre TOTAL
+  et sémantique (personal, cargo, civil, combat, sondes ; puis created_at,
+  id). Reproduit par l'E2E (2 échecs consécutifs au même endroit), vérifié
+  par 2 reruns + suite complète.
+- **Clic d'unlock avalé par le re-tri de la main** : re-clic jusqu'à preuve
+  d'état (bouton Place visible) — l'assertion sur la notice était trompeuse
+  (texte identique entre deux unlocks).
+- **Sonde de « déjà bâti » trop précoce** : remplacée par une introspection
+  API en lecture seule (les actions restent pilotées par l'UI).
+
+### Vérifications
+47 unit shared (6 marché) + 27 unit serveur ; 71/71 intégration (12 marché :
+slots=niveau, throttle, physicalité 2 côtés, limites, whitelist, refus
+directs) ; E2E 10/10 ×2 (chemin premier passage ET rerun) ; captures 30–32
+observées (formulaire de slot, offres à quai, échange réglé +0,5 T water).

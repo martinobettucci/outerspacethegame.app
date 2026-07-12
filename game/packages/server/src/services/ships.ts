@@ -94,8 +94,16 @@ export async function fleet(
   playerId: string,
   nowMs = Date.now(),
 ): Promise<ShipView[]> {
+  // Ordre TOTAL et sémantique : le personnel d'abord (c'est le Souverain),
+  // puis cargo/civil/combat/sondes — created_at seul est instable (même
+  // transaction ⇒ même timestamp, l'ordre du tas flippait après UPDATE et
+  // déplaçait les marqueurs de l'éventail).
   const { rows } = await pool.query(
-    `SELECT * FROM ships WHERE owner_id = $1 ORDER BY created_at`,
+    `SELECT * FROM ships WHERE owner_id = $1
+     ORDER BY CASE hull_category
+        WHEN 'personal' THEN 0 WHEN 'cargo' THEN 1 WHEN 'civil' THEN 2
+        WHEN 'combat' THEN 3 ELSE 4 END,
+       created_at, id`,
     [playerId],
   );
   return rows.map((r) => {

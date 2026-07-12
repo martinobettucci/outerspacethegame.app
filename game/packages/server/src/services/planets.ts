@@ -26,6 +26,7 @@ import {
   type BuildingKey,
   type Climate,
   type CostBundle,
+  type MarketSlot,
   type NpcRole,
   type PlanetSize,
   type Quality,
@@ -133,6 +134,7 @@ export interface PlanetDetail {
     workforceU: number | null;
     limiting: string | null;
     landing: 'self' | 'everyone' | null;
+    marketSlots: MarketSlot[] | null;
   }[];
   tech: {
     available: TechNodeKey[];
@@ -274,6 +276,12 @@ export async function planetDetail(
               ? b.config?.landing === 'everyone'
                 ? ('everyone' as const)
                 : ('self' as const)
+              : null,
+          marketSlots:
+            b.key === 'market'
+              ? Array.isArray(b.config?.slots)
+                ? (b.config.slots as MarketSlot[])
+                : []
               : null,
         };
       }),

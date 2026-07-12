@@ -127,7 +127,10 @@ renderer lighting pass, free flight + probes + fog-of-war, the contact
 protocol (pings/channels/messages, GB §5 — scope, quota and channel
 membership all enforced server-side with direct-request tests), and the
 physical-economy foundation (explicit landing with spaceport policy,
-docked cargo load/unload with exact DG §7 container accounting).
+docked cargo load/unload with exact DG §7 container accounting), and the
+first trading venue (fixed-rate market L1: slots = level, directional
+pair at a posted rate, 1/min repricing, daily/absolute limits + whitelist
+against the `trades` journal — all enforced server-side).
 Staging/prod Compose files: not yet written (planned with first deploy).
 
 ## 7. Recovery strategies

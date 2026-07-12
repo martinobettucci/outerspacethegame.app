@@ -8,3 +8,4 @@ export * from './units.js';
 export * from './ships.js';
 export * from './recipes.js';
 export * from './techtree.js';
+export * from './market.js';
