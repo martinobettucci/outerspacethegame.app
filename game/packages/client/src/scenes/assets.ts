@@ -1,0 +1,63 @@
+/**
+ * Chargement des sprites du contrat d'assets (docs/ASSET_PIPELINE.md §4).
+ * Les stubs GIF sont décodés en première frame via <img> + canvas — les
+ * animations et la passe de lumière WebGL (bump/light maps) arrivent avec
+ * le micro-prototype d'éclairage (backlog P0.4, item [~]).
+ * Échange d'art sans code : remplacer le fichier au même chemin.
+ */
+
+const cache = new Map<string, Promise<HTMLCanvasElement>>();
+
+export function spriteUrl(path: string): string {
+  return `/game-assets/${path}`;
+}
+
+/** Charge une image (première frame pour un GIF) dans un canvas. */
+export function loadSpriteCanvas(path: string): Promise<HTMLCanvasElement> {
+  const url = spriteUrl(path);
+  let entry = cache.get(url);
+  if (!entry) {
+    entry = new Promise<HTMLCanvasElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('canvas 2d indisponible'));
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas);
+      };
+      img.onerror = () => reject(new Error(`sprite introuvable : ${url}`));
+      img.src = url;
+    });
+    cache.set(url, entry);
+  }
+  return entry;
+}
+
+export function planetSprite(climate: string, size: string): string {
+  return `planets/planet_${climate}_${size}.gif`;
+}
+
+export function starSprite(fuelType: string): string {
+  return `stars/star_${fuelType}.gif`;
+}
+
+export const BLACK_HOLE_SPRITE = 'stars/blackhole.gif';
+
+export function buildingSprite(key: string, level: number): string {
+  return `buildings/building_${key}_l${level}.gif`;
+}
+
+export function buildingClimateOverlay(
+  key: string,
+  level: number,
+  climate: 'hot' | 'cold',
+): string {
+  return `buildings/building_${key}_l${level}.ov.${climate}.gif`;
+}
+
+export function cardArt(buildingKey: string): string {
+  return `cards/card_building_${buildingKey}.png`;
+}

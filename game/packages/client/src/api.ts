@@ -1,0 +1,131 @@
+/**
+ * Client API — toutes les requêtes passent par /api (proxy Vite en dev).
+ * Les erreurs serveur sont typées et remontées aux écrans (états d'erreur
+ * explicites, CLAUDE.md §4).
+ */
+import type {
+  Archetype,
+  BuildingKey,
+  TechNodeKey,
+} from '@atg/shared';
+
+export interface ApiError {
+  status: number;
+  error: string;
+  message?: string;
+}
+
+async function call<T>(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method,
+    credentials: 'include',
+    headers: body ? { 'content-type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let payload: { error?: string; message?: string } = {};
+    try {
+      payload = await res.json();
+    } catch {
+      /* réponse sans corps */
+    }
+    const err: ApiError = {
+      status: res.status,
+      error: payload.error ?? `http_${res.status}`,
+      message: payload.message,
+    };
+    throw err;
+  }
+  return (await res.json()) as T;
+}
+
+export interface Me {
+  player: { id: string; displayName: string; politics: Archetype };
+  planets: { id: string; name: string }[];
+}
+
+export interface GalaxyBody {
+  id: string;
+  bodyType: 'planet' | 'star' | 'black_hole';
+  name: string;
+  x: number;
+  y: number;
+  size: 's' | 'm' | 'l' | null;
+  climate: string | null;
+  quality: string | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  isStarter: boolean;
+  starClass: string | null;
+  starFuelType: string | null;
+  owned: boolean;
+}
+
+export interface PlanetBuilding {
+  id: string;
+  key: BuildingKey;
+  level: number;
+  tileIndex: number | null;
+  status: 'constructing' | 'active' | 'demolishing';
+  completesAt: string | null;
+  recipe: string | null;
+}
+
+export interface PlanetDetail {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  size: 's' | 'm' | 'l';
+  climate: 'hot' | 'cold' | 'temperate' | 'poison';
+  quality: string;
+  tiles: number;
+  isStarter: boolean;
+  population: number;
+  popCap: number;
+  planetEfficiency: number;
+  storageUsedT: number;
+  storageCapT: number;
+  stock: Record<string, number>;
+  deposits: { resource: string; remainingT: number; initialT: number }[];
+  buildings: PlanetBuilding[];
+  tech: {
+    available: TechNodeKey[];
+    maxLevel: Record<string, number>;
+    unlocked: TechNodeKey[];
+    maskAllowed: TechNodeKey[];
+    governingArchetypes: Archetype[];
+  };
+}
+
+export const api = {
+  register: (input: {
+    email: string;
+    password: string;
+    displayName: string;
+    politics: Archetype;
+  }) =>
+    call<{ playerId: string; starterPlanetId: string }>(
+      'POST',
+      '/auth/register',
+      input,
+    ),
+  login: (input: { email: string; password: string }) =>
+    call<{ playerId: string }>('POST', '/auth/login', input),
+  logout: () => call<{ ok: true }>('POST', '/auth/logout'),
+  me: () => call<Me>('GET', '/me'),
+  galaxy: () => call<{ bodies: GalaxyBody[] }>('GET', '/galaxy'),
+  planet: (id: string) => call<PlanetDetail>('GET', `/planets/${id}`),
+  unlock: (planetId: string, node: TechNodeKey) =>
+    call<{ ok: true }>('POST', `/planets/${planetId}/unlock`, { node }),
+  build: (planetId: string, building: BuildingKey, tileIndex: number | null) =>
+    call<{ buildingId: string; completesAt: string }>(
+      'POST',
+      `/planets/${planetId}/build`,
+      { building, tileIndex },
+    ),
+};

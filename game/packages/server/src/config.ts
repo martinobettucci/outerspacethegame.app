@@ -30,6 +30,12 @@ const schema = z.object({
     .default('dev-only-secret-change-me-0123456789abcdef'),
   UNIVERSE_SEED: z.string().min(1).default('atg-dev-universe-0001'),
   TICK_MS: z.coerce.number().int().positive().default(60_000),
+  /**
+   * Accélérateur de temps DEV/TEST uniquement (instrumentation §15 :
+   * observer en E2E des durées de plusieurs heures). 1 en production.
+   * Divise les durées (construction, démolition…) au moment de la commande.
+   */
+  TIME_SCALE: z.coerce.number().positive().default(1),
 });
 
 export type Config = z.infer<typeof schema>;

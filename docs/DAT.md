@@ -98,7 +98,10 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
 
 ## 5. Authentication & authorization
 
-- Account auth: email/OAuth (decision pending; documented before impl).
+- Account auth (implemented, chunk D): e-mail + password — scrypt (Node
+  crypto, self-describing hash format), server-side sessions (opaque token
+  in an httpOnly cookie; only the SHA-256 of the token is stored; 30 d).
+  OAuth may be added later as a second method.
 - All game permissions server-side (landing rights, market whitelists, faction
   moderation, share grants, governance masks). Every access rule must have a
   direct-request test that bypasses the UI (CLAUDE.md §10).

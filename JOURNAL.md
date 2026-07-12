@@ -1254,3 +1254,55 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
 - 15/15 intégration (8 garanties spawn + événements + migrations) sur
   vraie base ; 42 unit au total ; seed rejoué idempotent ; géométrie de
   démo contrôlée en SQL (starters à 159,6 pc, tuiles ≥ 10, tempérés D/F).
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk D — tranche verticale jouable
+
+### Réalisé
+- **API** : sessions serveur (jeton opaque httpOnly, seul le SHA-256 stocké,
+  30 j) ; routes register/login/logout, /me, /galaxy (visibilité = union des
+  cercles par planète : BASE_SKY 60 pc [TUNE-GAP] + 200 pc/niveau de
+  télescope actif ; le stock caché des étoiles ne quitte jamais le serveur),
+  /planets/:id (détail lazy-évalué, propriétaire uniquement), POST unlock &
+  build (transactions : propriété, ADN du seed, prérequis, masque
+  d'intersection, coûts crystal_any résolus au climat, tuiles, maxInstances,
+  chantier 6 h + événement construction_complete ; TIME_SCALE dev/test
+  documenté comme instrumentation §15).
+- **Client** : écran d'éveil (login/register, 6 politiques, états d'erreur),
+  HUD (rail avec sections futures désactivées AVEC raison), carte galaxie
+  three.js (pan/zoom 2D, sprites pixel des stubs, anneau de possession,
+  labels projetés, panneau de sélection, avertissement étoile), vue planète
+  PixiJS (île isométrique, tuiles cliquables, sprites 512×256 + overlay
+  climat hot/cold, anneau jaune de chantier, polling 4 s), main de cartes
+  EXHAUSTIVE (28) triée plaçables/déverrouillables/bloquées avec raisons,
+  courbe d'efficacité SVG avec point vivant (équivalent numérique a11y).
+
+### Défauts trouvés par les tests (corrigés)
+1. **Départ non sain sur starter medium** : E_planet 0,20 avec pop fixe
+   1 200 sur cap 12 000 — contradiction interne du guide (« 1 200 » vs
+   « u = 0,6 ⇒ E ≈ 0,95 »). Résolution : pop initiale = 0,6 × popCap
+   (1 200 EST 0,6 × 2 000 du cas small-F). Starter medium-D : 12 240/20 400,
+   E = 96 % — vérifié en E2E.
+2. **Canvas Pixi jamais monté** : l'effet d'init (deps []) courait pendant
+   l'état « loading », avant l'existence de la div. Init conditionnée à
+   l'arrivée des données + .catch explicite (jamais d'échec silencieux §18).
+
+### Vérifications
+- Intégration : 26/26 (11 API — authz par requêtes directes : 403 lecture
+  étrangère, 403 construction étrangère, masque militariste refusé à un
+  industrialiste, tuile occupée, double unlock, kind d'erreur explicites).
+- E2E Playwright : 4/4 (état d'erreur d'identifiants ; éveil → galaxie ;
+  vue planète avec 28 cartes ; unlock → pose → chantier → persistance après
+  rechargement). 8 captures JPEG observées + 3 vidéos .webm envoyées au
+  responsable. Conformité design system contrôlée sur captures (tokens,
+  Orbitron, accent jaune, états, focus).
+- Base de dev réinitialisée puis re-seedée (comptes démo au nouveau départ
+  sain) ; suite unit 42 + build verts.
+
+### Limites connues du chunk
+- Sprites = 1re frame des stubs GIF (animation + passe bump/light : chunk
+  renderer dédié — l'item P0.4 Pixi reste [~]).
+- La production/industrie n'existe pas encore (chunk E) : stocks à taux 0.
+- Détail planète réservé au propriétaire ; l'intel télescope à niveaux
+  (L1–L3) viendra en P3.

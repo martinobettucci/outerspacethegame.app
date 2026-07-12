@@ -17,8 +17,9 @@ import {
   POCKET_NEIGHBOR_MAX_PC,
   POCKET_STAR_MAX_PC,
   POCKET_WILD_MAX_PC,
-  STARTER_POPULATION,
+  STARTER_POP_UTILIZATION,
 } from '../../src/gen/spawn.js';
+import { efficiency, popCap } from '@atg/shared';
 
 let pool: pg.Pool;
 const run = randomUUID().slice(0, 8);
@@ -70,7 +71,12 @@ describe('spawn starter — garanties DG §2.2', () => {
         86_400_000;
       expect(bindDays).toBeGreaterThan(44);
       expect(bindDays).toBeLessThanOrEqual(45.01);
-      expect(Number(starter.population)).toBe(STARTER_POPULATION);
+      // Pop de départ = 0,6 × cap ⇒ colonie « saine » (E ≈ 0,95, DG §2.2).
+      const cap = popCap(starter.size, starter.quality);
+      expect(Number(starter.population)).toBe(
+        Math.round(STARTER_POP_UTILIZATION * cap),
+      );
+      expect(efficiency(Number(starter.population) / cap)).toBeGreaterThan(0.9);
     }
   });
 

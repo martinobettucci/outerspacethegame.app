@@ -69,7 +69,7 @@
 - [~] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; reste : preuve E2E offline catch-up (P2)
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2
 - [ ] Policy/instruction engine core (declarative rulesets + evaluator; manual-first override; stackable conditions; predefined strategy library) → GB §15; DG §9.2/§3.5
-- [~] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18 — registerPlayer (scrypt, transactionnel) + spawn complet + bind 45 j FAITS et testés (8 tests d'intégration) ; restent : sessions/login API (chunk D), bouclier combat 14 j + voids, receive-cap
+- [~] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18 — registerPlayer + spawn + bind 45 j + sessions/login/logout API (cookie httpOnly, hash de jeton) FAITS et testés (intégration + E2E) ; restent : bouclier combat 14 j + voids, receive-cap (avec le combat P5)
 - [~] Seed contract: starter-system generator = reproducible dev seed demonstrating every P2 feature → GB §19; DG §2.2; CLAUDE.md §8 — seed = vrai flux registerPlayer, 2 comptes démo (voisin garanti 150–240 pc vérifié : 159,6 pc), idempotent ; la couverture « every P2 feature » suivra les livraisons P2
 - [ ] Observability baseline (structured logs, health/readiness, correlation ids; no secrets) → CLAUDE.md §20
 - [ ] CI: unit + integration + Playwright E2E + visual-capture harness → CLAUDE.md §15/§16
@@ -78,9 +78,9 @@
 
 - [~] Universe gen: bodies, seeds-as-DNA, planet rolls (size/climate/quality/tiles), star rolls (type, hidden stock, R_nova) → GB §2/§3/§22; DG §2.1 — rolls déterministes (planète/starter/étoile/gisements/noms) implémentés + testés ; restent : ceintures denses hors poches (P3 carte), poids étoile S/M/L à équilibrer
 - [~] Starter spawn: Fermi pocket, guarantees (star ≤40 pc, 2 uninhabited ≤60 pc, neighbor 150–240 pc), starter planet (≥10 tiles, deposits garanties, stock, pop 1200, fuel 150 u, pilot, Cargo-S), supernova-safe → GB §19/§22; DG §2.2 — toutes les garanties implémentées et testées en intégration ; restent : E2E visuel (chunk D) + cas « univers saturé »
-- [ ] Isometric planet view: tile grid, climate variants, GIF sprites + overlays, bump/light WebGL pass, light propagation → GB §17/§26; ASSET_PIPELINE §2–3
-- [ ] Card hand UI: construction cards, unlock/place phases, demolish 50 %, costs chips → GB §9/§18; DG §5/§6
-- [ ] Tech tree runtime: global DAG, seed mask (tiers %), never-gated set (telescope/probe/depot/mine/colony), unlock = permanent knowledge, production needs live infra → GB §18; DG §5
+- [~] Isometric planet view: tile grid, climate variants, GIF sprites + overlays, bump/light WebGL pass, light propagation → GB §17/§26; ASSET_PIPELINE §2–3 — grille iso PixiJS + sprites (1re frame) + overlays climat + états chantier LIVRÉS et vérifiés visuellement/E2E ; restent : animation GIF, passe bump/light + propagation lumineuse
+- [~] Card hand UI: construction cards, unlock/place phases, demolish 50 %, costs chips → GB §9/§18; DG §5/§6 — main EXHAUSTIVE (28 cartes), phases unlock/place, chips de coûts, états désactivés avec raison, E2E vert ; reste : démolition 50 %
+- [~] Tech tree runtime: global DAG, seed mask (tiers %), never-gated set (telescope/probe/depot/mine/colony), unlock = permanent knowledge, production needs live infra → GB §18; DG §5 — DAG 35 nœuds + masque de seed + jamais-masqués + unlock permanent + masques de gouvernance testés (unit + API + E2E) ; reste : « production needs live infra » (industrie, chunk E)
 - [ ] Building catalog complet (28) avec effets par niveau + coûts + 1 tuile + adaptations climat → GB §9/§25; DG §5.1
 - [ ] Industry: one-recipe queues, throughput ladder, retool 24 h, refinery→cells, fuelcell_plant line, max 1 extracteur/gisement → GB §9; DG §6/§3.3
 - [ ] Mining + trace mining, deposit depletion + projected-dry-date UI → GB §3; DG §3.3
@@ -94,7 +94,7 @@
 
 ## P3 — Galaxie & mouvement
 
-- [ ] Galaxy map three.js: star field 3D-style, 2D nav, fog-of-war, pixel-sprite bodies → GB §2/§17/§26
+- [~] Galaxy map three.js: star field 3D-style, 2D nav, fog-of-war, pixel-sprite bodies → GB §2/§17/§26 — v1 livrée (pan/zoom, sprites stubs, brouillard serveur, panneau de sélection, labels) et vérifiée E2E ; restent : intel télescopes (tiers), ceintures denses, routes
 - [ ] Telescopes: scope +200/level max 3, intel tiers L1/L2/L3 (heading/destination/manifest + junk & harvest attribution) → GB §4/§20; DG §9.2
 - [ ] Probes: solar sail 10 pc/day, crewless, scanning, build cap → GB §4/§14; DG §8.1
 - [ ] Free flight: segments, speedEff/burnEff (weight), fuel×engine matrix, derived range UI, course changes → GB §6/§14; DG §8.2–8.4/§9.1

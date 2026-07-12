@@ -19,6 +19,7 @@
 import {
   GAME_DAY_SECONDS,
   PEOPLES,
+  popCap,
   SeededStream,
   type People,
   type ResourceBundle,
@@ -33,7 +34,13 @@ export const POCKET_NEIGHBOR_MAX_PC = 240;
 export const POCKET_STAR_MAX_PC = 40;
 export const POCKET_WILD_MAX_PC = 60;
 export const STARTER_ACCOUNT_BIND_DAYS = 45;
-export const STARTER_POPULATION = 1_200;
+/**
+ * Population de départ = 0,6 × popCap — u = 0.6 ⇒ E_planet ≈ 0.95, « les
+ * nouvelles colonies naissent saines » (DG §2.2). Le « 1 200 » du guide est
+ * exactement 0,6 × cap d'une small-F ; généralisé aux starters medium
+ * [TUNE interp, JOURNAL session 30].
+ */
+export const STARTER_POP_UTILIZATION = 0.6;
 export const STARTER_FUEL_U = 150;
 
 /** Stock de départ (avant ×U(1.0, 1.3)). [TUNE] DG §2.2 */
@@ -183,6 +190,9 @@ export async function spawnStarterSystem(
   // 2. Le starter au centre de la poche.
   const starterSeed = `${opts.universeSeed}:starter:${opts.playerKey}`;
   const starter = rollStarterPlanet(starterSeed);
+  const starterPop = Math.round(
+    STARTER_POP_UTILIZATION * popCap(starter.size, starter.quality),
+  );
   const boundUntil = new Date(
     now + STARTER_ACCOUNT_BIND_DAYS * GAME_DAY_SECONDS * 1000,
   );
@@ -205,7 +215,7 @@ export async function spawnStarterSystem(
       opts.playerId,
       boundUntil,
       now,
-      STARTER_POPULATION,
+      starterPop,
     ],
   );
   const starterPlanetId = pRows[0]!.id;

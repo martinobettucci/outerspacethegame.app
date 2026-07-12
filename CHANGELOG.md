@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Tranche verticale jouable (chunk D)** : API de jeu (register/login/
+  logout avec sessions httpOnly hachées, /me, /galaxy avec brouillard par
+  scope, /planets/:id lazy-évalué réservé au propriétaire, unlock/build
+  transactionnels avec coûts, masque de gouvernance, tuiles, événement de
+  chantier) ; client complet (écran d'éveil, HUD groovy-dark, carte galaxie
+  three.js pan/zoom + sprites + brouillard, vue planète isométrique PixiJS
+  + overlays climat + chantiers, main EXHAUSTIVE des 28 cartes avec chips
+  de coûts et raisons de blocage, courbe d'efficacité signature) ;
+  correction « départ sain » (pop initiale = 0,6 × popCap, le 1 200 du
+  guide = cas small-F) ; autorisations vérifiées par requêtes directes.
 - **Génération d'univers + spawn starter (chunk C)** : rolls déterministes
   DG §2.1 (planète, starter, étoile avec stock caché + R_nova, gisements,
   noms), poche de Fermi DG §2.2 avec toutes ses garanties (étoile S à
