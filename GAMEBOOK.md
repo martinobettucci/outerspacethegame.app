@@ -222,9 +222,10 @@ ready-to-use, undamaged materiel.** The siege lock applies to warehouses too
 — war starts, too late: prepare before they arrive in range.
 
 **Markets & manual trade (canon).**
-- **Per market building, ONE automated vehicle/item listing** (spot buy-now
-  OR timed auction) **or ONE fungible trading pair** — pairs and listings
-  cost buildings and tiles; market breadth is physical.
+- **Per market building, ONE automated trade slot PER LEVEL** (L1 = 1,
+  L2 = 2, L3 = 3): each slot holds one vehicle/item listing (spot buy-now OR
+  timed auction) or one fungible trading pair — market breadth costs
+  buildings, levels and tiles; upgrading a trade centre adds a slot.
 - **This limit applies to FULL-AUTO trade only.** A player may always send a
   **manual purchase offer, at any price, on anything visible in a public
   warehouse**; manual offers resolve manually between players (accept /
@@ -234,7 +235,8 @@ ready-to-use, undamaged materiel.** The siege lock applies to warehouses too
   content hidden, **cannot be used as sales stock** — a strategic reserve
   with **exclusively manual entry/exit**.
 - **The merchant-planet exception (canon).** A planet under **Mercantile
-  governance** trades **survival resources (water, food, oxygen)** innately —
+  governance** trades **survival resources (water, food, oxygen) AND
+  propulsion fuel** innately —
   **always available to trade, no market building required**. The owner sets
   a **minimum keep-for-self floor per resource**; everything above the floor
   is available to trade. This is the true privilege of a merchant world —

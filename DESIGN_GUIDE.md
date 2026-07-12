@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.8.1** — merchant-planet innate survival trading (owner) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.8.2** — market slots per level + fuel in merchant innate (owner) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -328,7 +328,7 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | fuelcell_plant | T2 | — | own line: **40/80/160 batches/day × E** (2× same-level refinery); recipe yields unchanged |
 | spaceport | T1 | — | docks cumulative: **L1 = 2 S; L2 = +2 M; L3 = +2 L** [TUNE]; a dock accepts hulls ≤ its size; docks = max simultaneous grounded visitors, reservable |
 | workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories & terraform cores |
-| market | T1 | — (L2+: Mercantile) | L1 fixed-rate; L2 AMM pools + auctions; L3 **LP fee 25→20 bp** (house cut untouched) |
+| market | T1 | — (L2+: Mercantile) | **trade slots = level (1/2/3)**; L1 fixed-rate; L2 AMM pools + auctions; L3 **LP fee 25→20 bp** |
 | residential | T1 | (L2+: Civic) | popCap **+15 pp/level, additive** (+45% at L3); UI must project the E(u) trough before build |
 | lab | T2 | — | medicines 10/20/40 batches/day |
 | obs_station | T2 | — | ground OBS umbrella radius 5/8/12 pc |
@@ -447,8 +447,9 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   planet, install, uninstall, warehouse in/out and dock deployments are all
   blocked — prepare before they arrive. Off-siege install concurrency: 3.
 - **Sales (owner spec, CONFIRMED):** per market building, **ONE automated
-  channel: one item listing (spot buy-now OR timed auction) — or — one
-  fungible trading pair**. Market breadth costs buildings and tiles.
+  trade slot PER LEVEL (L1 = 1, L2 = 2, L3 = 3)** — each slot holds one item
+  listing (spot buy-now OR timed auction) or one fungible trading pair.
+  Market breadth costs buildings, levels and tiles.
   Continuous sales: no seller limit; the buyer is bound by physical loading.
   **Manual channel (always open):** any player **docked at a commerce dock**
   may browse **public** warehouses and send a manual offer at any price;
@@ -695,8 +696,9 @@ pairs, rate mode (fixed | AMM), absolute & daily limits, whitelist (canon).
 Landing rights gate access. Fixed-rate re-pricing ≤ 1/min [TUNE].
 
 ### 11.2 AMM & liquidity (the no-currency answer)
-- **Pool = one market building = ONE pair** (owner canon — pairs are
-  physical: each costs a building + tile). Reserves x, y, constant product.
+- **Pool = one market trade SLOT = ONE pair** (owner canon — slots = market
+  level, L1/L2/L3 = 1/2/3; pairs are physical). Reserves x, y, constant
+  product.
   **Tile arithmetic makes the cells-star the only feasible multi-resource
   topology** (N−1 buildings vs N(N−1)/2 all-pairs): cells-as-reserve is a
   design fact, not merely an expectation. **Hospitality triad convention:**
