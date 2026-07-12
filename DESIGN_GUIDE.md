@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.7** — round-6 patches (storage caps sim-derived, docks, impound) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.7.1** — market topology & public/private warehouses (owner) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -425,10 +425,10 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   return to the player's hand; re-crewing happens at the warehouse too.
   **Crewed sales:** listing a warehoused vehicle **auto-releases its crew to
   the seller's hand** (listing is a warehouse act; crew sells separately as
-  NPCs, account-bind rules apply). **Heavy note [owner to confirm]:** the
-  free buffer holds no L slot — an L-unit line (turret_heavy, cannon,
-  tank_combined) without warehouse space blocks at unit #1: warehouses are
-  required infrastructure for heavy production [TUNE].
+  NPCs, account-bind rules apply). **Heavy rule (owner CONFIRMED):** the free buffer holds no L slot —
+  heavy production (turret_heavy, cannon, tank_combined) **requires
+  warehouse space** from unit #1: warehouses are mandatory infrastructure
+  for heavy industry.
   **Impound (ally betrayal, round 6):** on ally-status loss (faction leave,
   whitelist removal, war declaration) foreign installed units enter
   **IMPOUND** — hold-fire, no orders, still occupying slots and consuming
@@ -446,10 +446,14 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   **Siege lock [round 5, extended]:** during an ACTIVE combat event at the
   planet, install, uninstall, warehouse in/out and dock deployments are all
   blocked — prepare before they arrive. Off-siege install concurrency: 3.
-- **Sales (owner spec):** ONE active vehicle/item listing per market building
-  [TUNE — granularity assumed] — spot buy-now OR timed auction. Continuous
-  sales: **no seller limit; the buyer is bound by what their ships can
-  physically load** (co-location canon).
+- **Sales (owner spec, CONFIRMED):** per market building, **ONE automated
+  channel: one item listing (spot buy-now OR timed auction) — or — one
+  fungible trading pair**. Market breadth costs buildings and tiles.
+  Continuous sales: no seller limit; the buyer is bound by physical loading.
+  **Manual channel (always open):** any player **docked at a commerce dock**
+  may browse **public** warehouses and send a manual offer at any price;
+  resolution is manual between players. **Private warehouses:** content
+  hidden, unusable as sales stock — strategic reserve, manual in/out only.
 - **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
   [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
@@ -682,7 +686,8 @@ pairs, rate mode (fixed | AMM), absolute & daily limits, whitelist (canon).
 Landing rights gate access. Fixed-rate re-pricing ≤ 1/min [TUNE].
 
 ### 11.2 AMM & liquidity (the no-currency answer)
-- **Pool = (market, resourceA, resourceB)**, reserves x, y, constant product.
+- **Pool = one market building = ONE pair** (owner canon — pairs are
+  physical: each costs a building + tile). Reserves x, y, constant product.
   Spot = y/x. **The owner's initial deposit ratio *is* the initial price** —
   seeding is a pricing decision, not a magic 50/50 (mispricing is the owner's
   tuition).

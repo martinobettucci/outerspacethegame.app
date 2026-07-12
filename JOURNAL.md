@@ -962,3 +962,28 @@ définir par simulation, §5.1 warehouse, §6 refondu) ; stubs : +warehouse
   première unité (statu quo, cohérent) ou faut-il 1 slot L au buffer ?
 - Interprétations antérieures toujours ouvertes : plancher « 2 2 et 10 » ;
   « une enchère par trade centre » = par bâtiment market.
+
+---
+
+## 2026-07-12 — Session 22 (réponses responsable : marché par bâtiment, warehouses publics/privés)
+
+### Décisions (canon)
+- **Pas de slot L gratuit** : la production lourde exige un warehouse dès la
+  première unité (statu quo confirmé).
+- **Par bâtiment market, UN canal automatique** : une listing d'item
+  (buy-now OU enchère) — ou — UNE paire de trading. La largeur de marché
+  coûte des bâtiments et des tuiles (rareté des paires = physique).
+- **La limite ne s'applique qu'au full-auto** : offre d'achat MANUELLE
+  toujours possible, à n'importe quel prix, sur le contenu visible d'un
+  warehouse public ; résolution manuelle entre joueurs.
+- **Warehouses publics/privés** : public = contenu consultable UNIQUEMENT
+  par un acheteur posé sur un dock de commerce ; privé = contenu caché,
+  inutilisable comme stock de vente — réserve stratégique à entrées/sorties
+  exclusivement manuelles.
+
+### Docs
+GAMEBOOK (bloc « Markets & manual trade ») ; DESIGN_GUIDE v0.7.1 (§6 ventes
+confirmées, règle lourde confirmée, §11.2 un bâtiment = une paire).
+Tour 7 lancé : économie de la topologie de marché (coût en tuiles des paires
+vs viabilité des hubs, 4a re-vérifié) + exploits du canal manuel (spam
+d'offres, intel via browse, réserve privée vs census).
