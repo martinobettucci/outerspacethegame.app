@@ -191,6 +191,22 @@ instructions** (the §15 engine). Capability is gated by building type:
 - **Workshop** → enables repair of ships/accessories.
 - **Mining / industry** → mint materials from the planet or transform them.
 
+**BUILD ≠ INSTALL — the economy's keystone (canon).** Manufacturing something
+and putting it in service are **two separate acts, everywhere**:
+- **Ground units (turrets, cannons, tanks), ship upgrades, weapons,
+  accessories, derived items** are **manufactured as portable items** where
+  the tech tree, politics and industry allow it ("raising the card" on a
+  military world) — then **hauled, traded or sold like any item**, and
+  **installed elsewhere** by whoever owns them. Installation is gated by
+  *physics and permissions* (delivery on-planet, garrison/ship slots, landing
+  rights) — **never by the installing planet's politics**.
+- This is why worlds with no military production of their own are still
+  defensible: they **import their cannons** (or keep **defensive ships
+  hovering in orbit**). Production is specialized; protection is a market.
+- **Buildings are the exception in one direction only:** the **card** is
+  tradeable (canon §9 card acquisition), but the **construction** is local —
+  pay on-planet resources, consume a tile; a built building never moves.
+
 **Construction vs. minting — two different acts:**
 - **Constructing a building** = pay its resource cost from resources available on
   the planet, and consume one free tile (§18). Any *discovered/unlocked* building

@@ -5,8 +5,9 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.4** — rounds 1–2 system patches + round-4 content-catalog
-> patches applied (see `BALANCE_LOG.md`).
+> **Version v0.4.1** — rounds 1–2 system patches + round-4 content patches +
+> the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
+> `BALANCE_LOG.md`.
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
@@ -360,8 +361,18 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
 - **Construction workflow:** unlocked card → pay from on-planet stock → tile
   reserved → build 6 h / 24 h / 72 h by level [TUNE] (engineers −10%/tier) →
   active. Resources may be hauled from other owned planets (canon).
-- **Ground units**: no tiles (garrison), upkeep 0.2 cells/day, cap = 2 × tiles
-  [TUNE]. **Building HP: 150/300/600 by level** [TUNE].
+- **BUILD ≠ INSTALL (canon, GAMEBOOK §9) — the economy's keystone.**
+  Ground units, ship upgrades, weapons, accessories and derived items are
+  **manufactured as portable items** where tech/politics/industry allow
+  (military_district & unit cards = Militarist **production**), then hauled
+  (1 large item = 1 container), traded (buy-now/auction like any item) and
+  **installed anywhere** the owner has delivery + permission. Installation is
+  never politics-gated. Install/uninstall a ground unit: 6 h [TUNE];
+  uninstalled units are cargo again. Defenseless-production worlds defend by
+  **importing units** or **hovering defensive ships** — protection is a
+  market. (Supersedes round-4b's "turret_light politics-free" patch.)
+- **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
+  [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
 ---
 
@@ -371,8 +382,9 @@ Master list per GAMEBOOK §24. Carriage:
 - 1 container = 1 T of a single fungible OR 1 large item; partial tons still
   monopolize their container.
 - Fungible stacks live in planet stock, ship containers, or market pools.
-- Derived items are entities with `location` (planet / ship slot / cargo /
-  system escrow / NFT-locked).
+- Derived items AND ground units are entities with `location` (planet /
+  garrison / ship slot / cargo / system escrow / NFT-locked); a ground unit
+  in transit = 1 large item in 1 container.
 
 ---
 
@@ -522,7 +534,7 @@ gate's planet stock. Factions tolling chokepoints is intended politics.
 
 | Unit | Levels | ATK (L1) | HP (L1) | Cost (L1) | Notes |
 |---|---|---|---|---|---|
-| turret_light | 2 | 40 | 150 | 10 steelL | cheap screen; **mit 0**; **politics-free** (basic self-defense is never gated) |
+| turret_light | 2 | 40 | 150 | 10 steelL | cheap screen; **mit 0** |
 | turret_heavy | 2 | 160 | 400 | 40 steelH | mit 0.30; backbone |
 | cannon | 2 | 120 | 200 | 25 steelH | anti-orbital: **range = the hover band only (~1 pc [TUNE])** — never out-shoots the 3 pc engage bubble |
 | tank_ground | 3 | 40 | 250 | 15 steelL | fires on **landed & force-landing ships ×1.5** — punishes the 24 h conquest hold |
