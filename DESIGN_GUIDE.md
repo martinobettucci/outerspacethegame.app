@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.6** — warehouse/docks/crew-release (owner spec) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.7** — round-6 patches (storage caps sim-derived, docks, impound) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -152,13 +152,30 @@ Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):
 - **Trace mining** (no deposit): flat **2 T/day** [TUNE], exempt from
   efficiency — a bootstrap floor, never an industry.
 
-### 3.3b Fungible storage caps (depots) — gameplay, not bookkeeping
-The planet's **ready** stock (extracted, sellable/transformable/consumable)
-is capped by **depot capacity** (§5.1). Mines/industry slow via the storage
-bell (u = stock/cap) and **halt at hard cap** — a second floor besides the
-natural deposit total, making global supply census cheap and "leave
-headroom" physical. **Exact cap ladder & base planet allowance: TO BE SET BY
-SIMULATION (owner directive — round 6).** [TUNE]
+### 3.3b Fungible storage caps (depots) — sim-derived, round 6b
+The planet's **ready** fungible stock is capped by **base allowance +
+depots**. All numbers below were derived by the round-6b storage study
+(owner directive) [TUNE]:
+- **Base free allowance (the "plancher", no building): S 800 / M 1 000 /
+  L 1 200 T** — mandatory: without it the starter spawns over-cap (mines
+  halted day 0) and the 10-tile budget breaks.
+- **Depot ladder: +200/400/600 T** per instance (1 tile; L1 10 ore, level-up
+  L2 30 ore + 10 steelL, L3 60 ore + 30 steelL) — tiles, not ore, are the
+  real price; at maturity each depot-L3 tile buys ≈ +2 days of logistics
+  slack; **depots double as siege endurance** (blockade pressure: starter
+  24 d, active hub ~9 d — the 1–2-week target).
+- **One-sided brake (never punish low stock):** production throttle = **1
+  for u ≤ 0.7**, the right branch of E(u) above 0.7, **halt at u ≥ 1** —
+  a freshly emptied hub must never throttle its own mines.
+- **Fuel shares the cap** (1 u = 1 T, no separate tankage); ship tanks and
+  parked freighters are the legitimate overflow valve.
+- **AMM pool reserves COUNT against the cap** (they are physical planet
+  stock) — deep-liquidity market worlds must build depot farms (Mercantile
+  specialization). **Swaps/deliveries may overfill (physics); only
+  production halts at cap.**
+- Starter compatibility: worst-roll grant = 449 T → u 0.56 with zero
+  buildings; the round-3 colony window (32–45 d) holds with exactly 1 depot
+  leveled by ~d20.
 
 ### 3.4 Efficiency (the tilted bell) — THE formula
 Every producing/consuming unit has an efficiency `E ∈ [0.12, 1]`:
@@ -309,7 +326,7 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | crystal_extractor | T1 | — | climate crystal 8/16/32 T/day |
 | refinery | T1 | — | fuel cells 20/40/80 batches/day |
 | fuelcell_plant | T2 | — | own line: **40/80/160 batches/day × E** (2× same-level refinery); recipe yields unchanged |
-| spaceport | T1 | — | docks S / +M / +L by level |
+| spaceport | T1 | — | docks cumulative: **L1 = 2 S; L2 = +2 M; L3 = +2 L** [TUNE]; a dock accepts hulls ≤ its size; docks = max simultaneous grounded visitors, reservable |
 | workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories & terraform cores |
 | market | T1 | — (L2+: Mercantile) | L1 fixed-rate; L2 AMM pools + auctions; L3 **LP fee 25→20 bp** (house cut untouched) |
 | residential | T1 | (L2+: Civic) | popCap **+15 pp/level, additive** (+45% at L3); UI must project the E(u) trough before build |
@@ -327,7 +344,7 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | terraformer | T4 | Civic | +1 quality grade, once per world (huge cost) |
 | artificial_planet_yard | T5 | Industrialist | builds artificial planets (§13) |
 
-**warehouse unlock: 40 ore + 20 steelL [TUNE]** (T1, common mask).
+**warehouse unlock: 40 ore + 20 steelL; level-up L2 80 ore + 40 steelL, L3 160 ore + 80 steelL [TUNE]** (T1, common mask).
 
 **Unit-card unlocks (once per planet, Militarist mask) [TUNE]:**
 turret_light 30 ore+10 steelL; tank_ground 40 ore+20 steelL; tank_antiair
@@ -406,6 +423,26 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   throughput); docks can be **reserved** (self/allies, "ready to depart").
   **Crew release: only while warehoused** (GAMEBOOK §12 exception) — crews
   return to the player's hand; re-crewing happens at the warehouse too.
+  **Crewed sales:** listing a warehoused vehicle **auto-releases its crew to
+  the seller's hand** (listing is a warehouse act; crew sells separately as
+  NPCs, account-bind rules apply). **Heavy note [owner to confirm]:** the
+  free buffer holds no L slot — an L-unit line (turret_heavy, cannon,
+  tank_combined) without warehouse space blocks at unit #1: warehouses are
+  required infrastructure for heavy production [TUNE].
+  **Impound (ally betrayal, round 6):** on ally-status loss (faction leave,
+  whitelist removal, war declaration) foreign installed units enter
+  **IMPOUND** — hold-fire, no orders, still occupying slots and consuming
+  upkeep — then auto-uninstall to the guest's warehouse space or dockside
+  escrow **72 h later**; under siege lock the clock starts when the lock
+  lifts; off-siege the host may evict to impound at any time.
+  **Gate-raid doctrine (round 6):** free-flight gives days of telescope
+  warning, but a **Stargate raid arrives with 0–12 h warning** (exit
+  scatter) — warehouse ground reserves (S 10 min / M 1 h / L 2 h) are the
+  ONLY reactive defense there; L-hull ship reserves (6 h) may not make it,
+  and once combat starts the siege lock freezes everything: the
+  pre-installed garrison remains the true answer. Raids through YOUR OWN
+  gate are deniable (toll whitelist is a hard gate); the exposure is nearby
+  third-party gates.
   **Siege lock [round 5, extended]:** during an ACTIVE combat event at the
   planet, install, uninstall, warehouse in/out and dock deployments are all
   blocked — prepare before they arrive. Off-siege install concurrency: 3.
