@@ -987,3 +987,24 @@ confirmées, règle lourde confirmée, §11.2 un bâtiment = une paire).
 Tour 7 lancé : économie de la topologie de marché (coût en tuiles des paires
 vs viabilité des hubs, 4a re-vérifié) + exploits du canal manuel (spam
 d'offres, intel via browse, réserve privée vs census).
+
+---
+
+## 2026-07-12 — Session 23 (tour 7 appliqué → guide v0.8)
+
+- **Verdict : topologie viable.** Un canal par bâtiment force la
+  spécialisation (hubs rationnels : 2–4 paires ; la largeur migre vers des
+  réseaux multi-planètes) sans tuer les hubs (max-hub 7 canaux tient sur une
+  grande 20 tuiles, ~1,4 % des mondes).
+- **Étoile-cellules = fait de design** (N−1 bâtiments vs N(N−1)/2) ; trades
+  croisés hors cellules = 100 bp. Triade d'hospitalité (food/water/fuel vs
+  cells) + nudge UI.
+- **Patches sérieux** : anti-DoS docks (dwell 24 h max configurable,
+  éviction auto vers survol hors siège, browse orbital pour alliés avec
+  share grant, réserver 1–2 docks) ; rate-limit d'offres manuelles (1 par
+  couple acheteur-item, 20/j, expiration 48 h).
+- **Clarifié** : warehouse public = vitrine ET fuite (les réserves de guerre
+  vont en privé — le choix public/privé est stratégique) ; census publié en
+  totaux globaux uniquement, jamais de ventilation par planète/warehouse ;
+  le canal manuel ne peut pas contourner l'AMM (les fongibles n'entrent
+  jamais en warehouse).

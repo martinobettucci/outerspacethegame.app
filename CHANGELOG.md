@@ -23,6 +23,8 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Tour 7 CLOS (guide v0.8) : topologie de marche viable ; etoile-cellules
+  = fait de design ; anti-DoS docks ; rate-limit offres ; census global seul.
 - Tour 6 CLOS (guide v0.7) : planchers fongibles derives par simulation
   (franchise S 800/M 1000/L 1200 T, frein unilateral, reserves AMM comptees),
   docks par niveau, regle d'impound, doctrine anti-raid par gate ; M9-M10.
