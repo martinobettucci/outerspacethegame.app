@@ -810,3 +810,37 @@ adoptée (ouvert GAMEBOOK §27 clos — usure déterministe, temperate sûr).
 ### Vérifications
 - Chaque correctif tracé constat→patch au BALANCE_LOG (tour 4) ; aucun
   patch des tours 1–3 rouvert ; GAMEBOOK amendé (ouvert clos).
+
+---
+
+## 2026-07-12 — Session 17 (correction canon : CONSTRUIRE ≠ INSTALLER)
+
+### Problème (signalé par le responsable)
+Le guide conflatait fabrication et installation des unités sol ; le patch
+4b-F7b (turret_light apolitique) soignait le symptôme. Règle réelle, clef de
+voûte de l'économie : on « monte la carte » et on PRODUIT là où la politique
+et la tech le permettent ; l'objet produit (canon, tourelle, tank, upgrade,
+accessoire) est un item portable — transporté, vendu, installé ailleurs.
+L'installation n'est jamais gated par la politique du monde receveur. Les
+mondes sans production militaire se défendent en important ou en faisant
+hover des vaisseaux défensifs.
+
+### Aveu de compréhension (demandé explicitement)
+Compris à moitié seulement : la séparation existait pour les objets forgés
+(fonderie → workshop/slots) mais PAS pour les unités sol. Corrigé.
+
+### Corrections
+- GAMEBOOK §9 : bloc canon « BUILD ≠ INSTALL » (unités/upgrades/armes/
+  accessoires = items portables ; bâtiments = carte échangeable mais
+  construction locale, jamais déplaçable).
+- DESIGN_GUIDE v0.4.1 : §6 principe + install/désinstall 6 h [TUNE], unité en
+  transit = 1 large item/container (§7) ; production turret_light re-gated
+  Militarist ; « politics-free » retiré de §5/§10.1.
+- BALANCE_LOG : erratum 4b-F7b (supersédé) + audit d'impact des tours 1–4
+  (fortress/garnison et économie inchangés ; nouveau marché de la défense =
+  voulu).
+- **Tour 5 lancé** (sim ciblée) : viabilité de l'import de défense, fenêtre
+  de rasage pendant l'import, exploits de la séparation (désinstallation
+  sous siège, stockage anti-pillage, renforts en cours de bataille,
+  mercenariat de garnison, mintabilité NFT), et spec manquante de la
+  production d'unités (qui produit quoi, à quel débit).

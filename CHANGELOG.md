@@ -23,6 +23,10 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Correction canon du responsable : **construire ≠ installer** (clef de voûte
+  de l'économie) — unités sol et objets = items portables produits là où la
+  politique le permet, installés n'importe où ; patch « turret_light
+  apolitique » annulé ; GAMEBOOK §9 amendé ; tour 5 de vérification lancé.
 - Tour d'équilibrage 4 TERMINÉ (économie + militaire du catalogue) : 15
   constats, 15 correctifs → DESIGN_GUIDE v0.4 ; règle boucliers↔climat
   tranchée ; coûts T2+ complets ; moniteurs M6–M7.

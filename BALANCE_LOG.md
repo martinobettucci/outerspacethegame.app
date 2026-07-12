@@ -467,3 +467,30 @@ completeness rule — no half-tested content).
 
 **Verdict: catalog balanced under the patched wording — guide bumped to
 v0.4.** No round 1–3 system patch re-opened. Monitors now M1–M7.
+
+---
+
+## Erratum round 4b-F7b + Round 5 (2026-07-12) — BUILD ≠ INSTALL
+
+**Owner correction (canon):** manufacturing and installing are separate acts
+— the keystone of the whole economy. Ground units (cannons, turrets, tanks)
+are **portable items**: produced where politics/tech allow ("raising the
+card" on a military world), then hauled (1 large item/container), traded, and
+installed anywhere the owner has delivery + permission. Worlds with no
+military production defend by **importing units** or **hovering defensive
+ships** — protection is a market, not a politics flag.
+
+- **4b-F7b ("turret_light politics-free") is SUPERSEDED** — it patched the
+  symptom (Mercantile worlds defenseless) instead of the cause (conflated
+  build+install). Production returns to Militarist; installation is never
+  politics-gated. GAMEBOOK §9 now carries the principle as canon.
+- Audit of prior rounds under the corrected model: rounds 1–3 did not model
+  unit provenance (unaffected); 4b fortress/garrison math is provenance-
+  independent (stands); 4a economy numbers unaffected — a NEW defense-items
+  market opens (intended; it is the point).
+
+**Round 5 (targeted verification, launched):** produce→haul→install chain
+timings vs raze threats; defense-import market viability for a Mercantile
+hub; exploit sweep on the separation (units as plunder-proof value storage,
+uninstall-before-conquest, install-during-siege, mercenary garrison
+swapping).
