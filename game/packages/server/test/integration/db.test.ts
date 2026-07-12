@@ -7,13 +7,14 @@ import type pg from 'pg';
 import { buildServer } from '../../src/api/server.js';
 import { loadConfig } from '../../src/config.js';
 import { runMigrations } from '../../src/db/migrate.js';
-import { createPool } from '../../src/db/pool.js';
+import { createTestPool } from './helpers.js';
 
-const config = loadConfig(process.env);
 let pool: pg.Pool;
 
-beforeAll(() => {
-  pool = createPool(config.DATABASE_URL);
+const config = loadConfig(process.env);
+
+beforeAll(async () => {
+  pool = await createTestPool();
 });
 
 afterAll(async () => {

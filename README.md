@@ -66,6 +66,16 @@ pnpm stopDev       # stop the dev database container
 Environment variables are documented in `game/.env.example` (copy to
 `game/.env` to customize; no real secret ever enters the repository).
 
+### Demo accounts (dev seed — never valid outside local dev)
+
+| Email | Password | Politics | Purpose |
+|---|---|---|---|
+| `demo@atg.local` | `demo-password-1` | industrialist | main demo Sovereign |
+| `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor |
+
+The seed goes through the real registration flow (`registerPlayer` →
+starter spawn), is idempotent, and is recreated by `pnpm resetDb`.
+
 ## Tests (game, from `game/`)
 
 ```bash

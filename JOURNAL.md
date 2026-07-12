@@ -1217,3 +1217,40 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
   masques). server : 8/8 unit (lazy, health) + 7/7 intégration vraie base
   (migrations idempotentes, file d'événements, idempotence, concurrence,
   kind sans handler signalé). Builds tsc verts.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk C — univers, poche de Fermi, seed
+
+### Réalisé
+- `gen/rolls.ts` : rolls purs depuis seed (tailles 50/35/15, climats
+  40/25/25/10, qualités F→A, tuiles par classe, gisements 3–7 avec cristal
+  climatique — poison ⇒ Nox toujours, 0 tuile), starter dédié (tempéré, D–F,
+  ≥ 10 tuiles, 7 gisements garantis), étoiles (F0 caché, R_nova), noms
+  procéduraux seedés.
+- `gen/spawn.ts` : poche de Fermi transactionnelle avec collision-check en
+  base (isolement ≥ 150 pc, anneau voisin 150–240 pc quand l'univers a des
+  actifs), grants de départ, vaisseaux (personnel + Cargo-S), pilote commun
+  (people 60/30/10, roll individuel ×U(0.5,1.5)), anti-abus (bind 45 j,
+  is_starter jamais mintable).
+- `services/players.ts` + `passwords.ts` : inscription = joueur + spawn en
+  UNE transaction ; scrypt natif Node (format auto-décrit) ; erreurs typées.
+- Seed dev via le VRAI flux (CLAUDE.md §8) : demo@atg.local /
+  neighbor@atg.local (mots de passe de démo documentés au README), idempotent.
+
+### Décisions/écarts documentés
+- **Bande dégénérée étoile-starter** : R_nova(S) = 40 pc et garantie
+  « étoile ≤ 40 pc » ⇒ l'étoile de poche est S, posée à 40 pc exactement.
+  TUNE-GAP signalé (élargir la bande ou réduire R_nova(S) à discuter en
+  tour d'équilibrage).
+- **Bootstrap du premier joueur** : dans un univers vierge, la garantie du
+  voisin 150–240 pc est vide par définition — le premier compte naît sans
+  voisin ; tous les suivants l'ont (vérifié : 159,6 pc entre les 2 démos).
+- **Base de test dédiée `atg_test`** : les tests d'intégration polluaient
+  l'univers seedé (le voisin de démo s'ancrait sur un joueur de test à
+  ~404 pc). Séparation stricte test/dev sur la même instance Postgres.
+
+### Vérifications
+- 15/15 intégration (8 garanties spawn + événements + migrations) sur
+  vraie base ; 42 unit au total ; seed rejoué idempotent ; géométrie de
+  démo contrôlée en SQL (starters à 159,6 pc, tuiles ≥ 10, tempérés D/F).

@@ -69,15 +69,15 @@
 - [~] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; reste : preuve E2E offline catch-up (P2)
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2
 - [ ] Policy/instruction engine core (declarative rulesets + evaluator; manual-first override; stackable conditions; predefined strategy library) → GB §15; DG §9.2/§3.5
-- [ ] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18
-- [ ] Seed contract: starter-system generator = reproducible dev seed demonstrating every P2 feature → GB §19; DG §2.2; CLAUDE.md §8
+- [~] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18 — registerPlayer (scrypt, transactionnel) + spawn complet + bind 45 j FAITS et testés (8 tests d'intégration) ; restent : sessions/login API (chunk D), bouclier combat 14 j + voids, receive-cap
+- [~] Seed contract: starter-system generator = reproducible dev seed demonstrating every P2 feature → GB §19; DG §2.2; CLAUDE.md §8 — seed = vrai flux registerPlayer, 2 comptes démo (voisin garanti 150–240 pc vérifié : 159,6 pc), idempotent ; la couverture « every P2 feature » suivra les livraisons P2
 - [ ] Observability baseline (structured logs, health/readiness, correlation ids; no secrets) → CLAUDE.md §20
 - [ ] CI: unit + integration + Playwright E2E + visual-capture harness → CLAUDE.md §15/§16
 
 ## P2 — MVP « one planet, solo » (chaque unité = mécanique GAMEBOOK)
 
-- [ ] Universe gen: bodies, seeds-as-DNA, planet rolls (size/climate/quality/tiles), star rolls (type, hidden stock, R_nova) → GB §2/§3/§22; DG §2.1
-- [ ] Starter spawn: Fermi pocket, guarantees (star ≤40 pc, 2 uninhabited ≤60 pc, neighbor 150–240 pc), starter planet (≥10 tiles, deposits garanties, stock, pop 1200, fuel 150 u, pilot, Cargo-S), supernova-safe → GB §19/§22; DG §2.2
+- [~] Universe gen: bodies, seeds-as-DNA, planet rolls (size/climate/quality/tiles), star rolls (type, hidden stock, R_nova) → GB §2/§3/§22; DG §2.1 — rolls déterministes (planète/starter/étoile/gisements/noms) implémentés + testés ; restent : ceintures denses hors poches (P3 carte), poids étoile S/M/L à équilibrer
+- [~] Starter spawn: Fermi pocket, guarantees (star ≤40 pc, 2 uninhabited ≤60 pc, neighbor 150–240 pc), starter planet (≥10 tiles, deposits garanties, stock, pop 1200, fuel 150 u, pilot, Cargo-S), supernova-safe → GB §19/§22; DG §2.2 — toutes les garanties implémentées et testées en intégration ; restent : E2E visuel (chunk D) + cas « univers saturé »
 - [ ] Isometric planet view: tile grid, climate variants, GIF sprites + overlays, bump/light WebGL pass, light propagation → GB §17/§26; ASSET_PIPELINE §2–3
 - [ ] Card hand UI: construction cards, unlock/place phases, demolish 50 %, costs chips → GB §9/§18; DG §5/§6
 - [ ] Tech tree runtime: global DAG, seed mask (tiers %), never-gated set (telescope/probe/depot/mine/colony), unlock = permanent knowledge, production needs live infra → GB §18; DG §5

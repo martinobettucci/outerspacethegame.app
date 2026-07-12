@@ -7,18 +7,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type pg from 'pg';
 import { randomUUID } from 'node:crypto';
-import { loadConfig } from '../../src/config.js';
-import { runMigrations } from '../../src/db/migrate.js';
-import { createPool } from '../../src/db/pool.js';
 import { enqueue, processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
+import { createTestPool } from './helpers.js';
 
-const config = loadConfig(process.env);
 let pool: pg.Pool;
 
 beforeAll(async () => {
-  pool = createPool(config.DATABASE_URL);
-  await runMigrations(pool);
+  pool = await createTestPool();
   await pool.query('DELETE FROM events');
 });
 

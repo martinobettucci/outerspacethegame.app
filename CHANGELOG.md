@@ -4,6 +4,15 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Génération d'univers + spawn starter (chunk C)** : rolls déterministes
+  DG §2.1 (planète, starter, étoile avec stock caché + R_nova, gisements,
+  noms), poche de Fermi DG §2.2 avec toutes ses garanties (étoile S à
+  40 pc, 2 planètes sauvages ≤ 60 pc, voisin 150–240 pc, starter tempéré
+  D–F ≥ 10 tuiles, gisements garantis, stock ×U(1.0–1.3), 150 u de fuel
+  assorti, pop 1 200, vaisseau personnel + Cargo-S, pilote commun avec roll
+  individuel, bind compte 45 j) ; inscription registerPlayer (scrypt natif,
+  transaction unique) ; seed de dev = vrai flux applicatif, 2 comptes démo,
+  idempotent ; base de test dédiée atg_test (plus de contamination du seed).
 - **Noyau de simulation (chunk B)** : schéma baseline PostgreSQL
   (001_baseline.sql — joueurs/sessions, corps, gisements, stock lazy,
   bâtiments, unlocks, NPC, vaisseaux, file d'événements) + docs/SCHEMA.md +
