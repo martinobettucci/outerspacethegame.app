@@ -221,6 +221,19 @@ unit is installed, sold or stored. **On conquest, warehouses are THE spoil:
 ready-to-use, undamaged materiel.** The siege lock applies to warehouses too
 — war starts, too late: prepare before they arrive in range.
 
+**Markets & manual trade (canon).**
+- **Per market building, ONE automated vehicle/item listing** (spot buy-now
+  OR timed auction) **or ONE fungible trading pair** — pairs and listings
+  cost buildings and tiles; market breadth is physical.
+- **This limit applies to FULL-AUTO trade only.** A player may always send a
+  **manual purchase offer, at any price, on anything visible in a public
+  warehouse**; manual offers resolve manually between players (accept /
+  decline / counter).
+- **Warehouses are public or private.** Public: content browsable — but
+  **only by a buyer docked at a commerce dock** of the planet. Private:
+  content hidden, **cannot be used as sales stock** — a strategic reserve
+  with **exclusively manual entry/exit**.
+
 **Spaceport docks = trade throughput (canon).** The number of docks limits
 how many ships sit grounded WITHOUT entering a warehouse — i.e. **the max
 simultaneous traders** on the planet. Docks can be **reserved** for self and
