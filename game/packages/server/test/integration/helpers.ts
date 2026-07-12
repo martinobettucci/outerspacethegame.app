@@ -29,5 +29,8 @@ export async function createTestPool(): Promise<pg.Pool> {
 
   const pool = createPool(testUrl.toString());
   await runMigrations(pool);
+  // Isolation entre fichiers de test (exécution sérielle) : chaque fichier
+  // démarre sur un univers vierge.
+  await pool.query('TRUNCATE events, npcs, ships, bodies, players CASCADE');
   return pool;
 }

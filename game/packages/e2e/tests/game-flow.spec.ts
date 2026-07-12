@@ -142,3 +142,73 @@ test('unlock depot → pose sur une tuile → chantier visible → persistance',
   await page.waitForTimeout(1000);
   await shot(page, '08-persisted-after-reload');
 });
+
+test('boucle colonie : mine + recette → production réelle → réglages du bâtiment', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+
+  // Unlock de la mine puis choix de recette (canon : une industrie, une chose).
+  const hand = page.getByRole('region', { name: 'Construction cards' });
+  const mineCard = hand
+    .getByRole('article')
+    .filter({ hasText: /^mine/ })
+    .first();
+  await mineCard.getByRole('button', { name: 'Unlock' }).click();
+  await expect(page.getByRole('status')).toContainText('Card unlocked.');
+  await mineCard.getByRole('button', { name: 'Place' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await shot(page, '09-recipe-picker');
+  await dialog.getByRole('button', { name: /Extract ore/ }).click();
+
+  // Pose sur une tuile adjacente au dépôt du test précédent.
+  const canvas = page.getByTestId('planet-canvas');
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2 + 74, box.y + box.height / 2 + 17);
+  await expect(page.getByRole('status')).toContainText('Construction started.');
+
+  // Chantier 3 s (TIME_SCALE) + tick worker 0,5 s + polling UI 4 s.
+  await expect(page.getByText(/ore/).first()).toBeVisible();
+  await expect(
+    page
+      .getByRole('table')
+      .filter({ hasText: 'ore' })
+      .getByText(/\+9\.\d\/day|\+10\.0\/day|\+8\.\d\/day/)
+      .first(),
+  ).toBeVisible({ timeout: 20_000 });
+  // Date de tarissement projetée (exigence UI, DG §3.3).
+  await expect(page.getByText(/dry on/).first()).toBeVisible();
+  await shot(page, '10-mine-active-rates');
+
+  // Panneau du bâtiment : clic sur la tuile de la mine.
+  await page.mouse.click(box.x + box.width / 2 + 74, box.y + box.height / 2 + 17);
+  const panel = page.getByRole('region', { name: 'Building settings' });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText(/Extracting ore/)).toBeVisible();
+  await expect(panel.getByText('Running clean')).toBeVisible();
+  await shot(page, '11-building-panel');
+
+  // Réglage : cadence 50 % → le débit affiché baisse.
+  await panel.getByRole('slider').fill('50');
+  await panel.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByRole('status')).toContainText('Settings applied.');
+  await expect(
+    page
+      .getByRole('table')
+      .filter({ hasText: 'ore' })
+      .getByText(/\+4\.\d\/day|\+5\.0\/day/)
+      .first(),
+  ).toBeVisible({ timeout: 10_000 });
+  await shot(page, '12-throttled-50pct');
+});

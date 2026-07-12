@@ -1,20 +1,25 @@
 /**
  * Lecture & commandes planète — GB §9/§18, DG §5/§6.
  * Toutes les règles d'accès sont appliquées ICI (CLAUDE.md §10) : la
- * propriété, le masque de gouvernance, l'ADN tech du seed, les tuiles et
- * les coûts sont vérifiés côté serveur, dans des transactions.
+ * propriété, le masque de gouvernance, l'ADN tech du seed, les tuiles,
+ * les recettes/gisements et les coûts sont vérifiés côté serveur, dans
+ * des transactions ; chaque commande rebase les débits de la planète.
  */
 import {
-  BASE_STORAGE_ALLOWANCE_T,
+  BASIC_RESOURCES,
   BUILD_HOURS_BY_LEVEL,
   BUILDINGS,
+  CLIMATE_CRYSTAL,
   effectiveMask,
   efficiency,
   planetTechAvailability,
   popCap,
+  RECIPES,
   resolveCost,
   ROLE_TO_ARCHETYPE,
   TECH_NODES,
+  WORKFORCE_ASSIGNABLE_SHARE,
+  WORKFORCE_OPTIMAL_BY_LEVEL,
   type Archetype,
   type BuildingKey,
   type Climate,
@@ -22,12 +27,18 @@ import {
   type NpcRole,
   type PlanetSize,
   type Quality,
+  type RecipeId,
   type ResourceBundle,
+  type ResourceId,
   type TechNodeKey,
 } from '@atg/shared';
 import type pg from 'pg';
-import { evalLazy } from '../sim/lazy.js';
+import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { enqueue } from '../sim/events.js';
+import {
+  loadProductionSnapshot,
+  recomputePlanetRates,
+} from '../sim/rebase.js';
 
 export class CommandError extends Error {
   constructor(
@@ -43,7 +54,10 @@ export class CommandError extends Error {
       | 'tile_taken'
       | 'max_instances'
       | 'insufficient_resources'
-      | 'unbuildable',
+      | 'unbuildable'
+      | 'recipe_invalid'
+      | 'deposit_taken'
+      | 'workforce_invalid',
     message: string,
   ) {
     super(message);
@@ -87,11 +101,21 @@ export interface PlanetDetail {
   isStarter: boolean;
   population: number;
   popCap: number;
+  illness: number;
   planetEfficiency: number;
   storageUsedT: number;
   storageCapT: number;
-  stock: Record<string, number>;
-  deposits: { resource: string; remainingT: number; initialT: number }[];
+  storageU: number;
+  workforceAssigned: number;
+  workforceAssignable: number;
+  stock: Record<string, { amount: number; ratePerDay: number }>;
+  deposits: {
+    resource: string;
+    remainingT: number;
+    initialT: number;
+    ratePerDay: number;
+    dryAt: string | null;
+  }[];
   buildings: {
     id: string;
     key: BuildingKey;
@@ -100,6 +124,11 @@ export interface PlanetDetail {
     status: string;
     completesAt: string | null;
     recipe: string | null;
+    workforce: number;
+    runPct: number;
+    effBatchesPerDay: number | null;
+    workforceU: number | null;
+    limiting: string | null;
   }[];
   tech: {
     available: TechNodeKey[];
@@ -116,111 +145,139 @@ export async function planetDetail(
   bodyId: string,
   nowMs = Date.now(),
 ): Promise<PlanetDetail> {
-  const { rows } = await pool.query(
-    `SELECT * FROM bodies WHERE id = $1 AND body_type = 'planet'`,
-    [bodyId],
-  );
-  const body = rows[0];
-  if (!body) throw new CommandError('not_found', 'Planète inconnue');
-  // Autorisation : le détail complet est réservé au propriétaire (le
-  // niveau d'intel télescope pour les tiers arrive en P3).
-  if (body.owner_id !== playerId) {
-    throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
-  }
-
-  const { rows: stockRows } = await pool.query(
-    'SELECT resource, amount_t, rate_t_per_day, as_of FROM planet_stock WHERE body_id = $1',
-    [bodyId],
-  );
-  const stock: Record<string, number> = {};
-  let storageUsed = 0;
-  for (const r of stockRows) {
-    const v = evalLazy(
-      { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
-      nowMs,
-      { min: 0 },
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT id, name, x, y, seed, size, climate, quality, tiles, owner_id,
+              is_starter, population, illness
+       FROM bodies WHERE id = $1 AND body_type = 'planet'`,
+      [bodyId],
     );
-    stock[r.resource] = Math.floor(v * 100) / 100;
-    storageUsed += v;
-  }
-
-  const { rows: depositRows } = await pool.query(
-    'SELECT resource, initial_t, amount_t, rate_t_per_day, as_of FROM deposits WHERE body_id = $1 ORDER BY resource',
-    [bodyId],
-  );
-  const deposits = depositRows.map((r) => ({
-    resource: r.resource,
-    initialT: r.initial_t,
-    remainingT:
-      Math.floor(
-        evalLazy(
-          { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
-          nowMs,
-          { min: 0 },
-        ) * 100,
-      ) / 100,
-  }));
-
-  const { rows: buildingRows } = await pool.query(
-    'SELECT id, key, level, tile_index, status, completes_at, recipe FROM buildings WHERE body_id = $1 ORDER BY created_at',
-    [bodyId],
-  );
-
-  // Cap de stockage = franchise de base + dépôts actifs (DG §3.3b).
-  let depotBonus = 0;
-  for (const b of buildingRows) {
-    if (b.key === 'depot' && b.status === 'active') {
-      depotBonus += [200, 400, 600][b.level - 1] ?? 0;
+    const body = rows[0];
+    if (!body) throw new CommandError('not_found', 'Planète inconnue');
+    // Autorisation : le détail complet est réservé au propriétaire (le
+    // niveau d'intel télescope pour les tiers arrive en P3).
+    if (body.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
     }
+
+    const snap = await loadProductionSnapshot(client, bodyId, nowMs);
+    if (!snap) throw new CommandError('not_found', 'Planète inconnue');
+
+    const { rows: buildingRows } = await client.query(
+      `SELECT id, key, level, tile_index, status, completes_at, recipe,
+              workforce, run_pct
+       FROM buildings WHERE body_id = $1 ORDER BY created_at, id`,
+      [bodyId],
+    );
+    const rateByBuilding = new Map(
+      snap.rates.industries.map((i) => [i.buildingId, i]),
+    );
+
+    const availability = planetTechAvailability(body.seed);
+    const { rows: unlockRows } = await client.query(
+      'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
+      [bodyId],
+    );
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    const mask = effectiveMask(archetypes);
+
+    const cap = popCap(snap.size, snap.quality);
+    const storageUsed = Object.values(snap.stocks).reduce(
+      (s, v) => s + (v ?? 0),
+      0,
+    );
+    const workforceAssigned = buildingRows.reduce(
+      (s, b) => s + (b.workforce ?? 0),
+      0,
+    );
+
+    const stock: PlanetDetail['stock'] = {};
+    const allRes = new Set<string>([
+      ...Object.keys(snap.stocks),
+      ...Object.keys(snap.rates.stockRates),
+    ]);
+    for (const res of allRes) {
+      stock[res] = {
+        amount:
+          Math.floor(((snap.stocks[res as ResourceId] ?? 0) as number) * 100) / 100,
+        ratePerDay:
+          Math.round(((snap.rates.stockRates[res as ResourceId] ?? 0) as number) * 100) /
+          100,
+      };
+    }
+
+    return {
+      id: body.id,
+      name: body.name,
+      x: body.x,
+      y: body.y,
+      size: snap.size,
+      climate: body.climate,
+      quality: snap.quality,
+      tiles: body.tiles,
+      isStarter: body.is_starter,
+      population: snap.population,
+      popCap: cap,
+      illness: snap.illness,
+      planetEfficiency: efficiency(snap.population / cap),
+      storageUsedT: Math.round(storageUsed * 100) / 100,
+      storageCapT: snap.storageCapT,
+      storageU: Math.round(snap.rates.storageU * 1000) / 1000,
+      workforceAssigned,
+      workforceAssignable: Math.floor(
+        snap.population * WORKFORCE_ASSIGNABLE_SHARE,
+      ),
+      stock,
+      deposits: Object.entries(snap.deposits)
+        .map(([resource, remaining]) => {
+          const rate = snap.rates.depositRates[resource as ResourceId] ?? 0;
+          const dryMs =
+            rate < -1e-9
+              ? whenReaches(
+                  { amount: remaining ?? 0, ratePerDay: rate, asOfMs: nowMs },
+                  0,
+                )
+              : null;
+          return {
+            resource,
+            remainingT: Math.floor((remaining ?? 0) * 100) / 100,
+            initialT: snap.depositInitial[resource as ResourceId] ?? 0,
+            ratePerDay: Math.round(rate * 100) / 100,
+            dryAt: dryMs ? new Date(dryMs).toISOString() : null,
+          };
+        })
+        .sort((a, b) => a.resource.localeCompare(b.resource)),
+      buildings: buildingRows.map((b) => {
+        const r = rateByBuilding.get(b.id);
+        return {
+          id: b.id,
+          key: b.key,
+          level: b.level,
+          tileIndex: b.tile_index,
+          status: b.status,
+          completesAt: b.completes_at
+            ? new Date(b.completes_at).toISOString()
+            : null,
+          recipe: b.recipe,
+          workforce: b.workforce,
+          runPct: b.run_pct,
+          effBatchesPerDay: r ? Math.round(r.effBatchesPerDay * 100) / 100 : null,
+          workforceU: r ? Math.round(r.workforceU * 1000) / 1000 : null,
+          limiting: r ? r.limiting : null,
+        };
+      }),
+      tech: {
+        available: [...availability.available],
+        maxLevel: Object.fromEntries(availability.maxLevel),
+        unlocked: unlockRows.map((r) => r.node_key),
+        maskAllowed: [...mask],
+        governingArchetypes: archetypes,
+      },
+    };
+  } finally {
+    client.release();
   }
-  const storageCap =
-    BASE_STORAGE_ALLOWANCE_T[body.size as PlanetSize] + depotBonus;
-
-  const availability = planetTechAvailability(body.seed);
-  const { rows: unlockRows } = await pool.query(
-    'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
-    [bodyId],
-  );
-  const archetypes = await governingArchetypes(pool, bodyId, playerId);
-  const mask = effectiveMask(archetypes);
-
-  const cap = popCap(body.size as PlanetSize, body.quality as Quality);
-  const population = body.population ?? 0;
-
-  return {
-    id: body.id,
-    name: body.name,
-    x: body.x,
-    y: body.y,
-    size: body.size,
-    climate: body.climate,
-    quality: body.quality,
-    tiles: body.tiles,
-    isStarter: body.is_starter,
-    population,
-    popCap: cap,
-    planetEfficiency: efficiency(population / cap),
-    storageUsedT: Math.round(storageUsed * 100) / 100,
-    storageCapT: storageCap,
-    stock,
-    deposits,
-    buildings: buildingRows.map((b) => ({
-      id: b.id,
-      key: b.key,
-      level: b.level,
-      tileIndex: b.tile_index,
-      status: b.status,
-      completesAt: b.completes_at ? new Date(b.completes_at).toISOString() : null,
-      recipe: b.recipe,
-    })),
-    tech: {
-      available: [...availability.available],
-      maxLevel: Object.fromEntries(availability.maxLevel),
-      unlocked: unlockRows.map((r) => r.node_key),
-      maskAllowed: [...mask],
-      governingArchetypes: archetypes,
-    },
-  };
 }
 
 /**
@@ -272,9 +329,15 @@ async function loadOwnedPlanet(
   client: pg.PoolClient,
   playerId: string,
   bodyId: string,
-): Promise<{ seed: string; climate: Climate; size: PlanetSize; tiles: number }> {
+): Promise<{
+  seed: string;
+  climate: Climate;
+  size: PlanetSize;
+  tiles: number;
+  population: number;
+}> {
   const { rows } = await client.query(
-    `SELECT seed, climate, size, tiles, owner_id FROM bodies
+    `SELECT seed, climate, size, tiles, owner_id, population FROM bodies
      WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
     [bodyId],
   );
@@ -303,7 +366,7 @@ export async function unlockNode(
     if (!availability.available.has(nodeKey)) {
       throw new CommandError(
         'not_available',
-        'Ce nœud n\'existe pas dans l\'ADN tech de cette planète',
+        "Ce nœud n'existe pas dans l'ADN tech de cette planète",
       );
     }
     const { rows: unlocked } = await client.query(
@@ -331,6 +394,7 @@ export async function unlockNode(
       'INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)',
       [bodyId, nodeKey],
     );
+    await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -340,6 +404,74 @@ export async function unlockNode(
   }
 }
 
+/** Valide la recette demandée pour un bâtiment-industrie. */
+async function validateRecipe(
+  client: pg.PoolClient,
+  bodyId: string,
+  buildingKey: BuildingKey,
+  recipe: string | null,
+): Promise<string | null> {
+  const def = BUILDINGS[buildingKey];
+  if (!def.batchesPerDayByLevel) {
+    if (recipe) {
+      throw new CommandError('recipe_invalid', 'Ce bâtiment ne prend pas de recette');
+    }
+    return null;
+  }
+  if (!recipe) {
+    throw new CommandError(
+      'recipe_invalid',
+      'Une industrie mint exactement une chose : choisir la recette à la construction (canon GB §9)',
+    );
+  }
+  if (recipe.startsWith('extract:')) {
+    if (buildingKey !== 'mine' && buildingKey !== 'crystal_extractor') {
+      throw new CommandError('recipe_invalid', 'Seuls mine et crystal_extractor extraient');
+    }
+    const resource = recipe.slice('extract:'.length) as ResourceId;
+    const isBasic = (BASIC_RESOURCES as readonly string[]).includes(resource);
+    const isCrystal = Object.values(CLIMATE_CRYSTAL).includes(
+      resource as (typeof CLIMATE_CRYSTAL)[Climate],
+    );
+    if (buildingKey === 'mine' && !isBasic) {
+      throw new CommandError('recipe_invalid', 'Une mine extrait un matériau de base');
+    }
+    if (buildingKey === 'crystal_extractor' && !isCrystal) {
+      throw new CommandError('recipe_invalid', 'Un extracteur de cristal extrait un cristal');
+    }
+    const { rows: dep } = await client.query(
+      'SELECT amount_t FROM deposits WHERE body_id = $1 AND resource = $2',
+      [bodyId, resource],
+    );
+    if (buildingKey === 'crystal_extractor' && !dep[0]) {
+      throw new CommandError(
+        'recipe_invalid',
+        'Aucun gisement de ce cristal ici (les cristaux ne se minent pas en trace)',
+      );
+    }
+    if (dep[0]) {
+      // Max 1 extracteur par gisement (DG §3.3) — toute instance non démolie.
+      const { rows: taken } = await client.query(
+        `SELECT 1 FROM buildings
+         WHERE body_id = $1 AND recipe = $2 AND status <> 'demolishing' LIMIT 1`,
+        [bodyId, recipe],
+      );
+      if (taken[0]) {
+        throw new CommandError(
+          'deposit_taken',
+          'Ce gisement a déjà son extracteur (max 1 par gisement)',
+        );
+      }
+    }
+    return recipe;
+  }
+  const r = RECIPES[recipe as RecipeId];
+  if (!r || r.extraction || !r.buildings.includes(buildingKey)) {
+    throw new CommandError('recipe_invalid', `Recette invalide pour ${buildingKey}`);
+  }
+  return recipe;
+}
+
 /** Place un bâtiment (GB §18 phase 2) : coût + tuile + chantier + événement. */
 export async function placeBuilding(
   pool: pg.Pool,
@@ -347,7 +479,7 @@ export async function placeBuilding(
   bodyId: string,
   buildingKey: BuildingKey,
   tileIndex: number | null,
-  opts: { nowMs?: number; timeScale?: number } = {},
+  opts: { nowMs?: number; timeScale?: number; recipe?: string | null } = {},
 ): Promise<{ buildingId: string; completesAt: Date }> {
   const nowMs = opts.nowMs ?? Date.now();
   const timeScale = opts.timeScale ?? 1;
@@ -358,7 +490,10 @@ export async function placeBuilding(
     await client.query('BEGIN');
     const planet = await loadOwnedPlanet(client, playerId, bodyId);
     if (planet.tiles === 0) {
-      throw new CommandError('unbuildable', 'Monde toxique : aucune tuile constructible (canon GB §3)');
+      throw new CommandError(
+        'unbuildable',
+        'Monde toxique : aucune tuile constructible (canon GB §3)',
+      );
     }
     const { rows: unlocked } = await client.query(
       'SELECT 1 FROM tech_unlocks WHERE body_id = $1 AND node_key = $2',
@@ -397,20 +532,103 @@ export async function placeBuilding(
         throw new CommandError('max_instances', `Maximum ${def.maxInstances} instances`);
       }
     }
+    const recipe = await validateRecipe(client, bodyId, buildingKey, opts.recipe ?? null);
+
+    // Workforce par défaut : 0,7 × optimal si la population le permet
+    // [TUNE — réglable ensuite ; le point idéal E(0,7) = 1].
+    let workforce = 0;
+    if (def.batchesPerDayByLevel) {
+      const { rows: wf } = await client.query(
+        'SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings WHERE body_id = $1',
+        [bodyId],
+      );
+      const assignable = Math.floor(
+        (planet.population ?? 0) * WORKFORCE_ASSIGNABLE_SHARE,
+      );
+      workforce = Math.max(
+        0,
+        Math.min(
+          Math.round(0.7 * WORKFORCE_OPTIMAL_BY_LEVEL[0]),
+          assignable - wf[0].assigned,
+        ),
+      );
+    }
+
     await payCost(client, bodyId, planet.climate, def.placementCost, nowMs);
     const buildMs =
       (BUILD_HOURS_BY_LEVEL[0] * 3_600_000) / Math.max(timeScale, 1e-9);
     const completesAt = new Date(nowMs + buildMs);
     const { rows: created } = await client.query<{ id: string }>(
-      `INSERT INTO buildings (body_id, key, level, tile_index, status, completes_at)
-       VALUES ($1, $2, 1, $3, 'constructing', $4) RETURNING id`,
-      [bodyId, buildingKey, tileIndex, completesAt],
+      `INSERT INTO buildings (body_id, key, level, tile_index, status,
+          completes_at, recipe, workforce)
+       VALUES ($1, $2, 1, $3, 'constructing', $4, $5, $6) RETURNING id`,
+      [bodyId, buildingKey, tileIndex, completesAt, recipe, workforce],
     );
     await enqueue(client, 'construction_complete', completesAt, {
       buildingId: created[0]!.id,
     });
+    await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
     return { buildingId: created[0]!.id, completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Réglages d'un bâtiment : workforce et % de cadence (GB §9/§10). */
+export async function setBuildingSettings(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  settings: { workforce?: number; runPct?: number },
+  nowMs = Date.now(),
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, workforce, run_pct FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+
+    const workforce = settings.workforce ?? rows[0].workforce;
+    const runPct = settings.runPct ?? rows[0].run_pct;
+    if (
+      !Number.isInteger(workforce) ||
+      workforce < 0 ||
+      !Number.isInteger(runPct) ||
+      runPct < 0 ||
+      runPct > 100
+    ) {
+      throw new CommandError('workforce_invalid', 'Réglages invalides');
+    }
+    const { rows: wf } = await client.query(
+      `SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings
+       WHERE body_id = $1 AND id <> $2`,
+      [bodyId, buildingId],
+    );
+    const assignable = Math.floor(
+      (planet.population ?? 0) * WORKFORCE_ASSIGNABLE_SHARE,
+    );
+    if (wf[0].assigned + workforce > assignable) {
+      throw new CommandError(
+        'workforce_invalid',
+        `Workforce assignable dépassée (${wf[0].assigned + workforce}/${assignable} — max 60 % de la population)`,
+      );
+    }
+    await client.query(
+      'UPDATE buildings SET workforce = $2, run_pct = $3 WHERE id = $1',
+      [buildingId, workforce, runPct],
+    );
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

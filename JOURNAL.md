@@ -1306,3 +1306,47 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
 - La production/industrie n'existe pas encore (chunk E) : stocks à taux 0.
 - Détail planète réservé au propriétaire ; l'intel télescope à niveaux
   (L1–L3) viendra en P3.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk E — la boucle colonie vivante
+
+### Réalisé
+- `sim/production.ts` (PUR) : potentiel par industrie = base(niveau) ×
+  E(workforce/optimal) × runPct × E_planet×G × frein§3.3b ; extraction sur
+  gisement (max 1, tarissement définitif) ; minage de trace 2 T/j EXEMPT
+  d'efficacité ; point fixe déterministe de partage des arrivages quand un
+  intrant est à sec (≤ 8 itérations, ordre stable) ; consommation de survie
+  par familles (food_1→3, med_1→3) ; facteurs limitants explicites.
+- `sim/rebase.ts` : matérialisation + écriture des taux + replanification
+  du bord le plus proche (zéro-cross de stock, seuils 0.7/0.85/1.0 du
+  frein, tarissement) + garantie d'un pop_daily par monde habité.
+- Handlers : stock_edge, deposit_dry (0 pour toujours), pop_daily (H depuis
+  les saturations, maladie, ΔP logistique, re-planification), activation/
+  démolition rebasent.
+- Commandes : recette obligatoire à la pose pour les industries (validée :
+  bâtiment/ressource/gisement/max-1/trace), workforce par défaut 0,7 ×
+  optimal si la population le permet [TUNE], PATCH réglages (workforce ≤
+  60 % pop, runPct 0–100), unlock/build rebasent.
+- Client : RecipePicker (gisements d'abord, trace ensuite ; cristaux jamais
+  en trace), débits colorés par ressource, date de tarissement projetée,
+  BuildingPanel (facteur limitant lisible, courbe E(u) de l'unité,
+  réglages), clic-tuile → panneau du bâtiment.
+
+### Approximations documentées (à revalider en tour d'équilibrage)
+- Frein §3.3b en constantes par morceaux (recalcul aux seuils) ;
+- saturation de survie évaluée à la matérialisation quotidienne ;
+- partage au prorata des demandes quand un intrant est à sec.
+
+### Vérifications
+- 22 tests unitaires production (nominal, understaffed, dry, trace, brake,
+  halt, cascade des familles, point fixe demi-cadence) ; intégration 32/32
+  dont boucle colonie 6 (activation par événement → +9,5 T/j ; runPct 0 ;
+  refus workforce ; max-1-extracteur ; tarissement à l'échéance exacte —
+  stock figé ≈ gisement initial ; nourri +24 hab/j vs famine 0 ; rattrapage
+  hors-ligne stepped == direct à 1e-6) ; E2E 5/5 (nouveau parcours : recette
+  → pose → production visible +9,6/j → panneau → cadence 50 % → +4,8/j).
+  Captures 09–12 observées : conformes (débits verts/rouges, « dry on »,
+  « Running clean », curve u=70 %). Vidéo envoyée au responsable.
+- Correctif d'infrastructure de test : base atg_test TRONQUÉE par fichier
+  (l'ancrage du voisin fuyait entre fichiers de test).

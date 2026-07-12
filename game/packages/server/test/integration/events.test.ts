@@ -121,7 +121,12 @@ describe("file d'événements (DG §1)", () => {
 
   it('un kind sans handler reste en file et est signalé en échec', async () => {
     await pool.query('DELETE FROM events WHERE processed_at IS NULL');
-    await enqueue(pool, 'stock_edge', new Date(Date.now() - 1000), {});
+    await enqueue(
+      pool,
+      'unknown_kind' as Parameters<typeof enqueue>[1],
+      new Date(Date.now() - 1000),
+      {},
+    );
     const r = await processDueEvents(pool, baseHandlers());
     expect(r.failed).toBe(1);
     const { rows } = await pool.query(

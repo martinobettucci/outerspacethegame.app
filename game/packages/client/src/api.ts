@@ -16,7 +16,7 @@ export interface ApiError {
 }
 
 async function call<T>(
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PATCH',
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -73,6 +73,11 @@ export interface PlanetBuilding {
   status: 'constructing' | 'active' | 'demolishing';
   completesAt: string | null;
   recipe: string | null;
+  workforce: number;
+  runPct: number;
+  effBatchesPerDay: number | null;
+  workforceU: number | null;
+  limiting: string | null;
 }
 
 export interface PlanetDetail {
@@ -87,11 +92,21 @@ export interface PlanetDetail {
   isStarter: boolean;
   population: number;
   popCap: number;
+  illness: number;
   planetEfficiency: number;
   storageUsedT: number;
   storageCapT: number;
-  stock: Record<string, number>;
-  deposits: { resource: string; remainingT: number; initialT: number }[];
+  storageU: number;
+  workforceAssigned: number;
+  workforceAssignable: number;
+  stock: Record<string, { amount: number; ratePerDay: number }>;
+  deposits: {
+    resource: string;
+    remainingT: number;
+    initialT: number;
+    ratePerDay: number;
+    dryAt: string | null;
+  }[];
   buildings: PlanetBuilding[];
   tech: {
     available: TechNodeKey[];
@@ -122,10 +137,25 @@ export const api = {
   planet: (id: string) => call<PlanetDetail>('GET', `/planets/${id}`),
   unlock: (planetId: string, node: TechNodeKey) =>
     call<{ ok: true }>('POST', `/planets/${planetId}/unlock`, { node }),
-  build: (planetId: string, building: BuildingKey, tileIndex: number | null) =>
+  build: (
+    planetId: string,
+    building: BuildingKey,
+    tileIndex: number | null,
+    recipe: string | null,
+  ) =>
     call<{ buildingId: string; completesAt: string }>(
       'POST',
       `/planets/${planetId}/build`,
-      { building, tileIndex },
+      { building, tileIndex, recipe },
+    ),
+  setBuildingSettings: (
+    planetId: string,
+    buildingId: string,
+    settings: { workforce?: number; runPct?: number },
+  ) =>
+    call<{ ok: true }>(
+      'PATCH',
+      `/planets/${planetId}/buildings/${buildingId}`,
+      settings,
     ),
 };

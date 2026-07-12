@@ -64,7 +64,7 @@ export function computeCardStates(planet: PlanetDetail): CardState[] {
   const enough = (cost: CostBundle) =>
     Object.entries(cost).every(([res, qty]) => {
       const key = res === 'crystal_any' ? `crystal_${planet.climate}` : res;
-      return (planet.stock[key] ?? 0) >= (qty ?? 0);
+      return (planet.stock[key]?.amount ?? 0) >= (qty ?? 0);
     });
 
   return (Object.keys(BUILDINGS) as BuildingKey[]).map((key) => {

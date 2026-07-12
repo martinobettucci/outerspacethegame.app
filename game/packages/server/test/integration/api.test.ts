@@ -126,7 +126,7 @@ describe('planète : lecture et autorisations (CLAUDE.md §10)', () => {
     expect(res.statusCode).toBe(200);
     const p = res.json();
     expect(p.tiles).toBeGreaterThanOrEqual(10);
-    expect(p.stock.ore).toBeGreaterThan(0);
+    expect(p.stock.ore.amount).toBeGreaterThan(0);
     expect(p.deposits.length).toBeGreaterThanOrEqual(7);
     expect(p.tech.available).toContain('telescope');
     expect(p.tech.available).toContain('colony_program');
@@ -155,7 +155,7 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
         headers: { cookie: cookieA },
       })
     ).json();
-    const oreBefore = before.stock.ore as number;
+    const oreBefore = before.stock.ore.amount as number;
 
     const unlock = await app.inject({
       method: 'POST',
@@ -181,7 +181,7 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
       })
     ).json();
     // depot : unlock 10 ore + placement 10 ore (arrondi via règle 50 %).
-    expect(after.stock.ore).toBeLessThan(oreBefore);
+    expect(after.stock.ore.amount).toBeLessThan(oreBefore);
     const depot = after.buildings.find((b: { key: string }) => b.key === 'depot');
     expect(depot.status).toBe('constructing');
     expect(depot.tileIndex).toBe(0);

@@ -22,6 +22,7 @@ import {
   CommandError,
   placeBuilding,
   planetDetail,
+  setBuildingSettings,
   unlockNode,
 } from '../services/planets.js';
 
@@ -48,6 +49,11 @@ const unlockSchema = z.object({
 const buildSchema = z.object({
   building: z.enum(ALL_BUILDING_KEYS as [BuildingKey, ...BuildingKey[]]),
   tileIndex: z.number().int().nullable(),
+  recipe: z.string().max(64).nullable().optional(),
+});
+const settingsSchema = z.object({
+  workforce: z.number().int().min(0).optional(),
+  runPct: z.number().int().min(0).max(100).optional(),
 });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
@@ -63,6 +69,9 @@ const COMMAND_HTTP: Record<CommandError['code'], number> = {
   max_instances: 409,
   insufficient_resources: 409,
   unbuildable: 409,
+  recipe_invalid: 400,
+  deposit_taken: 409,
+  workforce_invalid: 400,
 };
 
 /**
@@ -241,12 +250,32 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         id,
         parsed.data.building,
         parsed.data.tileIndex,
-        { timeScale: deps.config.TIME_SCALE },
+        { timeScale: deps.config.TIME_SCALE, recipe: parsed.data.recipe ?? null },
       );
       return {
         buildingId: result.buildingId,
         completesAt: result.completesAt.toISOString(),
       };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.patch('/planets/:id/buildings/:buildingId', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, buildingId } = req.params as { id: string; buildingId: string };
+    const parsed = settingsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid_input' });
+    }
+    try {
+      await setBuildingSettings(deps.pool, player.id, id, buildingId, parsed.data);
+      return { ok: true };
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

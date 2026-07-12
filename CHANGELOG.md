@@ -4,6 +4,18 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Boucle colonie vivante (chunk E)** : cœur de production pur et
+  déterministe (extraction ×E×runPct×frein, recettes, point fixe de
+  partage des intrants à sec, minage de trace exempt, consommation de
+  survie par familles) ; rebase aux événements de bord (stock_edge aux
+  seuils 0.7/0.85/1.0 du frein, deposit_dry DÉFINITIF, pop_daily
+  quotidien : H, maladie, croissance logistique) ; recette obligatoire à
+  la pose (canon « une industrie mint une chose »), max 1 extracteur par
+  gisement, workforce ≤ 60 % pop, réglages workforce/cadence par bâtiment ;
+  UI : choix de recette, débits +/− par ressource, date de tarissement
+  projetée, panneau bâtiment (facteur limitant, courbe, réglages) ;
+  rattrapage hors-ligne prouvé (zéro dérive). TIME_SCALE documenté
+  (instrumentation dev/test).
 - **Tranche verticale jouable (chunk D)** : API de jeu (register/login/
   logout avec sessions httpOnly hachées, /me, /galaxy avec brouillard par
   scope, /planets/:id lazy-évalué réservé au propriétaire, unlock/build

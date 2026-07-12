@@ -11,8 +11,11 @@ import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
+import { BUILDINGS } from '@atg/shared';
 import { CardHand, type CardAction } from '../components/CardHand.tsx';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
+import { RecipePicker } from '../components/RecipePicker.tsx';
+import { BuildingPanel } from '../components/BuildingPanel.tsx';
 import {
   buildingClimateOverlay,
   buildingSprite,
@@ -47,10 +50,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const boardRef = useRef<Container | null>(null);
   const [planet, setPlanet] = useState<PlanetDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCard, setSelectedCard] = useState<BuildingKey | null>(null);
+  const [selectedCard, setSelectedCard] = useState<{
+    building: BuildingKey;
+    recipe: string | null;
+  } | null>(null);
+  const [recipePickerFor, setRecipePickerFor] = useState<BuildingKey | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const selectedCardRef = useRef<BuildingKey | null>(null);
+  const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
+  const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
+  selectBuildingRef.current = (id: string) => setSelectedBuildingId(id);
 
   const refresh = useCallback(async () => {
     try {
@@ -73,7 +83,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
       const card = selectedCardRef.current;
       if (!card) return;
       try {
-        await api.build(planetId, card, tileIndex);
+        await api.build(planetId, card.building, tileIndex, card.recipe);
         setNotice(t.planet.buildSuccess);
         setSelectedCard(null);
         await refresh();
@@ -168,7 +178,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
       tile.eventMode = 'static';
       tile.cursor = 'pointer';
       tile.on('pointertap', () => {
-        if (selectedCardRef.current && !byTile.has(index)) void placeAt(index);
+        const existing = byTile.get(index);
+        if (selectedCardRef.current && !existing) void placeAt(index);
+        else if (existing) selectBuildingRef.current(existing.id);
       });
       tile.on('pointerover', () => {
         tile.tint = selectedCardRef.current && !byTile.has(index) ? 0xd9cf4a : 0x9db4e8;
@@ -323,6 +335,40 @@ export function PlanetView({ planetId }: { planetId: string }) {
           </p>
         )}
 
+        {recipePickerFor && (
+          <RecipePicker
+            planet={planet}
+            building={recipePickerFor}
+            onPick={(recipe) => {
+              setSelectedCard({ building: recipePickerFor, recipe });
+              setRecipePickerFor(null);
+            }}
+            onCancel={() => setRecipePickerFor(null)}
+          />
+        )}
+        {selectedBuildingId &&
+          (() => {
+            const b = planet.buildings.find((x) => x.id === selectedBuildingId);
+            if (!b) return null;
+            return (
+              <BuildingPanel
+                building={b}
+                workforceAssignable={planet.workforceAssignable}
+                workforceAssigned={planet.workforceAssigned}
+                onClose={() => setSelectedBuildingId(null)}
+                onApply={async (settings) => {
+                  try {
+                    await api.setBuildingSettings(planetId, b.id, settings);
+                    setNotice(t.planet.settingsSaved);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+              />
+            );
+          })()}
+
         {/* Panneau stats (droite) */}
         <aside
           style={{
@@ -400,9 +446,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
               </caption>
               <tbody>
                 {Object.entries(planet.stock)
-                  .filter(([, v]) => v > 0)
+                  .filter(([, v]) => v.amount > 0.5 || Math.abs(v.ratePerDay) > 0.01)
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([res, qty]) => (
+                  .map(([res, v]) => (
                     <tr key={res}>
                       <td style={{ color: 'var(--text-secondary)', paddingRight: 10 }}>
                         {res.replace('_', ' ')}
@@ -414,7 +460,24 @@ export function PlanetView({ planetId }: { planetId: string }) {
                           color: res === 'fuel_cells' ? 'var(--accent-200)' : undefined,
                         }}
                       >
-                        {qty.toFixed(0)} T
+                        {v.amount.toFixed(0)} T
+                      </td>
+                      <td
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          textAlign: 'right',
+                          paddingLeft: 8,
+                          color:
+                            v.ratePerDay > 0.01
+                              ? 'var(--success-500)'
+                              : v.ratePerDay < -0.01
+                                ? 'var(--danger-500)'
+                                : 'var(--text-disabled)',
+                        }}
+                      >
+                        {v.ratePerDay > 0 ? '+' : ''}
+                        {v.ratePerDay.toFixed(1)}
+                        {t.planet.perDay}
                       </td>
                     </tr>
                   ))}
@@ -437,6 +500,21 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                       {Math.round(d.remainingT).toLocaleString('en-US')} T
                     </td>
+                    <td
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        textAlign: 'right',
+                        paddingLeft: 8,
+                        fontSize: 10,
+                        color: d.dryAt ? 'var(--warning-500)' : 'var(--text-disabled)',
+                      }}
+                    >
+                      {d.dryAt
+                        ? `${t.planet.dryOn} ${new Date(d.dryAt).toLocaleDateString('en-US')}`
+                        : d.ratePerDay < 0
+                          ? `${d.ratePerDay}${t.planet.perDay}`
+                          : ''}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -447,7 +525,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
 
       <CardHand
         planet={planet}
-        selectedCard={selectedCard}
+        selectedCard={selectedCard?.building ?? null}
         onAction={async (action: CardAction) => {
           if (action.kind === 'unlock') {
             try {
@@ -457,8 +535,13 @@ export function PlanetView({ planetId }: { planetId: string }) {
             } catch (err) {
               setNotice((err as ApiError).message ?? t.errors.generic);
             }
+          } else if (selectedCard?.building === action.building) {
+            setSelectedCard(null);
+          } else if (BUILDINGS[action.building].batchesPerDayByLevel) {
+            // Une industrie mint exactement une chose : recette d'abord.
+            setRecipePickerFor(action.building);
           } else {
-            setSelectedCard((c) => (c === action.building ? null : action.building));
+            setSelectedCard({ building: action.building, recipe: null });
           }
         }}
       />

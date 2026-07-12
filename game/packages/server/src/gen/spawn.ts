@@ -27,6 +27,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { rollName, rollStar, rollStarterPlanet, rollPlanet } from './rolls.js';
+import { recomputePlanetRates } from '../sim/rebase.js';
 
 /** Contraintes de la poche. [TUNE] DG §2.2 */
 export const POCKET_MIN_ISOLATION_PC = 150;
@@ -317,6 +318,10 @@ export async function spawnStarterSystem(
      VALUES ($1, $2, 'pilot', 'common', $3) RETURNING id`,
     [opts.playerId, people, JSON.stringify({ settler_risk_reduction: statRoll })],
   );
+
+  // Rebase initial : matérialise les taux (zéro) et planifie le premier
+  // pop_daily du monde habité.
+  await recomputePlanetRates(client, starterPlanetId, now);
 
   return {
     starterPlanetId,

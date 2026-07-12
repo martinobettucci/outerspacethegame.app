@@ -13,6 +13,7 @@ const chromiumPath = ['/opt/pw-browsers/chromium', '/usr/bin/chromium'].find(
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './global-setup.ts',
   fullyParallel: false,
   retries: 0,
   reporter: [['list']],
@@ -27,10 +28,11 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'pnpm --filter @atg/server dev:api',
+      // TIME_SCALE : instrumentation de test (6 h de chantier → 3 s).
+      command: 'TIME_SCALE=7200 pnpm --filter @atg/server dev:api',
       cwd: '../..',
       url: 'http://localhost:8080/health',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 30_000,
     },
     {
