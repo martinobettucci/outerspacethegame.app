@@ -326,10 +326,12 @@ Per-building configuration includes:
     (mediation).
 - **The full-diplomatic sanctuary (canon).** If **every governor of a planet
   is a Diplomat** (1 on medium, all 3 on large), **hostilities cannot be
-  initiated there** — no combat may be started in its orbit or on its ground,
-  and it **cannot be conquered**; it changes hands only by trade. The price:
-  the intersection mask forecloses the military branch forever, and the
-  governor commitment is permanent.
+  initiated ON the planet** — its ground and its docks; the **hover band
+  stays normal space** (no third-party fleet ever parks under sanctuary
+  protection). It **cannot be conquered**; it changes hands only by trade.
+  The price: the intersection mask forecloses the military branch — and
+  market L2+ — forever, and the governor commitment is permanent: sanctuaries
+  are mediation grounds, never AMM hubs.
 - **Same-type stacking (canon).** Installing **several governors of the same
   archetype stacks their planetary stat advantages** — a triple-Mercantile
   large is a deeper merchant world, a triple-Militarist a harder fortress.

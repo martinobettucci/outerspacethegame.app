@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.9** — governance specializations, full-diplo sanctuary, NPC stat rolls (owner) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.9.1** — round-8 governance patches (sanctuary = ground truce) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -255,17 +255,40 @@ is never politics-gated). [TUNE: exact matrix lives in data.]
   - Civic *haven world*: illness decay **×2**; settler accident risk **÷2**
     on departure AND arrival legs; **zero landing wear for all visitors**.
   - Diplomatic *neutral ground*: docking + trading **without established
-    contact** (no ping-back needed — localized exception); hosts
+    contact** (no ping-back needed — localized exception) — **waives the
+    contact requirement, never the owner's blacklist** (default-open,
+    ban-capable; round-7 dwell/eviction apply unchanged); hosts
     **multi-party chat channels** (mediation).
-- **Full-diplomatic sanctuary:** ALL governors Diplomats (1/medium, 3/large)
-  ⇒ **no hostile action can be initiated in the planet's orbit or ground**,
-  and the planet is **unconquerable** (changes hands by trade only). Ships
-  become attackable again the moment they leave the sanctuary zone. Cost:
-  military branch foreclosed forever + full permanent-governor commitment.
-- **Same-type stacking:** N governors of the same archetype **stack the
-  archetype's planetary stat advantages** (privilege magnitudes scale; e.g.
-  forge-world −25% → −40% → −50% at ×2/×3 [TUNE]; sanctuary requires
-  full-diplo regardless).
+- **Full-diplomatic sanctuary (round 8 — ground truce, never an orbital
+  umbrella):** ALL governors Diplomats (1/medium, 3/large) ⇒ **no hostile
+  action can be initiated on the planet** — its ground, and ships **docked
+  with landing rights** (Combat hulls dock only with explicit owner grant;
+  no-contact docking is for Cargo/Civil). **The hover band is normal space:**
+  hovering ships, whoever owns them, are engageable — no third-party fleet
+  ever parks under sanctuary protection; undocking re-enters normal space
+  immediately. Sanctuary zone = ground + docks only [TUNE]. The planet is
+  **unconquerable** (changes hands by trade only). Costs: military branch
+  foreclosed forever + full permanent-governor commitment — **and the mask
+  forecloses market L2+ (Mercantile-gated): sanctuaries are mediation grounds
+  and manual-channel bazaars, never AMM hubs. This asymmetry is the balance —
+  do not "fix" it.** Fencing stolen goods there is politics, not a bug.
+  **[PENDING OWNER — round-8 F1d]:** additionally requiring a
+  **diplomatic_district L3** to activate sanctuary (earned status, ~cost of a
+  defense package) — else one Rare diplomat makes any mining medium
+  unconquerable forever and re-opens plunder-proofing.
+- **Same-type stacking (round-8 formula):** magnitude(N same-type) =
+  base × {1, 1.6, 2.0} [TUNE]. Per archetype: Militarist production interval
+  ×0.85/×0.75 (rate stack — NOT extra queues, preserves M7 siege math);
+  Industrialist −25/−40/−50% on **durations only (build/retool/queue), never
+  batches/day**, instant retool ≤ 1 switch/24 h; Civic illness decay
+  ×2/×2.5/×3, settler risk ÷2/÷3/÷4; Mercantile daily limits +0/50/100%;
+  Diplomatic +10 pings & +2 share slots per extra; Scientific **intel bonus
+  hard-capped at +1 tier** (extras give unlock −5% each, inside the −50%
+  research cap). **Permission privileges never stack** (ops, no-contact,
+  wear-waiver); sanctuary requires full-diplo regardless.
+- **Privilege magnitudes are archetype CONSTANTS** — never scaled by a
+  governor's individual stat roll (a 1.5× Legendary Industrialist is still
+  −25%); the G +2%/tier term uses rarity tier only, not the roll [round 8].
 
 ### 4.2 NPC roles
 Roles: **pilot**, **engineer**, **merchant**, **diplomat**, **soldier**,
