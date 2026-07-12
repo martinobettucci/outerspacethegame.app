@@ -59,14 +59,14 @@
 - [x] **Balance Round 4 — content breadth**: 2 campaigns (économie + militaire), 15 constats, tous patchés → DESIGN_GUIDE v0.4 (fees en bp, cap remises −50%, coûts T2+ complets, matrice de ciblage unités, slots de garnison pondérés, HP bâtiments ×10, turret_light apolitique, règle boucliers climat) ; moniteurs M6–M7 ajoutés
 - [x] **Balance Round 6 — warehouse & planchers fongibles** : CLOS (guide v0.7) — franchise de base S 800/M 1000/L 1200 T (obligatoire : starter sur-plafond au spawn sinon), frein unilatéral (jamais punir le stock bas), docks 2S/+2M/+2L, impound trahison d'allié, ventes avec équipage auto-libéré, doctrine anti-raid par gate ; moniteurs M9–M10 ; slot L au tampon : TRANCHÉ session 22 (aucun L gratuit — la production lourde exige un warehouse)
 - [x] **Balance Round 7 — topologie de marché & canal manuel** : VIABLE (guide v0.8) — étoile-cellules physiquement obligatoire, triade d'hospitalité, anti-DoS docks (dwell 24 h + browse orbital allié), rate-limit d'offres, census global uniquement
-- [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
+- [x] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — écrit ET appliqué (001_baseline.sql, vérifié par tests d'intégration sur vraie base)
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria
 
 ## P1 — Fondations techniques (**GO responsable donné le 2026-07-12** — JOURNAL session 30)
 
 - [~] Monorepo/app scaffolding + containerized dev env (Compose: Postgres, API, worker, client; runDev/runStaging/runProd) → GB §1; DAT §2/§6 — dev opérationnel et vérifié (build + unit + intégration + E2E + captures observées) ; **reste : Compose staging/prod** (avec le premier déploiement)
-- [ ] Migrations framework + baseline schema from docs/SCHEMA.md + PROD_MIGRATIONS.md → GB §1; DAT §3
-- [ ] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1
+- [~] Migrations framework + baseline schema from docs/SCHEMA.md + PROD_MIGRATIONS.md → GB §1; DAT §3 — runner transactionnel + 001_baseline appliqué + PROD_MIGRATIONS créé ; tests intégration OK ; preuve E2E complète au premier parcours P2
+- [~] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; reste : preuve E2E offline catch-up (P2)
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2
 - [ ] Policy/instruction engine core (declarative rulesets + evaluator; manual-first override; stackable conditions; predefined strategy library) → GB §15; DG §9.2/§3.5
 - [ ] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18

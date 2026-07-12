@@ -1177,3 +1177,43 @@ P1 est officiellement entamé sur la branche de session
 Prochain chunk : noyau de simulation déterministe (schéma baseline, file
 d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
 `@atg/shared`.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk B — noyau de simulation + catalogue
+
+### Réalisé
+- **Schéma baseline** (001_baseline.sql) : players/sessions, bodies (planètes
+  + étoiles avec stock caché et R_nova), deposits & planet_stock en modèle
+  lazy (amount, rate_per_day, as_of), buildings (1 tuile = contrainte UNIQUE,
+  statuts constructing/active/demolishing), tech_unlocks, npcs (stat_rolls
+  individuels), ships, events. docs/SCHEMA.md (conventions et pourquoi) +
+  PROD_MIGRATIONS.md (contrat §12, baseline « jamais déployé »).
+- **Sim core** : evalLazy/whenReaches/rebase (pur, borné min/max) ; file
+  d'événements avec réclamation FOR UPDATE SKIP LOCKED, transaction par lot,
+  handlers idempotents (construction/demolition), garde anti-boucle sur
+  handlers manquants ; worker branché sur TICK_MS.
+- **Catalogue COMPLET @atg/shared** : 30 ressources (ids = clés d'assets),
+  28 bâtiments, 6 unités sol, 9+2 coques, 16 recettes, 9 items, arbre tech
+  35 nœuds avec masque de seed (95/80/55/30/12 %) + élagage DAG + masques
+  de gouvernance par intersection. Formules §3.2/§3.3b/§3.4 + RNG sfc32
+  cyrb128 (bit-identique tous moteurs JS).
+
+### Décisions/écarts (visibles, en attente d'équilibrage)
+- `CostBundle.crystal_any` : les coûts « crystal » du catalogue s'acquittent
+  dans le cristal climatique de la planète payeuse (résolution au paiement).
+- TUNE_GAPS (buildings.ts) : coûts de montée de niveau génériques L2=3×/
+  L3=6× placement (ratio du ladder depot) là où le guide ne chiffre pas ;
+  spaceport/market L3 = double du nœud L2 chiffré ; scanner coûté.
+- TECH_TUNE_GAPS (techtree.ts) : arêtes de prérequis proposées (le guide ne
+  livrait pas le graphe) ; plafond de profondeur L1/L2/L3 = 20/30/50 %.
+- Correction de robustesse pendant les tests : fuite de client Postgres sur
+  lot vide (break sautait release) → restructuré en finally ; test de
+  concurrence 2 processeurs × SKIP LOCKED = exactement-une-fois vérifié.
+
+### Vérifications
+- shared : 34/34 (déterminisme RNG, propriétés E(u), complétude 30/28/6/9,
+  DAG acyclique, jamais-masqués, élagage sur 200 seeds, intersection des
+  masques). server : 8/8 unit (lazy, health) + 7/7 intégration vraie base
+  (migrations idempotentes, file d'événements, idempotence, concurrence,
+  kind sans handler signalé). Builds tsc verts.

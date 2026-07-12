@@ -1,41 +1,33 @@
 /**
- * Tick worker — squelette (chunk A). La boucle réelle de traitement de la
- * file d'événements arrive avec le noyau de simulation (chunk B) ; ce
- * processus vérifie déjà la connexion et bat au rythme configuré, pour que
- * `runDev` lance la topologie complète dès maintenant.
+ * Tick worker — avance la simulation en traitant la file d'événements
+ * (DG §1). Cadence de réveil = TICK_MS (60 s canon ; abaissable en dev/E2E).
+ * Plusieurs workers peuvent tourner : FOR UPDATE SKIP LOCKED partitionne.
  */
 import { config } from '../config.js';
 import { createPool } from '../db/pool.js';
+import { processDueEvents } from '../sim/events.js';
+import { baseHandlers } from '../sim/handlers.js';
 
 const pool = createPool();
+const handlers = baseHandlers();
 let running = true;
 
-console.log(
-  JSON.stringify({
-    level: 'info',
-    service: 'tick-worker',
-    msg: 'démarrage',
-    tickMs: config.TICK_MS,
-  }),
-);
+const log = (level: 'info' | 'error', msg: string, extra: object = {}) =>
+  console.log(
+    JSON.stringify({ level, service: 'tick-worker', msg, ...extra }),
+  );
 
-async function heartbeat(): Promise<void> {
-  await pool.query('SELECT 1');
-}
+log('info', 'démarrage', { tickMs: config.TICK_MS });
 
 while (running) {
   const started = Date.now();
   try {
-    await heartbeat();
+    const { processed, failed } = await processDueEvents(pool, handlers);
+    if (processed > 0 || failed > 0) {
+      log('info', 'tick', { processed, failed, ms: Date.now() - started });
+    }
   } catch (err) {
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        service: 'tick-worker',
-        msg: 'base injoignable',
-        err: String(err),
-      }),
-    );
+    log('error', 'échec du tick', { err: String(err) });
   }
   const elapsed = Date.now() - started;
   await new Promise((r) => setTimeout(r, Math.max(0, config.TICK_MS - elapsed)));

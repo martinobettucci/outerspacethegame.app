@@ -4,6 +4,21 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Noyau de simulation (chunk B)** : schéma baseline PostgreSQL
+  (001_baseline.sql — joueurs/sessions, corps, gisements, stock lazy,
+  bâtiments, unlocks, NPC, vaisseaux, file d'événements) + docs/SCHEMA.md +
+  PROD_MIGRATIONS.md ; évaluation paresseuse (value, rate, t0) ; file
+  d'événements SKIP LOCKED idempotente (concurrence testée) ; worker qui
+  traite les échéances ; RNG seedé de génération (SeededStream, flux par
+  label).
+- **Catalogue de contenu COMPLET dans @atg/shared** (règle de complétude) :
+  30 ressources, 28 bâtiments (coûts/niveaux/politiques/effets), 6 unités
+  sol + cartes, 9 coques + personnel + sonde, 16 recettes + 9 items dérivés,
+  arbre tech 35 nœuds (DAG, masque de seed, masques de gouvernance) ;
+  formules E(u)/frein §3.3b/population/maladie ; écarts non chiffrés par le
+  guide listés visiblement (TUNE_GAPS / TECH_TUNE_GAPS).
+- Vérifié : 34 tests shared + 8 unit / 7 intégration serveur (vraie base).
+
 - Décisions P0.4 tranchées et documentées (JOURNAL session 30, DAT §2) :
   tick worker en **TypeScript (Node 22)** ; renderer isométrique **PixiJS v8**
   (validation micro-prototype de la passe de lumière à venir).
