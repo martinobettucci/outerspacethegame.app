@@ -34,11 +34,36 @@ def _label_block(lines, colors, scale=1):
         tmp = tmp.resize((tmp.width * scale, tmp.height * scale), Image.NEAREST)
     return tmp
 
-def stub(relpath, w, h, label, desc, overlay=False):
-    p = os.path.join(ROOT, relpath); os.makedirs(os.path.dirname(p), exist_ok=True)
+def _to_gif_frames(frames):
+    """RGBA -> frames P avec transparence binaire (alpha<128 = transparent)."""
+    out = []
+    for fr in frames:
+        alpha = fr.getchannel("A")
+        p = fr.convert("RGB").convert("P", palette=Image.ADAPTIVE, colors=255)
+        mask = alpha.point(lambda a: 255 if a < 128 else 0)
+        p.paste(255, mask=mask)
+        p.info["transparency"] = 255
+        out.append(p)
+    return out
+
+def _save(relpath, frames):
+    """PNG statique pour les cartes, GIF animé (2 frames) pour tout le reste."""
+    p = os.path.join(ROOT, relpath)
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    if relpath.startswith("cards/"):
+        frames[0].save(p, optimize=True)
+        return relpath
+    gp = os.path.splitext(p)[0] + ".gif"
+    fr = _to_gif_frames(frames)
+    fr[0].save(gp, save_all=True, append_images=fr[1:], duration=600, loop=0,
+               disposal=2, transparency=255, optimize=False)
+    return os.path.relpath(gp, ROOT)
+
+def _frame_stub(w, h, label, desc, overlay, blink):
     if overlay:
         im = Image.new("RGBA", (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
-        d.rectangle([1, 1, w - 2, h - 2], outline=(217, 207, 74, 140), width=1)
+        col = (217, 207, 74, 220 if blink else 140)
+        d.rectangle([1, 1, w - 2, h - 2], outline=col, width=1)
         for x in range(-h, w, max(24, w // 8)):
             d.line([(x, h), (x + h, 0)], fill=(74, 45, 140, 60), width=1)
         im.alpha_composite(_label_block([f"[OV] {label}"], [ACCENT], scale=max(1, w // 512 + 1)), (4, 4))
@@ -48,26 +73,39 @@ def stub(relpath, w, h, label, desc, overlay=False):
             d.line([(x, h), (x + h, 0)], fill=HATCH, width=1)
         d.rectangle([0, 0, w - 1, h - 1], outline=BORDER, width=max(1, w // 256))
         lines = [f"[STUB] {label}", f"{w}x{h}"] + ([desc[:44]] if w >= 160 else [])
-        block = _label_block(lines, [ACCENT, TXT, STUB][:len(lines)], scale=max(1, w // 512))
+        cols = [ACCENT if not blink else (242, 236, 155, 255), TXT, STUB][:len(lines)]
+        block = _label_block(lines, cols, scale=max(1, w // 512))
         im.alpha_composite(block, ((w - block.width) // 2, (h - block.height) // 2))
-    im.save(p, optimize=True)
-    manifest.append({"file": f"assets/game/{relpath}", "size": f"{w}x{h}", "label": label,
-                     "overlay": overlay, "expected_art": desc})
+    return im
+
+def stub(relpath, w, h, label, desc, overlay=False):
+    saved = _save(relpath, [_frame_stub(w, h, label, desc, overlay, b) for b in (False, True)])
+    manifest.append({"file": f"assets/game/{saved}", "size": f"{w}x{h}", "label": label,
+                     "overlay": overlay, "animated": not relpath.startswith("cards/"),
+                     "expected_art": desc})
+
+def _frame_bump(w, h, phase):
+    im = Image.new("RGBA", (w, h), (128, 128, 128, 255)); d = ImageDraw.Draw(im)
+    g = 168 if not phase else 176
+    d.ellipse([w * .25, h * .25, w * .75, h * .75], fill=(g, g, g, 255))
+    d.rectangle([0, 0, w - 1, h - 1], outline=(96, 96, 96, 255))
+    return im
 
 def bump(relpath, w, h):
-    p = os.path.join(ROOT, relpath)
-    im = Image.new("RGBA", (w, h), (128, 128, 128, 255)); d = ImageDraw.Draw(im)
-    d.ellipse([w * .25, h * .25, w * .75, h * .75], fill=(168, 168, 168, 255))
-    d.rectangle([0, 0, w - 1, h - 1], outline=(96, 96, 96, 255))
-    im.save(p, optimize=True)
+    _save(relpath, [_frame_bump(w, h, b) for b in (False, True)])
 
-def light(relpath, w, h):
-    p = os.path.join(ROOT, relpath)
+def _frame_light(w, h, phase):
+    # GIF: transparence binaire -> intensité portée par la LUMINOSITÉ du pixel
     im = Image.new("RGBA", (w, h), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     for i in range(3):
-        cx = int(w * (0.3 + 0.2 * i)); cy = int(h * (0.4 + 0.15 * (i % 2))); r = max(2, w // 64)
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 255, 255, 230 - 50 * i))
-    im.save(p, optimize=True)
+        cx = int(w * (0.3 + 0.2 * i)); cy = int(h * (0.4 + 0.15 * (i % 2)))
+        r = max(2, w // 64)
+        v = 255 if (i + int(phase)) % 2 == 0 else 190
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(v, v, v, 255))
+    return im
+
+def light(relpath, w, h):
+    _save(relpath, [_frame_light(w, h, b) for b in (False, True)])
 
 def full(relpath, w, h, label, desc):
     stub(relpath, w, h, label, desc, overlay=(".ov." in relpath))
@@ -167,8 +205,8 @@ UNITS = {
 }
 for key, (desc, levels) in UNITS.items():
     for lvl in range(1, levels + 1):
-        full(f"units/unit_{key}_l{lvl}.png", 256, 256, f"UNIT {key} L{lvl}",
-             f"{desc} (level {lvl}), isometric")
+        full(f"units/unit_{key}_l{lvl}.png", 512, 256, f"UNIT {key} L{lvl}",
+             f"{desc} (level {lvl}), placed like a building, isometric")
 
 # ================= PORTRAITS : matrice complète peuples × rôles =================
 # RÈGLE : n'importe quel peuple peut tenir N'IMPORTE QUEL rôle (gouverneur compris).

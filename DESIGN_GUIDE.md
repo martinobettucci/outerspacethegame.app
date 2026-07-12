@@ -505,7 +505,9 @@ gate's planet stock. Factions tolling chokepoints is intended politics.
 | tank_combined | 3 | 50 | 260 | 30 steelL | hits ground AND air |
 
   Upkeep 0.2 cells/day each; garrison cap 2 × tiles (§6). **Turrets and
-  cannons fire on hovering ships at full ATK.**
+  cannons fire on hovering ships at full ATK.** Ground units are **placed on
+  the planet view like buildings** (sprites 512×256, animated GIF) but occupy
+  **no tile** (garrison rule) — placement is visual, the cap is the limit.
 
 ### 10.2 Resolution (at arrival — canon)
 Simultaneous rounds, 1 round = 1 tick:

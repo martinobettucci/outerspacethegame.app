@@ -960,3 +960,11 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 - **Prototypage visuel.** Les prototypes d'interface sont générés via l'API
   OpenAI Images (`OPEN_AI_KEY`, variable d'environnement du cloud worker,
   jamais commitée) et archivés dans `docs/design/prototypes/`.
+- **Règle de complétude (exigence du responsable — non négociable).**
+  Aucun livrable fait « à moitié ». Quand un ensemble est énumérable
+  (bâtiments, unités, upgrades, ressources, props, cas de test…), le livrer
+  **exhaustivement**, ou lister explicitement et visiblement ce qui manque,
+  pourquoi, et quand ce sera couvert. Un « sous-ensemble pragmatique » non
+  annoncé est une faute. Toute valeur ou contenu non testé reste `[TUNE]` et
+  déclenche un tour d'équilibrage/vérification avant d'être considéré fiable.
+  En cas de doute sur le périmètre : demander, jamais réduire en silence.
