@@ -1039,3 +1039,31 @@ d'offres, intel via browse, réserve privée vs census).
 - Ouvert en discussion : spécialisations des gouvernances restantes
   (Industrielle, Scientifique, Civique, Diplomatique) — proposition soumise
   au responsable dans le chat, PAS encore canon.
+
+---
+
+## 2026-07-12 — Session 26 (spécialisations de gouvernance → canon, tour 8 lancé)
+
+### Décisions (responsable : « j'adore tout » + 3 ajouts)
+- **Les 6 privilèges innés adoptés** : Militariste (monopole de guerre),
+  Marchande (trading inné survie+fuel), Industrielle (monde-forge : retool
+  instantané, temps −25 %), Scientifique (regard profond : scans révèlent
+  ADN-tech/gisements/qualité, +1 palier d'intel, vendable), Civique
+  (monde-havre : maladie ÷2, accidents colons ÷2, zéro usure d'atterrissage),
+  Diplomatique (terrain neutre : dock+trade sans contact établi, chats
+  multi-parties).
+- **Sanctuaire full-diplomate** : tous les gouverneurs Diplomates (1/moyenne,
+  3/grande) ⇒ aucune hostilité ne peut être INITIÉE sur la planète (orbite +
+  sol) et elle est INCONQUÉRABLE (ne change de mains que par commerce). Prix :
+  branche militaire à jamais forclose + engagement permanent.
+- **Stacking même archétype** : plusieurs gouverneurs du même type empilent
+  les avantages de stats de la planète (magnitudes croissantes [TUNE]).
+- **Stats individuelles des NPC** : même type/rareté ⇒ boosts différents,
+  tirés au sort à l'ouverture du pod (RNG de génération seedé, canon
+  déterminisme respecté) — baseline de rareté × U(0.5, 1.5) par stat [TUNE].
+
+### Docs
+GAMEBOOK §11/§12 ; DESIGN_GUIDE v0.9 (§4.1, §11.4). Tour 8 lancé :
+parité d'attractivité des 6 privilèges, exploits du sanctuaire (parking de
+flotte immunisé ? hub inattaquable ?), math du stacking, économie des rolls
+de stats (profondeur du gamble des pods).

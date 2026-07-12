@@ -308,6 +308,31 @@ Per-building configuration includes:
   are powerful but hard to steer.
 - **A governance preview** (resulting allow/deny mask before committing) is a
   **required** part of the mechanic, not polish — because the choice is permanent.
+- **Governance specializations (canon).** Beyond its building mask, each
+  archetype grants its planet an **innate privilege**:
+  - **Militarist** — the war monopoly: unit & weapon production, conquest ops.
+  - **Mercantile** — innate trading of survival resources + fuel with a
+    keep-for-self floor (the merchant-planet exception).
+  - **Industrialist** — *forge world*: industry retooling is instant and
+    build/production times are reduced.
+  - **Scientific** — *deep sight*: its telescopes & probes reveal scanned
+    planets' tech-DNA, deposits and quality (+1 intel tier) — intel becomes a
+    sellable good, shareable like telescopes.
+  - **Civic** — *haven world*: illness decays faster, settler accident risk
+    is halved departing AND arriving, visitors take no landing wear.
+  - **Diplomatic** — *neutral ground*: any player may dock and trade WITHOUT
+    established contact (localized exception to ping-back — the Silence
+    breaks *at their table*), and the world hosts multi-party chat channels
+    (mediation).
+- **The full-diplomatic sanctuary (canon).** If **every governor of a planet
+  is a Diplomat** (1 on medium, all 3 on large), **hostilities cannot be
+  initiated there** — no combat may be started in its orbit or on its ground,
+  and it **cannot be conquered**; it changes hands only by trade. The price:
+  the intersection mask forecloses the military branch forever, and the
+  governor commitment is permanent.
+- **Same-type stacking (canon).** Installing **several governors of the same
+  archetype stacks their planetary stat advantages** — a triple-Mercantile
+  large is a deeper merchant world, a triple-Militarist a harder fortress.
 
 ---
 
@@ -315,6 +340,9 @@ Per-building configuration includes:
 
 - NPCs are obtained by **loot boxes** or by **burning an NFT**. Loot boxes yield
   **only NPCs** — nothing else.
+- **Individual stat rolls (canon):** even two NPCs of the same type/rarity
+  carry **different stat boosts, rolled at loot time** — every character is
+  unique; opening pods is a gamble on quality, not just on role.
 - **Characters can be human, robot, or humanoid alien**, and are **he / she /
   androgynous**. **People is purely cosmetic: any people can hold any role —
   including governor.** No race gates any capability, rarity or politics.

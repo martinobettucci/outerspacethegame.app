@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.8.2** — market slots per level + fuel in merchant innate (owner) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.9** — governance specializations, full-diplo sanctuary, NPC stat rolls (owner) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -243,6 +243,29 @@ is never politics-gated). [TUNE: exact matrix lives in data.]
   effective governance mask** (anti poisoned-world sales).
 - **Conquest transfers planet-bound governors with the world** (§10.3) — they
   serve the *world*, not the owner. Permanence is not launderable.
+- **Innate privileges (owner canon, per archetype) [TUNE values]:**
+  - Militarist: unit/weapon production monopoly (§5.1) + conquest ops.
+  - Mercantile: innate survival+fuel trading w/ keep-floor (§11.2).
+  - Industrialist *forge world*: **retool 24 h → instant; build & production
+    times −25%**.
+  - Scientific *deep sight*: telescope/probe scans reveal **tech-DNA branches,
+    deposits and quality** of scanned planets (**+1 intel tier** on §9.2's
+    L1/L2/L3 ladder); scan results are shareable/sellable like telescope
+    shares.
+  - Civic *haven world*: illness decay **×2**; settler accident risk **÷2**
+    on departure AND arrival legs; **zero landing wear for all visitors**.
+  - Diplomatic *neutral ground*: docking + trading **without established
+    contact** (no ping-back needed — localized exception); hosts
+    **multi-party chat channels** (mediation).
+- **Full-diplomatic sanctuary:** ALL governors Diplomats (1/medium, 3/large)
+  ⇒ **no hostile action can be initiated in the planet's orbit or ground**,
+  and the planet is **unconquerable** (changes hands by trade only). Ships
+  become attackable again the moment they leave the sanctuary zone. Cost:
+  military branch foreclosed forever + full permanent-governor commitment.
+- **Same-type stacking:** N governors of the same archetype **stack the
+  archetype's planetary stat advantages** (privilege magnitudes scale; e.g.
+  forge-world −25% → −40% → −50% at ×2/×3 [TUNE]; sanctuary requires
+  full-diplo regardless).
 
 ### 4.2 NPC roles
 Roles: **pilot**, **engineer**, **merchant**, **diplomat**, **soldier**,
@@ -746,6 +769,11 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
 - Contents: **1 NPC** (canon). Rarity: Common 62 / Uncommon 24 / Rare 10 /
   Epic 3.4 / Legendary 0.6 (%) [TUNE]; role uniform; people 60/30/10
   human/Forged/Vess [TUNE]. Governor-grade = Rare+. Bonuses +4%/tier [TUNE].
+- **Individual stat rolls (owner canon):** each NPC rolls its
+  archetype-relevant stat boosts **individually at pod-opening** (seeded
+  generation-moment RNG, §1): boost = rarity-tier baseline × **U(0.5, 1.5)**
+  per stat [TUNE] — two Rare pilots are never equal; pods gamble on quality
+  as well as role/rarity.
 - **Pod-sourced NPCs are account-bound for 60 days** (no trade, auction, or
   NFT mint until aged) [TUNE] — recruitment is a sink, not a mint. **Host
   transfers inherit the strictest account-bind of any bound NPC** (no
