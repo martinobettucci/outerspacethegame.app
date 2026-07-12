@@ -606,3 +606,43 @@ pipeline doc, not GAMEBOOK).
   packing window, §22 star flares below ~5% + harvest attribution.
 - **Round 3:** focused verification of v0.3 patched surfaces (results in
   BALANCE_LOG).
+
+---
+
+## 2026-07-12 — Session 11 (CLAUDE.md registered, repo reconciled to standards)
+
+### Problem
+Owner registered a durable conventions file (CLAUDE.md, in French) and asked to
+reconcile the repo, write the full backlog, and update the design system to a
+"groovy dark" direction (Out There-like, P2Enjoy palette shaded darker, 2D
+sprites over 3D environments), with UI prototypes via OpenAI Images BEFORE
+finalizing. Still preproduction — no app code.
+
+### Decisions & work
+- **CLAUDE.md registered verbatim** + « Spécificités du projet » local block:
+  preproduction status, design-doc precedence (GAMEBOOK > BIBLE > GUIDE),
+  root JOURNAL.md = docs/JOURNAL.md equivalent, mandated session branch as a
+  documented §13 exception, English docs / French commits, dark-theme
+  exception to §4, balancing-sims as the sole subagent exception.
+- **Compliance docs created:** README.md (status, corpus map, stack, limits),
+  CHANGELOG.md ([Non publié] = design corpus; [Publié] = legacy Jekyll site),
+  docs/DAT.md (target architecture: Postgres-authoritative, tick worker,
+  relayer, Stripe; flows, data model, trade-offs, recovery),
+  docs/BACKLOG.md (full scope P0→P7 with honest statuses).
+- **docs/DESIGN_SYSTEM.md written as DRAFT [~]:** groovy-dark tokens derived
+  from the P2Enjoy chart (bg #060810/#0D0D0D, violet ramp, yellow #D9CF4A as
+  signature accent), Orbitron/Inter/JetBrains Mono, components (card hand,
+  efficiency-curve widget, governance preview), a11y & responsive rules,
+  documented deviations, and the §10 prototype prompt kit.
+
+### Limitation (flagged, not assumed)
+- **No `OPENAI_API_KEY` exists in this environment** (checked shell env, .env
+  files, home configs). The prototype generation step is **blocked — human
+  action required** (add the key). Consequently the design system stays [~]
+  and P0.3 prototype/review items stay [ ] in the backlog. No prototypes were
+  faked.
+
+### Verifications
+- Repo state inspected before changes (git clean, no docs/ dir previously).
+- All new docs cross-checked against GAMEBOOK/DESIGN_GUIDE for consistency.
+- No app code written (preproduction respected).
