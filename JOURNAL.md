@@ -871,3 +871,17 @@ aucun patch antérieur rouvert.
 ### Reste
 Tour 5b de confirmation lancé (les calculs R5-2 utilisaient les taux
 proposés ; re-vérification maintenant qu'ils sont dans le guide).
+
+---
+
+## 2026-07-12 — Session 19 (tour 5b : CONFIRMÉ, clôture — guide v0.5.1)
+
+- Vérification texte : les 7 patches du tour 5 présents et corrects.
+- R5-2 recalculé aux taux officiels : import défense 7,0 j (stock) /
+  13,7 j (production) vs grâce 14 j — marge fine, nudge M8 porteur.
+- Grief « bee solitaire » : pas de verrouillage durable (contre-jeu réel).
+- 3 lignes appliquées (v0.5.1) : escrow d'enchères rendu au stock AVANT le
+  calcul du pillage (ferme l'esquive 25:1) ; verrou de siège = événement de
+  combat ACTIF uniquement ; unités hors ligne ≠ garnison pour la
+  ciblabilité des bâtiments.
+- **TOUR 5 CLOS — CONSTRUIRE ≠ INSTALLER est canon vérifié.** M1–M8.
