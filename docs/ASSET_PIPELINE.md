@@ -116,8 +116,8 @@ All files under `assets/game/` are **programmatically generated placeholders**
 
 Regenerate anytime: `python3 docs/design/props/generate_stubs.py`.
 
-**Current coverage: 576 assets (×3 files = 1 728)** — full v0 catalog: 27
-buildings ×3 levels ×(base+hot+cold), 11 ships with per-hull overlay sets,
+**Current coverage: 586 assets (×3 files = 1 758)** — full v0 catalog: 28
+buildings (warehouse included) ×3 levels ×(base+hot+cold), 11 ships with per-hull overlay sets,
 15 ground units, 18 portraits (full 3-peoples × 6-roles matrix — any people,
 any role), 42 cards, 30 resources, 12 planets + weather overlays on every
 climate×size, 4 giants. Browse: `docs/design/props/gallery.html`

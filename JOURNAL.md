@@ -885,3 +885,48 @@ proposés ; re-vérification maintenant qu'ils sont dans le guide).
   combat ACTIF uniquement ; unités hors ligne ≠ garnison pour la
   ciblabilité des bâtiments.
 - **TOUR 5 CLOS — CONSTRUIRE ≠ INSTALLER est canon vérifié.** M1–M8.
+
+---
+
+## 2026-07-12 — Session 20 (WAREHOUSE : spec du responsable intégrée, tour 6 lancé)
+
+### Décisions du responsable (réponses au questionnaire)
+- **Warehouse** (bâtiment T1 commun) : entrepose véhicules terrestres ET
+  spatiaux + items, en **balances séparées S/M/L véhicules + compteur
+  items** (ex. L1 = 2L/4M/6S + 50 items) ; contenu = **zéro consommation** ;
+  parking allié configurable **par planète ET par warehouse** (allié =
+  membre de faction ou whitelist — le joueur sert sa lore) ; **seul le
+  propriétaire retire** son véhicule ; à la conquête, **les warehouses sont
+  LE butin** (matériel prêt à l'usage, non abîmé).
+- **Plancher sans warehouse** : « genre 2 2 et 10 » → interprété 2 M + 2 S
+  + 10 items [SIGNALÉ à confirmer] ; concerne les non-fongibles.
+- **Usine bloquée** quand tampon gratuit plein ET warehouses pleins.
+- **Dépôts fongibles = mécanique de jeu** : plafond du « prêt-à-servir »
+  (extrait/vendable/transformable) → facilite le census ; **planchers à
+  définir PAR SIMULATION (directive du responsable)** → mission du tour 6.
+- **Allié installateur** : peut installer/renforcer chez moi ; occupe MES
+  slots, consomme MES ressources, mais reste **seul maître de son
+  paramétrage et de ses déplacements**.
+- **Verrou de siège étendu aux warehouses** (« la guerre commence, c'est
+  trop tard »).
+- **Docks du spaceport = débit de commerce** : limite des visiteurs posés
+  simultanés hors warehouse (= max de tradeurs en même temps) ;
+  **réservations** de docks (soi/alliés, « prêts à partir ») ; sortir un
+  vaisseau du warehouse = temps + **dock libre requis** ; unités sol se
+  déploient direct au sol (minutes → quelques heures).
+- **Exceptions warehouse (canon)** : seul état où un véhicule peut être
+  **freeze pour export NFT** et seul moment où **l'équipage peut descendre
+  et revenir dans la main du joueur** (amendement GAMEBOOK §12 — les
+  gouverneurs restent à jamais liés).
+- Upkeep : uniquement quand installé (remplace « l'upkeep suit partout » du
+  tour 5 ; l'anti-abus devient la capacité).
+
+### Interprétations signalées (à corriger si besoin)
+1. Plancher « 2 2 et 10 » = 2 M + 2 S + 10 items (pas de L sans warehouse).
+2. « Une seule enchère par trade centre » = une listing active de
+   véhicule/item **par bâtiment market** [TUNE].
+
+### Docs
+GAMEBOOK §9/§12/§16 amendés ; DESIGN_GUIDE v0.6 (§3.3b plafonds fongibles à
+définir par simulation, §5.1 warehouse, §6 refondu) ; stubs : +warehouse
+(586 assets ×3) ; tour 6 lancé (logistique warehouse + étude des planchers).

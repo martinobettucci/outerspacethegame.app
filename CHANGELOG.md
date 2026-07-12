@@ -23,6 +23,11 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- WAREHOUSE (spec responsable) : entrepot vehicules+items en balances
+  separees, parking allie, docks = debit de commerce, equipage liberable en
+  warehouse (amendement paragraphe 12), freeze NFT en warehouse uniquement,
+  usines bloquees si plein -> GAMEBOOK + DESIGN_GUIDE v0.6 + stub batiment ;
+  tour 6 lance (dont etude des planchers fongibles par simulation).
 - Tour 5b de CONFIRMATION passé : v0.5.1 (escrow rendu avant pillage,
   verrou de siège = combat actif seul, hors-ligne ≠ garnison) ; tour 5 CLOS.
 - Tour 5 TERMINÉ : la clef de voûte « construire ≠ installer » tient ;

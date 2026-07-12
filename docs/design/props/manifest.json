@@ -2552,6 +2552,78 @@
   "expected_art": "transparent cold-climate adaptation only"
  },
  {
+  "file": "assets/game/buildings/building_warehouse_l1.gif",
+  "size": "512x256",
+  "label": "BLDG warehouse L1",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "vehicle+item warehouse, big doors, parked tanks and crates (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l1.ov.hot.gif",
+  "size": "512x256",
+  "label": "warehouse L1 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l1.ov.cold.gif",
+  "size": "512x256",
+  "label": "warehouse L1 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l2.gif",
+  "size": "512x256",
+  "label": "BLDG warehouse L2",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "vehicle+item warehouse, big doors, parked tanks and crates (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l2.ov.hot.gif",
+  "size": "512x256",
+  "label": "warehouse L2 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l2.ov.cold.gif",
+  "size": "512x256",
+  "label": "warehouse L2 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l3.gif",
+  "size": "512x256",
+  "label": "BLDG warehouse L3",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "vehicle+item warehouse, big doors, parked tanks and crates (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l3.ov.hot.gif",
+  "size": "512x256",
+  "label": "warehouse L3 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_warehouse_l3.ov.cold.gif",
+  "size": "512x256",
+  "label": "warehouse L3 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
   "file": "assets/game/ships/ship_combat_s.gif",
   "size": "512x256",
   "label": "SHIP combat S",
@@ -4246,6 +4318,14 @@
   "overlay": false,
   "animated": false,
   "expected_art": "artificial-planet construction yard (endgame) card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_warehouse.png",
+  "size": "512x512",
+  "label": "CARD warehouse",
+  "overlay": false,
+  "animated": false,
+  "expected_art": "vehicle+item warehouse, big doors, parked tanks and crates card art"
  },
  {
   "file": "assets/game/cards/card_npc_pilot.png",
