@@ -676,3 +676,44 @@ variable du cloud worker s'appelle `OPEN_AI_KEY` (et non `OPENAI_API_KEY`).
 - 4 images ouvertes et observées avec les capacités de vision (pas de
   validation sur mémoire) ; conformité des tokens vérifiée à l'œil sur
   chaque écran ; aucune clé ni valeur secrète écrite dans le dépôt.
+
+---
+
+## 2026-07-12 — Session 13 (pipeline d'assets, props HTML, stubs, itération HTML→image)
+
+### Décisions (canon assets, dictées par le responsable)
+- Tailles : planètes 128/256/512 ; étoiles/trous noirs 2048 ; bâtiments et
+  vaisseaux 512×256 ; portraits 512×1024 ; cartes 512×1024 composites (art
+  512×512 + zone stats HTML) ; icônes ressources 256×256. Unités sol :
+  256×256 **hypothèse à confirmer**.
+- **Mécanique de calques universelle** : base + overlays transparents de même
+  taille (accessoires vaisseaux, niveaux/climat bâtiments, variantes unités,
+  météo/conditions planétaires : smog, glace, feu, poison, radioactif…).
+- **Companion maps obligatoires** : chaque image a `X.bump.png` (relief) et
+  `X.light.png` (sources lumineuses en pixels blancs + alpha). Le moteur doit
+  relighter les sprites (bump) et **propager la lumière à l'environnement et
+  aux sprites voisins**.
+- **Desktop + tablettes uniquement, pas de mobile.**
+
+### Réalisé
+- `docs/ASSET_PIPELINE.md` (le contrat) ; arborescence `assets/game/` +
+  convention de nommage swap-ready.
+- `generate_stubs.py` → 85 assets ×3 fichiers (255 PNG, 1,9 Mo), étiquetés
+  « ce que l'art doit représenter » + `manifest.json`.
+- **Prop sheet HTML** (`docs/design/props/index.html`) : chaque élément à sa
+  taille exacte, toggles d'overlays, carte composite avec stats, démo lumière.
+- **Vérification visuelle (§16)** : capture headless Chromium observée ;
+  défaut trouvé et corrigé (§18) — les stubs d'overlay opaques masquaient
+  leur base → régénérés transparents avec étiquette en coin ; labels étoiles
+  2048 mis à l'échelle ; re-capture observée : empilement démontré.
+- **Itération HTML→gpt-image-2 validée** : 05-card-html-render (fidélité
+  quasi parfaite au prop) et 06-layered-lighting-scene (référence
+  d'acceptation du rendu lumière/calques). Méthode officialisée
+  (ASSET_PIPELINE §7, DESIGN_SYSTEM §11).
+- DAT (exigence moteur lumière), DESIGN_SYSTEM (§7 plateformes, §9 renvoi
+  pipeline, §11 round 2), BACKLOG P0.3, CHANGELOG mis à jour.
+
+### Vérifications
+- 2 captures du prop sheet observées (avant/après correction) ; 2 rendus
+  gpt-image-2 observés ; 255 stubs présents (`find | wc -l`) ; aucun secret
+  dans le dépôt.

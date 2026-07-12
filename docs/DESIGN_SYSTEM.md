@@ -121,12 +121,12 @@ Default · hover (`primary.300` tint / accent glow) · active/pressed (darken
 selected (accent glow + hairline) · disabled (`text.disabled`, keep label
 readable, tooltip explains *why*) · destructive (danger ramp + confirmation).
 
-## 7. Responsive
+## 7. Platforms & responsive
 
-Desktop-first (management UI), functional ≥ 1280 px full, degraded-but-usable
-to 1024 px; galaxy map and planet view support touch pan/zoom; card hand
-becomes a drawer under 1280 px. No horizontal body scroll ever; tables scroll
-within their own container.
+**Desktop and tablets only. Mobile is NOT supported** (owner decision).
+Minimum viewport 1280×800; tablets get touch pan/zoom on the canvas scenes;
+no mobile breakpoints exist anywhere. No horizontal body scroll ever; tables
+scroll within their own container.
 
 ## 8. Accessibility
 
@@ -142,10 +142,12 @@ within their own container.
 
 - **Lucide** for all UI icons; single stroke width; no emojis in the
   applicative UI (CLAUDE.md §4).
-- Game sprites per GAMEBOOK §26 pipeline: base hull/building + overlay
-  upgrade layers, composited by the engine; isometric angle consistent with
-  the 2022 reference set (512×256 ships, 3-level buildings, 256×256 resource
-  icons).
+- Game sprites per GAMEBOOK §26 pipeline: base + transparent same-size
+  overlay layers composited by the engine — the full sizing/naming/companion-
+  map contract (bump maps, light maps, light propagation, stub swapping,
+  HTML props) lives in **`docs/ASSET_PIPELINE.md`**; the living DOM contract
+  is **`docs/design/props/index.html`** (every element at exact pixel size,
+  stub-swappable).
 
 ## 10. Prototype kit (EXECUTED 2026-07-12 — kept for regeneration)
 
@@ -185,6 +187,18 @@ panels, yellow signature accent, dense-but-readable management UI all land.
 - The **market scene strip** (03): poor human / robot / rich alien with
   scattered ship parts = GAME_BIBLE §7 verbatim. Keep as a flavor band on
   market screens.
+
+**Round 2 (2026-07-12, prototypes 05–06 — HTML-fed technique):**
+- **05-card-html-render**: feeding the card prop's actual HTML/CSS to
+  gpt-image-2 produced a near-pixel-faithful render (badge, name, cost chips,
+  yellow-accent copy, stats block) with finished pixel art in the 512² art
+  zone. **HTML-fed prompting is now the official iteration method** for any
+  UI surface (ASSET_PIPELINE §7); the card prop layout is validated as-is.
+- **06-layered-lighting-scene**: the engine's north-star render — emissive
+  light pools spreading onto terrain and neighboring sprites (yellow cells,
+  blue engines, orange heat), a smog weather overlay reading as a distinct
+  layer, bump-lit relief. This is the acceptance reference for the WebGL
+  lighting pass (ASSET_PIPELINE §3).
 
 **Corrections (prompt artifacts that CONTRADICT canon — never reproduce):**
 1. **No "CREDITS", ever** (01/02/03 show them). There is no currency

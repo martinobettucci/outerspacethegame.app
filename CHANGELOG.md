@@ -14,6 +14,11 @@
 - Design system FINALISÉ v1 (« groovy dark », identité pixel-sprite) validé
   par 4 prototypes d'interface générés (gpt-image-2) et observés
   visuellement ; prototypes archivés dans `docs/design/prototypes/`.
+- Pipeline d'assets spécifié (`docs/ASSET_PIPELINE.md`) : tailles canoniques,
+  calques transparents universels, bump/light maps avec propagation lumineuse,
+  contrat de nommage/swap ; 255 stubs générés + prop sheet HTML vérifié ;
+  itération HTML→gpt-image-2 validée (prototypes 05–06). Desktop/tablette
+  uniquement.
 - Abandon acté de l'approche « moteur de jeu on-chain » au profit d'une
   architecture PostgreSQL autoritaire avec pont NFT opt-in (documenté, aucun
   code applicatif écrit).

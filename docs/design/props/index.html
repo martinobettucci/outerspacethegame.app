@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ATG — Prop Sheet (asset pipeline contract)</title>
+<!-- Desktop & tablets only. Mobile NOT supported (min 1280px). -->
+<style>
+  :root{
+    --bg-space:#060810; --bg-base:#0D0D0D; --bg-raised:#111A30; --bg-overlay:#16223F;
+    --stroke:#24314F; --primary:#23468C; --primary-i:#3E6BC7; --primary-h:#6E96E8;
+    --violet-700:#2A1B52; --violet-500:#4A2D8C;
+    --accent:#D9CF4A; --accent-2:#F2EC9B;
+    --ok:#2FB544; --danger:#F24141; --warn:#E8A33D;
+    --txt:#F2F4FA; --txt-2:#A9B4CE; --txt-dis:#5D6883;
+  }
+  *{box-sizing:border-box}
+  body{background:radial-gradient(ellipse at 30% 10%, #0B0E1E 0%, var(--bg-space) 60%);
+       color:var(--txt); font:14px/1.5 Inter,system-ui,sans-serif; margin:0; padding:32px; min-width:1280px;}
+  h1,h2{font-family:Orbitron,Inter,sans-serif; letter-spacing:.06em}
+  h1{font-size:24px; color:var(--accent)} h2{font-size:16px; color:var(--primary-h); margin-top:48px}
+  .note{color:var(--txt-2); max-width:900px}
+  .row{display:flex; gap:24px; flex-wrap:wrap; align-items:flex-end; margin:16px 0}
+  .prop{position:relative; background:var(--bg-raised); border:1px solid var(--stroke); border-radius:12px; padding:8px}
+  .prop figcaption{font-size:11px; color:var(--txt-2); padding-top:6px; text-align:center}
+  .stack{position:relative; display:block}
+  .stack img{display:block; image-rendering:pixelated}
+  .stack img.ov{position:absolute; inset:0}
+  /* ---- exact-size props (the DOM contract) ---- */
+  .prop-planet-s .stack, .prop-planet-s img{width:128px;height:128px}
+  .prop-planet-m .stack, .prop-planet-m img{width:256px;height:256px}
+  .prop-planet-l .stack, .prop-planet-l img{width:512px;height:512px}
+  .prop-star .stack{width:512px;height:512px;overflow:hidden}
+  .prop-star img{width:512px;height:512px} /* native 2048, engine scales by distance; sheet shows 25% */
+  .prop-building .stack, .prop-building img{width:512px;height:256px}
+  .prop-ship .stack, .prop-ship img{width:512px;height:256px}
+  .prop-unit .stack, .prop-unit img{width:256px;height:256px}
+  .prop-portrait .stack, .prop-portrait img{width:512px;height:1024px}
+  .prop-res .stack, .prop-res img{width:256px;height:256px}
+  /* ---- card: 512x1024 composite (512x512 art + HTML stats zone) ---- */
+  .prop-card{width:512px;height:1024px;padding:0;border-radius:16px;overflow:hidden;
+             display:flex;flex-direction:column;border:1px solid var(--stroke)}
+  .prop-card.sel{box-shadow:0 0 0 2px var(--accent),0 0 24px rgba(217,207,74,.35)}
+  .prop-card .art{width:512px;height:512px;display:block;image-rendering:pixelated}
+  .prop-card .body{flex:1;background:linear-gradient(180deg,var(--bg-raised),var(--bg-overlay));
+                   padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+  .prop-card .name{font-family:Orbitron,Inter,sans-serif;font-size:22px;color:var(--txt)}
+  .badge{display:inline-block;font-size:11px;letter-spacing:.08em;color:var(--bg-base);
+         background:var(--accent);border-radius:999px;padding:2px 10px;font-weight:700}
+  .badge.npc{background:var(--violet-500);color:var(--txt)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--bg-base);border:1px solid var(--stroke);
+        border-radius:999px;padding:3px 10px;font-size:12px;color:var(--txt-2)}
+  .chip img{width:20px;height:20px;image-rendering:pixelated}
+  .stats{margin-top:auto;border-top:1px solid var(--stroke);padding-top:12px;font-size:13px;color:var(--txt-2)}
+  .stats .s{display:flex;justify-content:space-between;padding:2px 0}
+  .stats .s b{color:var(--txt)} .up{color:var(--ok)} .down{color:var(--danger)}
+  /* ---- light demo: fake engine glow with the .light map (CSS preview only) ---- */
+  .lightdemo .glow{position:absolute;inset:-40px;filter:blur(28px) brightness(2.2);opacity:.85;pointer-events:none}
+  .lightdemo .neighbor{position:absolute;left:520px;top:40px;width:180px;height:180px;border-radius:12px;
+        background:var(--bg-raised);border:1px solid var(--stroke);
+        box-shadow:-30px 0 60px -20px rgba(242,236,155,.25)} /* light spreading to a near sprite */
+  label.tog{font-size:12px;color:var(--txt-2);display:inline-flex;gap:6px;align-items:center;margin-right:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<h1>ATG — PROP SHEET</h1>
+<p class="note">The DOM contract of the asset pipeline (<code>docs/ASSET_PIPELINE.md</code>).
+Every element renders at its <b>exact final size</b> from stub files under <code>assets/game/</code> —
+replace a stub with real art at the same path and this page (and the game) reveals it.
+All composites are <code>base + transparent overlays</code>. Desktop/tablet only.</p>
+
+<h2>Planets — 128 / 256 / 512 + weather overlays (same-size transparent layers)</h2>
+<div class="row">
+  <figure class="prop prop-planet-s"><span class="stack"><img src="../../../assets/game/planets/planet_hot_s.png"></span><figcaption>planet_hot_s · 128²</figcaption></figure>
+  <figure class="prop prop-planet-m"><span class="stack">
+      <img src="../../../assets/game/planets/planet_temperate_m.png">
+      <img class="ov" id="ovIce" src="../../../assets/game/planets/planet_temperate_m.ov.ice.png">
+    </span><figcaption>planet_temperate_m + <label class="tog"><input type="checkbox" checked onchange="ovIce.style.display=this.checked?'':'none'">ov.ice</label></figcaption></figure>
+  <figure class="prop prop-planet-l"><span class="stack">
+      <img src="../../../assets/game/planets/planet_temperate_l.png">
+      <img class="ov" id="ovSmog" src="../../../assets/game/planets/planet_temperate_l.ov.smog.png">
+      <img class="ov" id="ovRadio" src="../../../assets/game/planets/planet_temperate_l.ov.radio.png">
+    </span><figcaption>planet_temperate_l ·
+      <label class="tog"><input type="checkbox" checked onchange="ovSmog.style.display=this.checked?'':'none'">ov.smog</label>
+      <label class="tog"><input type="checkbox" onchange="ovRadio.style.display=this.checked?'':'none'"><script>document.currentScript.previousElementSibling.checked=false</script>ov.radio</label>
+    </figcaption></figure>
+</div>
+
+<h2>Stars &amp; black hole — native 2048², sheet preview at 25%</h2>
+<div class="row">
+  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/star_hot.png"></span><figcaption>star_hot · 2048² (shown 512)</figcaption></figure>
+  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/blackhole.png"></span><figcaption>blackhole · 2048² (shown 512)</figcaption></figure>
+</div>
+
+<h2>Buildings — 512×256, levels are separate bases, climate as overlay</h2>
+<div class="row">
+  <figure class="prop prop-building"><span class="stack">
+      <img src="../../../assets/game/buildings/building_refinery_l1.png">
+      <img class="ov" id="ovHot" src="../../../assets/game/buildings/building_refinery_l1.ov.hot.png">
+    </span><figcaption>building_refinery_l1 + <label class="tog"><input type="checkbox" checked onchange="ovHot.style.display=this.checked?'':'none'">ov.hot</label></figcaption></figure>
+  <figure class="prop prop-building"><span class="stack"><img src="../../../assets/game/buildings/building_mine_l3.png"></span><figcaption>building_mine_l3</figcaption></figure>
+</div>
+
+<h2>Ships — 512×256, hull + upgrade overlays (the fitted ship is the composite)</h2>
+<div class="row">
+  <figure class="prop prop-ship"><span class="stack">
+      <img src="../../../assets/game/ships/ship_cargo_m.png">
+      <img class="ov" id="ovE2" src="../../../assets/game/ships/ship_cargo_m.ov.engine_2.png">
+      <img class="ov" id="ovA1" src="../../../assets/game/ships/ship_cargo_m.ov.armor_1.png">
+      <img class="ov" id="ovH1" src="../../../assets/game/ships/ship_cargo_m.ov.harvest_1.png" style="display:none">
+    </span><figcaption>ship_cargo_m ·
+      <label class="tog"><input type="checkbox" checked onchange="ovE2.style.display=this.checked?'':'none'">engine_2</label>
+      <label class="tog"><input type="checkbox" checked onchange="ovA1.style.display=this.checked?'':'none'">armor_1</label>
+      <label class="tog"><input type="checkbox" onchange="ovH1.style.display=this.checked?'':'none'">harvest_1</label>
+    </figcaption></figure>
+  <figure class="prop prop-ship"><span class="stack"><img src="../../../assets/game/ships/ship_combat_l.png"></span><figcaption>ship_combat_l (crusader, bare)</figcaption></figure>
+</div>
+
+<h2>Ground units — 256² (size to confirm) &amp; resource icons — 256²</h2>
+<div class="row">
+  <figure class="prop prop-unit"><span class="stack"><img src="../../../assets/game/units/unit_turret_heavy.png"></span><figcaption>unit_turret_heavy</figcaption></figure>
+  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_fuel_cells.png"></span><figcaption>res_fuel_cells</figcaption></figure>
+  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_crystal_nox.png"></span><figcaption>res_crystal_nox</figcaption></figure>
+</div>
+
+<h2>Portraits — 512×1024 &amp; Cards — 512×1024 composite (art 512² + HTML stats)</h2>
+<div class="row">
+  <figure class="prop prop-portrait"><span class="stack"><img src="../../../assets/game/portraits/portrait_vess_diplomat_01.png"></span><figcaption>portrait_vess_diplomat_01</figcaption></figure>
+
+  <div class="prop-card sel">
+    <img class="art" src="../../../assets/game/cards/card_building_refinery.png" alt="refinery card art">
+    <div class="body">
+      <div><span class="badge">BUILDING · T1</span></div>
+      <div class="name">REFINERY</div>
+      <div class="chips">
+        <span class="chip"><img src="../../../assets/game/resources/res_ore.png">60</span>
+        <span class="chip"><img src="../../../assets/game/resources/res_silicon.png">20 steelL</span>
+      </div>
+      <div class="note" style="font-size:13px">Refines climate crystals into <b style="color:var(--accent)">fuel cells</b> — the universal refined resource.</div>
+      <div class="stats">
+        <div class="s"><span>Throughput</span><b>20 batches/day × E</b></div>
+        <div class="s"><span>Recipe</span><b>1 crystal + 1 silicon → 2 cells</b></div>
+        <div class="s"><span>Workforce optimal</span><b>50</b></div>
+        <div class="s"><span>Tile cost</span><b>1</b></div>
+        <div class="s"><span>Requires</span><b class="down">crystal_extractor</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prop-card">
+    <img class="art" src="../../../assets/game/cards/card_npc_governor.png" alt="governor card art">
+    <div class="body">
+      <div><span class="badge npc">NPC · GOVERNOR</span></div>
+      <div class="name">VESS GOVERNOR</div>
+      <div class="chips"><span class="chip">Rare</span><span class="chip">Diplomatic</span><span class="chip">she</span></div>
+      <div class="note" style="font-size:13px">Permanent appointment. Shares the fate of her world.</div>
+      <div class="stats">
+        <div class="s"><span>Mask</span><b>Diplomatic set</b></div>
+        <div class="s"><span>G bonus</span><b class="up">+2%/tier</b></div>
+        <div class="s"><span>Binding</span><b class="down">PERMANENT</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Light-map demo — emissive pixels spread to environment &amp; neighbors (CSS preview; real pass = WebGL)</h2>
+<div class="row">
+  <figure class="prop prop-building lightdemo" style="margin-right:220px">
+    <span class="stack">
+      <img class="glow" src="../../../assets/game/buildings/building_refinery_l1.light.png">
+      <img src="../../../assets/game/buildings/building_refinery_l1.png">
+      <img class="ov" src="../../../assets/game/buildings/building_refinery_l1.light.png" style="mix-blend-mode:screen">
+    </span>
+    <span class="neighbor"></span>
+    <figcaption>building_refinery_l1 + .light.png (émission + halo + report sur sprite voisin)</figcaption>
+  </figure>
+</div>
+</body>
+</html>

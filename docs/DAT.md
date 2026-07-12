@@ -27,10 +27,17 @@
 
 ## 2. Components
 
-- **Web client** — browser game. Two scenes: galaxy map (three.js star field,
-  2D navigation / 3D styling) and planet interior (isometric 2D tile renderer +
-  card hand). Design system: `docs/DESIGN_SYSTEM.md`. Client is **never
-  authoritative**; it renders lazily-evaluated server state and interpolates.
+- **Web client** — browser game, **desktop/tablet only (no mobile)**. Two
+  scenes: galaxy map (three.js star field, 2D navigation / 3D styling) and
+  planet interior (isometric 2D tile renderer + card hand). **Renderer
+  requirement:** a WebGL 2D lighting pass — every sprite ships with a bump
+  map and an emissive light map; sprite lights spread to the environment and
+  to nearby sprites (see `docs/ASSET_PIPELINE.md` §3; acceptance reference:
+  `docs/design/prototypes/06-layered-lighting-scene.png`). Sprites are
+  `base + transparent overlay` composites (upgrades, levels, climate, weather).
+  Design system: `docs/DESIGN_SYSTEM.md`; DOM contract:
+  `docs/design/props/index.html`. Client is **never authoritative**; it
+  renders lazily-evaluated server state and interpolates.
 - **Game API** — stateless service; auth, commands (place card, set policy,
   launch mission, trade, ping), reads. Every authorization rule is enforced
   here or in the database (CLAUDE.md §10) — UI gating is never sufficient.
