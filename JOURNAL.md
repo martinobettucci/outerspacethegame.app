@@ -717,3 +717,37 @@ variable du cloud worker s'appelle `OPEN_AI_KEY` (et non `OPENAI_API_KEY`).
 - 2 captures du prop sheet observées (avant/après correction) ; 2 rendus
   gpt-image-2 observés ; 255 stubs présents (`find | wc -l`) ; aucun secret
   dans le dépôt.
+
+---
+
+## 2026-07-12 — Session 14 (reproche du responsable : couverture incomplète — corrigé)
+
+### Problème (signalé par le responsable)
+1. Les portraits suggéraient un couplage race↔rôle ; règle réelle : **tout
+   peuple peut tenir tout rôle, gouverneur compris**.
+2. Le set de stubs ne couvrait qu'un sous-ensemble (~15 %) : bâtiments
+   précognisés absents (casino, districts, QG faction, chantiers…), upgrades
+   par coque absents, unités sol incomplètes.
+3. Question : ce vide existe-t-il aussi dans les mécaniques/simulations ?
+
+### Réponse factuelle (consignée au BALANCE_LOG)
+- Les SYSTÈMES étaient complets et simulés (tours 1–3) ; la LARGEUR de
+  contenu (stats de tous les bâtiments/unités/upgrades) était mince comme les
+  props. Rien n'était simulé sur le catalogue complet. Corrigé aujourd'hui ;
+  **tour 4 d'équilibrage contenu planifié et requis** avant de considérer ces
+  valeurs comme testées.
+
+### Corrections
+- Canon : GAMEBOOK §12 + DESIGN_GUIDE §4.2 — peuple ⟂ rôle (cosmétique).
+- DESIGN_GUIDE §5.1 : catalogue complet 27 bâtiments (tier, politique, effets
+  L1→L3 [TUNE], mapping spaceport/shipyard/market = niveaux du même bâtiment).
+- DESIGN_GUIDE §10.1 : table complète unités sol (6 types, 15 sprites, stats).
+- generate_stubs.py réécrit data-driven : **576 assets ×3 = 1 728 fichiers**
+  (bâtiments ×3 niveaux ×climat hot/cold ; upgrades PAR COQUE selon slots —
+  armes Combat only, cargo Cargo only, OBS M/L Combat, colony_fitting Civil
+  M/L ; + vaisseau personnel, sonde ; météo sur tous climats×tailles ;
+  portraits matrice 3 peuples × 6 rôles ; 42 cartes ; 30 ressources) +
+  gallery.html auto-générée.
+- Prop sheet : références réparées (unit_l1, card_npc_diplomat), vérif
+  automatique des src (aucune référence cassée) + preuves observées
+  (overlay arme Combat-M, portrait vess_soldier, casino L3).

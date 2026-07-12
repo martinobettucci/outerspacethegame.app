@@ -4,355 +4,2231 @@
   "size": "128x128",
   "label": "PLANET hot S",
   "overlay": false,
-  "expected_art": "pixel-sprite hot planet, groovy-dark palette"
+  "expected_art": "pixel-sprite hot planet"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_s.ov.smog.png",
+  "size": "128x128",
+  "label": "smog S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_s.ov.ice.png",
+  "size": "128x128",
+  "label": "ice S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_s.ov.burn.png",
+  "size": "128x128",
+  "label": "burn S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_s.ov.poison.png",
+  "size": "128x128",
+  "label": "poison S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_s.ov.radio.png",
+  "size": "128x128",
+  "label": "radio S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_hot_m.png",
   "size": "256x256",
   "label": "PLANET hot M",
   "overlay": false,
-  "expected_art": "pixel-sprite hot planet, groovy-dark palette"
+  "expected_art": "pixel-sprite hot planet"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_m.ov.smog.png",
+  "size": "256x256",
+  "label": "smog M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_m.ov.ice.png",
+  "size": "256x256",
+  "label": "ice M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_m.ov.burn.png",
+  "size": "256x256",
+  "label": "burn M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_m.ov.poison.png",
+  "size": "256x256",
+  "label": "poison M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_m.ov.radio.png",
+  "size": "256x256",
+  "label": "radio M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_hot_l.png",
   "size": "512x512",
   "label": "PLANET hot L",
   "overlay": false,
-  "expected_art": "pixel-sprite hot planet, groovy-dark palette"
+  "expected_art": "pixel-sprite hot planet"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_l.ov.smog.png",
+  "size": "512x512",
+  "label": "smog L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_l.ov.ice.png",
+  "size": "512x512",
+  "label": "ice L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_l.ov.burn.png",
+  "size": "512x512",
+  "label": "burn L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_l.ov.poison.png",
+  "size": "512x512",
+  "label": "poison L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_hot_l.ov.radio.png",
+  "size": "512x512",
+  "label": "radio L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_cold_s.png",
   "size": "128x128",
   "label": "PLANET cold S",
   "overlay": false,
-  "expected_art": "pixel-sprite cold planet, groovy-dark palette"
+  "expected_art": "pixel-sprite cold planet"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_s.ov.smog.png",
+  "size": "128x128",
+  "label": "smog S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_s.ov.ice.png",
+  "size": "128x128",
+  "label": "ice S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_s.ov.burn.png",
+  "size": "128x128",
+  "label": "burn S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_s.ov.poison.png",
+  "size": "128x128",
+  "label": "poison S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_s.ov.radio.png",
+  "size": "128x128",
+  "label": "radio S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_cold_m.png",
   "size": "256x256",
   "label": "PLANET cold M",
   "overlay": false,
-  "expected_art": "pixel-sprite cold planet, groovy-dark palette"
+  "expected_art": "pixel-sprite cold planet"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_m.ov.smog.png",
+  "size": "256x256",
+  "label": "smog M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_m.ov.ice.png",
+  "size": "256x256",
+  "label": "ice M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_m.ov.burn.png",
+  "size": "256x256",
+  "label": "burn M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_m.ov.poison.png",
+  "size": "256x256",
+  "label": "poison M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_m.ov.radio.png",
+  "size": "256x256",
+  "label": "radio M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_cold_l.png",
   "size": "512x512",
   "label": "PLANET cold L",
   "overlay": false,
-  "expected_art": "pixel-sprite cold planet, groovy-dark palette"
+  "expected_art": "pixel-sprite cold planet"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_l.ov.smog.png",
+  "size": "512x512",
+  "label": "smog L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_l.ov.ice.png",
+  "size": "512x512",
+  "label": "ice L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_l.ov.burn.png",
+  "size": "512x512",
+  "label": "burn L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_l.ov.poison.png",
+  "size": "512x512",
+  "label": "poison L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_cold_l.ov.radio.png",
+  "size": "512x512",
+  "label": "radio L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_temperate_s.png",
   "size": "128x128",
   "label": "PLANET temperate S",
   "overlay": false,
-  "expected_art": "pixel-sprite temperate planet, groovy-dark palette"
+  "expected_art": "pixel-sprite temperate planet"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_s.ov.smog.png",
+  "size": "128x128",
+  "label": "smog S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_s.ov.ice.png",
+  "size": "128x128",
+  "label": "ice S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_s.ov.burn.png",
+  "size": "128x128",
+  "label": "burn S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_s.ov.poison.png",
+  "size": "128x128",
+  "label": "poison S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_s.ov.radio.png",
+  "size": "128x128",
+  "label": "radio S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_temperate_m.png",
   "size": "256x256",
   "label": "PLANET temperate M",
   "overlay": false,
-  "expected_art": "pixel-sprite temperate planet, groovy-dark palette"
+  "expected_art": "pixel-sprite temperate planet"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_m.ov.smog.png",
+  "size": "256x256",
+  "label": "smog M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_m.ov.ice.png",
+  "size": "256x256",
+  "label": "ice M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_m.ov.burn.png",
+  "size": "256x256",
+  "label": "burn M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_m.ov.poison.png",
+  "size": "256x256",
+  "label": "poison M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_m.ov.radio.png",
+  "size": "256x256",
+  "label": "radio M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_temperate_l.png",
   "size": "512x512",
   "label": "PLANET temperate L",
   "overlay": false,
-  "expected_art": "pixel-sprite temperate planet, groovy-dark palette"
+  "expected_art": "pixel-sprite temperate planet"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_l.ov.smog.png",
+  "size": "512x512",
+  "label": "smog L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_l.ov.ice.png",
+  "size": "512x512",
+  "label": "ice L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_l.ov.burn.png",
+  "size": "512x512",
+  "label": "burn L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_l.ov.poison.png",
+  "size": "512x512",
+  "label": "poison L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_temperate_l.ov.radio.png",
+  "size": "512x512",
+  "label": "radio L",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_poison_s.png",
   "size": "128x128",
   "label": "PLANET poison S",
   "overlay": false,
-  "expected_art": "pixel-sprite poison planet, groovy-dark palette"
+  "expected_art": "pixel-sprite poison planet"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_s.ov.smog.png",
+  "size": "128x128",
+  "label": "smog S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_s.ov.ice.png",
+  "size": "128x128",
+  "label": "ice S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_s.ov.burn.png",
+  "size": "128x128",
+  "label": "burn S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_s.ov.poison.png",
+  "size": "128x128",
+  "label": "poison S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_s.ov.radio.png",
+  "size": "128x128",
+  "label": "radio S",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_poison_m.png",
   "size": "256x256",
   "label": "PLANET poison M",
   "overlay": false,
-  "expected_art": "pixel-sprite poison planet, groovy-dark palette"
+  "expected_art": "pixel-sprite poison planet"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_m.ov.smog.png",
+  "size": "256x256",
+  "label": "smog M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: smog only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_m.ov.ice.png",
+  "size": "256x256",
+  "label": "ice M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: ice only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_m.ov.burn.png",
+  "size": "256x256",
+  "label": "burn M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: burn only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_m.ov.poison.png",
+  "size": "256x256",
+  "label": "poison M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: poison only"
+ },
+ {
+  "file": "assets/game/planets/planet_poison_m.ov.radio.png",
+  "size": "256x256",
+  "label": "radio M",
+  "overlay": true,
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/planets/planet_poison_l.png",
   "size": "512x512",
   "label": "PLANET poison L",
   "overlay": false,
-  "expected_art": "pixel-sprite poison planet, groovy-dark palette"
+  "expected_art": "pixel-sprite poison planet"
  },
  {
-  "file": "assets/game/planets/planet_temperate_s.ov.smog.png",
-  "size": "128x128",
-  "label": "OVERLAY smog S",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: smog condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_m.ov.smog.png",
-  "size": "256x256",
-  "label": "OVERLAY smog M",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: smog condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_l.ov.smog.png",
+  "file": "assets/game/planets/planet_poison_l.ov.smog.png",
   "size": "512x512",
-  "label": "OVERLAY smog L",
+  "label": "smog L",
   "overlay": true,
-  "expected_art": "transparent weather overlay: smog condition only"
+  "expected_art": "transparent weather overlay: smog only"
  },
  {
-  "file": "assets/game/planets/planet_temperate_s.ov.ice.png",
-  "size": "128x128",
-  "label": "OVERLAY ice S",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: ice condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_m.ov.ice.png",
-  "size": "256x256",
-  "label": "OVERLAY ice M",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: ice condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_l.ov.ice.png",
+  "file": "assets/game/planets/planet_poison_l.ov.ice.png",
   "size": "512x512",
-  "label": "OVERLAY ice L",
+  "label": "ice L",
   "overlay": true,
-  "expected_art": "transparent weather overlay: ice condition only"
+  "expected_art": "transparent weather overlay: ice only"
  },
  {
-  "file": "assets/game/planets/planet_temperate_s.ov.burn.png",
-  "size": "128x128",
-  "label": "OVERLAY burn S",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: burn condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_m.ov.burn.png",
-  "size": "256x256",
-  "label": "OVERLAY burn M",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: burn condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_l.ov.burn.png",
+  "file": "assets/game/planets/planet_poison_l.ov.burn.png",
   "size": "512x512",
-  "label": "OVERLAY burn L",
+  "label": "burn L",
   "overlay": true,
-  "expected_art": "transparent weather overlay: burn condition only"
+  "expected_art": "transparent weather overlay: burn only"
  },
  {
-  "file": "assets/game/planets/planet_temperate_s.ov.poison.png",
-  "size": "128x128",
-  "label": "OVERLAY poison S",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: poison condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_m.ov.poison.png",
-  "size": "256x256",
-  "label": "OVERLAY poison M",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: poison condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_l.ov.poison.png",
+  "file": "assets/game/planets/planet_poison_l.ov.poison.png",
   "size": "512x512",
-  "label": "OVERLAY poison L",
+  "label": "poison L",
   "overlay": true,
-  "expected_art": "transparent weather overlay: poison condition only"
+  "expected_art": "transparent weather overlay: poison only"
  },
  {
-  "file": "assets/game/planets/planet_temperate_s.ov.radio.png",
-  "size": "128x128",
-  "label": "OVERLAY radio S",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: radio condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_m.ov.radio.png",
-  "size": "256x256",
-  "label": "OVERLAY radio M",
-  "overlay": true,
-  "expected_art": "transparent weather overlay: radio condition only"
- },
- {
-  "file": "assets/game/planets/planet_temperate_l.ov.radio.png",
+  "file": "assets/game/planets/planet_poison_l.ov.radio.png",
   "size": "512x512",
-  "label": "OVERLAY radio L",
+  "label": "radio L",
   "overlay": true,
-  "expected_art": "transparent weather overlay: radio condition only"
+  "expected_art": "transparent weather overlay: radio only"
  },
  {
   "file": "assets/game/stars/star_cold.png",
   "size": "2048x2048",
   "label": "STAR cold",
   "overlay": false,
-  "expected_art": "pixel-sprite cold star, blue-white, emissive"
+  "expected_art": "cold star, blue-white, emissive"
  },
  {
   "file": "assets/game/stars/star_hot.png",
   "size": "2048x2048",
   "label": "STAR hot",
   "overlay": false,
-  "expected_art": "pixel-sprite hot star, orange-violet, emissive"
+  "expected_art": "hot star, orange-violet, emissive"
  },
  {
   "file": "assets/game/stars/star_gas.png",
   "size": "2048x2048",
   "label": "STAR gas",
   "overlay": false,
-  "expected_art": "pixel-sprite gas giant star, emissive"
+  "expected_art": "gas giant star, emissive"
  },
  {
   "file": "assets/game/stars/blackhole.png",
   "size": "2048x2048",
   "label": "BLACK HOLE",
   "overlay": false,
-  "expected_art": "black hole with accretion ring, junk sink"
+  "expected_art": "black hole, accretion ring, junk sink"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l1.png",
+  "size": "512x256",
+  "label": "BLDG telescope L1",
+  "overlay": false,
+  "expected_art": "telescope mast array (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "telescope L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "telescope L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l2.png",
+  "size": "512x256",
+  "label": "BLDG telescope L2",
+  "overlay": false,
+  "expected_art": "telescope mast array (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "telescope L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "telescope L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l3.png",
+  "size": "512x256",
+  "label": "BLDG telescope L3",
+  "overlay": false,
+  "expected_art": "telescope mast array (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "telescope L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_telescope_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "telescope L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l1.png",
+  "size": "512x256",
+  "label": "BLDG probe_pad L1",
+  "overlay": false,
+  "expected_art": "probe launch pad (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "probe_pad L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "probe_pad L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l2.png",
+  "size": "512x256",
+  "label": "BLDG probe_pad L2",
+  "overlay": false,
+  "expected_art": "probe launch pad (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "probe_pad L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "probe_pad L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l3.png",
+  "size": "512x256",
+  "label": "BLDG probe_pad L3",
+  "overlay": false,
+  "expected_art": "probe launch pad (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "probe_pad L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_probe_pad_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "probe_pad L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l1.png",
+  "size": "512x256",
+  "label": "BLDG depot L1",
+  "overlay": false,
+  "expected_art": "storage depot, stacked containers (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "depot L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "depot L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l2.png",
+  "size": "512x256",
+  "label": "BLDG depot L2",
+  "overlay": false,
+  "expected_art": "storage depot, stacked containers (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "depot L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "depot L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l3.png",
+  "size": "512x256",
+  "label": "BLDG depot L3",
+  "overlay": false,
+  "expected_art": "storage depot, stacked containers (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "depot L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_depot_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "depot L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
  },
  {
   "file": "assets/game/buildings/building_mine_l1.png",
   "size": "512x256",
-  "label": "BUILDING mine L1",
+  "label": "BLDG mine L1",
   "overlay": false,
-  "expected_art": "basic mine with ore carts (level 1)"
+  "expected_art": "basic mine, ore carts (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "mine L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "mine L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
  },
  {
   "file": "assets/game/buildings/building_mine_l2.png",
   "size": "512x256",
-  "label": "BUILDING mine L2",
+  "label": "BLDG mine L2",
   "overlay": false,
-  "expected_art": "basic mine with ore carts (level 2)"
+  "expected_art": "basic mine, ore carts (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "mine L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "mine L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
  },
  {
   "file": "assets/game/buildings/building_mine_l3.png",
   "size": "512x256",
-  "label": "BUILDING mine L3",
+  "label": "BLDG mine L3",
   "overlay": false,
-  "expected_art": "basic mine with ore carts (level 3)"
+  "expected_art": "basic mine, ore carts (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "mine L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_mine_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "mine L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l1.png",
+  "size": "512x256",
+  "label": "BLDG farm L1",
+  "overlay": false,
+  "expected_art": "hydroponic farm domes (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "farm L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "farm L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l2.png",
+  "size": "512x256",
+  "label": "BLDG farm L2",
+  "overlay": false,
+  "expected_art": "hydroponic farm domes (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "farm L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "farm L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l3.png",
+  "size": "512x256",
+  "label": "BLDG farm L3",
+  "overlay": false,
+  "expected_art": "hydroponic farm domes (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "farm L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_farm_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "farm L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l1.png",
+  "size": "512x256",
+  "label": "BLDG waterworks L1",
+  "overlay": false,
+  "expected_art": "water synthesis plant (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "waterworks L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "waterworks L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l2.png",
+  "size": "512x256",
+  "label": "BLDG waterworks L2",
+  "overlay": false,
+  "expected_art": "water synthesis plant (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "waterworks L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "waterworks L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l3.png",
+  "size": "512x256",
+  "label": "BLDG waterworks L3",
+  "overlay": false,
+  "expected_art": "water synthesis plant (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "waterworks L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_waterworks_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "waterworks L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l1.png",
+  "size": "512x256",
+  "label": "BLDG smelter L1",
+  "overlay": false,
+  "expected_art": "steel smelter, glowing furnace (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "smelter L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "smelter L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l2.png",
+  "size": "512x256",
+  "label": "BLDG smelter L2",
+  "overlay": false,
+  "expected_art": "steel smelter, glowing furnace (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "smelter L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "smelter L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l3.png",
+  "size": "512x256",
+  "label": "BLDG smelter L3",
+  "overlay": false,
+  "expected_art": "steel smelter, glowing furnace (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "smelter L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_smelter_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "smelter L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l1.png",
+  "size": "512x256",
+  "label": "BLDG crystal_extractor L1",
+  "overlay": false,
+  "expected_art": "crystal extractor rig (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "crystal_extractor L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "crystal_extractor L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l2.png",
+  "size": "512x256",
+  "label": "BLDG crystal_extractor L2",
+  "overlay": false,
+  "expected_art": "crystal extractor rig (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "crystal_extractor L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "crystal_extractor L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l3.png",
+  "size": "512x256",
+  "label": "BLDG crystal_extractor L3",
+  "overlay": false,
+  "expected_art": "crystal extractor rig (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "crystal_extractor L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_crystal_extractor_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "crystal_extractor L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
  },
  {
   "file": "assets/game/buildings/building_refinery_l1.png",
   "size": "512x256",
-  "label": "BUILDING refinery L1",
+  "label": "BLDG refinery L1",
   "overlay": false,
   "expected_art": "crystal refinery, fuel cells scattered (level 1)"
  },
  {
-  "file": "assets/game/buildings/building_refinery_l2.png",
-  "size": "512x256",
-  "label": "BUILDING refinery L2",
-  "overlay": false,
-  "expected_art": "crystal refinery, fuel cells scattered (level 2)"
- },
- {
-  "file": "assets/game/buildings/building_refinery_l3.png",
-  "size": "512x256",
-  "label": "BUILDING refinery L3",
-  "overlay": false,
-  "expected_art": "crystal refinery, fuel cells scattered (level 3)"
- },
- {
-  "file": "assets/game/buildings/building_spaceport_l1.png",
-  "size": "512x256",
-  "label": "BUILDING spaceport L1",
-  "overlay": false,
-  "expected_art": "small spaceport with landing pad (level 1)"
- },
- {
-  "file": "assets/game/buildings/building_spaceport_l2.png",
-  "size": "512x256",
-  "label": "BUILDING spaceport L2",
-  "overlay": false,
-  "expected_art": "small spaceport with landing pad (level 2)"
- },
- {
-  "file": "assets/game/buildings/building_spaceport_l3.png",
-  "size": "512x256",
-  "label": "BUILDING spaceport L3",
-  "overlay": false,
-  "expected_art": "small spaceport with landing pad (level 3)"
- },
- {
-  "file": "assets/game/buildings/building_market_l1.png",
-  "size": "512x256",
-  "label": "BUILDING market L1",
-  "overlay": false,
-  "expected_art": "market hall with stalls (level 1)"
- },
- {
-  "file": "assets/game/buildings/building_market_l2.png",
-  "size": "512x256",
-  "label": "BUILDING market L2",
-  "overlay": false,
-  "expected_art": "market hall with stalls (level 2)"
- },
- {
-  "file": "assets/game/buildings/building_market_l3.png",
-  "size": "512x256",
-  "label": "BUILDING market L3",
-  "overlay": false,
-  "expected_art": "market hall with stalls (level 3)"
- },
- {
-  "file": "assets/game/buildings/building_workshop_l1.png",
-  "size": "512x256",
-  "label": "BUILDING workshop L1",
-  "overlay": false,
-  "expected_art": "repair workshop, sparks (level 1)"
- },
- {
-  "file": "assets/game/buildings/building_workshop_l2.png",
-  "size": "512x256",
-  "label": "BUILDING workshop L2",
-  "overlay": false,
-  "expected_art": "repair workshop, sparks (level 2)"
- },
- {
-  "file": "assets/game/buildings/building_workshop_l3.png",
-  "size": "512x256",
-  "label": "BUILDING workshop L3",
-  "overlay": false,
-  "expected_art": "repair workshop, sparks (level 3)"
- },
- {
-  "file": "assets/game/buildings/building_turret_l1.png",
-  "size": "512x256",
-  "label": "BUILDING turret L1",
-  "overlay": false,
-  "expected_art": "heavy defense turret (level 1)"
- },
- {
-  "file": "assets/game/buildings/building_turret_l2.png",
-  "size": "512x256",
-  "label": "BUILDING turret L2",
-  "overlay": false,
-  "expected_art": "heavy defense turret (level 2)"
- },
- {
-  "file": "assets/game/buildings/building_turret_l3.png",
-  "size": "512x256",
-  "label": "BUILDING turret L3",
-  "overlay": false,
-  "expected_art": "heavy defense turret (level 3)"
- },
- {
   "file": "assets/game/buildings/building_refinery_l1.ov.hot.png",
   "size": "512x256",
-  "label": "OVERLAY refinery hot",
+  "label": "refinery L1 hot",
   "overlay": true,
   "expected_art": "transparent hot-climate adaptation only"
  },
  {
   "file": "assets/game/buildings/building_refinery_l1.ov.cold.png",
   "size": "512x256",
-  "label": "OVERLAY refinery cold",
+  "label": "refinery L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l2.png",
+  "size": "512x256",
+  "label": "BLDG refinery L2",
+  "overlay": false,
+  "expected_art": "crystal refinery, fuel cells scattered (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "refinery L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "refinery L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l3.png",
+  "size": "512x256",
+  "label": "BLDG refinery L3",
+  "overlay": false,
+  "expected_art": "crystal refinery, fuel cells scattered (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "refinery L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_refinery_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "refinery L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l1.png",
+  "size": "512x256",
+  "label": "BLDG fuelcell_plant L1",
+  "overlay": false,
+  "expected_art": "industrial fuel-cell plant (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l2.png",
+  "size": "512x256",
+  "label": "BLDG fuelcell_plant L2",
+  "overlay": false,
+  "expected_art": "industrial fuel-cell plant (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l3.png",
+  "size": "512x256",
+  "label": "BLDG fuelcell_plant L3",
+  "overlay": false,
+  "expected_art": "industrial fuel-cell plant (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_fuelcell_plant_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "fuelcell_plant L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l1.png",
+  "size": "512x256",
+  "label": "BLDG spaceport L1",
+  "overlay": false,
+  "expected_art": "spaceport landing pads (dock size grows w/ level) (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "spaceport L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "spaceport L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l2.png",
+  "size": "512x256",
+  "label": "BLDG spaceport L2",
+  "overlay": false,
+  "expected_art": "spaceport landing pads (dock size grows w/ level) (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "spaceport L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "spaceport L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l3.png",
+  "size": "512x256",
+  "label": "BLDG spaceport L3",
+  "overlay": false,
+  "expected_art": "spaceport landing pads (dock size grows w/ level) (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "spaceport L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_spaceport_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "spaceport L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l1.png",
+  "size": "512x256",
+  "label": "BLDG workshop L1",
+  "overlay": false,
+  "expected_art": "repair workshop, sparks and cranes (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "workshop L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "workshop L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l2.png",
+  "size": "512x256",
+  "label": "BLDG workshop L2",
+  "overlay": false,
+  "expected_art": "repair workshop, sparks and cranes (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "workshop L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "workshop L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l3.png",
+  "size": "512x256",
+  "label": "BLDG workshop L3",
+  "overlay": false,
+  "expected_art": "repair workshop, sparks and cranes (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "workshop L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_workshop_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "workshop L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l1.png",
+  "size": "512x256",
+  "label": "BLDG market L1",
+  "overlay": false,
+  "expected_art": "market hall with stalls (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "market L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "market L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l2.png",
+  "size": "512x256",
+  "label": "BLDG market L2",
+  "overlay": false,
+  "expected_art": "market hall with stalls (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "market L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "market L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l3.png",
+  "size": "512x256",
+  "label": "BLDG market L3",
+  "overlay": false,
+  "expected_art": "market hall with stalls (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "market L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_market_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "market L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l1.png",
+  "size": "512x256",
+  "label": "BLDG residential L1",
+  "overlay": false,
+  "expected_art": "residential habitat blocks (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "residential L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "residential L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l2.png",
+  "size": "512x256",
+  "label": "BLDG residential L2",
+  "overlay": false,
+  "expected_art": "residential habitat blocks (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "residential L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "residential L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l3.png",
+  "size": "512x256",
+  "label": "BLDG residential L3",
+  "overlay": false,
+  "expected_art": "residential habitat blocks (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "residential L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_residential_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "residential L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l1.png",
+  "size": "512x256",
+  "label": "BLDG lab L1",
+  "overlay": false,
+  "expected_art": "medical/science lab (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "lab L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "lab L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l2.png",
+  "size": "512x256",
+  "label": "BLDG lab L2",
+  "overlay": false,
+  "expected_art": "medical/science lab (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "lab L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "lab L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l3.png",
+  "size": "512x256",
+  "label": "BLDG lab L3",
+  "overlay": false,
+  "expected_art": "medical/science lab (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "lab L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_lab_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "lab L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l1.png",
+  "size": "512x256",
+  "label": "BLDG obs_station L1",
+  "overlay": false,
+  "expected_art": "ground OBS targeting dome (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "obs_station L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "obs_station L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l2.png",
+  "size": "512x256",
+  "label": "BLDG obs_station L2",
+  "overlay": false,
+  "expected_art": "ground OBS targeting dome (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "obs_station L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "obs_station L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l3.png",
+  "size": "512x256",
+  "label": "BLDG obs_station L3",
+  "overlay": false,
+  "expected_art": "ground OBS targeting dome (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "obs_station L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_obs_station_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "obs_station L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l1.png",
+  "size": "512x256",
+  "label": "BLDG shipyard L1",
+  "overlay": false,
+  "expected_art": "shipyard gantry (hull size grows w/ level) (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "shipyard L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "shipyard L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l2.png",
+  "size": "512x256",
+  "label": "BLDG shipyard L2",
+  "overlay": false,
+  "expected_art": "shipyard gantry (hull size grows w/ level) (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "shipyard L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "shipyard L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l3.png",
+  "size": "512x256",
+  "label": "BLDG shipyard L3",
+  "overlay": false,
+  "expected_art": "shipyard gantry (hull size grows w/ level) (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "shipyard L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_shipyard_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "shipyard L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l1.png",
+  "size": "512x256",
+  "label": "BLDG military_district L1",
+  "overlay": false,
+  "expected_art": "military district, barracks and banners (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "military_district L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "military_district L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l2.png",
+  "size": "512x256",
+  "label": "BLDG military_district L2",
+  "overlay": false,
+  "expected_art": "military district, barracks and banners (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "military_district L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "military_district L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l3.png",
+  "size": "512x256",
+  "label": "BLDG military_district L3",
+  "overlay": false,
+  "expected_art": "military district, barracks and banners (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "military_district L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_military_district_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "military_district L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l1.png",
+  "size": "512x256",
+  "label": "BLDG weapon_foundry L1",
+  "overlay": false,
+  "expected_art": "weapon foundry, beam-laser parts (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "weapon_foundry L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "weapon_foundry L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l2.png",
+  "size": "512x256",
+  "label": "BLDG weapon_foundry L2",
+  "overlay": false,
+  "expected_art": "weapon foundry, beam-laser parts (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "weapon_foundry L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "weapon_foundry L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l3.png",
+  "size": "512x256",
+  "label": "BLDG weapon_foundry L3",
+  "overlay": false,
+  "expected_art": "weapon foundry, beam-laser parts (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "weapon_foundry L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_weapon_foundry_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "weapon_foundry L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l1.png",
+  "size": "512x256",
+  "label": "BLDG research_center L1",
+  "overlay": false,
+  "expected_art": "research center, antennae (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "research_center L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "research_center L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l2.png",
+  "size": "512x256",
+  "label": "BLDG research_center L2",
+  "overlay": false,
+  "expected_art": "research center, antennae (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "research_center L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "research_center L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l3.png",
+  "size": "512x256",
+  "label": "BLDG research_center L3",
+  "overlay": false,
+  "expected_art": "research center, antennae (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "research_center L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_research_center_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "research_center L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l1.png",
+  "size": "512x256",
+  "label": "BLDG diplomatic_district L1",
+  "overlay": false,
+  "expected_art": "diplomatic district, embassy hall (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "diplomatic_district L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "diplomatic_district L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l2.png",
+  "size": "512x256",
+  "label": "BLDG diplomatic_district L2",
+  "overlay": false,
+  "expected_art": "diplomatic district, embassy hall (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "diplomatic_district L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "diplomatic_district L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l3.png",
+  "size": "512x256",
+  "label": "BLDG diplomatic_district L3",
+  "overlay": false,
+  "expected_art": "diplomatic district, embassy hall (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "diplomatic_district L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_diplomatic_district_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "diplomatic_district L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l1.png",
+  "size": "512x256",
+  "label": "BLDG casino L1",
+  "overlay": false,
+  "expected_art": "wager-house casino, neon and gold (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "casino L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "casino L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l2.png",
+  "size": "512x256",
+  "label": "BLDG casino L2",
+  "overlay": false,
+  "expected_art": "wager-house casino, neon and gold (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "casino L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "casino L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l3.png",
+  "size": "512x256",
+  "label": "BLDG casino L3",
+  "overlay": false,
+  "expected_art": "wager-house casino, neon and gold (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "casino L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_casino_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "casino L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l1.png",
+  "size": "512x256",
+  "label": "BLDG commerce_district L1",
+  "overlay": false,
+  "expected_art": "business and commerce district (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "commerce_district L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "commerce_district L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l2.png",
+  "size": "512x256",
+  "label": "BLDG commerce_district L2",
+  "overlay": false,
+  "expected_art": "business and commerce district (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "commerce_district L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "commerce_district L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l3.png",
+  "size": "512x256",
+  "label": "BLDG commerce_district L3",
+  "overlay": false,
+  "expected_art": "business and commerce district (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "commerce_district L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_commerce_district_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "commerce_district L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l1.png",
+  "size": "512x256",
+  "label": "BLDG faction_hq L1",
+  "overlay": false,
+  "expected_art": "faction HQ, giant banner mast (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "faction_hq L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "faction_hq L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l2.png",
+  "size": "512x256",
+  "label": "BLDG faction_hq L2",
+  "overlay": false,
+  "expected_art": "faction HQ, giant banner mast (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "faction_hq L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "faction_hq L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l3.png",
+  "size": "512x256",
+  "label": "BLDG faction_hq L3",
+  "overlay": false,
+  "expected_art": "faction HQ, giant banner mast (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "faction_hq L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_faction_hq_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "faction_hq L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l1.png",
+  "size": "512x256",
+  "label": "BLDG stargate_yard L1",
+  "overlay": false,
+  "expected_art": "stargate assembly yard (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "stargate_yard L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "stargate_yard L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l2.png",
+  "size": "512x256",
+  "label": "BLDG stargate_yard L2",
+  "overlay": false,
+  "expected_art": "stargate assembly yard (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "stargate_yard L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "stargate_yard L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l3.png",
+  "size": "512x256",
+  "label": "BLDG stargate_yard L3",
+  "overlay": false,
+  "expected_art": "stargate assembly yard (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "stargate_yard L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_stargate_yard_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "stargate_yard L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l1.png",
+  "size": "512x256",
+  "label": "BLDG terraformer L1",
+  "overlay": false,
+  "expected_art": "terraforming facility, atmosphere processors (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "terraformer L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "terraformer L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l2.png",
+  "size": "512x256",
+  "label": "BLDG terraformer L2",
+  "overlay": false,
+  "expected_art": "terraforming facility, atmosphere processors (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "terraformer L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "terraformer L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l3.png",
+  "size": "512x256",
+  "label": "BLDG terraformer L3",
+  "overlay": false,
+  "expected_art": "terraforming facility, atmosphere processors (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "terraformer L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_terraformer_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "terraformer L3 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l1.png",
+  "size": "512x256",
+  "label": "BLDG artificial_planet_yard L1",
+  "overlay": false,
+  "expected_art": "artificial-planet construction yard (endgame) (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l1.ov.hot.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L1 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l1.ov.cold.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L1 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l2.png",
+  "size": "512x256",
+  "label": "BLDG artificial_planet_yard L2",
+  "overlay": false,
+  "expected_art": "artificial-planet construction yard (endgame) (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l2.ov.hot.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L2 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l2.ov.cold.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L2 cold",
+  "overlay": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l3.png",
+  "size": "512x256",
+  "label": "BLDG artificial_planet_yard L3",
+  "overlay": false,
+  "expected_art": "artificial-planet construction yard (endgame) (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l3.ov.hot.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L3 hot",
+  "overlay": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_artificial_planet_yard_l3.ov.cold.png",
+  "size": "512x256",
+  "label": "artificial_planet_yard L3 cold",
   "overlay": true,
   "expected_art": "transparent cold-climate adaptation only"
  },
@@ -361,196 +2237,1589 @@
   "size": "512x256",
   "label": "SHIP combat S",
   "overlay": false,
-  "expected_art": "combat hull S, isometric, bare (no upgrades)"
+  "expected_art": "bee \u2014 small fighter, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.engine_1.png",
+  "size": "512x256",
+  "label": "comS engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.engine_2.png",
+  "size": "512x256",
+  "label": "comS engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.armor_1.png",
+  "size": "512x256",
+  "label": "comS armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.armor_2.png",
+  "size": "512x256",
+  "label": "comS armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "comS fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "comS fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.weapon_a2a_1.png",
+  "size": "512x256",
+  "label": "comS weapon_a2a_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L1 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.weapon_a2a_2.png",
+  "size": "512x256",
+  "label": "comS weapon_a2a_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L2 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.weapon_a2g_1.png",
+  "size": "512x256",
+  "label": "comS weapon_a2g_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L1 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.weapon_a2g_2.png",
+  "size": "512x256",
+  "label": "comS weapon_a2g_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L2 only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.harvest.png",
+  "size": "512x256",
+  "label": "comS harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "comS junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "comS claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.scanner.png",
+  "size": "512x256",
+  "label": "comS scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "comS shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "comS shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits combat_s"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_s.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "comS shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits combat_s"
  },
  {
   "file": "assets/game/ships/ship_combat_m.png",
   "size": "512x256",
   "label": "SHIP combat M",
   "overlay": false,
-  "expected_art": "combat hull M, isometric, bare (no upgrades)"
+  "expected_art": "bird \u2014 medium fighter, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.engine_1.png",
+  "size": "512x256",
+  "label": "comM engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.engine_2.png",
+  "size": "512x256",
+  "label": "comM engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.armor_1.png",
+  "size": "512x256",
+  "label": "comM armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.armor_2.png",
+  "size": "512x256",
+  "label": "comM armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "comM fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "comM fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.obs_1.png",
+  "size": "512x256",
+  "label": "comM obs_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: OBS dish L1 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.obs_2.png",
+  "size": "512x256",
+  "label": "comM obs_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: OBS dish L2 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.weapon_a2a_1.png",
+  "size": "512x256",
+  "label": "comM weapon_a2a_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L1 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.weapon_a2a_2.png",
+  "size": "512x256",
+  "label": "comM weapon_a2a_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L2 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.weapon_a2g_1.png",
+  "size": "512x256",
+  "label": "comM weapon_a2g_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L1 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.weapon_a2g_2.png",
+  "size": "512x256",
+  "label": "comM weapon_a2g_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L2 only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.harvest.png",
+  "size": "512x256",
+  "label": "comM harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "comM junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "comM claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.scanner.png",
+  "size": "512x256",
+  "label": "comM scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "comM shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "comM shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits combat_m"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_m.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "comM shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits combat_m"
  },
  {
   "file": "assets/game/ships/ship_combat_l.png",
   "size": "512x256",
   "label": "SHIP combat L",
   "overlay": false,
-  "expected_art": "combat hull L, isometric, bare (no upgrades)"
+  "expected_art": "star crusader, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.engine_1.png",
+  "size": "512x256",
+  "label": "comL engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.engine_2.png",
+  "size": "512x256",
+  "label": "comL engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.armor_1.png",
+  "size": "512x256",
+  "label": "comL armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.armor_2.png",
+  "size": "512x256",
+  "label": "comL armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "comL fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "comL fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.obs_1.png",
+  "size": "512x256",
+  "label": "comL obs_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: OBS dish L1 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.obs_2.png",
+  "size": "512x256",
+  "label": "comL obs_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: OBS dish L2 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.weapon_a2a_1.png",
+  "size": "512x256",
+  "label": "comL weapon_a2a_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L1 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.weapon_a2a_2.png",
+  "size": "512x256",
+  "label": "comL weapon_a2a_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-air weapon L2 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.weapon_a2g_1.png",
+  "size": "512x256",
+  "label": "comL weapon_a2g_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L1 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.weapon_a2g_2.png",
+  "size": "512x256",
+  "label": "comL weapon_a2g_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: air-to-ground weapon L2 only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.harvest.png",
+  "size": "512x256",
+  "label": "comL harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "comL junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "comL claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.scanner.png",
+  "size": "512x256",
+  "label": "comL scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "comL shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "comL shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits combat_l"
+ },
+ {
+  "file": "assets/game/ships/ship_combat_l.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "comL shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits combat_l"
  },
  {
   "file": "assets/game/ships/ship_cargo_s.png",
   "size": "512x256",
   "label": "SHIP cargo S",
   "overlay": false,
-  "expected_art": "cargo hull S, isometric, bare (no upgrades)"
+  "expected_art": "small freighter, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.engine_1.png",
+  "size": "512x256",
+  "label": "carS engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.engine_2.png",
+  "size": "512x256",
+  "label": "carS engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.armor_1.png",
+  "size": "512x256",
+  "label": "carS armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.armor_2.png",
+  "size": "512x256",
+  "label": "carS armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "carS fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "carS fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.cargo_1.png",
+  "size": "512x256",
+  "label": "carS cargo_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L1 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.cargo_2.png",
+  "size": "512x256",
+  "label": "carS cargo_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L2 only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.harvest.png",
+  "size": "512x256",
+  "label": "carS harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "carS junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "carS claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.scanner.png",
+  "size": "512x256",
+  "label": "carS scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "carS shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "carS shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits cargo_s"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_s.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "carS shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits cargo_s"
  },
  {
   "file": "assets/game/ships/ship_cargo_m.png",
   "size": "512x256",
   "label": "SHIP cargo M",
   "overlay": false,
-  "expected_art": "cargo hull M, isometric, bare (no upgrades)"
+  "expected_art": "medium freighter, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.engine_1.png",
+  "size": "512x256",
+  "label": "carM engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.engine_2.png",
+  "size": "512x256",
+  "label": "carM engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.armor_1.png",
+  "size": "512x256",
+  "label": "carM armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.armor_2.png",
+  "size": "512x256",
+  "label": "carM armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "carM fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "carM fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.cargo_1.png",
+  "size": "512x256",
+  "label": "carM cargo_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L1 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.cargo_2.png",
+  "size": "512x256",
+  "label": "carM cargo_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L2 only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.harvest.png",
+  "size": "512x256",
+  "label": "carM harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "carM junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "carM claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.scanner.png",
+  "size": "512x256",
+  "label": "carM scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "carM shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "carM shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits cargo_m"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_m.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "carM shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits cargo_m"
  },
  {
   "file": "assets/game/ships/ship_cargo_l.png",
   "size": "512x256",
   "label": "SHIP cargo L",
   "overlay": false,
-  "expected_art": "cargo hull L, isometric, bare (no upgrades)"
+  "expected_art": "large freighter, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.engine_1.png",
+  "size": "512x256",
+  "label": "carL engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.engine_2.png",
+  "size": "512x256",
+  "label": "carL engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.armor_1.png",
+  "size": "512x256",
+  "label": "carL armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.armor_2.png",
+  "size": "512x256",
+  "label": "carL armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "carL fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "carL fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.cargo_1.png",
+  "size": "512x256",
+  "label": "carL cargo_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L1 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.cargo_2.png",
+  "size": "512x256",
+  "label": "carL cargo_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: extra containers L2 only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.harvest.png",
+  "size": "512x256",
+  "label": "carL harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "carL junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "carL claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.scanner.png",
+  "size": "512x256",
+  "label": "carL scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "carL shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "carL shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits cargo_l"
+ },
+ {
+  "file": "assets/game/ships/ship_cargo_l.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "carL shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits cargo_l"
  },
  {
   "file": "assets/game/ships/ship_civil_s.png",
   "size": "512x256",
   "label": "SHIP civil S",
   "overlay": false,
-  "expected_art": "civil hull S, isometric, bare (no upgrades)"
+  "expected_art": "small civil transport, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.engine_1.png",
+  "size": "512x256",
+  "label": "civS engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.engine_2.png",
+  "size": "512x256",
+  "label": "civS engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.armor_1.png",
+  "size": "512x256",
+  "label": "civS armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.armor_2.png",
+  "size": "512x256",
+  "label": "civS armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "civS fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "civS fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.harvest.png",
+  "size": "512x256",
+  "label": "civS harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "civS junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "civS claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.scanner.png",
+  "size": "512x256",
+  "label": "civS scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "civS shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "civS shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits civil_s"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_s.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "civS shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits civil_s"
  },
  {
   "file": "assets/game/ships/ship_civil_m.png",
   "size": "512x256",
   "label": "SHIP civil M",
   "overlay": false,
-  "expected_art": "civil hull M, isometric, bare (no upgrades)"
+  "expected_art": "medium civil/settler transport, bare hull"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.engine_1.png",
+  "size": "512x256",
+  "label": "civM engine_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L1 glow only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.engine_2.png",
+  "size": "512x256",
+  "label": "civM engine_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: engine L2 glow only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.armor_1.png",
+  "size": "512x256",
+  "label": "civM armor_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L1 only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.armor_2.png",
+  "size": "512x256",
+  "label": "civM armor_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: armor plates L2 only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.fuel_1.png",
+  "size": "512x256",
+  "label": "civM fuel_1",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L1 only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "civM fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.harvest.png",
+  "size": "512x256",
+  "label": "civM harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "civM junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "civM claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.scanner.png",
+  "size": "512x256",
+  "label": "civM scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "civM shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "civM shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "civM shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits civil_m"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_m.ov.colony_fitting.png",
+  "size": "512x256",
+  "label": "civM colony_fitting",
+  "overlay": true,
+  "expected_art": "transparent overlay: colony fitting: terraform core mounts only, fits civil_m"
  },
  {
   "file": "assets/game/ships/ship_civil_l.png",
   "size": "512x256",
   "label": "SHIP civil L",
   "overlay": false,
-  "expected_art": "civil hull L, isometric, bare (no upgrades)"
+  "expected_art": "large civil/colony transport, bare hull"
  },
  {
-  "file": "assets/game/ships/ship_cargo_m.ov.engine_1.png",
+  "file": "assets/game/ships/ship_civil_l.ov.engine_1.png",
   "size": "512x256",
-  "label": "OVERLAY engine_1",
+  "label": "civL engine_1",
   "overlay": true,
-  "expected_art": "transparent overlay: engine upgrade L1 glow only, fits cargo_m hull"
+  "expected_art": "transparent overlay: engine L1 glow only, fits civil_l"
  },
  {
-  "file": "assets/game/ships/ship_cargo_m.ov.engine_2.png",
+  "file": "assets/game/ships/ship_civil_l.ov.engine_2.png",
   "size": "512x256",
-  "label": "OVERLAY engine_2",
+  "label": "civL engine_2",
   "overlay": true,
-  "expected_art": "transparent overlay: engine upgrade L2 glow only, fits cargo_m hull"
+  "expected_art": "transparent overlay: engine L2 glow only, fits civil_l"
  },
  {
-  "file": "assets/game/ships/ship_cargo_m.ov.armor_1.png",
+  "file": "assets/game/ships/ship_civil_l.ov.armor_1.png",
   "size": "512x256",
-  "label": "OVERLAY armor_1",
+  "label": "civL armor_1",
   "overlay": true,
-  "expected_art": "transparent overlay: armor plates L1 only, fits cargo_m hull"
+  "expected_art": "transparent overlay: armor plates L1 only, fits civil_l"
  },
  {
-  "file": "assets/game/ships/ship_cargo_m.ov.cargo_1.png",
+  "file": "assets/game/ships/ship_civil_l.ov.armor_2.png",
   "size": "512x256",
-  "label": "OVERLAY cargo_1",
+  "label": "civL armor_2",
   "overlay": true,
-  "expected_art": "transparent overlay: extra containers L1 only, fits cargo_m hull"
+  "expected_art": "transparent overlay: armor plates L2 only, fits civil_l"
  },
  {
-  "file": "assets/game/ships/ship_cargo_m.ov.harvest_1.png",
+  "file": "assets/game/ships/ship_civil_l.ov.fuel_1.png",
   "size": "512x256",
-  "label": "OVERLAY harvest_1",
+  "label": "civL fuel_1",
   "overlay": true,
-  "expected_art": "transparent overlay: star-harvest rig only, fits cargo_m hull"
+  "expected_art": "transparent overlay: external tank L1 only, fits civil_l"
  },
  {
-  "file": "assets/game/units/unit_turret_light.png",
-  "size": "256x256",
-  "label": "UNIT turret_light",
+  "file": "assets/game/ships/ship_civil_l.ov.fuel_2.png",
+  "size": "512x256",
+  "label": "civL fuel_2",
+  "overlay": true,
+  "expected_art": "transparent overlay: external tank L2 only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.harvest.png",
+  "size": "512x256",
+  "label": "civL harvest",
+  "overlay": true,
+  "expected_art": "transparent overlay: star-harvest rig only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.junk_collector.png",
+  "size": "512x256",
+  "label": "civL junk_collector",
+  "overlay": true,
+  "expected_art": "transparent overlay: junk collector rig only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.claim_rig.png",
+  "size": "512x256",
+  "label": "civL claim_rig",
+  "overlay": true,
+  "expected_art": "transparent overlay: salvage claim rig only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.scanner.png",
+  "size": "512x256",
+  "label": "civL scanner",
+  "overlay": true,
+  "expected_art": "transparent overlay: survey scanner only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.shield_hot.png",
+  "size": "512x256",
+  "label": "civL shield_hot",
+  "overlay": true,
+  "expected_art": "transparent overlay: hot-climate shield only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.shield_cold.png",
+  "size": "512x256",
+  "label": "civL shield_cold",
+  "overlay": true,
+  "expected_art": "transparent overlay: cold-climate shield only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.shield_radio.png",
+  "size": "512x256",
+  "label": "civL shield_radio",
+  "overlay": true,
+  "expected_art": "transparent overlay: radiation shield only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_civil_l.ov.colony_fitting.png",
+  "size": "512x256",
+  "label": "civL colony_fitting",
+  "overlay": true,
+  "expected_art": "transparent overlay: colony fitting: terraform core mounts only, fits civil_l"
+ },
+ {
+  "file": "assets/game/ships/ship_personal.png",
+  "size": "512x256",
+  "label": "PERSONAL SHIP",
   "overlay": false,
-  "expected_art": "light turret, isometric ground unit"
+  "expected_art": "the Sovereign's vessel, unique, no upgrades"
  },
  {
-  "file": "assets/game/units/unit_turret_heavy.png",
-  "size": "256x256",
-  "label": "UNIT turret_heavy",
+  "file": "assets/game/ships/ship_probe.png",
+  "size": "512x256",
+  "label": "PROBE",
   "overlay": false,
-  "expected_art": "heavy turret, isometric ground unit"
+  "expected_art": "crewless solar-sail probe, integrated scanner"
  },
  {
-  "file": "assets/game/units/unit_tank.png",
+  "file": "assets/game/units/unit_turret_light_l1.png",
   "size": "256x256",
-  "label": "UNIT tank",
+  "label": "UNIT turret_light L1",
   "overlay": false,
-  "expected_art": "ground tank, isometric ground unit"
+  "expected_art": "light turret (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_turret_light_l2.png",
+  "size": "256x256",
+  "label": "UNIT turret_light L2",
+  "overlay": false,
+  "expected_art": "light turret (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_turret_heavy_l1.png",
+  "size": "256x256",
+  "label": "UNIT turret_heavy L1",
+  "overlay": false,
+  "expected_art": "heavy turret (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_turret_heavy_l2.png",
+  "size": "256x256",
+  "label": "UNIT turret_heavy L2",
+  "overlay": false,
+  "expected_art": "heavy turret (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_cannon_l1.png",
+  "size": "256x256",
+  "label": "UNIT cannon L1",
+  "overlay": false,
+  "expected_art": "long-range cannon (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_cannon_l2.png",
+  "size": "256x256",
+  "label": "UNIT cannon L2",
+  "overlay": false,
+  "expected_art": "long-range cannon (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_ground_l1.png",
+  "size": "256x256",
+  "label": "UNIT tank_ground L1",
+  "overlay": false,
+  "expected_art": "ground-attack tank (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_ground_l2.png",
+  "size": "256x256",
+  "label": "UNIT tank_ground L2",
+  "overlay": false,
+  "expected_art": "ground-attack tank (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_ground_l3.png",
+  "size": "256x256",
+  "label": "UNIT tank_ground L3",
+  "overlay": false,
+  "expected_art": "ground-attack tank (level 3), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_antiair_l1.png",
+  "size": "256x256",
+  "label": "UNIT tank_antiair L1",
+  "overlay": false,
+  "expected_art": "anti-air tank (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_antiair_l2.png",
+  "size": "256x256",
+  "label": "UNIT tank_antiair L2",
+  "overlay": false,
+  "expected_art": "anti-air tank (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_antiair_l3.png",
+  "size": "256x256",
+  "label": "UNIT tank_antiair L3",
+  "overlay": false,
+  "expected_art": "anti-air tank (level 3), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_combined_l1.png",
+  "size": "256x256",
+  "label": "UNIT tank_combined L1",
+  "overlay": false,
+  "expected_art": "combined ground+air tank (level 1), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_combined_l2.png",
+  "size": "256x256",
+  "label": "UNIT tank_combined L2",
+  "overlay": false,
+  "expected_art": "combined ground+air tank (level 2), isometric"
+ },
+ {
+  "file": "assets/game/units/unit_tank_combined_l3.png",
+  "size": "256x256",
+  "label": "UNIT tank_combined L3",
+  "overlay": false,
+  "expected_art": "combined ground+air tank (level 3), isometric"
  },
  {
   "file": "assets/game/portraits/portrait_human_pilot_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT human pilot",
+  "label": "human pilot",
   "overlay": false,
-  "expected_art": "human civil pilot, weathered jacket; pixel-sprite, full height"
+  "expected_art": "human pilot; any people can hold any role"
  },
  {
-  "file": "assets/game/portraits/portrait_human_militarist_01.png",
+  "file": "assets/game/portraits/portrait_human_engineer_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT human militarist",
+  "label": "human engineer",
   "overlay": false,
-  "expected_art": "stern human militarist officer; pixel-sprite, full height"
+  "expected_art": "human engineer; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_human_merchant_01.png",
+  "size": "512x1024",
+  "label": "human merchant",
+  "overlay": false,
+  "expected_art": "human merchant; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_human_diplomat_01.png",
+  "size": "512x1024",
+  "label": "human diplomat",
+  "overlay": false,
+  "expected_art": "human diplomat; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_human_soldier_01.png",
+  "size": "512x1024",
+  "label": "human soldier",
+  "overlay": false,
+  "expected_art": "human soldier; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_human_scientist_01.png",
+  "size": "512x1024",
+  "label": "human scientist",
+  "overlay": false,
+  "expected_art": "human scientist; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_forged_pilot_01.png",
+  "size": "512x1024",
+  "label": "forged pilot",
+  "overlay": false,
+  "expected_art": "robot (the Forged) pilot; any people can hold any role"
  },
  {
   "file": "assets/game/portraits/portrait_forged_engineer_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT forged engineer",
+  "label": "forged engineer",
   "overlay": false,
-  "expected_art": "industrial robot engineer, worn chassis; pixel-sprite, full height"
+  "expected_art": "robot (the Forged) engineer; any people can hold any role"
  },
  {
   "file": "assets/game/portraits/portrait_forged_merchant_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT forged merchant",
+  "label": "forged merchant",
   "overlay": false,
-  "expected_art": "polished robot exchange-arbiter; pixel-sprite, full height"
+  "expected_art": "robot (the Forged) merchant; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_forged_diplomat_01.png",
+  "size": "512x1024",
+  "label": "forged diplomat",
+  "overlay": false,
+  "expected_art": "robot (the Forged) diplomat; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_forged_soldier_01.png",
+  "size": "512x1024",
+  "label": "forged soldier",
+  "overlay": false,
+  "expected_art": "robot (the Forged) soldier; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_forged_scientist_01.png",
+  "size": "512x1024",
+  "label": "forged scientist",
+  "overlay": false,
+  "expected_art": "robot (the Forged) scientist; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_vess_pilot_01.png",
+  "size": "512x1024",
+  "label": "vess pilot",
+  "overlay": false,
+  "expected_art": "rich alien (the Vess) pilot; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_vess_engineer_01.png",
+  "size": "512x1024",
+  "label": "vess engineer",
+  "overlay": false,
+  "expected_art": "rich alien (the Vess) engineer; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_vess_merchant_01.png",
+  "size": "512x1024",
+  "label": "vess merchant",
+  "overlay": false,
+  "expected_art": "rich alien (the Vess) merchant; any people can hold any role"
  },
  {
   "file": "assets/game/portraits/portrait_vess_diplomat_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT vess diplomat",
+  "label": "vess diplomat",
   "overlay": false,
-  "expected_art": "tall opulent Vess diplomat, rich robes; pixel-sprite, full height"
+  "expected_art": "rich alien (the Vess) diplomat; any people can hold any role"
  },
  {
-  "file": "assets/game/portraits/portrait_vess_governor_01.png",
+  "file": "assets/game/portraits/portrait_vess_soldier_01.png",
   "size": "512x1024",
-  "label": "PORTRAIT vess governor",
+  "label": "vess soldier",
   "overlay": false,
-  "expected_art": "Vess governor, always rich, gold details; pixel-sprite, full height"
+  "expected_art": "rich alien (the Vess) soldier; any people can hold any role"
+ },
+ {
+  "file": "assets/game/portraits/portrait_vess_scientist_01.png",
+  "size": "512x1024",
+  "label": "vess scientist",
+  "overlay": false,
+  "expected_art": "rich alien (the Vess) scientist; any people can hold any role"
+ },
+ {
+  "file": "assets/game/cards/card_building_telescope.png",
+  "size": "512x512",
+  "label": "CARD telescope",
+  "overlay": false,
+  "expected_art": "telescope mast array card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_probe_pad.png",
+  "size": "512x512",
+  "label": "CARD probe_pad",
+  "overlay": false,
+  "expected_art": "probe launch pad card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_depot.png",
+  "size": "512x512",
+  "label": "CARD depot",
+  "overlay": false,
+  "expected_art": "storage depot, stacked containers card art"
  },
  {
   "file": "assets/game/cards/card_building_mine.png",
   "size": "512x512",
-  "label": "CARD building mine",
+  "label": "CARD mine",
   "overlay": false,
-  "expected_art": "mine building card art"
+  "expected_art": "basic mine, ore carts card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_farm.png",
+  "size": "512x512",
+  "label": "CARD farm",
+  "overlay": false,
+  "expected_art": "hydroponic farm domes card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_waterworks.png",
+  "size": "512x512",
+  "label": "CARD waterworks",
+  "overlay": false,
+  "expected_art": "water synthesis plant card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_smelter.png",
+  "size": "512x512",
+  "label": "CARD smelter",
+  "overlay": false,
+  "expected_art": "steel smelter, glowing furnace card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_crystal_extractor.png",
+  "size": "512x512",
+  "label": "CARD crystal_extractor",
+  "overlay": false,
+  "expected_art": "crystal extractor rig card art"
  },
  {
   "file": "assets/game/cards/card_building_refinery.png",
   "size": "512x512",
-  "label": "CARD building refinery",
+  "label": "CARD refinery",
   "overlay": false,
-  "expected_art": "refinery card art, crystals+cells"
+  "expected_art": "crystal refinery, fuel cells scattered card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_fuelcell_plant.png",
+  "size": "512x512",
+  "label": "CARD fuelcell_plant",
+  "overlay": false,
+  "expected_art": "industrial fuel-cell plant card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_spaceport.png",
+  "size": "512x512",
+  "label": "CARD spaceport",
+  "overlay": false,
+  "expected_art": "spaceport landing pads (dock size grows w/ level) card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_workshop.png",
+  "size": "512x512",
+  "label": "CARD workshop",
+  "overlay": false,
+  "expected_art": "repair workshop, sparks and cranes card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_market.png",
+  "size": "512x512",
+  "label": "CARD market",
+  "overlay": false,
+  "expected_art": "market hall with stalls card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_residential.png",
+  "size": "512x512",
+  "label": "CARD residential",
+  "overlay": false,
+  "expected_art": "residential habitat blocks card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_lab.png",
+  "size": "512x512",
+  "label": "CARD lab",
+  "overlay": false,
+  "expected_art": "medical/science lab card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_obs_station.png",
+  "size": "512x512",
+  "label": "CARD obs_station",
+  "overlay": false,
+  "expected_art": "ground OBS targeting dome card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_shipyard.png",
+  "size": "512x512",
+  "label": "CARD shipyard",
+  "overlay": false,
+  "expected_art": "shipyard gantry (hull size grows w/ level) card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_military_district.png",
+  "size": "512x512",
+  "label": "CARD military_district",
+  "overlay": false,
+  "expected_art": "military district, barracks and banners card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_weapon_foundry.png",
+  "size": "512x512",
+  "label": "CARD weapon_foundry",
+  "overlay": false,
+  "expected_art": "weapon foundry, beam-laser parts card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_research_center.png",
+  "size": "512x512",
+  "label": "CARD research_center",
+  "overlay": false,
+  "expected_art": "research center, antennae card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_diplomatic_district.png",
+  "size": "512x512",
+  "label": "CARD diplomatic_district",
+  "overlay": false,
+  "expected_art": "diplomatic district, embassy hall card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_casino.png",
+  "size": "512x512",
+  "label": "CARD casino",
+  "overlay": false,
+  "expected_art": "wager-house casino, neon and gold card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_commerce_district.png",
+  "size": "512x512",
+  "label": "CARD commerce_district",
+  "overlay": false,
+  "expected_art": "business and commerce district card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_faction_hq.png",
+  "size": "512x512",
+  "label": "CARD faction_hq",
+  "overlay": false,
+  "expected_art": "faction HQ, giant banner mast card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_stargate_yard.png",
+  "size": "512x512",
+  "label": "CARD stargate_yard",
+  "overlay": false,
+  "expected_art": "stargate assembly yard card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_terraformer.png",
+  "size": "512x512",
+  "label": "CARD terraformer",
+  "overlay": false,
+  "expected_art": "terraforming facility, atmosphere processors card art"
+ },
+ {
+  "file": "assets/game/cards/card_building_artificial_planet_yard.png",
+  "size": "512x512",
+  "label": "CARD artificial_planet_yard",
+  "overlay": false,
+  "expected_art": "artificial-planet construction yard (endgame) card art"
  },
  {
   "file": "assets/game/cards/card_npc_pilot.png",
   "size": "512x512",
   "label": "CARD npc pilot",
   "overlay": false,
-  "expected_art": "civil pilot NPC card art"
+  "expected_art": "pilot NPC card art"
  },
  {
-  "file": "assets/game/cards/card_npc_governor.png",
+  "file": "assets/game/cards/card_npc_engineer.png",
   "size": "512x512",
-  "label": "CARD npc governor",
+  "label": "CARD npc engineer",
   "overlay": false,
-  "expected_art": "governor NPC card art"
+  "expected_art": "engineer NPC card art"
+ },
+ {
+  "file": "assets/game/cards/card_npc_merchant.png",
+  "size": "512x512",
+  "label": "CARD npc merchant",
+  "overlay": false,
+  "expected_art": "merchant NPC card art"
+ },
+ {
+  "file": "assets/game/cards/card_npc_diplomat.png",
+  "size": "512x512",
+  "label": "CARD npc diplomat",
+  "overlay": false,
+  "expected_art": "diplomat NPC card art"
+ },
+ {
+  "file": "assets/game/cards/card_npc_soldier.png",
+  "size": "512x512",
+  "label": "CARD npc soldier",
+  "overlay": false,
+  "expected_art": "soldier NPC card art"
+ },
+ {
+  "file": "assets/game/cards/card_npc_scientist.png",
+  "size": "512x512",
+  "label": "CARD npc scientist",
+  "overlay": false,
+  "expected_art": "scientist NPC card art"
  },
  {
   "file": "assets/game/cards/card_item_beamlaser.png",
   "size": "512x512",
   "label": "CARD item beamlaser",
   "overlay": false,
-  "expected_art": "beam laser derived-item card art"
+  "expected_art": "beam laser derived item"
+ },
+ {
+  "file": "assets/game/cards/card_item_harvest_rig.png",
+  "size": "512x512",
+  "label": "CARD item harvest_rig",
+  "overlay": false,
+  "expected_art": "star-harvest rig item"
+ },
+ {
+  "file": "assets/game/cards/card_item_junk_collector.png",
+  "size": "512x512",
+  "label": "CARD item junk_collector",
+  "overlay": false,
+  "expected_art": "junk collector item"
+ },
+ {
+  "file": "assets/game/cards/card_item_claim_rig.png",
+  "size": "512x512",
+  "label": "CARD item claim_rig",
+  "overlay": false,
+  "expected_art": "salvage claim rig item"
+ },
+ {
+  "file": "assets/game/cards/card_item_scanner.png",
+  "size": "512x512",
+  "label": "CARD item scanner",
+  "overlay": false,
+  "expected_art": "survey scanner item"
+ },
+ {
+  "file": "assets/game/cards/card_item_terraform_core.png",
+  "size": "512x512",
+  "label": "CARD item terraform_core",
+  "overlay": false,
+  "expected_art": "terraform core item"
+ },
+ {
+  "file": "assets/game/cards/card_item_shield_hot.png",
+  "size": "512x512",
+  "label": "CARD item shield_hot",
+  "overlay": false,
+  "expected_art": "hot shield item"
+ },
+ {
+  "file": "assets/game/cards/card_item_shield_cold.png",
+  "size": "512x512",
+  "label": "CARD item shield_cold",
+  "overlay": false,
+  "expected_art": "cold shield item"
+ },
+ {
+  "file": "assets/game/cards/card_item_shield_radio.png",
+  "size": "512x512",
+  "label": "CARD item shield_radio",
+  "overlay": false,
+  "expected_art": "radiation shield item"
  },
  {
   "file": "assets/game/resources/res_ore.png",
@@ -558,6 +3827,76 @@
   "label": "RES ore",
   "overlay": false,
   "expected_art": "ore chunk"
+ },
+ {
+  "file": "assets/game/resources/res_carbon.png",
+  "size": "256x256",
+  "label": "RES carbon",
+  "overlay": false,
+  "expected_art": "carbon lump"
+ },
+ {
+  "file": "assets/game/resources/res_hydrogen.png",
+  "size": "256x256",
+  "label": "RES hydrogen",
+  "overlay": false,
+  "expected_art": "hydrogen vial"
+ },
+ {
+  "file": "assets/game/resources/res_oxygen.png",
+  "size": "256x256",
+  "label": "RES oxygen",
+  "overlay": false,
+  "expected_art": "oxygen canister"
+ },
+ {
+  "file": "assets/game/resources/res_lithium.png",
+  "size": "256x256",
+  "label": "RES lithium",
+  "overlay": false,
+  "expected_art": "lithium shards"
+ },
+ {
+  "file": "assets/game/resources/res_sulfur.png",
+  "size": "256x256",
+  "label": "RES sulfur",
+  "overlay": false,
+  "expected_art": "sulfur pile"
+ },
+ {
+  "file": "assets/game/resources/res_gold.png",
+  "size": "256x256",
+  "label": "RES gold",
+  "overlay": false,
+  "expected_art": "gold nuggets"
+ },
+ {
+  "file": "assets/game/resources/res_uranium.png",
+  "size": "256x256",
+  "label": "RES uranium",
+  "overlay": false,
+  "expected_art": "uranium rods"
+ },
+ {
+  "file": "assets/game/resources/res_deuterium.png",
+  "size": "256x256",
+  "label": "RES deuterium",
+  "overlay": false,
+  "expected_art": "deuterium flask"
+ },
+ {
+  "file": "assets/game/resources/res_aluminium.png",
+  "size": "256x256",
+  "label": "RES aluminium",
+  "overlay": false,
+  "expected_art": "aluminium ingots"
+ },
+ {
+  "file": "assets/game/resources/res_phosphor.png",
+  "size": "256x256",
+  "label": "RES phosphor",
+  "overlay": false,
+  "expected_art": "phosphor grains"
  },
  {
   "file": "assets/game/resources/res_silicon.png",
@@ -574,11 +3913,95 @@
   "expected_art": "Ignis violet-red crystal"
  },
  {
+  "file": "assets/game/resources/res_crystal_cold.png",
+  "size": "256x256",
+  "label": "RES crystal_cold",
+  "overlay": false,
+  "expected_art": "Glace blue-white crystal"
+ },
+ {
+  "file": "assets/game/resources/res_crystal_temperate.png",
+  "size": "256x256",
+  "label": "RES crystal_temperate",
+  "overlay": false,
+  "expected_art": "Virid green-blue crystal"
+ },
+ {
   "file": "assets/game/resources/res_crystal_nox.png",
   "size": "256x256",
   "label": "RES crystal_nox",
   "overlay": false,
   "expected_art": "Nox black crystal"
+ },
+ {
+  "file": "assets/game/resources/res_steel_l.png",
+  "size": "256x256",
+  "label": "RES steel_l",
+  "overlay": false,
+  "expected_art": "light steel beams"
+ },
+ {
+  "file": "assets/game/resources/res_steel_h.png",
+  "size": "256x256",
+  "label": "RES steel_h",
+  "overlay": false,
+  "expected_art": "heavy steel plates"
+ },
+ {
+  "file": "assets/game/resources/res_water.png",
+  "size": "256x256",
+  "label": "RES water",
+  "overlay": false,
+  "expected_art": "water barrel"
+ },
+ {
+  "file": "assets/game/resources/res_heavy_water.png",
+  "size": "256x256",
+  "label": "RES heavy_water",
+  "overlay": false,
+  "expected_art": "heavy water flask"
+ },
+ {
+  "file": "assets/game/resources/res_food_1.png",
+  "size": "256x256",
+  "label": "RES food_1",
+  "overlay": false,
+  "expected_art": "food crate type 1"
+ },
+ {
+  "file": "assets/game/resources/res_food_2.png",
+  "size": "256x256",
+  "label": "RES food_2",
+  "overlay": false,
+  "expected_art": "food crate type 2"
+ },
+ {
+  "file": "assets/game/resources/res_food_3.png",
+  "size": "256x256",
+  "label": "RES food_3",
+  "overlay": false,
+  "expected_art": "food crate type 3"
+ },
+ {
+  "file": "assets/game/resources/res_med_1.png",
+  "size": "256x256",
+  "label": "RES med_1",
+  "overlay": false,
+  "expected_art": "medicine type 1"
+ },
+ {
+  "file": "assets/game/resources/res_med_2.png",
+  "size": "256x256",
+  "label": "RES med_2",
+  "overlay": false,
+  "expected_art": "medicine type 2"
+ },
+ {
+  "file": "assets/game/resources/res_med_3.png",
+  "size": "256x256",
+  "label": "RES med_3",
+  "overlay": false,
+  "expected_art": "medicine type 3"
  },
  {
   "file": "assets/game/resources/res_fuel_cells.png",
@@ -588,10 +4011,24 @@
   "expected_art": "glowing yellow fuel cell"
  },
  {
-  "file": "assets/game/resources/res_food.png",
+  "file": "assets/game/resources/res_fuel_cold.png",
   "size": "256x256",
-  "label": "RES food",
+  "label": "RES fuel_cold",
   "overlay": false,
-  "expected_art": "food crate"
+  "expected_art": "cold propulsion fuel"
+ },
+ {
+  "file": "assets/game/resources/res_fuel_hot.png",
+  "size": "256x256",
+  "label": "RES fuel_hot",
+  "overlay": false,
+  "expected_art": "hot propulsion fuel"
+ },
+ {
+  "file": "assets/game/resources/res_fuel_gas.png",
+  "size": "256x256",
+  "label": "RES fuel_gas",
+  "overlay": false,
+  "expected_art": "gas propulsion fuel"
  }
 ]

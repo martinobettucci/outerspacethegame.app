@@ -223,6 +223,8 @@ Roles: **pilot**, **engineer**, **merchant**, **diplomat**, **soldier**,
 **scientist** — bonuses per §11.4; governor-grade = rarity Rare+, role maps to
 archetype (pilot→Civic, soldier→Militarist, merchant→Mercantile,
 scientist→Scientific, engineer→Industrialist, diplomat→Diplomatic) [TUNE].
+**People (human / Forged / Vess) is cosmetic and orthogonal to role: any
+people can hold any role, any rarity, and govern** (canon, GAMEBOOK §12).
 Civil pilots: settler-risk −2%/level (crew) or landing-wear waiver (governor).
 
 ---
@@ -278,6 +280,45 @@ seed-locked].
 **Seed mask:** branch kept with probability by tier: T1 95%, T2 80%, T3 55%,
 T4 30%, T5 12% [TUNE]; kept branches roll a depth cap. Exempt nodes above.
 Unlock paid in on-planet resources (canon); scientists −5%/rarity tier [TUNE].
+
+### 5.1 Building catalog (v0 — complete; every effect [TUNE])
+
+One building instance, 3 levels (level-up in place); `spaceport`, `shipyard`
+and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
+**level-2/3 unlocks of the same building**, matching the 3-level art.
+
+| Building | Tier | Politics | Effect L1 → L2 → L3 |
+|---|---|---|---|
+| telescope | T0 | — | scope +200 pc/level (max 3 instances); no tile |
+| probe_pad | T0 | — | builds probes; 5/day/level cap; no tile |
+| depot | T0 | — | +200/400/600 T storage |
+| mine | T0 | — | basic extraction 10/20/40 T/day |
+| farm | T1 | — | food 10/20/40 batches/day |
+| waterworks | T1 | — | water 10/20/40 batches/day |
+| smelter | T1 | — | steel 10/20/40 batches/day |
+| crystal_extractor | T1 | — | climate crystal 8/16/32 T/day |
+| refinery | T1 | — | fuel cells 20/40/80 batches/day |
+| fuelcell_plant | T2 | — | industrial cells: refinery rate ×2 per level pair |
+| spaceport | T1 | — | docks S / +M / +L by level |
+| workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories & terraform cores |
+| market | T1 | — (L2+: Mercantile) | L1 fixed-rate; L2 AMM pools + auctions; L3 fees −0.05% |
+| residential | T1 | (L2+: Civic) | popCap +15%/level |
+| lab | T2 | — | medicines 10/20/40 batches/day |
+| obs_station | T2 | — | ground OBS umbrella radius 5/8/12 pc |
+| shipyard | T2 | — (L3: Industrialist) | L1 builds S+M hulls; L2 bulk M (−25% cost); L3 builds L hulls |
+| military_district | T3 | Militarist | enables conquest ops; garrison cap +50%/level |
+| weapon_foundry | T3 | Militarist | mints weapons & combat derived items; 1/2/4 items/week |
+| research_center | T3 | Scientific | unlock costs −10%/level (planet-wide) |
+| diplomatic_district | T3 | Diplomatic | +2 treaty slots/level; ping range +10%/level |
+| casino | T3 | Mercantile | market fee income +5%/level; +population happiness event slot |
+| commerce_district | T3 | Mercantile | market daily limits +50%/level |
+| faction_hq | T3 | Diplomatic | faction charter/moderation seat; banner broadcast |
+| stargate_yard | T4 | — | builds Stargates (§9.3); 1 concurrent build/level |
+| terraformer | T4 | Civic | +1 quality grade, once per world (huge cost) |
+| artificial_planet_yard | T5 | Industrialist | builds artificial planets (§13) |
+
+All buildings 512×256, 3 levels, hot/cold climate-adaptation overlays; full
+sprite contract in `docs/ASSET_PIPELINE.md`.
 
 ---
 
@@ -451,9 +492,20 @@ gate's planet stock. Factions tolling chokepoints is intended politics.
   radius 5 pc [TUNE]): **ATK ×0.6** [TUNE].
 - **DEF** = armor HP. Mitigation `mit = 0.15 × armorLevel`; **turrets mit
   0.30** [TUNE].
-- Ground units: turret light ATK 40 HP 150 (10 steelL), **turret heavy ATK
-  160 HP 400 (40 steelH)** [TUNE]; tanks ATK 40 HP 250; anti-air ×1.5 vs
-  atmospheric ships. **Turrets fire on hovering ships at full ATK.**
+- **Ground-unit catalog (complete, v0 — all [TUNE], L2/L3 ≈ ×1.4/×1.9 the
+  L1 line):**
+
+| Unit | Levels | ATK (L1) | HP (L1) | Cost (L1) | Notes |
+|---|---|---|---|---|---|
+| turret_light | 2 | 40 | 150 | 10 steelL | cheap screen |
+| turret_heavy | 2 | 160 | 400 | 40 steelH | mit 0.30; backbone |
+| cannon | 2 | 120 | 200 | 25 steelH | long-range anti-orbital (targets hovering) |
+| tank_ground | 3 | 40 | 250 | 15 steelL | a2g only; mobile garrison |
+| tank_antiair | 3 | 60 | 220 | 20 steelL | ×1.5 vs atmospheric ships |
+| tank_combined | 3 | 50 | 260 | 30 steelL | hits ground AND air |
+
+  Upkeep 0.2 cells/day each; garrison cap 2 × tiles (§6). **Turrets and
+  cannons fire on hovering ships at full ATK.**
 
 ### 10.2 Resolution (at arrival — canon)
 Simultaneous rounds, 1 round = 1 tick:
