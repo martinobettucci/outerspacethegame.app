@@ -18,7 +18,14 @@ import {
 } from '../services/sessions.js';
 import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
-import { fleet, launchProbe, moveShip } from '../services/ships.js';
+import {
+  fleet,
+  landShip,
+  launchProbe,
+  moveShip,
+  transferCargo,
+  undockShip,
+} from '../services/ships.js';
 import {
   listComms,
   listMessages,
@@ -71,6 +78,12 @@ const messageSchema = z.object({ body: z.string().min(1).max(2000) });
 const settingsSchema = z.object({
   workforce: z.number().int().min(0).optional(),
   runPct: z.number().int().min(0).max(100).optional(),
+  landing: z.enum(['self', 'everyone']).optional(),
+});
+const cargoSchema = z.object({
+  resource: z.string().min(1),
+  tons: z.number().positive(),
+  direction: z.enum(['load', 'unload']),
 });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
@@ -392,6 +405,26 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   app.get('/comms', async (req) => {
     const player = await requirePlayer(req);
     return listComms(deps.pool, player.id);
+  });
+
+  app.post('/ships/:id/land', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => landShip(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/undock', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => undockShip(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/cargo', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = cargoSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () => transferCargo(deps.pool, player.id, id, parsed.data));
   });
 
   app.post('/pings', async (req, reply) => {

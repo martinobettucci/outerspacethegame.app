@@ -465,3 +465,59 @@ test('la Silence se brise : télescope → ping → ping-back → canal (GB §5)
   await shot(pageB, '25-chat-neighbor-side');
   await ctxB.close();
 });
+
+test('fret : charger à quai → décoller → se reposer → décharger (GB §13, DG §7)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  // Compte NEUF : soute et stock déterministes (Cargo S = 3 conteneurs).
+  const email3 = `e2e-cargo-${runId}@test.local`;
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
+    .click();
+  await page.getByLabel('E-mail').fill(email3);
+  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Sovereign name').fill('E2E Hauler');
+  await page.getByLabel('Industrialist').check();
+  await page.getByRole('button', { name: 'Awaken' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  await page.waitForTimeout(1500); // sprites + flotte
+
+  // Le cargo docké est déployé en éventail : idx 1 → ~(−25, −23) px.
+  const canvas = page.getByTestId('galaxy-canvas');
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2 - 25, box.y + box.height / 2 - 23);
+  const hold = page.getByRole('region', { name: 'Cargo hold' });
+  await expect(hold).toBeVisible({ timeout: 5_000 });
+  await expect(hold.getByText('Hold empty')).toBeVisible();
+  await shot(page, '26-cargo-hold-empty');
+
+  // Charge 2 T d'ore (stock starter ≥ 60).
+  await hold.getByLabel('Resource').selectOption('ore');
+  await hold.getByLabel('Tons').fill('2');
+  await hold.getByRole('button', { name: 'Load', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Cargo transferred.');
+  await expect(hold.getByText(/ore · 2\.0 T/)).toBeVisible();
+  await expect(hold.getByText(/2\/3 containers/)).toBeVisible();
+  await shot(page, '27-cargo-loaded');
+
+  // Décoller (survol du même monde) puis se reposer — l'atterrissage est
+  // un acte explicite (GB §9), pas une conséquence de l'arrivée.
+  await page.getByRole('button', { name: 'Undock', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Airborne — hovering.');
+  const landBtn = page.getByRole('button', { name: 'Land', exact: true });
+  await expect(landBtn).toBeVisible();
+  await shot(page, '28-hovering-land-available');
+  await landBtn.click();
+  await expect(page.getByRole('status')).toContainText('Touchdown.');
+  await expect(page.getByRole('button', { name: 'Undock', exact: true })).toBeVisible();
+
+  // Décharge tout : la soute se vide (le stock remonte côté serveur —
+  // vérifié en intégration).
+  await hold.getByLabel('Tons').fill('2');
+  await hold.getByRole('button', { name: 'Unload', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Cargo transferred.');
+  await expect(hold.getByText('Hold empty')).toBeVisible();
+  await shot(page, '29-cargo-unloaded');
+});

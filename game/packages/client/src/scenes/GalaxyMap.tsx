@@ -5,7 +5,18 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Globe2, Sun, CircleDot, Rocket, Send, Radar } from 'lucide-react';
+import {
+  Globe2,
+  Sun,
+  CircleDot,
+  Rocket,
+  Send,
+  Radar,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Package,
+} from 'lucide-react';
+import { ALL_RESOURCE_IDS, containersUsed } from '@atg/shared';
 import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
@@ -42,6 +53,8 @@ export function GalaxyMap() {
     | null
   >(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [cargoRes, setCargoRes] = useState('ore');
+  const [cargoTons, setCargoTons] = useState('1');
   const targetingRef = useRef<typeof targeting>(null);
   targetingRef.current = targeting;
   const shipsRef = useRef<ShipView[]>([]);
@@ -49,6 +62,18 @@ export function GalaxyMap() {
   const [labels, setLabels] = useState<
     { id: string; name: string; x: number; y: number; owned: boolean }[]
   >([]);
+
+  /** Rafraîchit la flotte ET le panneau du vaisseau sélectionné. */
+  const refreshShips = () =>
+    api
+      .fleet()
+      .then((r) => {
+        setShips(r.ships);
+        setSelectedShip((cur) =>
+          cur ? (r.ships.find((s) => s.id === cur.id) ?? null) : null,
+        );
+      })
+      .catch(() => undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -476,6 +501,191 @@ export function GalaxyMap() {
               ([type, u]) => ` · ${Math.floor(u)} u ${type}`,
             )}
           </p>
+          {selectedShip.containers > 0 && (
+            <section
+              aria-label={t.galaxy.cargoTitle}
+              style={{
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                display: 'grid',
+                gap: 4,
+              }}
+            >
+              <strong
+                style={{
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Package size={13} aria-hidden /> {t.galaxy.cargoTitle} —{' '}
+                {containersUsed(selectedShip.cargo)}/{selectedShip.containers}{' '}
+                {t.galaxy.containers}
+              </strong>
+              {Object.keys(selectedShip.cargo).length === 0 ? (
+                <span>{t.galaxy.cargoEmpty}</span>
+              ) : (
+                Object.entries(selectedShip.cargo).map(([res, tons]) => (
+                  <span key={res} style={{ fontFamily: 'var(--font-mono)' }}>
+                    {res.replace('_', ' ')} · {tons.toFixed(1)} {t.galaxy.tons}
+                  </span>
+                ))
+              )}
+              {selectedShip.status === 'docked' &&
+                selectedShip.dockedBodyId &&
+                bodies.some(
+                  (b) => b.id === selectedShip.dockedBodyId && b.owned,
+                ) && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select
+                      aria-label="Resource"
+                      value={cargoRes}
+                      onChange={(e) => setCargoRes(e.target.value)}
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                        maxWidth: 110,
+                      }}
+                    >
+                      {ALL_RESOURCE_IDS.map((r) => (
+                        <option key={r} value={r}>
+                          {r.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      aria-label="Tons"
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      value={cargoTons}
+                      onChange={(e) => setCargoTons(e.target.value)}
+                      style={{
+                        width: 58,
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    />
+                    {(['load', 'unload'] as const).map((direction) => (
+                      <button
+                        key={direction}
+                        type="button"
+                        onClick={() =>
+                          api
+                            .transferCargo(selectedShip.id, {
+                              resource: cargoRes,
+                              tons: Number(cargoTons),
+                              direction,
+                            })
+                            .then(() => {
+                              setNotice(t.galaxy.cargoDone);
+                              void refreshShips();
+                            })
+                            .catch((err: ApiError) =>
+                              setNotice(
+                                `${t.galaxy.cargoFailed} — ${err.message ?? err.error}`,
+                              ),
+                            )
+                        }
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          background:
+                            direction === 'load'
+                              ? 'var(--primary-400)'
+                              : 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 8px',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {direction === 'load' ? (
+                          <ArrowUpFromLine size={11} aria-hidden />
+                        ) : (
+                          <ArrowDownToLine size={11} aria-hidden />
+                        )}
+                        {direction === 'load'
+                          ? t.galaxy.cargoLoad
+                          : t.galaxy.cargoUnload}
+                      </button>
+                    ))}
+                  </div>
+                )}
+            </section>
+          )}
+          {selectedShip.status === 'hovering' && selectedShip.hoverBodyId && (
+            <button
+              type="button"
+              onClick={() =>
+                api
+                  .land(selectedShip.id)
+                  .then(() => {
+                    setNotice(t.galaxy.landed);
+                    void refreshShips();
+                  })
+                  .catch((err: ApiError) =>
+                    setNotice(`${t.galaxy.landRefused} — ${err.message ?? err.error}`),
+                  )
+              }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--success-500)',
+                color: '#0D0D0D',
+                border: 'none',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <ArrowDownToLine size={14} aria-hidden /> {t.galaxy.land}
+            </button>
+          )}
+          {selectedShip.status === 'docked' && (
+            <button
+              type="button"
+              onClick={() =>
+                api
+                  .undock(selectedShip.id)
+                  .then(() => {
+                    setNotice(t.galaxy.undocked);
+                    void refreshShips();
+                  })
+                  .catch((err: ApiError) =>
+                    setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                  )
+              }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--bg-overlay)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <ArrowUpFromLine size={14} aria-hidden /> {t.galaxy.undock}
+            </button>
+          )}
           {['docked', 'hovering', 'idle'].includes(selectedShip.status) && (
             <button
               type="button"

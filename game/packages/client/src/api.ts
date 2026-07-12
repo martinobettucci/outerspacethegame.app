@@ -78,6 +78,7 @@ export interface PlanetBuilding {
   effBatchesPerDay: number | null;
   workforceU: number | null;
   limiting: string | null;
+  landing: 'self' | 'everyone' | null;
 }
 
 export interface PlanetDetail {
@@ -126,6 +127,9 @@ export interface ShipView {
   y: number;
   status: string;
   dockedBodyId: string | null;
+  hoverBodyId: string | null;
+  cargo: Record<string, number>;
+  containers: number;
   fuel: Record<string, number>;
   mission: {
     originX: number;
@@ -192,6 +196,19 @@ export const api = {
       `/planets/${planetId}/probes`,
       dest,
     ),
+  land: (shipId: string) =>
+    call<{ bodyId: string }>('POST', `/ships/${shipId}/land`),
+  undock: (shipId: string) =>
+    call<{ bodyId: string }>('POST', `/ships/${shipId}/undock`),
+  transferCargo: (
+    shipId: string,
+    input: { resource: string; tons: number; direction: 'load' | 'unload' },
+  ) =>
+    call<{ cargo: Record<string, number> }>(
+      'POST',
+      `/ships/${shipId}/cargo`,
+      input,
+    ),
   comms: () =>
     call<{
       incoming: { id: string; fromName: string; bodyName: string; createdAt: string }[];
@@ -212,7 +229,7 @@ export const api = {
   setBuildingSettings: (
     planetId: string,
     buildingId: string,
-    settings: { workforce?: number; runPct?: number },
+    settings: { workforce?: number; runPct?: number; landing?: 'self' | 'everyone' },
   ) =>
     call<{ ok: true }>(
       'PATCH',

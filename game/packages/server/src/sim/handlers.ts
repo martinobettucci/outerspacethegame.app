@@ -131,6 +131,7 @@ export const shipArrival: EventHandler = async (client, event) => {
     `UPDATE ships
        SET x = dest_x, y = dest_y,
            status = CASE WHEN dest_body_id IS NULL THEN 'idle' ELSE 'hovering' END,
+           hover_body_id = dest_body_id,
            origin_x = NULL, origin_y = NULL, dest_x = NULL, dest_y = NULL,
            departed_at = NULL, arrives_at = NULL, dest_body_id = NULL
      WHERE id = $1 AND status = 'transit' AND arrives_at <= now()`,

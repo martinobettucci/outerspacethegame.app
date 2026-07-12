@@ -4,6 +4,20 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Atterrissage & fret (chunk J)** : migration `ships.hover_body_id` +
+  `buildings.config` ; le survol garde le corps sous la coque et atterrir
+  devient un acte EXPLICITE (GB §9) — mondes possédés toujours accueillants
+  [TUNE-v1], monde étranger = spaceport actif avec politique `everyone`
+  (v1 self|everyone, réglée par la commande de réglages du bâtiment,
+  friends/neighbours avec les factions), monde sauvage et sondes refusés ;
+  fret à quai sur monde possédé : 1 conteneur = 1 T d'un fongible, tonnes
+  partielles monopolisent leur conteneur (DG §7 exact), stock vérifié,
+  cap de stockage refusé explicitement, rebase des bords de frein après
+  transfert ; UI : soute du vaisseau (manifeste + conteneurs), boutons
+  Land/Undock, formulaire load/unload, politique d'atterrissage dans le
+  panneau spaceport. AUCUNE limite de docks en v1 (annoncé — comptes par
+  niveau au backlog). 7 unit + 9 intégration + E2E boucle complète,
+  captures 26–29 observées.
 - **La Silence se brise : ping, ping-back & canaux (chunk I)** : migration
   `pings`/`channels`/`messages` (canal canonique par couple : paire triée +
   contrainte SQL unique) ; sendPing (cible = monde POSSÉDÉ visible dans le

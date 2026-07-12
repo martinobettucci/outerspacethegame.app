@@ -165,6 +165,40 @@ export const MIN_CREW: Record<HullSize, number> = { s: 1, m: 3, l: 8 };
 /** Usure d'atterrissage : 1 % d'armure par atterrissage. [TUNE] DG §8.6 */
 export const LANDING_WEAR_RATIO = 0.01;
 
+/**
+ * Conteneurs consommés par un manifeste de fret — DG §7 : « 1 conteneur =
+ * 1 T d'UN fongible ; les tonnes partielles monopolisent leur conteneur. »
+ */
+export function containersUsed(cargo: Record<string, number>): number {
+  return Object.values(cargo).reduce(
+    (n, t) => n + Math.ceil(Math.max(0, t) - 1e-9),
+    0,
+  );
+}
+
+/**
+ * Politique d'atterrissage v1 (GB §9 « self / friends / neighbours », liste
+ * complète OPEN) : `self` | `everyone` — friends/neighbours arrivent avec
+ * les factions (P4). [TUNE-v1]
+ */
+export type LandingPolicy = 'self' | 'everyone';
+
+/**
+ * Droit d'atterrir (GB §9 : « Spaceport → enables landing »).
+ * v1 documentée : ses propres mondes accueillent toujours (précédent du
+ * spawn : les vaisseaux du starter naissent dockés sans spaceport)
+ * [TUNE-v1 interp] ; un monde étranger exige un spaceport ACTIF dont la
+ * politique est `everyone`.
+ */
+export function canLand(input: {
+  owned: boolean;
+  hasActiveSpaceport: boolean;
+  policy: LandingPolicy;
+}): boolean {
+  if (input.owned) return true;
+  return input.hasActiveSpaceport && input.policy === 'everyone';
+}
+
 /** Effets d'upgrade (niveau 1 / niveau 2). [TUNE] DG §8.2 */
 export const UPGRADE_EFFECTS = {
   engine: { speedMult: [1.15, 1.3] },

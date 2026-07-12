@@ -60,6 +60,18 @@ No unilateral contact exists at the schema level: nothing references a
 channel except through the canonical pair, and the only writer of
 `channels` is the ping-back service path.
 
+## 004_landing_cargo (landing & carriage, GB §9 / DG §7)
+
+- `ships.hover_body_id` — arrival keeps the body under the hull; landing
+  is an explicit command (`docked` ⇄ `hovering` moves the reference
+  between `docked_body_id` and `hover_body_id`; departure clears both).
+- `buildings.config jsonb` — per-building configuration: today the
+  spaceport landing policy (`{"landing": "self"|"everyone"}`, default
+  self); market trade slots will live here next. Cargo itself needs no
+  schema change: `ships.cargo` (jsonb, tons per resource) existed since
+  001; capacity is enforced in code via `containersUsed` (1 container =
+  1 T of one fungible, partial tons monopolize — mirrors DG §7).
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

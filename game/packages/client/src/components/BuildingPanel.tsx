@@ -31,7 +31,11 @@ export function BuildingPanel({
   workforceAssignable: number;
   workforceAssigned: number;
   maxLevelBySeed: number;
-  onApply: (settings: { workforce: number; runPct: number }) => void;
+  onApply: (settings: {
+    workforce?: number;
+    runPct?: number;
+    landing?: 'self' | 'everyone';
+  }) => void;
   onLevelUp: () => void;
   onDemolish: () => void;
   onClose: () => void;
@@ -112,6 +116,28 @@ export function BuildingPanel({
 
       {isIndustry && building.workforceU !== null && (
         <EfficiencyCurve u={building.workforceU} label={building.key.replace(/_/g, ' ')} />
+      )}
+
+      {building.key === 'spaceport' && building.landing && (
+        <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+          <span>{t.planet.landingPolicy}</span>
+          <select
+            value={building.landing}
+            onChange={(e) =>
+              onApply({ landing: e.target.value as 'self' | 'everyone' })
+            }
+            style={{
+              background: 'var(--bg-overlay)',
+              border: '1px solid var(--stroke-subtle)',
+              borderRadius: 'var(--radius-button)',
+              color: 'var(--text-primary)',
+              padding: '6px 10px',
+            }}
+          >
+            <option value="self">{t.planet.landingSelf}</option>
+            <option value="everyone">{t.planet.landingEveryone}</option>
+          </select>
+        </label>
       )}
 
       {isIndustry && (

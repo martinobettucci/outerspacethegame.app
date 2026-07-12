@@ -132,6 +132,7 @@ export interface PlanetDetail {
     effBatchesPerDay: number | null;
     workforceU: number | null;
     limiting: string | null;
+    landing: 'self' | 'everyone' | null;
   }[];
   tech: {
     available: TechNodeKey[];
@@ -169,7 +170,7 @@ export async function planetDetail(
 
     const { rows: buildingRows } = await client.query(
       `SELECT id, key, level, tile_index, status, completes_at, recipe,
-              workforce, run_pct
+              workforce, run_pct, config
        FROM buildings WHERE body_id = $1 ORDER BY created_at, id`,
       [bodyId],
     );
@@ -268,6 +269,12 @@ export async function planetDetail(
           effBatchesPerDay: r ? Math.round(r.effBatchesPerDay * 100) / 100 : null,
           workforceU: r ? Math.round(r.workforceU * 1000) / 1000 : null,
           limiting: r ? r.limiting : null,
+          landing:
+            b.key === 'spaceport'
+              ? b.config?.landing === 'everyone'
+                ? ('everyone' as const)
+                : ('self' as const)
+              : null,
         };
       }),
       tech: {
@@ -587,7 +594,7 @@ export async function setBuildingSettings(
   playerId: string,
   bodyId: string,
   buildingId: string,
-  settings: { workforce?: number; runPct?: number },
+  settings: { workforce?: number; runPct?: number; landing?: string },
   nowMs = Date.now(),
 ): Promise<void> {
   const client = await pool.connect();
@@ -595,11 +602,31 @@ export async function setBuildingSettings(
     await client.query('BEGIN');
     const planet = await loadOwnedPlanet(client, playerId, bodyId);
     const { rows } = await client.query(
-      `SELECT id, workforce, run_pct FROM buildings
+      `SELECT id, key, workforce, run_pct FROM buildings
        WHERE id = $1 AND body_id = $2 FOR UPDATE`,
       [buildingId, bodyId],
     );
     if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+
+    // Politique d'atterrissage (GB §9) — réservée au spaceport, v1
+    // self|everyone (friends/neighbours avec les factions, P4).
+    if (settings.landing !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'La politique d\'atterrissage se règle sur un spaceport',
+        );
+      }
+      if (!['self', 'everyone'].includes(settings.landing)) {
+        throw new CommandError('workforce_invalid', 'Politique inconnue');
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('landing', $2::text)
+         WHERE id = $1`,
+        [buildingId, settings.landing],
+      );
+    }
 
     const workforce = settings.workforce ?? rows[0].workforce;
     const runPct = settings.runPct ?? rows[0].run_pct;

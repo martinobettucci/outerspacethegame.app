@@ -1483,3 +1483,40 @@ démolition qui en dépendait.
 - Limite documentée : quota épuisable en re-runs massifs (20 pings/j pour
   demo) → `resetDb` si la limite est atteinte ; pas de notification de
   hail hors de l'écran Comms (backlog).
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk J — atterrissage & fret (fondation de l'économie physique)
+
+### Pourquoi ce chunk avant les marchés
+GB §13 : « goods are hauled, never teleported ». Un marché sans jambe
+physique (soute, quai, droit d'atterrir) serait un mensonge mécanique. Le
+chunk K (marché L1 taux fixe) s'appuiera sur cette fondation.
+
+### Décisions v1 (documentées)
+- **Arriver ≠ se poser** : l'arrivée laisse le vaisseau en survol avec
+  `hover_body_id` ; « Land » est une commande. Migration 004.
+- **Ses mondes accueillent toujours** [TUNE-v1 interp] : précédent du
+  spawn (les vaisseaux du starter naissent dockés sans spaceport). Monde
+  étranger : spaceport ACTIF + politique `everyone` (v1 self|everyone,
+  friends/neighbours arrivent avec les factions). Monde sauvage : refus
+  (la colonisation est un autre chantier). Sonde : ne se pose jamais.
+- **Config par bâtiment** : `buildings.config jsonb` — politique
+  d'atterrissage du spaceport aujourd'hui, slots de marché demain.
+- **DG §7 appliqué à la lettre** : 1 conteneur = 1 T d'UN fongible,
+  tonnes partielles monopolisent leur conteneur (`containersUsed` pur,
+  testé unitaire) ; Cargo S = 3 conteneurs.
+- **Fret réservé aux mondes possédés** (v1) : échanger sur le monde d'un
+  autre, c'est du commerce — chunk marché.
+- **Gaps annoncés** : aucune limite de docks (comptes par niveau au
+  backlog), pas d'usure d'atterrissage (le suivi d'armure n'existe pas
+  encore), pas de poids/loadFrac sur le vol.
+
+### Vérifications
+- 7 unit purs (conteneurs, canLand) + 9 intégration (matrice spaceport
+  self/everyone via la vraie commande, cap de stockage refusé, refus
+  d'autorisation par requêtes directes) + E2E 9/9 dont la boucle fret
+  complète (charge 2 T → décolle → se repose → décharge) ; captures 26–29
+  observées (soute 2/3 conteneurs, Land vert en survol, formulaire à quai).
+- Correctif de test au passage : l'ordre capacité-avant-stock rendait un
+  refus ambigu — test ajusté pour vérifier chaque refus isolément.

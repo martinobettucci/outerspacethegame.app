@@ -17,6 +17,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 1 | `game/packages/server/migrations/001_baseline.sql` | Schéma fondateur : joueurs/sessions, corps célestes, gisements, stock, bâtiments, unlocks, NPC, vaisseaux, file d'événements | PostgreSQL ≥ 16, extension `pgcrypto` | DROP des tables (aucune donnée réelle n'existe) |
 | 2 | `game/packages/server/migrations/002_ship_missions.sql` | Missions de vol (segments, statut `idle`, colonnes mission, index transit) — omission du chunk H corrigée ici | 001 | DROP des colonnes/index ajoutés |
 | 3 | `game/packages/server/migrations/003_pings_channels.sql` | Protocole de contact (GB §5) : `pings`, `channels` (paire canonique unique), `messages` | 001 | DROP des trois tables |
+| 4 | `game/packages/server/migrations/004_landing_cargo.sql` | Atterrissage & fret (GB §9, DG §7) : `ships.hover_body_id`, `buildings.config` (politique d'atterrissage) | 001, 002 | DROP des deux colonnes |
 
 ## Services à déployer (au premier déploiement)
 

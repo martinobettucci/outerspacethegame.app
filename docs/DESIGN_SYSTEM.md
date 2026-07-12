@@ -118,6 +118,12 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   listing no-tile buildings (telescope, probe pad) as `key Ln — status`
   (status colored success/warning); infrastructure cards build directly from
   the hand (no tile selection), and this panel is their only on-screen proof.
+- **Ship panel: cargo hold & landing (implemented, chunk J)** — hold section
+  (mono manifest `res · X.X T`, `used/total containers` count), success-green
+  `Land` when hovering over a world, neutral `Undock` when docked; the
+  load/unload mini-form (resource select + tons + Load primary / Unload
+  neutral) appears only when docked at an owned world. Spaceport building
+  panel gains the landing-policy select (Self only / Everyone).
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen
