@@ -663,3 +663,9 @@ survival list (no fuel); pricing = fixed-rate + house cut.
   outside the zone; zone defined = ground + docks.
 - **F3:** post-F1a/F1d parity plausible; **Monitor M12** — governor-install
   shares by archetype, trigger >50% (lever: magnitudes, never masks).
+
+### Round 8 — F1d resolved (owner approved)
+
+Sanctuary = **earned status**: full-diplo governors **+ diplomatic_district
+L3 built**. Closes the one-Rare-diplomat-unconquerable-mining-world hole and
+re-closes R5-5. Round 8 fully closed; monitors M1–M12.

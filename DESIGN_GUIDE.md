@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.9.1** — round-8 governance patches (sanctuary = ground truce) + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.9.2** — sanctuary = earned status (owner-approved F1d) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -272,10 +272,10 @@ is never politics-gated). [TUNE: exact matrix lives in data.]
   forecloses market L2+ (Mercantile-gated): sanctuaries are mediation grounds
   and manual-channel bazaars, never AMM hubs. This asymmetry is the balance —
   do not "fix" it.** Fencing stolen goods there is politics, not a bug.
-  **[PENDING OWNER — round-8 F1d]:** additionally requiring a
-  **diplomatic_district L3** to activate sanctuary (earned status, ~cost of a
-  defense package) — else one Rare diplomat makes any mining medium
-  unconquerable forever and re-opens plunder-proofing.
+  **Activation requirement (owner-approved, round 8):** sanctuary requires
+  **full-diplo governors AND a built diplomatic_district L3** — an earned
+  status (~cost of a defense package), never a single-governor trick. This
+  re-closes R5-5 plunder-proofing.
 - **Same-type stacking (round-8 formula):** magnitude(N same-type) =
   base × {1, 1.6, 2.0} [TUNE]. Per archetype: Militarist production interval
   ×0.85/×0.75 (rate stack — NOT extra queues, preserves M7 siege math);
