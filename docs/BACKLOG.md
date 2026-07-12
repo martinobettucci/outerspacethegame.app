@@ -53,7 +53,7 @@
 - [ ] Anti-stagnation levers beyond depletion (new regions, discovery cycles)
 - [ ] Route/stargate decay edge cases beyond destination-death
 - [ ] Artificial-planet open sub-items (pop/quality caps confirmation, movement cost tuning)
-- [~] **Balance Round 5 — build≠install** : correction canon du responsable (construire ≠ installer, unités = objets portables) appliquée (GAMEBOOK §9, guide v0.4.1, patch 4b-F7b annulé) ; sim ciblée EN COURS (chaîne produire→transporter→installer, marché de la défense, exploits de la séparation, spec de production des unités)
+- [~] **Balance Round 5 — build≠install** : VERDICT « la clef de voûte tient » ; 8 constats patchés → guide v0.5 (production d'unités par le military_district + 6 cartes, verrou de siège, pillage des items entreposés, upkeep suiveur, unités mintables, moniteur M8) ; **tour 5b de confirmation en cours** (re-calcul R5-2 avec les taux désormais dans le guide)
 - [x] **Balance Round 4 — content breadth**: 2 campaigns (économie + militaire), 15 constats, tous patchés → DESIGN_GUIDE v0.4 (fees en bp, cap remises −50%, coûts T2+ complets, matrice de ciblage unités, slots de garnison pondérés, HP bâtiments ×10, turret_light apolitique, règle boucliers climat) ; moniteurs M6–M7 ajoutés
 - [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria

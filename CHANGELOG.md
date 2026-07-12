@@ -23,6 +23,9 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Tour 5 TERMINÉ : la clef de voûte « construire ≠ installer » tient ;
+  production d'unités spécifiée (military_district), verrou de siège,
+  pillage des items, upkeep suiveur → DESIGN_GUIDE v0.5 ; moniteur M8.
 - Correction canon du responsable : **construire ≠ installer** (clef de voûte
   de l'économie) — unités sol et objets = items portables produits là où la
   politique le permet, installés n'importe où ; patch « turret_light

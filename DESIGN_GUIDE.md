@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.4.1** — rounds 1–2 system patches + round-4 content patches +
+> **Version v0.5** — rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >
@@ -307,7 +307,7 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | lab | T2 | — | medicines 10/20/40 batches/day |
 | obs_station | T2 | — | ground OBS umbrella radius 5/8/12 pc |
 | shipyard | T2 | — (L3: Industrialist) | L1 builds S+M hulls; L2 bulk M (−25% cost); L3 builds L hulls |
-| military_district | T3 | Militarist | enables conquest ops; garrison cap +50%/level |
+| military_district | T3 | Militarist | enables conquest ops; garrison cap +50%/level; **UNIT PRODUCTION: 1 unit / 48·24·12 h × E** by level (one queue; mints unit levels ≤ district level; per-unit cost = §10.1 cost column, paid at queue time) |
 | weapon_foundry | T3 | Militarist | **continuous mint: 1 item / 168·84·42 h × E** (no weekly burst buckets) |
 | research_center | T3 | Scientific | unlock costs −10%/level; **discounts multiply, best scientist only, total capped −50%** |
 | diplomatic_district | T3 | Diplomatic | **ping quota +10/day/level; share-grant slots +2/level** (treaty = standing share/route grant; targeting stays telescope-scope-limited — canon) |
@@ -317,6 +317,11 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | stargate_yard | T4 | — | builds Stargates (§9.3); 1 concurrent build/level |
 | terraformer | T4 | Civic | +1 quality grade, once per world (huge cost) |
 | artificial_planet_yard | T5 | Industrialist | builds artificial planets (§13) |
+
+**Unit-card unlocks (once per planet, Militarist mask) [TUNE]:**
+turret_light 30 ore+10 steelL; tank_ground 40 ore+20 steelL; tank_antiair
+50 ore+25 steelL; tank_combined 80 ore+40 steelL+10 cells; turret_heavy
+100 ore+50 steelH+20 cells; cannon 80 ore+40 steelH+15 cells.
 
 **Unlock costs (T2+; placement = 50 % rule; T0-T1 costs in §5) [TUNE]:**
 spaceport L2 120 ore+60 steelL; shipyard 150 ore+80 steelL+20 cells;
@@ -371,6 +376,13 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   uninstalled units are cargo again. Defenseless-production worlds defend by
   **importing units** or **hovering defensive ships** — protection is a
   market. (Supersedes round-4b's "turret_light politics-free" patch.)
+  **Siege lock [round 5]:** install & uninstall are **blocked while any
+  hostile is engaged at the planet** (mirrors no-disengage-vs-structures) —
+  evacuate or reinforce BEFORE arrival (telescopes give days); reinforcement
+  under fire = hovering ships, as the keystone intends. Off-siege install
+  concurrency: **3 parallel installs/planet** [TUNE]. **Upkeep follows the
+  unit wherever it is** (garrison, warehouse, cargo — drawn from planet or
+  carrier stock); unpaid ⇒ unit **offline (ATK 0)** until fed.
 - **Ground units**: no tiles (garrison slots — §10.1), upkeep 0.2 cells/day
   [TUNE]. **Building HP: 1 500/3 000/6 000 by level** [round 4b].
 
@@ -574,11 +586,17 @@ buildings (HP §6) only (canon).
   **forced combat-landing** (Combat-M/L; no dock needed once defenses are
   dead) → hold 24 h [TUNE] → ownership transfers: buildings & population
   stay, **planet-bound governors transfer with the world** (§4.1), ship/
-  building-bound NPCs die with their hosts (canon), stock plunder **25%**
+  building-bound NPCs die with their hosts (canon), stock plunder **25%** —
+  **warehoused unit/derived ITEMS count as stock** (conqueror takes
+  floor(25%) by census value, deterministic pick) and **installed units are
+  captured with the world**
   [TUNE]. Starter-only-planet exemption (§2.2). **Fresh colonies carry a
   14-day grace: no conquest and no a2g bombardment of their buildings**
   (blockade and tolls remain legal — siege the cradle, don't burn it) [TUNE].
 - **Personal ship** unattackable/unhijackable everywhere (canon).
+- **Escort rule of thumb (round 5):** one armored hovering Combat-M trades
+  ~1:1 with a raider bird; two escorts beat one raider — orbit defense is
+  affordable protection for production-less worlds (upkeep from own stock).
 
 ### 10.4 Junk fields
 Dump/kill drops junk at site: hazard **15 HP per 30 T** in a 0.5 pc cell,
@@ -703,7 +721,8 @@ listings disclose the governance mask (§11.3).
   live (canon). **Burned assets credit only the minting account for 60 days**
   [TUNE]; **no minting for accounts < 45 days** (§2.2) — the bridge is a
   vault, not a teleporter.
-- Mintable: planets, ships, NPCs, derived items, building cards (canon).
+- Mintable: planets, ships, NPCs, derived items, building cards (canon),
+  **and ground units** (uninstalled state required; standard 48 h packing).
   Factions: DB entities in v0; banner mint = v2 [TUNE]. Starter planet never
   mintable.
 

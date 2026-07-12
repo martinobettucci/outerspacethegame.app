@@ -844,3 +844,30 @@ Compris à moitié seulement : la séparation existait pour les objets forgés
   sous siège, stockage anti-pillage, renforts en cours de bataille,
   mercenariat de garnison, mintabilité NFT), et spec manquante de la
   production d'unités (qui produit quoi, à quel débit).
+
+---
+
+## 2026-07-12 — Session 18 (tour 5 appliqué → guide v0.5)
+
+### Verdict tour 5
+La clef de voûte CONSTRUIRE ≠ INSTALLER tient : import de défense bouclé en
+≈8 j (dans la grâce de colonie), escortes en orbite couvrent la fenêtre nue,
+aucun patch antérieur rouvert.
+
+### Correctifs (v0.5)
+- R5-1 (bloquant) : le military_district PRODUIT les unités (1/48·24·12 h ×E
+  par niveau, file unique, niveaux ≤ niveau du district, coût = colonne
+  §10.1) + coûts de déblocage des 6 cartes d'unités.
+- R5-4/6 : VERROU DE SIÈGE — ni install ni désinstall quand un hostile est
+  engagé sur la planète ; hors siège, 3 installations parallèles max.
+- R5-5 : les items entreposés comptent dans le pillage de conquête (25 % en
+  valeur census) ; les unités installées sont capturées avec le monde.
+- R5-7 : l'upkeep suit l'unité partout (garnison, entrepôt, cargo) ; impayé
+  = unité hors ligne.
+- R5-8 : unités sol ajoutées à la liste mintable (désinstallées seulement).
+- R5-3 : règle documentée « 1 escorte Combat-M blindée ≈ 1 raider bird ».
+- Moniteur M8 : coût du pack défense vs revenus d'un hub.
+
+### Reste
+Tour 5b de confirmation lancé (les calculs R5-2 utilisaient les taux
+proposés ; re-vérification maintenant qu'ils sont dans le guide).

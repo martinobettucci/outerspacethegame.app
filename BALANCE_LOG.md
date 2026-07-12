@@ -494,3 +494,30 @@ timings vs raze threats; defense-import market viability for a Mercantile
 hub; exploit sweep on the separation (units as plunder-proof value storage,
 uninstall-before-conquest, install-during-siege, mercenary garrison
 swapping).
+
+### Round 5 — results (PATCHED → guide v0.5)
+
+- **R5-1 (blocker):** no unit-production line existed → **military_district
+  produces units** (1 / 48·24·12 h × E by level, queue, levels ≤ district
+  level, cost = §10.1 column) + 6 unit-card unlock costs adopted.
+- **R5-2 (verified):** Mercantile hub imports 6 heavy turrets from 100 pc in
+  **≈8 d ex-stock / 14 d ex-works** — inside the 14 d colony grace if ordered
+  at founding. Fee income alone can't fund defense (trading margins must —
+  "protection is a market", intended). **Monitor M8**: defense-package cost
+  vs hub income mix; UI nudge "order defense at founding".
+- **R5-3 (pass):** naked window = haul time only (first turret re-shields
+  buildings); 1 armored hovering Combat-M ≈ 1 raider bird — documented.
+- **R5-4/6 (serious):** uninstall-under-siege & install-conveyor → one rule:
+  **siege lock** (no install/uninstall while hostiles engaged) + off-siege
+  concurrency 3.
+- **R5-5 (serious):** plunder-proof warehousing → warehoused items count as
+  stock for the 25% plunder (census value); installed units captured with
+  the world.
+- **R5-7 (minor):** mercenary garrison swap legitimate; **upkeep follows the
+  unit everywhere**, unpaid ⇒ offline.
+- **R5-8 (minor):** ground units added to the §14 mintable list (uninstalled
+  only).
+
+**Verdict: BUILD ≠ INSTALL holds.** Round-5b confirmation pass pending (the
+R5-2 arithmetic used the proposed rates — re-check now that they are in the
+guide). Monitors: M1–M8.
