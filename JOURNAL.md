@@ -751,3 +751,30 @@ variable du cloud worker s'appelle `OPEN_AI_KEY` (et non `OPENAI_API_KEY`).
 - Prop sheet : références réparées (unit_l1, card_npc_diplomat), vérif
   automatique des src (aucune référence cassée) + preuves observées
   (overlay arme Combat-M, portrait vess_soldier, casino L3).
+
+---
+
+## 2026-07-12 — Session 15 (GIF animés, unités 512×256, règle de complétude, tour 4 lancé)
+
+### Décisions du responsable
+- **Unités sol : 512×256** — elles se posent comme des bâtiments, mêmes
+  dimensions (l'hypothèse 256×256 est annulée).
+- **Tous les props hors cartes sont des GIF animés** ; les cartes restent en
+  PNG statique. Les companions bump/light suivent le format et la cadence de
+  leur sprite (GIF synchronisés). Contrainte GIF documentée : transparence
+  binaire → l'intensité des light maps est portée par la luminosité du pixel.
+- **Règle de complétude inscrite dans CLAUDE.md** (« Spécificités du
+  projet ») : aucun livrable à moitié ; tout ensemble énumérable est livré
+  exhaustivement ou les manques sont listés explicitement ; toute valeur non
+  testée reste [TUNE] et déclenche un tour de vérification.
+
+### Réalisé
+- Générateur réécrit : sorties GIF 2 frames (label/lueur pulsés) via
+  quantisation P + transparence binaire ; unités 512×256 ; cartes PNG.
+  Régénération complète : **1 602 GIF + 126 PNG (576 assets ×3), 11 Mo.**
+- Références du prop sheet migrées .png→.gif (hors cartes), zéro référence
+  cassée (script de contrôle) ; ASSET_PIPELINE §1/§1bis/§4 mis à jour ;
+  DESIGN_GUIDE §10.1 précisé (placement visuel type bâtiment, pas de tuile).
+- Vérification visuelle : GIF unité cannon L2 observé (512×256, étiquette).
+- **Tour 4 d'équilibrage lancé** (2 campagnes : économie du catalogue +
+  militaire du catalogue) — correctifs à l'atterrissage.

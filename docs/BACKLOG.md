@@ -39,7 +39,8 @@
 - [x] HTML-fed gpt-image-2 iteration validated (prototypes 05 card, 06 layered-lighting north-star)
 - [x] FULL stub catalog (576 assets ×3 = 1 728 files): 27 buildings ×3 lvl ×climat, per-hull ship upgrade sets (slot rules), 15 ground units, 18 portraits (full peoples×roles matrix), 42 cards, 30 resources, weather on every climate×size + auto-generated gallery.html
 - [~] Sprite/asset production plan — manifest + specs done; artist schedule & 2022-PSD reuse audit remaining
-- [ ] Ground-unit sprite size **256×256 to confirm** by owner (assumption flagged in ASSET_PIPELINE §1)
+- [x] Ground-unit sprite size settled by owner: **512×256, placed like buildings**
+- [x] Formats settled by owner: **non-card props = animated GIF** (frame-synced bump/light companions); card art = PNG — pipeline + stubs regenerated (1 602 GIF + 126 PNG)
 
 ### P0.4 Remaining design opens (GAMEBOOK §27)
 - [ ] Decide tick-worker language (TS vs Python) with documented trade-off → DAT
@@ -52,7 +53,7 @@
 - [ ] Anti-stagnation levers beyond depletion (new regions, discovery cycles)
 - [ ] Route/stargate decay edge cases beyond destination-death
 - [ ] Artificial-planet open sub-items (pop/quality caps confirmation, movement cost tuning)
-- [ ] **Balance Round 4 — content breadth**: re-run archetype sims against the FULL catalog (27 buildings' effects, 6 unit types, per-hull upgrades, shields) — values added Session 14 are [TUNE], untested (BALANCE_LOG honesty note)
+- [~] **Balance Round 4 — content breadth**: two sim campaigns RUNNING (4a content-economy: casino/commerce/research stacking, cell sinks, missing T3+ costs; 4b content-military: full unit×hull matchups, cannon anti-orbital, shields rule, fortress math) — patches to apply on return
 - [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria
 

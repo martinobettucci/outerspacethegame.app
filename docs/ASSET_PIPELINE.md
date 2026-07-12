@@ -20,10 +20,23 @@
 | Star / black hole (giants) | **2048×2048** | un-landable bodies |
 | Building | **512×256** | isometric, 3 levels = 3 base sprites |
 | Ship | **512×256** | isometric, 9 hulls (Combat/Cargo/Civil × S/M/L) |
-| Ground unit | **256×256** | ASSUMPTION [TUNE] — not fixed in past briefs; confirm |
+| Ground unit | **512×256** | placed like a building — same dimensions (owner decision) |
 | Portrait (player & NPC) | **512×1024** | full-height character |
 | Card | **512×1024** (DOM) | composite: **512×512 sprite art** + text/stats zone (HTML, not baked in the image) |
 | Resource icon | **256×256** | from the 2021 briefs |
+
+## 1bis. File formats (owner decision)
+
+- **All non-card props are ANIMATED GIFs** (`.gif`, ≥2 frames, loop): planets,
+  stars, buildings, ships, units, portraits, resources — idle animation is
+  part of the identity. **Card art stays static PNG** (`cards/*.png`).
+- **Companion maps follow their sprite**: `X.bump.gif` / `X.light.gif`,
+  **frame-synchronized** with `X.gif` (same frame count & timing) so relief
+  and lights animate with the sprite. Card companions stay PNG.
+- GIF constraints (engine + artists): ≤256 colors/frame, **binary
+  transparency** — so in light maps the **intensity is carried by pixel
+  brightness** (white = max), not by alpha; soft halos are the engine's job,
+  never baked into edges.
 
 ## 2. The layer mechanic (universal)
 
@@ -63,8 +76,8 @@ Root: **`assets/game/`**. Real art replaces stubs **at the same path** —
 no code/HTML change needed, ever.
 
 ```
-assets/game/
-├── planets/    planet_{climate}_{s|m|l}.png          climate ∈ hot|cold|temperate|poison
+assets/game/            # non-card files are .gif (animated)
+├── planets/    planet_{climate}_{s|m|l}.gif          climate ∈ hot|cold|temperate|poison
 │               planet_{climate}_{size}.ov.{cond}.png cond ∈ smog|ice|burn|poison|radio
 ├── stars/      star_{cold|hot|gas}.png · blackhole.png            (2048)
 ├── buildings/  building_{key}_l{1|2|3}.png           key ∈ mine|refinery|spaceport|market|workshop|turret …
@@ -77,7 +90,7 @@ assets/game/
 │               weapon_a2g_1/2, cargo_1/2) + accessories (harvest,
 │               junk_collector, claim_rig, scanner, shield_hot/cold/radio)
 │               + ship_personal.png, ship_probe.png
-├── units/      unit_{key}.png (+ .ov.* variants)
+├── units/      unit_{key}_l{n}.gif  (512×256, placed like buildings)
 ├── portraits/  portrait_{human|forged|vess}_{role}_{nn}.png
 ├── cards/      card_{building|npc|item}_{key}.png     (512×512 art only)
 ├── resources/  res_{key}.png

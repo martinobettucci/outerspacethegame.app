@@ -71,15 +71,15 @@ All composites are <code>base + transparent overlays</code>. Desktop/tablet only
 
 <h2>Planets — 128 / 256 / 512 + weather overlays (same-size transparent layers)</h2>
 <div class="row">
-  <figure class="prop prop-planet-s"><span class="stack"><img src="../../../assets/game/planets/planet_hot_s.png"></span><figcaption>planet_hot_s · 128²</figcaption></figure>
+  <figure class="prop prop-planet-s"><span class="stack"><img src="../../../assets/game/planets/planet_hot_s.gif"></span><figcaption>planet_hot_s · 128²</figcaption></figure>
   <figure class="prop prop-planet-m"><span class="stack">
-      <img src="../../../assets/game/planets/planet_temperate_m.png">
-      <img class="ov" id="ovIce" src="../../../assets/game/planets/planet_temperate_m.ov.ice.png">
+      <img src="../../../assets/game/planets/planet_temperate_m.gif">
+      <img class="ov" id="ovIce" src="../../../assets/game/planets/planet_temperate_m.ov.ice.gif">
     </span><figcaption>planet_temperate_m + <label class="tog"><input type="checkbox" checked onchange="ovIce.style.display=this.checked?'':'none'">ov.ice</label></figcaption></figure>
   <figure class="prop prop-planet-l"><span class="stack">
-      <img src="../../../assets/game/planets/planet_temperate_l.png">
-      <img class="ov" id="ovSmog" src="../../../assets/game/planets/planet_temperate_l.ov.smog.png">
-      <img class="ov" id="ovRadio" src="../../../assets/game/planets/planet_temperate_l.ov.radio.png">
+      <img src="../../../assets/game/planets/planet_temperate_l.gif">
+      <img class="ov" id="ovSmog" src="../../../assets/game/planets/planet_temperate_l.ov.smog.gif">
+      <img class="ov" id="ovRadio" src="../../../assets/game/planets/planet_temperate_l.ov.radio.gif">
     </span><figcaption>planet_temperate_l ·
       <label class="tog"><input type="checkbox" checked onchange="ovSmog.style.display=this.checked?'':'none'">ov.smog</label>
       <label class="tog"><input type="checkbox" onchange="ovRadio.style.display=this.checked?'':'none'"><script>document.currentScript.previousElementSibling.checked=false</script>ov.radio</label>
@@ -88,44 +88,44 @@ All composites are <code>base + transparent overlays</code>. Desktop/tablet only
 
 <h2>Stars &amp; black hole — native 2048², sheet preview at 25%</h2>
 <div class="row">
-  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/star_hot.png"></span><figcaption>star_hot · 2048² (shown 512)</figcaption></figure>
-  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/blackhole.png"></span><figcaption>blackhole · 2048² (shown 512)</figcaption></figure>
+  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/star_hot.gif"></span><figcaption>star_hot · 2048² (shown 512)</figcaption></figure>
+  <figure class="prop prop-star"><span class="stack"><img src="../../../assets/game/stars/blackhole.gif"></span><figcaption>blackhole · 2048² (shown 512)</figcaption></figure>
 </div>
 
 <h2>Buildings — 512×256, levels are separate bases, climate as overlay</h2>
 <div class="row">
   <figure class="prop prop-building"><span class="stack">
-      <img src="../../../assets/game/buildings/building_refinery_l1.png">
-      <img class="ov" id="ovHot" src="../../../assets/game/buildings/building_refinery_l1.ov.hot.png">
+      <img src="../../../assets/game/buildings/building_refinery_l1.gif">
+      <img class="ov" id="ovHot" src="../../../assets/game/buildings/building_refinery_l1.ov.hot.gif">
     </span><figcaption>building_refinery_l1 + <label class="tog"><input type="checkbox" checked onchange="ovHot.style.display=this.checked?'':'none'">ov.hot</label></figcaption></figure>
-  <figure class="prop prop-building"><span class="stack"><img src="../../../assets/game/buildings/building_mine_l3.png"></span><figcaption>building_mine_l3</figcaption></figure>
+  <figure class="prop prop-building"><span class="stack"><img src="../../../assets/game/buildings/building_mine_l3.gif"></span><figcaption>building_mine_l3</figcaption></figure>
 </div>
 
 <h2>Ships — 512×256, hull + upgrade overlays (the fitted ship is the composite)</h2>
 <div class="row">
   <figure class="prop prop-ship"><span class="stack">
-      <img src="../../../assets/game/ships/ship_cargo_m.png">
-      <img class="ov" id="ovE2" src="../../../assets/game/ships/ship_cargo_m.ov.engine_2.png">
-      <img class="ov" id="ovA1" src="../../../assets/game/ships/ship_cargo_m.ov.armor_1.png">
-      <img class="ov" id="ovH1" src="../../../assets/game/ships/ship_cargo_m.ov.harvest.png" style="display:none">
+      <img src="../../../assets/game/ships/ship_cargo_m.gif">
+      <img class="ov" id="ovE2" src="../../../assets/game/ships/ship_cargo_m.ov.engine_2.gif">
+      <img class="ov" id="ovA1" src="../../../assets/game/ships/ship_cargo_m.ov.armor_1.gif">
+      <img class="ov" id="ovH1" src="../../../assets/game/ships/ship_cargo_m.ov.harvest.gif" style="display:none">
     </span><figcaption>ship_cargo_m ·
       <label class="tog"><input type="checkbox" checked onchange="ovE2.style.display=this.checked?'':'none'">engine_2</label>
       <label class="tog"><input type="checkbox" checked onchange="ovA1.style.display=this.checked?'':'none'">armor_1</label>
       <label class="tog"><input type="checkbox" onchange="ovH1.style.display=this.checked?'':'none'">harvest_1</label>
     </figcaption></figure>
-  <figure class="prop prop-ship"><span class="stack"><img src="../../../assets/game/ships/ship_combat_l.png"></span><figcaption>ship_combat_l (crusader, bare)</figcaption></figure>
+  <figure class="prop prop-ship"><span class="stack"><img src="../../../assets/game/ships/ship_combat_l.gif"></span><figcaption>ship_combat_l (crusader, bare)</figcaption></figure>
 </div>
 
 <h2>Ground units — 256² (size to confirm) &amp; resource icons — 256²</h2>
 <div class="row">
-  <figure class="prop prop-unit"><span class="stack"><img src="../../../assets/game/units/unit_turret_heavy_l1.png"></span><figcaption>unit_turret_heavy_l1</figcaption></figure>
-  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_fuel_cells.png"></span><figcaption>res_fuel_cells</figcaption></figure>
-  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_crystal_nox.png"></span><figcaption>res_crystal_nox</figcaption></figure>
+  <figure class="prop prop-unit"><span class="stack"><img src="../../../assets/game/units/unit_turret_heavy_l1.gif"></span><figcaption>unit_turret_heavy_l1</figcaption></figure>
+  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_fuel_cells.gif"></span><figcaption>res_fuel_cells</figcaption></figure>
+  <figure class="prop prop-res"><span class="stack"><img src="../../../assets/game/resources/res_crystal_nox.gif"></span><figcaption>res_crystal_nox</figcaption></figure>
 </div>
 
 <h2>Portraits — 512×1024 &amp; Cards — 512×1024 composite (art 512² + HTML stats)</h2>
 <div class="row">
-  <figure class="prop prop-portrait"><span class="stack"><img src="../../../assets/game/portraits/portrait_vess_diplomat_01.png"></span><figcaption>portrait_vess_diplomat_01</figcaption></figure>
+  <figure class="prop prop-portrait"><span class="stack"><img src="../../../assets/game/portraits/portrait_vess_diplomat_01.gif"></span><figcaption>portrait_vess_diplomat_01</figcaption></figure>
 
   <div class="prop-card sel">
     <img class="art" src="../../../assets/game/cards/card_building_refinery.png" alt="refinery card art">
@@ -133,8 +133,8 @@ All composites are <code>base + transparent overlays</code>. Desktop/tablet only
       <div><span class="badge">BUILDING · T1</span></div>
       <div class="name">REFINERY</div>
       <div class="chips">
-        <span class="chip"><img src="../../../assets/game/resources/res_ore.png">60</span>
-        <span class="chip"><img src="../../../assets/game/resources/res_silicon.png">20 steelL</span>
+        <span class="chip"><img src="../../../assets/game/resources/res_ore.gif">60</span>
+        <span class="chip"><img src="../../../assets/game/resources/res_silicon.gif">20 steelL</span>
       </div>
       <div class="note" style="font-size:13px">Refines climate crystals into <b style="color:var(--accent)">fuel cells</b> — the universal refined resource.</div>
       <div class="stats">
@@ -167,9 +167,9 @@ All composites are <code>base + transparent overlays</code>. Desktop/tablet only
 <div class="row">
   <figure class="prop prop-building lightdemo" style="margin-right:220px">
     <span class="stack">
-      <img class="glow" src="../../../assets/game/buildings/building_refinery_l1.light.png">
-      <img src="../../../assets/game/buildings/building_refinery_l1.png">
-      <img class="ov" src="../../../assets/game/buildings/building_refinery_l1.light.png" style="mix-blend-mode:screen">
+      <img class="glow" src="../../../assets/game/buildings/building_refinery_l1.light.gif">
+      <img src="../../../assets/game/buildings/building_refinery_l1.gif">
+      <img class="ov" src="../../../assets/game/buildings/building_refinery_l1.light.gif" style="mix-blend-mode:screen">
     </span>
     <span class="neighbor"></span>
     <figcaption>building_refinery_l1 + .light.png (émission + halo + report sur sprite voisin)</figcaption>
