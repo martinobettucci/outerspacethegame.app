@@ -167,3 +167,193 @@ against guide v0.1 numbers.
 Two fresh verifier campaigns against guide v0.2: an **early-game/economy
 re-run** (Voyager+Industrialist merged) and a **combat/exploit re-audit**
 (Corsair+Breaker merged). Findings and any further patches appended below.
+
+### Round-2 findings (adversarial re-audit, 2026-07-12)
+
+**Combat arithmetic (heavy 55/85, disengage, turret 160/0.30, bee ×0.6)**
+
+- **R2-1 (minor).** Crusader alpha = 4×85×1.4 OBS = **476**, still ≥ every
+  unarmored HP pool (max Cargo-L 400) — patch 23's "no 1-round alpha" goal is
+  only met for armored targets (L1 armor suffices: 520 HP vs 405 dmg).
+- **R2-2 (serious).** Disengage vs static defenses: turrets have speedEff 0,
+  so **any** ship's speedEff ≥ 1.25×0 ⇒ every attacker auto-exits sieges
+  after 3 rounds. A crusader kills 1–2 heavy turrets per risk-free 3-round
+  pass (333 dmg/round vs 400 HP·0.30 mit), repairs at 20%/h, repeats; turret
+  repair is undefined. Salami-siege costs the attacker only steel.
+  *Fix: disengage applies only to the non-initiating ship in ship-vs-ship
+  combat; planetary-defense engagements exempt.*
+- **R2-3 (serious).** Aggressor disengage: escort policy "engage what engages
+  the convoy" makes the escort the *attacker*, so an engine-L2 pirate
+  (28.6 ≥ 1.25×22) kills the freighter in 3 rounds and auto-exits the escort
+  — zero-commitment hit-and-run. *Fix: combat initiator forfeits disengage
+  for the engagement.*
+- **R2-4 (serious).** Disengage protects no intended victim: loaded Cargo-M/L
+  speedEff ≤ 15.3 can never reach 1.25× a bee/bird (28–39). Only empty ships
+  escape — i.e. only worthless targets. Patch 22 is a dead letter for haulers.
+
+**Piracy ROI (M2 monitor: FAIL)**
+
+- **R2-5 (game-breaking vs target).** Gate scatter U(0–5) pc < r_engage
+  3×1.5 (OBS L2) = 4.5 pc ⇒ **≥81% intercept** from a single camper — "no
+  pinpoint camping" fails arithmetically. Income per Cargo-M kill: 30%×18 T
+  + 20%×~150 T junk ≈ 8–11 T-eq vs hauler ~1 T-eq/day ⇒ **~8–14× hauling**
+  (target 2–3×). Containers ×3 raised pirate take 2.25× alongside hauler 3×.
+  *Fix: scatter U(0–15) pc, salvage 15%, plus R2-3 aggressor lock so escorts
+  actually deter.*
+
+**Patch re-breaks**
+
+- **R2-6 (serious).** Vault-before-attack survives patch 31: telescope
+  warning at speed ≤30 pc/day is *days–weeks*, packing is 48 h — any
+  telegraphed war is dodged by freezing. Conversely, the "blocked while a
+  hostile event targets the asset" clause lets a griefer block a rival's
+  legitimate extraction forever with free attack-postured flybys. *Fix:
+  only actual damage cancels packing; frozen planets stay conquerable as a
+  deed transfer (occupation lien).*
+- **R2-7 (serious).** Burn-to-minter-60d is bypassed **without the bridge**:
+  pod NPCs are ordinary tradeable non-fungibles — a 45-day farm account
+  auctions its Legendary to the main for a token reserve in-game. 60 d is
+  also maturity, not prevention, for staggered farm pipelines. *Fix:
+  pod-sourced NPCs account-bound 60 d.*
+- **R2-8 (serious).** Auction escrow = cheap invulnerability vault: relist
+  any asset (planets included) at ~2× value on rolling 72 h auctions;
+  "not attackable-in-escrow" grants permanent plunder/conquest immunity. The
+  1% bond is denominated in the seller-chosen reserve resource, so a
+  worthless self-abundant resource makes it free. *Fix: bond in cells (or %
+  of census value); listed planets remain attackable, sale voids on
+  conquest.*
+- **R2-9 (serious).** 14-day shield abuse: free throwaway accounts are
+  invulnerable scouts and mules — hover ISR over enemy worlds, and the
+  100 T/day receive-cap still permits ~100 T/day blockade-proof smuggling.
+  Unarmed starters can never "fire first", so the shield never drops. *Fix:
+  shield voids beyond N pc of own starter or on any transfer to/from another
+  account's assets.*
+- **R2-10 (serious).** Forced combat-landing (patch 20) snipes colonies: a
+  72 h-old colony has no turrets ⇒ "defenseless" ⇒ conquerable at hour ~97
+  for one Combat-M sortie, torching ~400 cells + 150 steelH + core + 200
+  settlers. Undermines the 15–30 d second-planet target. *Fix: 14 d conquest
+  grace for freshly established colonies.*
+- **R2-11 (OK).** Settler fractional accumulator holds: route-swapping gains
+  at most <1 death per route ever; long-run toll is 5% regardless. Specify
+  route = persistent (origin, destination) planet pair.
+- **R2-12 (minor, accepted).** Governor-transfer-on-conquest makes
+  legendary-governed worlds theft targets ("conquer the piñata"). Acceptable
+  stakes-politics, but GAMEBOOK §12 says the NPC "is lost" on conquest —
+  amend canon to "lost to the conqueror".
+
+**New surfaces**
+
+- **R2-13 (minor, spec bug).** LP-withdrawal guarantee vs physicality: if
+  pool reserves sit in planet stock the owner can spend/strand them; if
+  system-held, that is a *second* physicality exception contradicting §18
+  "escrow is the sole exception". Define custody explicitly.
+- **R2-14 (minor).** Premium floors: EV fine (€12.99 ⇒ E[qMult] ≈ 2.7 vs
+  1.5 base — ~1.8× deposits for 4.3× price). But specify **clamp-to-floor**
+  (F/E/D reroll as C), not truncation-renormalisation, else the €10 floor
+  quietly gives 15.8% A-rolls vs the "A/B never purchasable" rule's intent.
+- **R2-15 (minor).** Gate-exit scatter U(0–5) is *live* randomness,
+  contradicting §1 "live play is fully deterministic" and GAMEBOOK §20
+  no-RNG. *Fix: scatter = seeded hash(shipId, tick) — deterministic.*
+
+**Hard requirement & targets**
+
+- **R2-16 (PASS).** 7-day retention: shield (14 d) + no-dump 50 pc +
+  unconquerable-only-planet + ping/chat unblockable + starter guarantee ⇒ no
+  player action found that blocks days 1–7. Worst case (hostile sole
+  neighbour) delays *trade*, not retention-path activities.
+- **R2-17 (serious, target arithmetic).** First-trade <5 d is unmeetable at
+  the far shell: neighbour at 350 pc vs Cargo-S fuel range 240 pc and
+  survival ceiling 336 pc — far-shell spawns cannot even reach their
+  guaranteed contact one-way. Needs shell 150–250 pc, or the target restated
+  as "meet-in-the-middle" (75–175 pc each ⇒ 3.1–7.3 d).
+
+**Canon conflicts (amend GAMEBOOK first, per its own rule)**
+
+- **R2-18.** GAMEBOOK §13 AMM "toward perfect balance (50/50)" vs guide
+  §11.2 owner-ratio seeding. — §16 "frozen = indestructible by the sim" vs
+  guide §14 supernova annihilates frozen planets. — §6 "fixed void
+  coordinate" vs exit scatter. — §12 conquest NPC "lost" vs transfer (R2-12).
+
+**Round-2 verdict: ANOTHER ROUND** — R2-2/3/4/5 (combat & piracy), R2-6/7/8
+(vault & laundering) and R2-10 need patches before v0.3 verification.
+
+**Economy verifier findings (same round)**
+
+- **R2-E1 (blocker).** Round-1 patch 18 was mis-applied: guide §5 still put
+  terraform cores at shipyard_M (Industrialist) — free colonization re-sealed
+  for non-Industrialists. *Fix: cores politics-free.*
+- **R2-E2 (blocker).** Civil-M hulls required shipyard_M (T3 Industrialist,
+  seed-maskable) — same re-seal. *Fix: T2 shipyard builds S+M hulls.*
+- **R2-E3 (serious).** Silicon not in the starter guarantee ⇒ cell chain
+  throttles to 4 cells/day after day ~4 (colony ≈ 100 d). *Fix: guarantee it.*
+- **R2-E4 (serious).** Colony fitting's 150 steelH = 150 uranium (not
+  guaranteed) ⇒ +75 d. *Fix: fitting uses steelL.*
+- **R2-E5 (serious).** Tile budget: full chain = 10 tiles vs ≥8 guaranteed.
+  *Fix: starter ≥10 tiles.*
+- **R2-E6 (minor).** Oxygen not guaranteed ⇒ water gates pop ~2 000 after
+  day 10. *Fix: guarantee it.*
+- **R2-E7 (minor).** §19 targets self-contradict (second planet 15–30 d vs
+  colony 30–45 d). *Fix: align 30–45 d.*
+- **R2-E8 (minor).** Fuel unit ↔ ton conversion undefined (fuel hauling
+  incomputable). *Fix: 1 u = 1 T.*
+- **R2-E9 (OK).** Bootstrap-to-contact (day ~2), population dynamics
+  (u=0.6→0.7 in ~10 d), burn ÷4, containers ×3, pop-1200 start: all verify
+  clean; no new breaks from round-1 patches except those above.
+
+### Round-2 applied patches (→ DESIGN_GUIDE v0.3)
+
+39. Terraform core: **workshop L2 recipe, politics-free** (R2-E1).
+40. **T2 `shipyard` builds S and M hulls** (common mask); T3 `shipyard_M` →
+    bulk/faster M + prerequisite for L (R2-E2).
+41. Starter guarantee: **≥10 tiles**; deposits add **silicon + oxygen** (now
+    ore, carbon, hydrogen, oxygen, silicon, climate crystal, lithium|gold)
+    (R2-E3/5/6).
+42. Colony fitting: 400 cells + **150 steelL** + core (R2-E4).
+43. **1 fuel unit = 1 T** (haulable in containers) (R2-E8).
+44. Neighbor shell 150–350 → **150–240 pc** (inside Cargo-S fuel range);
+    targets restated: contact **<3 d**, first physical trade **<8 d**;
+    second-planet & colony targets aligned **30–45 d** (R2-17, R2-E7).
+45. **Disengage reworked** (R2-2/3/4): only the **non-initiator** may
+    disengage; initiator locked 20 rounds; vs structures no disengage;
+    initiator = first hostile actor of the engagement group (defensive-policy
+    responders are non-initiators); escape round = `ceil(3 ×
+    attackerSpeed/victimSpeed)`, cap 8 — armor+speed together decide who gets
+    away.
+46. Piracy ROI: exit scatter **U(0–15) pc, seeded-hash deterministic**
+    (R2-15), cargo salvage 30→**15%**, junk mass 20→**15%** (R2-5).
+47. NFT vault killed (R2-6): packing cancelled **only by actual damage**
+    within the window (no flyby denial); **frozen planets remain attackable &
+    conquerable** — conquest rewrites the deed; a burned token yields the
+    world only if the minter still controls it. *The token is a deed, and
+    wars rewrite deeds.*
+48. **Pod-sourced NPCs account-bound 60 d** (no trade/auction/mint) (R2-7).
+49. Auctions: bond = **1% of census value, paid in cells**; **listed planets
+    remain attackable** (sale voids on conquest); system escrow custody only
+    for movable assets; relist cooldown 72 h (R2-8).
+50. New-account shield **voids beyond 100 pc of own starter or on any
+    inter-account transfer**; receive-cap unchanged (R2-9).
+51. **New colonies: 14 d conquest grace** (blockade legal, conquest not)
+    (R2-10).
+52. LP custody defined: reserves physically on-planet; **LP claims survive
+    conquest** (conqueror inherits pool obligations) (R2-13).
+53. Premium quality floors **clamp** (reroll-below-floor-to-floor); A/B odds
+    never rise above base (R2-14).
+54. Crusader-vs-unarmored one-shot **accepted as design** (capital weapons
+    should delete unarmored freighters; armor is the counter) (R2-1).
+55. Settler route defined as persistent (origin, destination) pair (R2-11).
+
+### Canon amendments applied to GAMEBOOK (per its change rule)
+
+- §6: void exits scatter deterministically near the fixed coordinate.
+- §12: conquest-bound NPCs are lost **to the conqueror** (transfer, not
+  death); ship/building NPCs still die with their hosts.
+- §13: AMM initial price = owner's seeding ratio (perfect-balance wording
+  removed); escrow noted as the sole physicality exception.
+- §16: frozen assets are deeds, not bunkers — supernova and conquest still
+  apply; extraction requires a vulnerable packing window.
+- §22: stars flare visibly below ~5% fuel (the one warning the universe
+  gives); harvest attribution readable at high telescope levels.
+
+## Round 3 — verification of v0.3 (2026-07-12)
+
+Pending: one focused verifier over the patched surfaces only.

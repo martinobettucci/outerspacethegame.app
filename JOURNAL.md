@@ -570,3 +570,39 @@ pipeline doc, not GAMEBOOK).
   §3 body types + artificial planets; §6 mobile Stargate; §25 station=artificial
   planet; §24 tier split confirmed; §27 trimmed (3 forks resolved, station
   sub-opens added).
+
+---
+
+## 2026-07-12 — Session 10 (Game Bible, Design Guide, simulation balancing loop)
+
+### New documents
+- **GAME_BIBLE.md** — lore canon: the Silence (Fermi), the Starfall Wars &
+  Scattering, three peoples (Humans / the Forged / the Vess — always rich),
+  the Sovereign & personal-ship incarnation, places/substances/society lore,
+  crystal names (Glace/Ignis/Virid/Nox), "cells" as the spice, themes & tone.
+- **DESIGN_GUIDE.md** — complete mechanical spec: every system given concrete
+  formulae & numbers (all invented values tagged [TUNE]): tick/lazy-eval sim,
+  universe gen & spawn, population/illness/efficiency formulas, deposits &
+  depletion, governance masks, v0 tech tree & recipes, hull tables, fuel
+  matrix, movement/interception, deterministic combat + hijack/conquest,
+  AMM/auctions/pods economy, colonization, artificial planets, NFT bridge,
+  monetization, player journeys, anti-abuse, balance targets.
+- **BALANCE_LOG.md** — the balancing loop record.
+
+### Simulation balancing loop (subagent campaigns)
+- **Round 1:** 4 archetype campaigns (Industrialist, Corsair, Voyager,
+  Breaker) vs v0.1 → 20 critical findings (bootstrap deadlock, isolation >
+  range, frozen population, cell chain ~30× off, risk-free piracy 14×,
+  crusader one-round alpha, junk walls, NFT vault/RMT exploits, shill
+  auctions, governance laundering) → 38 patches → v0.2.
+- **Round 2:** 2 fresh verifiers vs v0.2 → bootstrap/growth/combat patches
+  verified; found 1 mis-applied patch, colony-chain starvation
+  (silicon/uranium/tiles), unmeetable trade target, disengage-rule abuses,
+  auction/NFT vault re-breaks, colony sniping, + 5 canon conflicts → 17 more
+  patches → v0.3.
+- **GAMEBOOK canon amendments** (per its own change rule): §6 exit scatter,
+  §12 governors transfer on conquest ("lost to the conqueror"), §13 AMM
+  seeding wording + escrow exception, §16 token-is-a-deed-not-a-bunker +
+  packing window, §22 star flares below ~5% + harvest attribution.
+- **Round 3:** focused verification of v0.3 patched surfaces (results in
+  BALANCE_LOG).
