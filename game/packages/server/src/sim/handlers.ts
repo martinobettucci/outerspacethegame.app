@@ -120,6 +120,24 @@ export const popDaily: EventHandler = async (client, event) => {
   );
 };
 
+/**
+ * ship_arrival { shipId } — fin de segment : position à destination,
+ * survol si corps visé, sinon à l'arrêt dans le vide. Idempotent.
+ */
+export const shipArrival: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  await client.query(
+    `UPDATE ships
+       SET x = dest_x, y = dest_y,
+           status = CASE WHEN dest_body_id IS NULL THEN 'idle' ELSE 'hovering' END,
+           origin_x = NULL, origin_y = NULL, dest_x = NULL, dest_y = NULL,
+           departed_at = NULL, arrives_at = NULL, dest_body_id = NULL
+     WHERE id = $1 AND status = 'transit' AND arrives_at <= now()`,
+    [shipId],
+  );
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -127,6 +145,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     stock_edge: stockEdge,
     deposit_dry: depositDry,
     pop_daily: popDaily,
+    ship_arrival: shipArrival,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

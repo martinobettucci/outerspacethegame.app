@@ -117,6 +117,27 @@ export interface PlanetDetail {
   };
 }
 
+export interface ShipView {
+  id: string;
+  hullCategory: string;
+  hullSize: string | null;
+  name: string;
+  x: number;
+  y: number;
+  status: string;
+  dockedBodyId: string | null;
+  fuel: Record<string, number>;
+  mission: {
+    originX: number;
+    originY: number;
+    destX: number;
+    destY: number;
+    destBodyId: string | null;
+    departedAt: string;
+    arrivesAt: string;
+  } | null;
+}
+
 export const api = {
   register: (input: {
     email: string;
@@ -157,6 +178,19 @@ export const api = {
     call<{ refunded: Record<string, number>; completesAt: string }>(
       'POST',
       `/planets/${planetId}/buildings/${buildingId}/demolish`,
+    ),
+  fleet: () => call<{ ships: ShipView[] }>('GET', '/fleet'),
+  moveShip: (shipId: string, dest: { bodyId: string } | { x: number; y: number }) =>
+    call<{ arrivesAt: string; fuelBurned: number; distancePc: number }>(
+      'POST',
+      `/ships/${shipId}/move`,
+      dest,
+    ),
+  launchProbe: (planetId: string, dest: { x: number; y: number }) =>
+    call<{ probeId: string; arrivesAt: string }>(
+      'POST',
+      `/planets/${planetId}/probes`,
+      dest,
     ),
   setBuildingSettings: (
     planetId: string,

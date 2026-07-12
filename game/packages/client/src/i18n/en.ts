@@ -51,6 +51,17 @@ export const t = {
   },
   galaxy: {
     title: 'Known sky',
+    fleet: 'Fleet',
+    sendShip: 'Send ship',
+    sendHint: 'Click a destination (a body, or empty void) to plot the course.',
+    launchProbe: 'Launch probe',
+    probeHint: 'Click anywhere: the probe will sail there and open your sky.',
+    inTransit: 'in transit',
+    eta: 'ETA',
+    fuelCost: 'fuel',
+    moveFailed: 'Course rejected',
+    departed: 'Course plotted.',
+    probeLaunched: 'Probe away.',
     emptyHint:
       'The Silence is total: nothing in scope. Build telescopes to extend your sky.',
     openPlanet: 'Open planet view',

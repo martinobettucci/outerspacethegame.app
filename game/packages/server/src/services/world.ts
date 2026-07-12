@@ -10,6 +10,9 @@ import type pg from 'pg';
 
 export const BASE_SKY_PC = 60;
 export const TELESCOPE_SCOPE_PC_PER_LEVEL = 200;
+/** Rayon de scan d'une sonde arrivée / d'un vaisseau (pc). [TUNE-GAP] */
+export const PROBE_SCAN_PC = 60;
+export const SHIP_SCAN_PC = 20;
 
 export interface VisibleBody {
   id: string;
@@ -39,7 +42,7 @@ export async function visibleBodies(
   const { rows } = await pool.query(
     `
     WITH scopes AS (
-      SELECT b.id, b.x, b.y,
+      SELECT b.x, b.y,
              $2::float + COALESCE((
                SELECT sum($3::float * t.level)
                FROM buildings t
@@ -48,6 +51,13 @@ export async function visibleBodies(
              ), 0) AS radius
       FROM bodies b
       WHERE b.owner_id = $1
+      UNION ALL
+      -- Sondes et vaisseaux hors transit : vision locale (GB §4 —
+      -- « on découvre en y allant ou par sonde »).
+      SELECT s.x, s.y,
+             CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
+      FROM ships s
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
     )
     SELECT DISTINCT ON (b.id)
            b.id, b.body_type, b.name, b.x, b.y, b.size, b.climate, b.quality,
@@ -62,7 +72,7 @@ export async function visibleBodies(
           )
     ORDER BY b.id
     `,
-    [playerId, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL],
+    [playerId, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL, PROBE_SCAN_PC, SHIP_SCAN_PC],
   );
   return rows.map((r) => ({
     id: r.id,

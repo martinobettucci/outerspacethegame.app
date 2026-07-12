@@ -18,6 +18,7 @@ import {
 } from '../services/sessions.js';
 import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
+import { fleet, launchProbe, moveShip } from '../services/ships.js';
 import {
   CommandError,
   demolishBuilding,
@@ -53,6 +54,11 @@ const buildSchema = z.object({
   tileIndex: z.number().int().nullable(),
   recipe: z.string().max(64).nullable().optional(),
 });
+const moveSchema = z.union([
+  z.object({ bodyId: z.string().uuid() }),
+  z.object({ x: z.number(), y: z.number() }),
+]);
+const probeSchema = z.object({ x: z.number(), y: z.number() });
 const settingsSchema = z.object({
   workforce: z.number().int().min(0).optional(),
   runPct: z.number().int().min(0).max(100).optional(),
@@ -295,6 +301,59 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         timeScale: deps.config.TIME_SCALE,
       });
       return { refunded: r.refunded, completesAt: r.completesAt.toISOString() };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.get('/fleet', async (req) => {
+    const player = await requirePlayer(req);
+    return { ships: await fleet(deps.pool, player.id) };
+  });
+
+  app.post('/ships/:id/move', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = moveSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid_input' });
+    }
+    try {
+      const r = await moveShip(deps.pool, player.id, id, parsed.data, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return {
+        arrivesAt: r.arrivesAt.toISOString(),
+        fuelBurned: Math.round(r.fuelBurned * 100) / 100,
+        distancePc: Math.round(r.distancePc * 10) / 10,
+      };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.post('/planets/:id/probes', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = probeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid_input' });
+    }
+    try {
+      const r = await launchProbe(deps.pool, player.id, id, parsed.data, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return { probeId: r.probeId, arrivesAt: r.arrivesAt.toISOString() };
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

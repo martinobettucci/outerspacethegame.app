@@ -13,6 +13,7 @@ export type EventKind =
   | 'pop_daily'
   | 'stock_edge'
   | 'deposit_dry'
+  | 'ship_arrival'
   | 'noop';
 
 export interface GameEvent {
