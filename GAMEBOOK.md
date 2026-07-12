@@ -325,8 +325,9 @@ Per-building configuration includes:
     breaks *at their table*), and the world hosts multi-party chat channels
     (mediation).
 - **The full-diplomatic sanctuary (canon).** If **every governor of a planet
-  is a Diplomat** (1 on medium, all 3 on large), **hostilities cannot be
-  initiated ON the planet** — its ground and its docks; the **hover band
+  is a Diplomat** (1 on medium, all 3 on large) **AND a diplomatic district
+  of the highest level is built** — sanctuary is an EARNED status, not a
+  governor trick — then **hostilities cannot be initiated ON the planet** — its ground and its docks; the **hover band
   stays normal space** (no third-party fleet ever parks under sanctuary
   protection). It **cannot be conquered**; it changes hands only by trade.
   The price: the intersection mask forecloses the military branch — and

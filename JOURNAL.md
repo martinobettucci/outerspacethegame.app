@@ -1091,3 +1091,11 @@ de stats (profondeur du gamble des pods).
   quelle moyenne minière inconquérable pour toujours (ré-ouvre l'anti-pillage
   R5-5). Statut : PENDING dans le guide, pas appliqué.
 - Moniteur M12 (parts d'installation par archétype, seuil 50 %).
+
+---
+
+## 2026-07-12 — Session 28 (F1d approuvé : sanctuaire = statut qui se gagne)
+
+- Responsable : « ok pour un statut qui se gagne » — le sanctuaire exige
+  gouverneurs full-diplo ET diplomatic_district L3 construit. GAMEBOOK §11 et
+  DESIGN_GUIDE v0.9.2 amendés ; R5-5 re-fermé ; tour 8 entièrement clos.
