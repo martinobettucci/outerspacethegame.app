@@ -70,7 +70,13 @@ assets/game/
 ├── buildings/  building_{key}_l{1|2|3}.png           key ∈ mine|refinery|spaceport|market|workshop|turret …
 │               building_{key}_l{n}.ov.{hot|cold|temperate}.png
 ├── ships/      ship_{combat|cargo|civil}_{s|m|l}.png
-│               ship_{cat}_{size}.ov.{upgrade}_{1|2}.png  upgrade ∈ engine|armor|fuel|obs|weapon_a2a|weapon_a2g|cargo|harvest …
+│               ship_{cat}_{size}.ov.{upgrade}.png — PER-HULL set, slot rules
+│               enforced (weapons: Combat only; cargo: Cargo only; OBS: M/L
+│               Combat; colony_fitting: Civil M/L); upgrades ×2 levels
+│               (engine_1/2, armor_1/2, fuel_1/2, obs_1/2, weapon_a2a_1/2,
+│               weapon_a2g_1/2, cargo_1/2) + accessories (harvest,
+│               junk_collector, claim_rig, scanner, shield_hot/cold/radio)
+│               + ship_personal.png, ship_probe.png
 ├── units/      unit_{key}.png (+ .ov.* variants)
 ├── portraits/  portrait_{human|forged|vess}_{role}_{nn}.png
 ├── cards/      card_{building|npc|item}_{key}.png     (512×512 art only)
@@ -96,6 +102,13 @@ All files under `assets/game/` are **programmatically generated placeholders**
   testable before real art exists).
 
 Regenerate anytime: `python3 docs/design/props/generate_stubs.py`.
+
+**Current coverage: 576 assets (×3 files = 1 728)** — full v0 catalog: 27
+buildings ×3 levels ×(base+hot+cold), 11 ships with per-hull overlay sets,
+15 ground units, 18 portraits (full 3-peoples × 6-roles matrix — any people,
+any role), 42 cards, 30 resources, 12 planets + weather overlays on every
+climate×size, 4 giants. Browse: `docs/design/props/gallery.html`
+(auto-generated).
 
 ## 6. HTML props (fixed-size components)
 

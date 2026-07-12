@@ -19,6 +19,11 @@
   contrat de nommage/swap ; 255 stubs générés + prop sheet HTML vérifié ;
   itération HTML→gpt-image-2 validée (prototypes 05–06). Desktop/tablette
   uniquement.
+- Catalogue de contenu COMPLET : 27 bâtiments avec effets par niveau
+  (DESIGN_GUIDE §5.1), 6 types d'unités sol (§10.1), upgrades par coque selon
+  les règles de slots ; 576 stubs (×3) couvrant tout + galerie auto-générée ;
+  canon « tout peuple, tout rôle » ; tour d'équilibrage 4 planifié (valeurs
+  catalogue non simulées, note d'honnêteté au BALANCE_LOG).
 - Abandon acté de l'approche « moteur de jeu on-chain » au profit d'une
   architecture PostgreSQL autoritaire avec pont NFT opt-in (documenté, aucun
   code applicatif écrit).

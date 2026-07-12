@@ -383,3 +383,31 @@ Six polish items found (all trivial/minor), applied immediately:
 **The balancing loop is closed. DESIGN_GUIDE v0.3 is the foundation spec.**
 All [TUNE] values remain tunable by construction; monitors M1–M5 carry into
 implementation playtesting.
+
+---
+
+## Honesty note & Round 4 (scheduled) — content-breadth audit (2026-07-12)
+
+**Owner asked whether the emptiness found in the prop set also existed in the
+mechanics and the simulation loop. Factual answer:**
+
+- **Systems: complete and simulated.** Rounds 1–3 exercised every *system*
+  (spawn/bootstrap, population/efficiency, depletion, tech unlock/place,
+  industry chains, movement/interception, combat/conquest/hijack/salvage,
+  AMM/auctions/pods, colonization, NFT bridge, monetization) with closed-form
+  arithmetic on the core numeric set.
+- **Content breadth: WAS thin, like the props.** Until today the guide carried
+  stat tables for only ~10 buildings, 2 turrets and 1 hull-upgrade matrix;
+  casino/diplomatic/commerce district effects were placeholders. The sims
+  therefore validated the economy through the *core chain* (mine → refine →
+  cells → ships/colony/war), NOT through the full catalog.
+- **Fixed today (Session 14):** DESIGN_GUIDE §5.1 now carries the complete
+  27-building catalog with per-level effects, §10.1 the complete 6-type/15-
+  sprite ground-unit table, §8 the per-hull upgrade/accessory sets (incl.
+  climate shields). All new values are [TUNE] and **NOT yet simulation-tested**.
+
+**⇒ Round 4 (content balancing) is REQUIRED and scheduled (BACKLOG P0.4):**
+archetype campaigns re-run against the full catalog — casino/commerce fee
+economies, research_center unlock-discount stacking, cannon/anti-air vs hull
+matchups, shield-gated climate operations, weapon-foundry item throughput.
+Until Round 4 passes, catalog-wide values are draft, and this log says so.

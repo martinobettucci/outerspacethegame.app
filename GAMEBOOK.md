@@ -253,7 +253,8 @@ Per-building configuration includes:
 - NPCs are obtained by **loot boxes** or by **burning an NFT**. Loot boxes yield
   **only NPCs** — nothing else.
 - **Characters can be human, robot, or humanoid alien**, and are **he / she /
-  androgynous**.
+  androgynous**. **People is purely cosmetic: any people can hold any role —
+  including governor.** No race gates any capability, rarity or politics.
 - **A character's role is flexible** — a **pilot** can serve either as **ship
   crew** or as a **governor**. (Roles determine which hosts an NPC can bind to.)
 - **Civil pilots** specifically:
