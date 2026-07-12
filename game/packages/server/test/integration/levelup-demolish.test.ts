@@ -156,13 +156,44 @@ describe('montée de niveau (GB §18, DG §5.1)', () => {
     ).rejects.toMatchObject({ code: 'max_level' });
   });
 
-  it('politique de niveau : market L2 exige une gouvernance TOUTE mercantile (joueur industrialiste refusé)', async () => {
-    await unlockNode(pool, playerId, planetId, 'depot');
-    await unlockNode(pool, playerId, planetId, 'market');
-    const placed = await placeBuilding(pool, playerId, planetId, 'market', 1, FAST);
-    await activateAll();
+  it('politique de niveau : market L2 exige une gouvernance TOUTE mercantile (gouverneur industrialiste refusé)', async () => {
+    // Seed PUR garantissant market présent ET profondeur ≥ 2 : le refus
+    // vient alors de la POLITIQUE, jamais du plafond d'ADN. (L'ancienne
+    // version roulait l'ADN du starter — market absent ou plafonné L1 dans
+    // ~20 % des univers, et `max_level` tombait avant `mask_denied` :
+    // test non déterministe, corrigé ici — même patron que « Capworld ».)
+    let deepSeed: string | null = null;
+    for (let i = 0; i < 3_000; i++) {
+      const seed = `maskseed-${run}-${i}`;
+      const av = planetTechAvailability(seed);
+      if (av.available.has('market') && (av.maxLevel.get('market') ?? 0) >= 2) {
+        deepSeed = seed;
+        break;
+      }
+    }
+    expect(deepSeed, 'aucun seed market profond trouvé').not.toBeNull();
+    const { rows: b } = await pool.query<{ id: string }>(
+      `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
+          tiles, owner_id, population, pop_as_of)
+       VALUES ('planet', 'Maskworld', 920000, 920000, $1, 's', 'temperate', 'E',
+          8, $2, 1200, now()) RETURNING id`,
+      [deepSeed, playerId],
+    );
+    const maskPlanet = b[0]!.id;
+    // Gouvernance réelle : un gouverneur ingénieur (⇒ industrialist) —
+    // l'intersection « TOUS mercantiles » échoue.
+    await pool.query(
+      `INSERT INTO npcs (owner_id, people, role, rarity, bound_host_type, bound_host_id)
+       VALUES ($1, 'human', 'engineer', 'common', 'planet', $2)`,
+      [playerId, maskPlanet],
+    );
+    const { rows: market } = await pool.query<{ id: string }>(
+      `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+       VALUES ($1, 'market', 1, 0, 'active', 35) RETURNING id`,
+      [maskPlanet],
+    );
     await expect(
-      levelUpBuilding(pool, playerId, planetId, placed.buildingId, FAST),
+      levelUpBuilding(pool, playerId, maskPlanet, market[0]!.id, FAST),
     ).rejects.toMatchObject({ code: 'mask_denied' });
   });
 
@@ -185,7 +216,9 @@ describe('montée de niveau (GB §18, DG §5.1)', () => {
 
 describe('démolition (DG §6)', () => {
   it('remboursement 50 % crédité, production coupée, tuile et gisement libérés à l\'issue', async () => {
-    // Un dépôt à démolir (placement 10 ore ⇒ remboursement 5).
+    // Un dépôt à démolir (placement 10 ore ⇒ remboursement 5). Le depot est
+    // never-masked : unlock déterministe quel que soit l'ADN du starter.
+    await unlockNode(pool, playerId, planetId, 'depot');
     await placeBuilding(pool, playerId, planetId, 'depot', 2, FAST);
     await activateAll();
     const { rows: dep } = await pool.query(
