@@ -1426,3 +1426,60 @@ suite E2E complète rejouée : 6/6, aucune régression ; typecheck vert.
 - Tests : 45/45 intégration (fuel exact 0,25 u/pc, interpolation 0,5 ± 0,05,
   la sonde arrivée révèle le starter voisin, cap 5/j/pad) ; E2E 7/7 ;
   capture 18 observée (ligne de transit, ETA/fuel).
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk I — la Silence se brise (ping/ping-back/canaux)
+
+### Problème & canon
+GB §5 : aucun contact unilatéral — un ping doit recevoir un ping-back pour
+que le canal existe. Cible d'un ping : un monde POSSÉDÉ, DANS le ciel de
+l'émetteur (la règle est un scope serveur, jamais une aide d'UI).
+
+### Décisions
+- **Canal canonique par couple** : `channels(player_a < player_b)` —
+  contrainte SQL `channel_pair_order` + UNIQUE ; le ping-back fait un
+  `INSERT … ON CONFLICT DO UPDATE … RETURNING id` (idempotent, un seul
+  canal quel que soit le sens de l'ouverture). Miroir pur `canonicalPair`
+  testé en unitaire.
+- **Quota 20 pings/jour [TUNE]** (DG §15, bonus diplomatique remis à plus
+  tard) + **1 hail en attente par couple** (anti-spam) : re-ping possible
+  seulement après réponse ou expiration (expiration non implémentée — noté
+  au backlog).
+- **Fuite d'information évitée** : la portée est vérifiée via
+  `visibleBodies` (même source de vérité que /galaxy) ; un monde hors ciel
+  répond « hors de portée », identique au monde inconnu côté sémantique.
+
+### Trouvaille : l'infrastructure sans tuile était inconstructible via l'UI
+Le flux de pose exigeait un clic-tuile, mais le serveur refuse (à raison)
+un tileIndex pour `telescope`/`probe_pad`. Correctif : « Place » construit
+directement ces cartes, et un panneau **Infrastructure** (vue planète,
+sous les gisements) rend visibles ces bâtiments hors plateau — sans lui,
+rien n'attestait à l'écran de l'existence d'un télescope.
+
+### Flake corrigé (§18) : test market L2 non déterministe
+Symptôme : ~1 run d'intégration sur 4-5, `max_level` au lieu de
+`mask_denied`. Cause : le test roulait l'ADN du starter (seed d'univers
+aléatoire par run) — market absent (~20 %) ou plafonné L1 (20 % des
+présents), et le plafond d'ADN est vérifié AVANT la politique de niveau.
+Correctif : patron « Capworld » — recherche d'un seed PUR garantissant
+market profondeur ≥ 2, monde synthétique + gouverneur ingénieur
+(industrialist) inséré : l'intersection « tous mercantiles » échoue
+toujours, quel que soit l'univers. 6 runs consécutifs verts. Au passage,
+l'unlock de `depot` (never-masked, déterministe) migre dans le test de
+démolition qui en dépendait.
+
+### Vérifications
+- 27 unit serveur (dont 5 comms purs) + 34 shared ; 50/50 intégration ×6 ;
+  E2E 8/8 dont le nouveau parcours bi-navigateur : Demo bâtit un télescope
+  L1 (ciel 60+200 pc ≥ 159,6 pc du couple seedé Kala↔Alkex), ping depuis la
+  carte, Neighbor voit le hail, ping-back (« the Silence breaks »), échange
+  bilatéral vérifié dans les deux navigateurs. Rerun-tolérant (télescope
+  déjà bâti → saut ; hail déjà en attente → réponse quand même) — validé
+  par 2 reruns isolés.
+- Captures 19–25 observées : panneau Infrastructure (télescope L1 actif),
+  panneau Alkex + Ping, notice d'envoi, hail entrant, canal ouvert,
+  conversation des deux côtés (bulles mine/theirs, historique stable).
+- Limite documentée : quota épuisable en re-runs massifs (20 pings/j pour
+  demo) → `resetDb` si la limite est atteinte ; pas de notification de
+  hail hors de l'écran Comms (backlog).

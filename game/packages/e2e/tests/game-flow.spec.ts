@@ -336,3 +336,132 @@ test('mouvement : envoi d\'un vaisseau depuis la carte galaxie', async ({
   await page.waitForTimeout(1200);
   await shot(page, '18-ship-in-transit');
 });
+
+test('la Silence se brise : télescope → ping → ping-back → canal (GB §5)', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  // Comptes SEEDÉS (contrat de seed, CLAUDE.md §8) : Sovereign Demo et
+  // Sovereign Neighbor naissent à ~160 pc l'un de l'autre (anneau de
+  // voisinage 150–240 pc du spawn) — dans le ciel d'un télescope L1
+  // (60 + 200 pc). Le test est tolérant aux reruns : télescope déjà bâti
+  // → on saute ; hail déjà en attente → on répond quand même.
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill('demo@atg.local');
+  await page.getByLabel('Password').fill('demo-password-1');
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+
+  // Télescope L1 — infrastructure sans tuile : « Place » construit
+  // directement, et le bâtiment apparaît dans le panneau Infrastructure.
+  const infra = page.getByRole('region', { name: 'Infrastructure' });
+  await expect(infra).toBeVisible();
+  if (!(await infra.getByText(/telescope L1/).isVisible().catch(() => false))) {
+    const hand = page.getByRole('region', { name: 'Construction cards' });
+    const teleCard = hand
+      .getByRole('article')
+      .filter({ hasText: 'telescope' })
+      .first();
+    const unlockBtn = teleCard.getByRole('button', { name: 'Unlock' });
+    if (await unlockBtn.isVisible().catch(() => false)) {
+      await unlockBtn.click();
+      await expect(page.getByRole('status')).toContainText('Card unlocked.');
+    }
+    await teleCard.getByRole('button', { name: 'Place' }).click();
+    await expect(page.getByRole('status')).toContainText('Construction started.');
+  }
+  // Activation : chantier 6 h / TIME_SCALE + tick 0,5 s + polling UI 4 s.
+  await expect(infra.getByText(/telescope L1/)).toBeVisible({ timeout: 30_000 });
+  await expect(infra.getByText('active', { exact: true }).first()).toBeVisible({
+    timeout: 30_000,
+  });
+  await infra.scrollIntoViewIfNeeded(); // la capture doit MONTRER la preuve
+  await shot(page, '19-telescope-infrastructure');
+
+  // Carte galaxie : le monde du voisin est entré dans le ciel. Son nom
+  // vient de l'API (seed déterministe — rien de codé en dur).
+  await rail.getByRole('button', { name: 'Galaxy' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  const galaxy = (await page.request
+    .get('/api/galaxy')
+    .then((r) => r.json())) as {
+    bodies: { name: string; ownerName: string | null; owned: boolean }[];
+  };
+  const neighborWorld = galaxy.bodies.find(
+    (b) => b.ownerName === 'Sovereign Neighbor' && !b.owned,
+  );
+  expect(neighborWorld, 'le starter voisin doit être dans le scope').toBeTruthy();
+  // Le label projeté marque la position écran du corps (centre à −26 px).
+  const label = page.getByText(neighborWorld!.name, { exact: true });
+  await expect(label).toBeVisible({ timeout: 15_000 });
+  const lb = (await label.boundingBox())!;
+  await page.mouse.click(lb.x + lb.width / 2, lb.y - 26);
+  const panel = page.getByRole('complementary', { name: neighborWorld!.name });
+  await expect(panel.getByText('Sovereign Neighbor')).toBeVisible();
+  await shot(page, '20-neighbor-in-scope');
+
+  // Ping — premier geste du protocole. Rerun : un hail peut déjà attendre.
+  await panel.getByRole('button', { name: 'Ping' }).click();
+  await expect(page.getByRole('status')).toContainText(
+    /Hail sent|Un hail attend déjà/,
+    { timeout: 10_000 },
+  );
+  await shot(page, '21-ping-sent');
+
+  // Second navigateur : le voisin voit le hail entrant et répond.
+  const ctxB = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    baseURL: 'http://localhost:5173',
+  });
+  const pageB = await ctxB.newPage();
+  await pageB.goto('/');
+  await pageB.getByLabel('E-mail').fill('neighbor@atg.local');
+  await pageB.getByLabel('Password').fill('demo-password-2');
+  await pageB.getByRole('button', { name: 'Enter the Silence' }).click();
+  await pageB
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('button', { name: 'Comms' })
+    .click();
+  const incoming = pageB.getByRole('region', { name: 'Incoming hails' });
+  await expect(incoming.getByText('Sovereign Demo')).toBeVisible({
+    timeout: 15_000,
+  });
+  await shot(pageB, '22-incoming-hail');
+  await incoming.getByRole('button', { name: 'Ping back' }).first().click();
+  await expect(pageB.getByRole('status')).toContainText(
+    'Channel open — the Silence breaks.',
+  );
+
+  // Premier message du voisin (identifié par runId : assertion sans ambiguïté).
+  const msgB = `The Silence breaks — we read you. [${runId}]`;
+  await pageB.getByPlaceholder('Speak across the dark…').fill(msgB);
+  await pageB.getByRole('button', { name: 'Send' }).click();
+  await expect(pageB.getByText(msgB)).toBeVisible();
+  await shot(pageB, '23-channel-open');
+
+  // Côté Demo : le canal apparaît, le message arrive, la réponse part.
+  await rail.getByRole('button', { name: 'Comms' }).click();
+  const channels = page.getByRole('region', { name: 'Open channels' });
+  await expect(
+    channels.getByRole('button', { name: 'Sovereign Neighbor' }),
+  ).toBeVisible({ timeout: 15_000 });
+  await channels.getByRole('button', { name: 'Sovereign Neighbor' }).click();
+  await expect(page.getByText(msgB)).toBeVisible({ timeout: 10_000 });
+  const msgA = `Contact confirmed across the dark. [${runId}]`;
+  await page.getByPlaceholder('Speak across the dark…').fill(msgA);
+  await page.getByRole('button', { name: 'Send' }).click();
+  await expect(page.getByText(msgA)).toBeVisible();
+  await shot(page, '24-chat-demo-side');
+
+  // Aller-retour complet : la réponse arrive chez le voisin (polling 3 s).
+  await expect(pageB.getByText(msgA)).toBeVisible({ timeout: 10_000 });
+  await shot(pageB, '25-chat-neighbor-side');
+  await ctxB.close();
+});

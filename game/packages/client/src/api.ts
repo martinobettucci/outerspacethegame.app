@@ -192,6 +192,23 @@ export const api = {
       `/planets/${planetId}/probes`,
       dest,
     ),
+  comms: () =>
+    call<{
+      incoming: { id: string; fromName: string; bodyName: string; createdAt: string }[];
+      outgoing: { id: string; status: string; bodyName: string; createdAt: string }[];
+      channels: { id: string; withName: string; openedAt: string }[];
+    }>('GET', '/comms'),
+  ping: (bodyId: string) =>
+    call<{ pingId: string }>('POST', '/pings', { bodyId }),
+  pingBack: (pingId: string) =>
+    call<{ channelId: string }>('POST', `/pings/${pingId}/pingback`),
+  messages: (channelId: string) =>
+    call<{ messages: { id: string; body: string; authorName: string; mine: boolean; createdAt: string }[] }>(
+      'GET',
+      `/channels/${channelId}/messages`,
+    ),
+  postMessage: (channelId: string, body: string) =>
+    call<{ ok: true }>('POST', `/channels/${channelId}/messages`, { body }),
   setBuildingSettings: (
     planetId: string,
     buildingId: string,

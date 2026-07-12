@@ -618,6 +618,33 @@ export function GalaxyMap() {
               <Rocket size={14} aria-hidden /> {t.galaxy.openPlanet}
             </button>
           )}
+          {!selected.owned && selected.bodyType === 'planet' && selected.ownerId && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await api.ping(selected.id);
+                  setNotice(t.galaxy.pingSent);
+                } catch (err) {
+                  setNotice((err as ApiError).message ?? t.errors.generic);
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--accent-400)',
+                color: '#0D0D0D',
+                border: 'none',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <Radar size={14} aria-hidden /> {t.galaxy.ping}
+            </button>
+          )}
           {!selected.owned && selected.bodyType === 'planet' && !selected.ownerId && (
             <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
               {t.galaxy.foreignPlanet}

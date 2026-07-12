@@ -85,6 +85,9 @@ pnpm test:e2e           # Playwright E2E (starts API + client; DB must be up)
 pnpm build              # build all packages
 ```
 
+The comms E2E ("the Silence breaks") drives the seeded demo pair; the ping
+quota is 20/day per player, so after ~20 same-day reruns run `pnpm resetDb`.
+
 ## Environment variables
 
 | Variable | Role | Required | Notes |

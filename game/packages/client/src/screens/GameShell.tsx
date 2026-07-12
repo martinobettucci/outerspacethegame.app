@@ -18,6 +18,7 @@ import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import { GalaxyMap } from '../scenes/GalaxyMap.tsx';
 import { PlanetView } from '../scenes/PlanetView.tsx';
+import { CommsScreen } from './CommsScreen.tsx';
 
 function RailButton({
   icon,
@@ -188,7 +189,8 @@ export function GameShell() {
         <RailButton
           icon={<MessagesSquare size={15} aria-hidden />}
           label={t.nav.comms}
-          disabledReason={t.nav.comingP4}
+          active={view.kind === 'comms'}
+          onClick={() => setView({ kind: 'comms' })}
         />
         <RailButton
           icon={<Flag size={15} aria-hidden />}
@@ -200,6 +202,8 @@ export function GameShell() {
       <main style={{ gridArea: 'main', minHeight: 0 }}>
         {view.kind === 'galaxy' ? (
           <GalaxyMap />
+        ) : view.kind === 'comms' ? (
+          <CommsScreen />
         ) : (
           <PlanetView planetId={view.planetId} />
         )}

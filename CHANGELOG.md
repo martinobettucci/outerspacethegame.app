@@ -4,6 +4,22 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **La Silence se brise : ping, ping-back & canaux (chunk I)** : migration
+  `pings`/`channels`/`messages` (canal canonique par couple : paire triée +
+  contrainte SQL unique) ; sendPing (cible = monde POSSÉDÉ visible dans le
+  ciel de l'émetteur — vérifié serveur via visibleBodies, quota 20/j
+  [TUNE], 1 hail en attente par couple), pingBack (seul le destinataire ;
+  ouvre ou retrouve LE canal), messages 1↔1 avec membership vérifiée
+  (refus d'un tiers testés par requêtes directes) ; écran Comms (hails
+  entrants avec Ping back accent, canaux, chat pollé 3 s, formulaire),
+  bouton Ping sur un monde étranger de la carte galaxie ; l'infrastructure
+  sans tuile (télescope, probe pad) se construit désormais via l'UI
+  (construction directe, panneau « Infrastructure » dans la vue planète —
+  le flux tuile la rejetait) ; correctif de déterminisme du test market L2
+  (l'ADN du starter roulait market absent/plafonné dans ~20 % des univers
+  → seed pur dédié, patron « Capworld »). 5 unit + 5 intégration + E2E
+  bi-navigateur (télescope → ping → ping-back → échange), captures 19–25
+  observées.
 - **Vol libre & sondes (chunk H)** : migration missions (segment, statut
   idle), moveShip (position interpolée pure, pré-brûlage v1 documenté,
   auto-chargement du réservoir sur monde possédé, personnel = mondes

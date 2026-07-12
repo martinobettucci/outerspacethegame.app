@@ -20,6 +20,13 @@ import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
 import { fleet, launchProbe, moveShip } from '../services/ships.js';
 import {
+  listComms,
+  listMessages,
+  pingBack,
+  postMessage,
+  sendPing,
+} from '../services/comms.js';
+import {
   CommandError,
   demolishBuilding,
   levelUpBuilding,
@@ -59,6 +66,8 @@ const moveSchema = z.union([
   z.object({ x: z.number(), y: z.number() }),
 ]);
 const probeSchema = z.object({ x: z.number(), y: z.number() });
+const pingSchema = z.object({ bodyId: z.string().uuid() });
+const messageSchema = z.object({ body: z.string().min(1).max(2000) });
 const settingsSchema = z.object({
   workforce: z.number().int().min(0).optional(),
   runPct: z.number().int().min(0).max(100).optional(),
@@ -362,6 +371,59 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       }
       throw err;
     }
+  });
+
+  const wrap = async (
+    reply: { status: (code: number) => { send: (b: unknown) => unknown } },
+    fn: () => Promise<unknown>,
+  ) => {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  };
+
+  app.get('/comms', async (req) => {
+    const player = await requirePlayer(req);
+    return listComms(deps.pool, player.id);
+  });
+
+  app.post('/pings', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const parsed = pingSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () => sendPing(deps.pool, player.id, parsed.data.bodyId));
+  });
+
+  app.post('/pings/:id/pingback', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => pingBack(deps.pool, player.id, id));
+  });
+
+  app.get('/channels/:id/messages', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      messages: await listMessages(deps.pool, player.id, id),
+    }));
+  });
+
+  app.post('/channels/:id/messages', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = messageSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, async () => {
+      await postMessage(deps.pool, player.id, id, parsed.data.body);
+      return { ok: true };
+    });
   });
 
   app.patch('/planets/:id/buildings/:buildingId', async (req, reply) => {

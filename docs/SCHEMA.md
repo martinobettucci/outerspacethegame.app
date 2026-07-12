@@ -39,6 +39,27 @@
 | `events` | simulation event queue | partial index on unprocessed |
 | `schema_migrations` | migration ledger | managed by the runner |
 
+## 002_ship_missions (free flight, GB §6)
+
+`ships` gains mission columns — one straight segment per flight, position
+derived lazily at read time (pure interpolation, nothing ticks per frame):
+`origin_x/y`, `dest_x/y`, `dest_body_id`, `departed_at`, `arrives_at`,
+`speed_pc_per_day`; status gains `idle` (stopped in the void — distinct
+from `stranded` = out of fuel). Partial index `ships_transit (arrives_at)
+WHERE status='transit'` feeds the arrival scheduler.
+
+## 003_pings_channels (the Silence protocol, GB §5)
+
+| Table | Purpose | Notes |
+|---|---|---|
+| `pings` | hails (contact requests) | `status ∈ sent/answered/ignored`; partial index on pending per recipient; `(from_player, created_at)` index backs the daily quota |
+| `channels` | 1↔1 conversation, opened by ping-back only | canonical pair: `CHECK (player_a < player_b)` + `UNIQUE` — one channel per couple regardless of who answered |
+| `messages` | channel messages | `bigserial` id = stable ordering; `CHECK char_length(body) BETWEEN 1 AND 2000` mirrors `normalizeMessageBody` |
+
+No unilateral contact exists at the schema level: nothing references a
+channel except through the canonical pair, and the only writer of
+`channels` is the ping-back service path.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
-import { ArrowLeft, Users, Database, Mountain, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
@@ -604,6 +604,45 @@ export function PlanetView({ planetId }: { planetId: string }) {
               </tbody>
             </table>
           </div>
+
+          {/* Infrastructure sans tuile (télescopes, probe pads) : invisible
+              sur le plateau iso, donc listée ici — sinon rien n'atteste de
+              son existence à l'écran. */}
+          <section
+            aria-label={t.planet.infrastructure}
+            style={{ display: 'grid', gap: 4 }}
+          >
+            <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+              <Satellite size={14} color="var(--primary-300)" aria-hidden />
+              {t.planet.infrastructure}
+            </span>
+            {planet.buildings.filter((b) => b.tileIndex === null).length === 0 ? (
+              <span style={{ fontSize: 11, color: 'var(--text-disabled)' }}>
+                {t.planet.infrastructureNone}
+              </span>
+            ) : (
+              planet.buildings
+                .filter((b) => b.tileIndex === null)
+                .map((b) => (
+                  <span
+                    key={b.id}
+                    style={{ fontSize: 12, fontFamily: 'var(--font-mono)' }}
+                  >
+                    {b.key.replace(/_/g, ' ')} L{b.level} —{' '}
+                    <span
+                      style={{
+                        color:
+                          b.status === 'active'
+                            ? 'var(--success-500)'
+                            : 'var(--warning-500)',
+                      }}
+                    >
+                      {b.status}
+                    </span>
+                  </span>
+                ))
+            )}
+          </section>
         </aside>
       </div>
 
@@ -624,6 +663,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
           } else if (BUILDINGS[action.building].batchesPerDayByLevel) {
             // Une industrie mint exactement une chose : recette d'abord.
             setRecipePickerFor(action.building);
+          } else if (!BUILDINGS[action.building].usesTile) {
+            // Infrastructure sans tuile : construction immédiate, pas de
+            // sélection de tuile (le serveur refuse un tileIndex ici).
+            try {
+              await api.build(planetId, action.building, null, null);
+              setNotice(t.planet.buildSuccess);
+              await refresh();
+            } catch (err) {
+              setNotice((err as ApiError).message ?? t.errors.generic);
+            }
           } else {
             setSelectedCard({ building: action.building, recipe: null });
           }

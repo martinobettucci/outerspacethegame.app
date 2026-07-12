@@ -120,6 +120,12 @@ Playwright.
 `ATG_DB_IMAGE` for restricted-egress sandboxes), `pnpm runDev` /
 `stopDev` / `resetDb`, SQL migration runner (`schema_migrations`,
 transactional, advisory-locked), env vars documented in `game/.env.example`.
+Delivered so far (chunks A–I, see `docs/BACKLOG.md` for exact status): sim
+core + full content catalog, spawn, auth/sessions, galaxy + isometric
+planet views, living colony loop, levels/demolition/stats, validated
+renderer lighting pass, free flight + probes + fog-of-war, and the contact
+protocol (pings/channels/messages, GB §5 — scope, quota and channel
+membership all enforced server-side with direct-request tests).
 Staging/prod Compose files: not yet written (planned with first deploy).
 
 ## 7. Recovery strategies

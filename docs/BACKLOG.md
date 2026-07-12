@@ -110,7 +110,7 @@
 
 ## P4 — Multijoueur, social & économie
 
-- [ ] Ping/ping-back (quota 20/day + diplo bonus), chat channels, multi-party channels (diplo worlds) → GB §5/§11; DG §15/§4.1
+- [~] Ping/ping-back (quota 20/day + diplo bonus), chat channels, multi-party channels (diplo worlds) → GB §5/§11; DG §15/§4.1 — **livré (chunk I)** : pings (portée = ciel du joueur vérifiée serveur, quota 20/j [TUNE], 1 hail en attente/couple), ping-back ouvrant LE canal canonique (paire triée + contrainte SQL unique), messages 1↔1 (membership vérifiée, refus testés en direct), écran Comms (hails entrants, canaux, chat 3 s), bouton Ping sur monde étranger (carte), infrastructure sans tuile constructible via l'UI (télescope/probe pad) + panneau Infrastructure ; tests : 5 unit + 5 intégration + E2E complet 2 navigateurs (télescope → ping → ping-back → échange bilatéral). **Restent** : bonus quota diplomatique, canaux multi-parties (mondes diplomatiques), notification de hail hors écran Comms
 - [ ] Shares: planets/telescopes, revocable; scientific deep-sight scans shareable/sellable → GB §5/§11; DG §4.1
 - [ ] Markets: slots = level (1/2/3), fixed-rate L1, AMM pools L2 (seeding=pricing, 25 bp LP/25 bp house, L3 LP 20 bp), daily/absolute limits, whitelists (authz direct tests) → GB §9/§13; DG §11.1–11.2
 - [ ] Cells-star routing + double-fee cross trades + hospitality triad nudge → GB §13; DG §11.2

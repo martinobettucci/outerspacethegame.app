@@ -108,6 +108,16 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   double-fee disclosure, mask disclosure on planet listings.
 - **Mission/policy editor** — the instruction-block builder (predefined
   strategy library in MVP): stacked condition chips, readable as a sentence.
+- **Comms screen (implemented, chunk I)** — two panes: left = incoming hails
+  (accent-bordered cards, `Ping back` accent button — the historic gesture),
+  open channels, sent hails (muted); right = chat (mine = primary bubble
+  right-aligned, theirs = raised bubble left with author name in accent-200),
+  input + Send. Empty state is lore-flavored ("The Silence is total…").
+  Ping entry point: accent button on a foreign-owned planet panel (galaxy).
+- **Infrastructure panel (implemented, chunk I)** — planet sidebar section
+  listing no-tile buildings (telescope, probe pad) as `key Ln — status`
+  (status colored success/warning); infrastructure cards build directly from
+  the hand (no tile selection), and this panel is their only on-screen proof.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen
