@@ -23,6 +23,9 @@
   props hors cartes en **GIF animés** avec companions bump/light synchronisés
   (stubs régénérés : 1 602 GIF + 126 PNG) ; **règle de complétude** inscrite
   dans CLAUDE.md ; tour d'équilibrage 4 lancé sur le catalogue complet.
+- Tour d'équilibrage 4 TERMINÉ (économie + militaire du catalogue) : 15
+  constats, 15 correctifs → DESIGN_GUIDE v0.4 ; règle boucliers↔climat
+  tranchée ; coûts T2+ complets ; moniteurs M6–M7.
 - Catalogue de contenu COMPLET : 27 bâtiments avec effets par niveau
   (DESIGN_GUIDE §5.1), 6 types d'unités sol (§10.1), upgrades par coque selon
   les règles de slots ; 576 stubs (×3) couvrant tout + galerie auto-générée ;

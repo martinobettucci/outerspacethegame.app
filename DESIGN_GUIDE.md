@@ -5,8 +5,8 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.3** — round-1 + round-2 balance patches applied (see
-> `BALANCE_LOG.md`).
+> **Version v0.4** — rounds 1–2 system patches + round-4 content-catalog
+> patches applied (see `BALANCE_LOG.md`).
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
@@ -144,7 +144,7 @@ Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):
 - Crystal deposit: matches climate; poison worlds always roll a Nox deposit.
 - **Deposit stock:** `S0 = 2 000 × sizeMult × qMult × U(0.6, 1.4)` T,
   sizeMult ∈ {1, 3, 10} [TUNE].
-- **Extraction:** a mine extracts `rate = baseRate(level) × E × runPct`/day;
+- **Extraction:** a mine extracts `rate = baseRate(level) × E × runPct`/day; **max 1 extractor/mine per deposit** (no stacking on one vein);
   baseRate: basic mine 10/20/40 T/day [TUNE]; crystal extractor **8/16/32**
   T/day [TUNE].
 - Deposit hits 0 ⇒ **dry forever** (canon). UI must show projected dry date.
@@ -298,24 +298,39 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | smelter | T1 | — | steel 10/20/40 batches/day |
 | crystal_extractor | T1 | — | climate crystal 8/16/32 T/day |
 | refinery | T1 | — | fuel cells 20/40/80 batches/day |
-| fuelcell_plant | T2 | — | industrial cells: refinery rate ×2 per level pair |
+| fuelcell_plant | T2 | — | own line: **40/80/160 batches/day × E** (2× same-level refinery); recipe yields unchanged |
 | spaceport | T1 | — | docks S / +M / +L by level |
 | workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories & terraform cores |
-| market | T1 | — (L2+: Mercantile) | L1 fixed-rate; L2 AMM pools + auctions; L3 fees −0.05% |
-| residential | T1 | (L2+: Civic) | popCap +15%/level |
+| market | T1 | — (L2+: Mercantile) | L1 fixed-rate; L2 AMM pools + auctions; L3 **LP fee 25→20 bp** (house cut untouched) |
+| residential | T1 | (L2+: Civic) | popCap **+15 pp/level, additive** (+45% at L3); UI must project the E(u) trough before build |
 | lab | T2 | — | medicines 10/20/40 batches/day |
 | obs_station | T2 | — | ground OBS umbrella radius 5/8/12 pc |
 | shipyard | T2 | — (L3: Industrialist) | L1 builds S+M hulls; L2 bulk M (−25% cost); L3 builds L hulls |
 | military_district | T3 | Militarist | enables conquest ops; garrison cap +50%/level |
-| weapon_foundry | T3 | Militarist | mints weapons & combat derived items; 1/2/4 items/week |
-| research_center | T3 | Scientific | unlock costs −10%/level (planet-wide) |
-| diplomatic_district | T3 | Diplomatic | +2 treaty slots/level; ping range +10%/level |
-| casino | T3 | Mercantile | market fee income +5%/level; +population happiness event slot |
+| weapon_foundry | T3 | Militarist | **continuous mint: 1 item / 168·84·42 h × E** (no weekly burst buckets) |
+| research_center | T3 | Scientific | unlock costs −10%/level; **discounts multiply, best scientist only, total capped −50%** |
+| diplomatic_district | T3 | Diplomatic | **ping quota +10/day/level; share-grant slots +2/level** (treaty = standing share/route grant; targeting stays telescope-scope-limited — canon) |
+| casino | T3 | Mercantile | house-cut income **+5% RELATIVE/level** (never percentage points) |
 | commerce_district | T3 | Mercantile | market daily limits +50%/level |
 | faction_hq | T3 | Diplomatic | faction charter/moderation seat; banner broadcast |
 | stargate_yard | T4 | — | builds Stargates (§9.3); 1 concurrent build/level |
 | terraformer | T4 | Civic | +1 quality grade, once per world (huge cost) |
 | artificial_planet_yard | T5 | Industrialist | builds artificial planets (§13) |
+
+**Unlock costs (T2+; placement = 50 % rule; T0-T1 costs in §5) [TUNE]:**
+spaceport L2 120 ore+60 steelL; shipyard 150 ore+80 steelL+20 cells;
+lab 80 ore+30 silicon+10 lithium; obs_station 60 ore+40 silicon;
+market L2 100 ore+40 carbon+25 cells; fuelcell_plant 120 ore+40 steelL+20
+crystal; shipyard L3 400 steelL+100 steelH+50 cells; military_district
+300 ore+150 steelH+100 cells; weapon_foundry 250 steelH+150 cells+20 gold;
+research_center 300 ore+200 silicon+100 cells; diplomatic_district 250
+ore+100 steelL+100 cells+20 gold; casino 200 ore+100 steelL+150 cells+30
+gold; commerce_district 250 ore+150 steelL+100 cells; faction_hq 300
+ore+150 steelL+100 cells; residential L3 150 ore+150 carbon+50 cells;
+colony_program 100 ore+50 steelL+25 cells (light: never-masked, preserves
+the day-32-43 colony window); stargate_yard 1 000 steelH+500 cells+200
+crystal; terraformer 2 000 steelH+1 500 cells+500 crystal+5 cores;
+artificial_planet_yard 5 000 steelH+3 000 cells+1 000 crystal.
 
 All buildings 512×256, 3 levels, hot/cold climate-adaptation overlays; full
 sprite contract in `docs/ASSET_PIPELINE.md`.
@@ -437,7 +452,17 @@ proportional to HP restored; policy: whom to serve (canon).
 - **Junk collector** — 15 steelL + 5 silicon [TUNE]: 30 T junk/day.
 - **Claim rig** — 25 steelL + 5 gold [TUNE]: claims ownerless hulls after 2 h
   proximity [TUNE].
-- Scanner, shields (climate ops), terraform core (§6): same slot family.
+- **Climate shields** — `shield_hot` / `shield_cold` / `shield_radio`
+  (workshop L2, politics-free, 15 steelL + 5 matching crystal [TUNE]).
+  **Rule (closes GAMEBOOK §27):** a ship landing on/hovering over a hot or
+  cold planet, harvesting a poison deposit, or operating within 5 pc of a
+  black hole or flaring star, without the matching shield, takes
+  **deterministic hull wear 5 % max-HP/day pro-rated per tick** [TUNE] — a
+  toll, never a kill nor a movement block. **Temperate worlds never require
+  shields** (starters are temperate ⇒ no starter grief). Buildings never
+  need shields (climate-adaptation art is cosmetic; canon: climate gates
+  resources, not operation). Combat unaffected — environmental only.
+- Scanner, terraform core (§6): same slot family.
 
 ---
 
@@ -497,17 +522,21 @@ gate's planet stock. Factions tolling chokepoints is intended politics.
 
 | Unit | Levels | ATK (L1) | HP (L1) | Cost (L1) | Notes |
 |---|---|---|---|---|---|
-| turret_light | 2 | 40 | 150 | 10 steelL | cheap screen |
+| turret_light | 2 | 40 | 150 | 10 steelL | cheap screen; **mit 0**; **politics-free** (basic self-defense is never gated) |
 | turret_heavy | 2 | 160 | 400 | 40 steelH | mit 0.30; backbone |
-| cannon | 2 | 120 | 200 | 25 steelH | long-range anti-orbital (targets hovering) |
-| tank_ground | 3 | 40 | 250 | 15 steelL | a2g only; mobile garrison |
+| cannon | 2 | 120 | 200 | 25 steelH | anti-orbital: **range = the hover band only (~1 pc [TUNE])** — never out-shoots the 3 pc engage bubble |
+| tank_ground | 3 | 40 | 250 | 15 steelL | fires on **landed & force-landing ships ×1.5** — punishes the 24 h conquest hold |
 | tank_antiair | 3 | 60 | 220 | 20 steelL | ×1.5 vs atmospheric ships |
-| tank_combined | 3 | 50 | 260 | 30 steelL | hits ground AND air |
+| tank_combined | 3 | **70** | 260 | 30 steelL | premium generalist: hits atmospheric AND landed |
 
-  Upkeep 0.2 cells/day each; garrison cap 2 × tiles (§6). **Turrets and
-  cannons fire on hovering ships at full ATK.** Ground units are **placed on
-  the planet view like buildings** (sprites 512×256, animated GIF) but occupy
-  **no tile** (garrison rule) — placement is visual, the cap is the limit.
+  Upkeep 0.2 cells/day each. **Garrison cap = 2 × tiles in SLOTS; units cost
+  slots by level (L1=1, L2=2, L3=3)** [round 4b — no 40-heavy unbreakable
+  turtles]. **"Atmospheric ship" = hovering over, landed on, or force-landing
+  at the planet.** Turrets & cannons fire on hovering ships at full ATK;
+  tank_antiair & tank_combined fire on atmospheric ships (AA ×1.5);
+  tank_ground fires on landed/force-landing only. Ground units are **placed
+  on the planet view like buildings** (sprites 512×256, animated GIF) but
+  occupy **no tile** — placement is visual, the slot cap is the limit.
 
 ### 10.2 Resolution (at arrival — canon)
 Simultaneous rounds, 1 round = 1 tick:
@@ -516,6 +545,10 @@ dmg_to_B = max(0, ATK_A × (1 − mit_B)); armor_B −= dmg_to_B  (and vice vers
 ```
 0 HP ⇒ destroyed ⇒ **space junk** (canon): junk mass = **15%** build-mass,
 cargo salvage **15%** [TUNE — piracy is a profession, not a printing press].
+**Buildings are untargetable by a2g while the planet's garrison > 0**, and
+building HP is **1 500/3 000/6 000** by level [round 4b ×10 — razing an
+undefended world is an hours-long commitment, not minutes]. The initiator
+may withdraw after the 20-round lock expires by leaving weapons range.
 Survivor keeps damage. Both-zero: both die. Fleets:
 policy targeting (focus-fire default); a2a hits ships, a2g hits ground/
 buildings (HP §6) only (canon).
@@ -556,7 +589,7 @@ Landing rights gate access. Fixed-rate re-pricing ≤ 1/min [TUNE].
   Spot = y/x. **The owner's initial deposit ratio *is* the initial price** —
   seeding is a pricing decision, not a magic 50/50 (mispricing is the owner's
   tuition).
-- **Fees:** 0.25%/leg to LPs + 0.05% house cut to the market owner [TUNE].
+- **Fees (basis points, never ambiguous): 25 bp/leg to LPs + 25 bp house cut** to the market owner [TUNE — house cut raised in round 4a so T3 commerce buildings pay back]. Market L3 lowers the **LP leg** to 20 bp.
   Cross-denominated trades route two legs = double fee (canon).
 - **Liquidity provenance:** planetary surplus; visiting players may LP if the
   owner allows. **LP withdrawal is system-guaranteed** — landing-rights

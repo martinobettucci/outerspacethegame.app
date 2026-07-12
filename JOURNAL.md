@@ -778,3 +778,35 @@ variable du cloud worker s'appelle `OPEN_AI_KEY` (et non `OPENAI_API_KEY`).
 - Vérification visuelle : GIF unité cannon L2 observé (512×256, étiquette).
 - **Tour 4 d'équilibrage lancé** (2 campagnes : économie du catalogue +
   militaire du catalogue) — correctifs à l'atterrissage.
+
+---
+
+## 2026-07-12 — Session 16 (tour 4 appliqué → DESIGN_GUIDE v0.4)
+
+### Problème
+Valeurs du catalogue (session 14) non testées ; règle de complétude exige le
+tour d'équilibrage avant fiabilité.
+
+### Observations (2 campagnes, arithmétique fermée)
+- Économie : pas de stratégie dominante (>60 %) dans les lectures saines,
+  MAIS ambiguïtés dangereuses (casino en points de pourcentage = cassé ;
+  remises de recherche empilables jusqu'à −105 % = déblocages gratuits ;
+  « ×2 per level pair » indéfini) et 19 coûts T2+ manquants (bloquant).
+- Militaire : échelle des unités saine ; tank_ground sans cible atteignable ;
+  tank_combined dominé ; « atmosphérique » indéfini ; rasage a2g en minutes ;
+  mondes mercantiles sans AUCUNE défense possible ; forteresse à 28 croiseurs.
+
+### Décisions / correctifs (v0.4)
+Frais en points de base (LP 25 bp, maison 25 bp, casino +5 % relatif) ;
+remises multiplicatives cap −50 % ; fuelcell_plant 40/80/160 batches/j +
+1 extracteur/gisement ; fonderie en continu (M6) ; district diplomatique →
+quota de pings + slots de partage (canon scope préservé) ; table des coûts
+T2+ adoptée ; tank_ground anti-débarquement ×1.5 ; canon = bande d'orbite ;
+« atmosphérique » défini + matrice de ciblage ; tank_combined ATK 70 ;
+slots de garnison pondérés L1/L2/L3=1/2/3 (M7) ; bâtiments inciblables si
+garnison>0 + HP ×10 ; turret_light apolitique ; règle boucliers climat
+adoptée (ouvert GAMEBOOK §27 clos — usure déterministe, temperate sûr).
+
+### Vérifications
+- Chaque correctif tracé constat→patch au BALANCE_LOG (tour 4) ; aucun
+  patch des tours 1–3 rouvert ; GAMEBOOK amendé (ouvert clos).
