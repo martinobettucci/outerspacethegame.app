@@ -411,3 +411,59 @@ archetype campaigns re-run against the full catalog — casino/commerce fee
 economies, research_center unlock-discount stacking, cannon/anti-air vs hull
 matchups, shield-gated climate operations, weapon-foundry item throughput.
 Until Round 4 passes, catalog-wide values are draft, and this log says so.
+
+---
+
+## Round 4 — content-catalog balancing (2026-07-12) — **PATCHED → guide v0.4**
+
+Two campaigns over the full Session-14 catalog (per the CLAUDE.md
+completeness rule — no half-tested content).
+
+### 4a — Content economy (7 findings)
+- **F1 casino/commerce/market stack:** no dominance (trade-tax ≈ 1:80 vs
+  production) but T3 commerce was economically dead + two wording bugs
+  (percentage-points reading = game-breaking; market L3 zeroed the house cut
+  the casino multiplies). → fees restated in **basis points** (LP 25 bp,
+  house 25 bp), casino +5% **relative**/level, market L3 cuts the **LP leg**
+  only, "happiness slot" deleted.
+- **F2 research stacking → free unlocks (−105% worst case):** discounts now
+  **multiply, best scientist only, hard cap −50%**.
+- **F3 fuelcell_plant "×2 per level pair" ambiguity** (worst readings ×8 or
+  double yields): own line **40/80/160 batches/day**, yields unchanged;
+  **max 1 extractor per deposit** (anti vein-stacking).
+- **F4 residential L3 vs bell:** trap confirmed & healthy (E-trough 0.96→0.72,
+  ~24 d regrowth); stated **additive +15 pp/level** + mandatory UI projection.
+- **F5 weapon_foundry burst buckets:** → **continuous mint** (1 item /
+  168·84·42 h × E); monitor **M6: items minted vs destroyed**.
+- **F6 diplomatic ping-range contradicted scope canon** (fog-of-war leak):
+  → ping **quota** +10/day/level + share-grant slots +2/level; treaty ≡
+  standing share/route grant.
+- **F7 (blocker) 19 missing T2+ unlock costs:** full cost table adopted into
+  §5.1 (colony_program kept light to preserve the day-32–43 window).
+
+### 4b — Content military (8 findings + shield rule)
+- Full unit×hull matchup table computed: **ladder sound** (lights kill bees,
+  heavies kill birds, only crusaders crack garrisons).
+- **F2 tank_ground dead** (no reachable target): → fires on **landed &
+  force-landing ships ×1.5** — punishes the 24 h conquest hold.
+- **F3 cannon range undefined:** → **hover band only (~1 pc)**; engage-bubble
+  sieges stay untouched (intended).
+- **F4 "atmospheric" undefined** (AA clause unreachable): defined = hovering /
+  landed / force-landing; per-unit targeting matrix stated.
+- **F5 tank_combined strictly dominated:** ATK 50 → **70** at 30 steelL.
+- **F6 fortress math:** 40×heavy-L2 needed ~28 crusaders (5:1 defender edge,
+  unbreakable turtle). → **garrison slots weighted by level (L1/L2/L3 =
+  1/2/3)** ⇒ maxed defense ≈ 14 crusaders; monitor **M7: assault-vs-turtle
+  cost ratio (target 2–3:1)**.
+- **F7 raze scale:** one bird razed a colony in ~1.5 h; Mercantile worlds
+  couldn't build ANY defense (turret_light was Militarist). → buildings
+  **untargetable while garrison > 0**, building HP **×10** (1 500/3 000/
+  6 000), **turret_light politics-free** (self-defense is never gated).
+- **F8 minors:** turret_light mit 0 explicit; bee-a2g fitting warning (UI);
+  initiator may withdraw after the 20-round lock by leaving range.
+- **Climate-shield rule adopted** (closes GAMEBOOK §27 open): hostile-
+  environment ops without the matching shield = deterministic hull wear
+  5 %/day; temperate always safe (no starter grief); buildings exempt.
+
+**Verdict: catalog balanced under the patched wording — guide bumped to
+v0.4.** No round 1–3 system patch re-opened. Monitors now M1–M7.

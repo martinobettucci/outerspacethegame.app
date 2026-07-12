@@ -672,9 +672,11 @@ the exact recipe graph and crystal→fuel-cell yields.
 **A. Tracked design opens (tuning — do not block a build):**
 - **Artificial planets** (§25) — population/quality caps, conquerable/attackable?,
   movement speed & fuel cost.
-- **Climate ↔ ship shields** — do hostile climates (poison, extreme hot/cold)
-  require shielded ships/buildings? (climate → advanced resources is canon, §3;
-  the shield tie is not).
+- ~~Climate ↔ ship shields~~ — **SETTLED (balance round 4):** ship operations
+  in a hostile environment (hot/cold worlds, poison harvesting, near black
+  holes or flaring stars) without the matching shield accessory cost
+  **deterministic hull wear** — a toll, never a block. Temperate worlds never
+  require shields; buildings never do. Details: DESIGN_GUIDE §8.8.
 - Full **landing-permission** option list — self/friends/neighbours grief cases
   (§9).
 - Fuel-type **travel effects** & black-hole fuel/supernova behaviour (§22).

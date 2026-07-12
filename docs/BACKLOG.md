@@ -45,7 +45,7 @@
 ### P0.4 Remaining design opens (GAMEBOOK §27)
 - [ ] Decide tick-worker language (TS vs Python) with documented trade-off → DAT
 - [ ] Decide isometric renderer (Pixi vs canvas) via micro-prototype → DAT
-- [ ] Climate ↔ ship shields rule (hostile climates requiring shields?)
+- [x] Climate ↔ ship shields rule — SETTLED round 4 (usure déterministe sans bouclier ; temperate toujours sûr ; bâtiments exempts)
 - [ ] Full landing-permission option list (self/friends/neighbours grief cases)
 - [ ] Fuel-type travel effects table (cold/hot/gas beyond the tuning matrix)
 - [ ] Black-hole mechanics detail (pure sink vs star-like behaviours)
@@ -53,7 +53,7 @@
 - [ ] Anti-stagnation levers beyond depletion (new regions, discovery cycles)
 - [ ] Route/stargate decay edge cases beyond destination-death
 - [ ] Artificial-planet open sub-items (pop/quality caps confirmation, movement cost tuning)
-- [~] **Balance Round 4 — content breadth**: two sim campaigns RUNNING (4a content-economy: casino/commerce/research stacking, cell sinks, missing T3+ costs; 4b content-military: full unit×hull matchups, cannon anti-orbital, shields rule, fortress math) — patches to apply on return
+- [x] **Balance Round 4 — content breadth**: 2 campaigns (économie + militaire), 15 constats, tous patchés → DESIGN_GUIDE v0.4 (fees en bp, cap remises −50%, coûts T2+ complets, matrice de ciblage unités, slots de garnison pondérés, HP bâtiments ×10, turret_light apolitique, règle boucliers climat) ; moniteurs M6–M7 ajoutés
 - [ ] Postgres schema draft (docs/SCHEMA.md) derived from DESIGN_GUIDE — design doc only
 - [ ] MVP specification (docs/MVP.md) — the solo-planet vertical slice, acceptance criteria
 
