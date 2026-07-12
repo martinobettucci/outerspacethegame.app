@@ -646,3 +646,33 @@ finalizing. Still preproduction — no app code.
 - Repo state inspected before changes (git clean, no docs/ dir previously).
 - All new docs cross-checked against GAMEBOOK/DESIGN_GUIDE for consistency.
 - No app code written (preproduction respected).
+
+---
+
+## 2026-07-12 — Session 12 (prototypes générés, design system finalisé)
+
+### Problem
+Le prototypage était bloqué faute de clé ; le responsable a précisé que la
+variable du cloud worker s'appelle `OPEN_AI_KEY` (et non `OPENAI_API_KEY`).
+
+### Observations & work
+- Clé `OPEN_AI_KEY` vérifiée présente ; 4 prototypes générés avec
+  **gpt-image-2** (1536×1024) : 01 carte galactique, 02 colonie isométrique +
+  main de cartes, 03 marché, 04 gouvernance → `docs/design/prototypes/`.
+- **Observation visuelle (§16)** de chaque image : direction « groovy dark »
+  validée ; 02 et 04 quasi conformes au système (courbe d'efficience avec
+  point vif et zones verte/rouge ; matrice d'intersection + modale
+  d'irréversibilité avec confirmation tapée ; les trois peuples en portraits).
+- **Décision d'art direction : identité pixel-sprite généralisée** (y compris
+  planètes de la carte galactique — pas de rendu photoréaliste).
+- **Corrections canon consignées** (artéfacts de prompt à ne jamais
+  reproduire) : aucun « CREDITS » (pas de monnaie, GAMEBOOK §13) ; aucun
+  « END TURN » (temps réel à ticks) ; planètes en sprites ; ancrage palette
+  sur #111A30 + profondeur violette.
+- `docs/DESIGN_SYSTEM.md` → **FINAL v1** (§11 = revue des prototypes) ;
+  backlog P0.3 mis à jour ; variable corrigée dans CLAUDE.md et README.
+
+### Verifications
+- 4 images ouvertes et observées avec les capacités de vision (pas de
+  validation sur mémoire) ; conformité des tokens vérifiée à l'œil sur
+  chaque écran ; aucune clé ni valeur secrète écrite dans le dépôt.

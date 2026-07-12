@@ -1,10 +1,10 @@
 # DESIGN SYSTEM — ATG (« groovy dark »)
 
-> **STATUS: DRAFT `[~]`.** Per the owner's instruction, the FINAL design
-> system is committed only after UI prototypes are generated (OpenAI Images)
-> and visually reviewed. That step is **blocked: no `OPENAI_API_KEY` in the
-> environment** (see BACKLOG P0.3). Everything below is the working draft the
-> prototypes will validate or amend. Prompt kit for the prototype pass: §10.
+> **STATUS: FINAL v1** (2026-07-12). Validated against four generated UI
+> prototypes (`docs/design/prototypes/01–04`, model `gpt-image-2`), each
+> visually reviewed — see §12 for the review findings and corrections.
+> This document keeps evolving with the product; changes go through the
+> same generate-observe-amend loop.
 
 ## 1. Art direction
 
@@ -147,11 +147,10 @@ within their own container.
   the 2022 reference set (512×256 ships, 3-level buildings, 256×256 resource
   icons).
 
-## 10. Prototype kit (to run when `OPENAI_API_KEY` is available)
+## 10. Prototype kit (EXECUTED 2026-07-12 — kept for regeneration)
 
-Four prototypes, 1536×1024, model `gpt-image-2` (fallback `gpt-image-1`),
-saved to `docs/design/prototypes/`, then vision-reviewed against §2 tokens
-before the FINAL stamp:
+Four prototypes, 1536×1024, model `gpt-image-2` (env var `OPEN_AI_KEY`),
+saved to `docs/design/prototypes/`, vision-reviewed against §2 tokens (§12):
 
 1. **Galaxy map** — "dark colourful space-game UI, near-black `#060810`
    violet-nebula 3D starfield, 2D navigation, planet sprites with fog of war,
@@ -167,7 +166,40 @@ before the FINAL stamp:
 4. **Governance preview** — "allow/deny mask matrix, three governor
    portraits, permanence warning modal, dark blue panels, red danger accents."
 
-## 11. Écarts / documented deviations
+## 11. Prototype review — findings & corrections (2026-07-12)
+
+All four prototypes observed with vision against §1–§9. Verdict: **the
+groovy-dark direction is validated** — deep violet-black space, dark blue
+panels, yellow signature accent, dense-but-readable management UI all land.
+
+**Confirmed & adopted:**
+- **Pixel-sprite treatment is THE identity** (02/03/04 shine): iso planet
+  chunks floating in violet space, pixel buildings with crystal scatter and
+  glowing yellow fuel cells, pixel character portraits. Adopt pixel-sprite
+  rendering for *all* game entities — including planets on the galaxy map.
+- The **efficiency bell-curve widget** (02, right panel: curve + live dot +
+  green sweet-spot + red overload) matches §5 exactly — canonize this render.
+- The **governance matrix** (04): per-governor columns, ✓/✗ cells, yellow
+  intersection column, "PERMANENT APPOINTMENT" modal with typed confirmation
+  and visible focus ring — matches §5/§6 exactly — canonize.
+- The **market scene strip** (03): poor human / robot / rich alien with
+  scattered ship parts = GAME_BIBLE §7 verbatim. Keep as a flavor band on
+  market screens.
+
+**Corrections (prompt artifacts that CONTRADICT canon — never reproduce):**
+1. **No "CREDITS", ever** (01/02/03 show them). There is no currency
+   (GAMEBOOK §13): trading pairs are always resource↔resource; HUD balances
+   show per-resource stocks, with **fuel cells** as the natural featured
+   figure — never a money counter.
+2. **No "END TURN"** (02). The game is a real-time tick simulation; the slot
+   belongs to mission/alert controls, not turn controls.
+3. **Planets are sprites, not photoreal renders** (01's right panel drifted
+   photoreal). Galaxy-map bodies use the pixel-sprite planet set
+   (`assets/icons/planets/`-style), consistent with 02.
+4. Minor palette drift toward generic blue in 01 — anchor panels on
+   `bg.raised #111A30` and keep the violet nebula depth present.
+
+## 12. Écarts / documented deviations
 
 - **Dark theme** instead of the P2Enjoy light default — owner decision for
   the game product (this file is the documentation required by CLAUDE.md §4).
