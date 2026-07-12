@@ -78,6 +78,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
       .catch(() => setHospOffers([]));
   }, [planetId]);
   useEffect(() => refreshHospitality(), [refreshHospitality]);
+  const [shipBuilds, setShipBuilds] = useState<
+    Awaited<ReturnType<typeof api.shipBuilds>>['builds']
+  >([]);
+  const refreshShipBuilds = useCallback(() => {
+    api
+      .shipBuilds(planetId)
+      .then((r) => setShipBuilds(r.builds))
+      .catch(() => setShipBuilds([]));
+  }, [planetId]);
+  useEffect(() => refreshShipBuilds(), [refreshShipBuilds]);
   const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
   const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
@@ -448,6 +458,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
                   try {
                     await api.setMarketSlot(planetId, b.id, input);
                     setNotice(t.planet.marketSlotSaved);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+                shipBuilds={shipBuilds}
+                onBuildShip={async (input) => {
+                  try {
+                    await api.buildShip(planetId, input);
+                    setNotice(t.planet.yardStarted);
+                    refreshShipBuilds();
                     await refresh();
                   } catch (err) {
                     setNotice((err as ApiError).message ?? t.errors.generic);

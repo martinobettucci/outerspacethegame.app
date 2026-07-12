@@ -14,6 +14,7 @@ export type EventKind =
   | 'stock_edge'
   | 'deposit_dry'
   | 'ship_arrival'
+  | 'ship_built'
   | 'noop';
 
 export interface GameEvent {

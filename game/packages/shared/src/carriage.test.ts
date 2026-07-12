@@ -3,7 +3,14 @@
  * (droit d'atterrir, v1 self|everyone).
  */
 import { describe, expect, it } from 'vitest';
-import { canLand, containersUsed, HULLS } from './ships.js';
+import {
+  buildableSizes,
+  canLand,
+  containersUsed,
+  HULLS,
+  shipBuildCost,
+  SHIP_BUILD_HOURS,
+} from './ships.js';
 
 describe('containersUsed (DG §7)', () => {
   it('1 conteneur = 1 T d\'un fongible', () => {
@@ -40,5 +47,26 @@ describe('canLand (GB §9, v1)', () => {
     expect(canLand({ owned: false, hasActiveSpaceport: false, policy: 'everyone' })).toBe(false);
     expect(canLand({ owned: false, hasActiveSpaceport: true, policy: 'self' })).toBe(false);
     expect(canLand({ owned: false, hasActiveSpaceport: true, policy: 'everyone' })).toBe(true);
+  });
+});
+
+describe('chantier naval (DG §381)', () => {
+  it('gate par niveau : L1/L2 = S+M ; L3 = S+M+L', () => {
+    expect(buildableSizes(1)).toEqual(['s', 'm']);
+    expect(buildableSizes(2)).toEqual(['s', 'm']);
+    expect(buildableSizes(3)).toEqual(['s', 'm', 'l']);
+  });
+
+  it('remise de masse : M à −25 % sur chantier L2+, jamais S ni L', () => {
+    expect(shipBuildCost(HULLS.cargo_m, 1)).toEqual(HULLS.cargo_m.buildCost);
+    expect(shipBuildCost(HULLS.cargo_m, 2)).toEqual({ steel_l: 90, fuel_cells: 22.5 });
+    expect(shipBuildCost(HULLS.cargo_s, 3)).toEqual(HULLS.cargo_s.buildCost);
+    expect(shipBuildCost(HULLS.cargo_l, 3)).toEqual(HULLS.cargo_l.buildCost);
+  });
+
+  it('temps de chantier [TUNE-GAP] : couvre les trois tailles', () => {
+    expect(Object.keys(SHIP_BUILD_HOURS).sort()).toEqual(['l', 'm', 's']);
+    expect(SHIP_BUILD_HOURS.s).toBeLessThan(SHIP_BUILD_HOURS.m);
+    expect(SHIP_BUILD_HOURS.m).toBeLessThan(SHIP_BUILD_HOURS.l);
   });
 });

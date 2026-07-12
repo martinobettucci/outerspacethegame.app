@@ -748,3 +748,134 @@ test('hospitalité du monde marchand : publier → acheter sur place (GB §9)', 
   await expect(hold.getByText(/ore · 1\.0 T/)).toBeVisible();
   await shot(page, '35-hospitality-honored');
 });
+
+test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §14)', async ({
+  page,
+}) => {
+  test.setTimeout(150_000);
+  // E-mail FIXE (ADN shipyard+spaceport garanti — seed = universe:starter:
+  // email) ; les coûts en steelL/cells absents du stock starter passent par
+  // l'endpoint de test /test/grant (instrumentation §15, jamais en prod).
+  const emailYard = 'e2e-shipyard@test.local';
+  await page.goto('/');
+  await page.getByLabel('E-mail').fill(emailYard);
+  await page.getByLabel('Password').fill(password);
+  await page.getByRole('button', { name: 'Enter the Silence' }).click();
+  const rail = page.getByRole('navigation', { name: 'Main' });
+  await expect(rail.or(page.getByRole('alert')).first()).toBeVisible({
+    timeout: 10_000,
+  });
+  if (!(await rail.isVisible().catch(() => false))) {
+    await page
+      .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
+      .click();
+    await page.getByLabel('E-mail').fill(emailYard);
+    await page.getByLabel('Password').fill(password);
+    await page.getByLabel('Sovereign name').fill('E2E Shipwright');
+    await page.getByLabel('Industrialist').check();
+    await page.getByRole('button', { name: 'Awaken' }).click();
+    await expect(rail).toBeVisible({ timeout: 10_000 });
+  }
+  const me = (await page.request.get('/api/me').then((r) => r.json())) as {
+    planets: { id: string }[];
+  };
+  const planetId = me.planets[0]!.id;
+  for (const [resource, tons] of [
+    ['ore', 270],
+    ['steel_l', 190],
+    ['fuel_cells', 45],
+  ] as const) {
+    const g = await page.request.post('/api/test/grant', {
+      data: { planetId, resource, tons },
+    });
+    expect(g.ok()).toBe(true);
+  }
+
+  await rail
+    .getByRole('button')
+    .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+  const box = (await page.getByTestId('planet-canvas').boundingBox())!;
+  const tileX = box.x + box.width / 2;
+  const tileY = box.y + box.height / 2 - 20;
+  const panel = page.getByRole('region', { name: 'Building settings' });
+
+  const detail = (await page.request
+    .get(`/api/planets/${planetId}`)
+    .then((r) => r.json())) as { buildings: { key: string }[] };
+  if (!detail.buildings.some((b) => b.key === 'shipyard')) {
+    const hand = page.getByRole('region', { name: 'Construction cards' });
+    for (const key of ['depot', 'spaceport', 'shipyard']) {
+      const card = hand
+        .getByRole('article')
+        .filter({ hasText: new RegExp(`^${key}`) })
+        .first();
+      await expect(async () => {
+        const unlockBtn = card.getByRole('button', { name: 'Unlock' });
+        if (await unlockBtn.isVisible().catch(() => false)) {
+          await unlockBtn.click().catch(() => undefined);
+        }
+        await expect(card.getByRole('button', { name: 'Place' })).toBeVisible({
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: 30_000 });
+    }
+    await expect(async () => {
+      const placeBtn = hand
+        .getByRole('article')
+        .filter({ hasText: /^shipyard/ })
+        .first()
+        .getByRole('button', { name: 'Place' });
+      if ((await placeBtn.getAttribute('aria-pressed')) !== 'true') {
+        await placeBtn.click();
+      }
+      await page.mouse.click(tileX, tileY);
+      await expect(page.getByRole('status')).toContainText(
+        'Construction started.',
+        { timeout: 2_500 },
+      );
+    }).toPass({ timeout: 30_000 });
+  }
+  await expect(async () => {
+    await page.mouse.click(tileX, tileY);
+    await expect(panel.getByText(/shipyard · L1/)).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+
+  // Pose la quille d'un Cargo S — nom unique par run.
+  const yard = panel.getByRole('region', { name: 'Shipyard — lay a keel' });
+  await expect(yard).toBeVisible();
+  const shipName = `Keel ${runId}`;
+  await yard.getByLabel('Category').selectOption('cargo');
+  await yard.getByLabel('Size').selectOption('s');
+  await yard.getByLabel('Ship name').fill(shipName);
+  await shot(page, '36-shipyard-form');
+  await expect(async () => {
+    await yard.getByRole('button', { name: 'Lay the keel' }).click();
+    await expect(page.getByRole('status')).toContainText(
+      'Keel laid — the yard is at work.',
+      { timeout: 2_000 },
+    );
+  }).toPass({ timeout: 30_000 });
+  await expect(yard.getByText(new RegExp(shipName))).toBeVisible();
+  await shot(page, '37-keel-under-construction');
+
+  // 12 h / TIME_SCALE = 6 s : le vaisseau rejoint la flotte, à quai.
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { name: string; status: string }[];
+        };
+        return f.ships.find((s) => s.name === shipName)?.status ?? 'absent';
+      },
+      { timeout: 30_000 },
+    )
+    .toBe('docked');
+  // Preuve visible : la flotte sur la carte compte le nouveau marqueur.
+  await rail.getByRole('button', { name: 'Galaxy' }).click();
+  await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
+  await page.waitForTimeout(1500);
+  await shot(page, '38-new-ship-in-fleet');
+});

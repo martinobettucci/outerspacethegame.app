@@ -13,11 +13,14 @@
  */
 import {
   ALL_RESOURCE_IDS,
+  buildableSizes,
   canLand,
   containersUsed,
   GAME_DAY_SECONDS,
   HULLS,
   PROBE,
+  SHIP_BUILD_HOURS,
+  shipBuildCost,
   UNIVERSE_SIZE_PC,
   type HullCategory,
   type HullSize,
@@ -652,4 +655,129 @@ export async function transferCargo(
   } finally {
     client.release();
   }
+}
+
+/**
+ * Chantier naval (GB §14, DG §381) : L1 construit S+M, L2 = M à −25 %,
+ * L3 construit L. Le coût se paie au lancement ; le vaisseau naît À QUAI,
+ * réservoirs et soute vides, à la fin du chantier (événement ship_built).
+ * ÉQUIPAGE : l'enforcement MIN_CREW est DIFFÉRÉ (annoncé — cohérent avec
+ * les vaisseaux du spawn ; arrive avec le lifecycle NPC, backlog P4).
+ */
+export async function buildShip(
+  pool: pg.Pool,
+  playerId: string,
+  planetId: string,
+  input: { category: string; size: string; name: string },
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; cost: Record<string, number> }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  if (!['combat', 'cargo', 'civil'].includes(input.category)) {
+    throw new CommandError('not_found', 'Catégorie de coque inconnue');
+  }
+  const hull =
+    HULLS[`${input.category}_${input.size}` as `${HullCategory}_${HullSize}`];
+  if (!hull) throw new CommandError('not_found', 'Coque inconnue');
+  const name = input.name.trim();
+  if (name.length < 2 || name.length > 40) {
+    throw new CommandError('not_available', 'Nom de vaisseau invalide (2–40 caractères)');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: planet } = await client.query(
+      `SELECT id, owner_id FROM bodies
+       WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
+      [planetId],
+    );
+    if (!planet[0]) throw new CommandError('not_found', 'Planète inconnue');
+    if (planet[0].owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
+    }
+    const { rows: yards } = await client.query(
+      `SELECT level FROM buildings
+       WHERE body_id = $1 AND key = 'shipyard' AND status = 'active'
+       ORDER BY level DESC LIMIT 1`,
+      [planetId],
+    );
+    if (!yards[0]) {
+      throw new CommandError('not_available', 'Aucun chantier naval actif ici');
+    }
+    const level = yards[0].level as 1 | 2 | 3;
+    if (!buildableSizes(level).includes(hull.size)) {
+      throw new CommandError(
+        'not_available',
+        `Un chantier L${level} ne construit pas les coques ${hull.size.toUpperCase()} (L3 requis)`,
+      );
+    }
+    const cost = shipBuildCost(hull, level);
+    for (const [resource, amount] of Object.entries(cost)) {
+      const { rows: stockRows } = await client.query(
+        `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+         WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+        [planetId, resource],
+      );
+      const available = stockRows[0]
+        ? evalLazy(
+            {
+              amount: stockRows[0].amount_t,
+              ratePerDay: stockRows[0].rate_t_per_day,
+              asOfMs: toMs(stockRows[0].as_of),
+            },
+            nowMs,
+            { min: 0 },
+          )
+        : 0;
+      if (available + 1e-9 < (amount as number)) {
+        throw new CommandError(
+          'insufficient_resources',
+          `Ressource insuffisante : ${resource} (${available.toFixed(1)}/${amount})`,
+        );
+      }
+      await client.query(
+        `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+         WHERE body_id = $1 AND resource = $2`,
+        [planetId, resource, available - (amount as number), nowMs],
+      );
+    }
+    const completesAt = new Date(
+      nowMs + (SHIP_BUILD_HOURS[hull.size] * 3600 * 1000) / timeScale,
+    );
+    await enqueue(client, 'ship_built', completesAt, {
+      planetId,
+      playerId,
+      category: input.category,
+      size: input.size,
+      name,
+    });
+    await client.query('COMMIT');
+    return { completesAt, cost: cost as Record<string, number> };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Chantiers en cours d'une planète (événements ship_built non traités). */
+export async function pendingShipBuilds(
+  pool: pg.Pool,
+  playerId: string,
+  planetId: string,
+): Promise<{ category: string; size: string; name: string; completesAt: string }[]> {
+  const { rows } = await pool.query(
+    `SELECT e.payload, e.due_at FROM events e
+     WHERE e.kind = 'ship_built' AND e.processed_at IS NULL
+       AND e.payload->>'planetId' = $1 AND e.payload->>'playerId' = $2
+     ORDER BY e.due_at`,
+    [planetId, playerId],
+  );
+  return rows.map((r) => ({
+    category: String(r.payload.category),
+    size: String(r.payload.size),
+    name: String(r.payload.name),
+    completesAt: new Date(r.due_at).toISOString(),
+  }));
 }

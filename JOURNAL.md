@@ -1594,3 +1594,42 @@ acheter sur place (panneau vaisseau : marché ET hospitalité côte à côte) ;
 captures 33–35 observées. L'achat trans-joueur est vérifié en intégration :
 l'autonomie v1 d'un Cargo S (240 pc) ne garantit pas le vol du couple
 seedé en E2E — annoncé au backlog.
+
+---
+
+## 2026-07-12 — Session 30 (suite) : chunk M — le chantier naval
+
+### Canon appliqué (GB §14, DG §381)
+L1 construit S+M ; L2 = M en masse (−25 % de coût, `shipBuildCost` pur
+testé) ; L3 construit les L. Le vaisseau naît À QUAI, réservoirs et soute
+vides — l'armement, les slots et les accessoires restent au backlog.
+
+### Décisions v1
+- **Temps de chantier S/M/L = 12/24/72 h [TUNE-GAP]** : le guide ne les
+  chiffre pas ; proposition alignée sur le ladder bâtiments, en attente
+  d'un tour d'équilibrage.
+- **MIN_CREW différé (annoncé)** : l'enforcement d'équipage arrive avec le
+  lifecycle NPC (P4) — cohérent avec les vaisseaux du spawn.
+- **Propriété à l'achèvement = propriétaire ACTUEL du monde** : une
+  conquête pendant le chantier capture la production (GB §9 : les
+  chantiers sont le butin).
+- **Exactement-une-fois structurel** : handler + processed_at commitent
+  dans la même transaction — l'insertion du vaisseau ne se rejoue pas.
+- **Instrumentation §15** : /test/grant (ATG_TEST_ENDPOINTS=1, E2E
+  uniquement, interdit en prod — PROD_MIGRATIONS) : le chantier coûte
+  steelL+cells absents du stock starter, la chaîne smelter serait un
+  parcours d'une heure ; le grant rend l'E2E déterministe sans simuler le
+  comportement testé.
+- **E-mail fixe e2e-shipyard@test.local** : ADN shipyard+spaceport garanti
+  (seed = universe:starter:email) ; chaîne d'unlocks réelle via l'UI
+  (depot → spaceport → shipyard — prérequis découvert par l'échec du
+  premier run, corrigé).
+
+### Vérifications
+53 unit shared (gate, remise, temps) + 27 serveur ; 84/84 intégration
+(6 chantier : gate L, coût exact, remise L2, événement→docké vide, refus
+directs) ; E2E 12/12 (premier passage 19,9 s + rerun 13,7 s) ; captures
+36–38 observées — panneau chantier avec file « Under construction », le
+nouveau marqueur dans l'éventail de flotte. Observation honnête : le stock
+sur-cap (grants répétés) s'affiche en ambre 1813/1000 T — comportement
+d'affichage correct, le cap clippe à l'évaluation suivante.

@@ -36,6 +36,15 @@ const schema = z.object({
    * Divise les durées (construction, démolition…) au moment de la commande.
    */
   TIME_SCALE: z.coerce.number().positive().default(1),
+  /**
+   * Endpoints d'instrumentation de TEST (§15 : « un endpoint dédié à
+   * l'environnement de test ») — grants de ressources pour rendre les
+   * parcours E2E déterministes. JAMAIS activé en production ('1' requis).
+   */
+  ATG_TEST_ENDPOINTS: z
+    .string()
+    .optional()
+    .transform((v) => v === '1'),
 });
 
 export type Config = z.infer<typeof schema>;

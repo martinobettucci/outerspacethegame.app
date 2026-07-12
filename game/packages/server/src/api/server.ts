@@ -19,10 +19,12 @@ import {
 import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
 import {
+  buildShip,
   fleet,
   landShip,
   launchProbe,
   moveShip,
+  pendingShipBuilds,
   transferCargo,
   undockShip,
 } from '../services/ships.js';
@@ -123,6 +125,11 @@ const innateTradeSchema = z.object({
   offerIndex: z.number().int().min(0).max(7),
   shipId: z.string().uuid(),
   buyT: z.number().positive(),
+});
+const buildShipSchema = z.object({
+  category: z.enum(['combat', 'cargo', 'civil']),
+  size: z.enum(['s', 'm', 'l']),
+  name: z.string().min(2).max(40),
 });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
@@ -486,6 +493,57 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const { id } = req.params as { id: string };
     return wrap(reply, async () => ({
       markets: await listMarkets(deps.pool, player.id, id),
+    }));
+  });
+
+  // Instrumentation de TEST (§15) — grants de ressources, propriétaire
+  // seulement, et UNIQUEMENT si ATG_TEST_ENDPOINTS=1 (jamais en prod).
+  if (deps.config.ATG_TEST_ENDPOINTS) {
+    app.post('/test/grant', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          planetId: z.string().uuid(),
+          resource: z.string().min(1),
+          tons: z.number().positive().max(100_000),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      const { planetId, resource, tons } = parsed.data;
+      const { rows } = await deps.pool.query(
+        `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+        [planetId, player.id],
+      );
+      if (!rows[0]) return reply.status(403).send({ error: 'forbidden' });
+      await deps.pool.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, now())
+         ON CONFLICT (body_id, resource)
+         DO UPDATE SET amount_t = planet_stock.amount_t + $3, as_of = now()`,
+        [planetId, resource, tons],
+      );
+      return { ok: true };
+    });
+  }
+
+  app.post('/planets/:id/ships', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = buildShipSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, async () => {
+      const r = await buildShip(deps.pool, player.id, id, parsed.data, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return { completesAt: r.completesAt.toISOString(), cost: r.cost };
+    });
+  });
+
+  app.get('/planets/:id/ship-builds', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      builds: await pendingShipBuilds(deps.pool, player.id, id),
     }));
   });
 

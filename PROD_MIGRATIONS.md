@@ -36,6 +36,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | `SESSION_SECRET` | signature des cookies de session (≥ 32 car., dédié) | oui |
 | `UNIVERSE_SEED` | graine de l'univers de production (fixée UNE fois, ne change jamais) | oui |
 | `API_PORT`, `CLIENT_ORIGIN`, `TICK_MS` | voir `game/.env.example` | non (défauts) |
+| `ATG_TEST_ENDPOINTS` | **NE JAMAIS provisionner en production** — instrumentation E2E (§15) | interdit en prod |
 
 ## Tâches de vérification post-déploiement
 

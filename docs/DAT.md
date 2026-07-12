@@ -133,7 +133,11 @@ pair at a posted rate, 1/min repricing, daily/absolute limits + whitelist
 against the `trades` journal — all enforced server-side) plus the
 merchant-world innate hospitality (GB §9: survival+fuel above a
 keep-for-self floor, all-mercantile governance re-checked per trade,
-reachable while merely hovering).
+reachable while merely hovering) and naval construction (shipyard L1
+S+M / L2 bulk M −25% / L3 L hulls; ships born docked and empty). Test
+instrumentation (§15): `TIME_SCALE` and `ATG_TEST_ENDPOINTS=1`
+(/test/grant) — E2E-only, never provisioned in production
+(PROD_MIGRATIONS).
 Staging/prod Compose files: not yet written (planned with first deploy).
 
 ## 7. Recovery strategies

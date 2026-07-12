@@ -162,6 +162,40 @@ export const PROBE = {
 /** Équipage minimal par taille de coque. [TUNE] DG §8.5 */
 export const MIN_CREW: Record<HullSize, number> = { s: 1, m: 3, l: 8 };
 
+/**
+ * Chantier naval (DG §381) : L1 construit S+M ; L2 = M en masse (−25 % de
+ * coût) ; L3 construit aussi les L.
+ */
+export function buildableSizes(shipyardLevel: 1 | 2 | 3): HullSize[] {
+  return shipyardLevel >= 3 ? ['s', 'm', 'l'] : ['s', 'm'];
+}
+
+/** Remise de production de masse : M à −25 % sur un chantier L2+. */
+export const BULK_M_DISCOUNT = 0.25;
+export function shipBuildCost(
+  hull: HullDef,
+  shipyardLevel: 1 | 2 | 3,
+): CostBundle {
+  if (hull.size !== 'm' || shipyardLevel < 2) return hull.buildCost;
+  const out: CostBundle = {};
+  for (const [res, qty] of Object.entries(hull.buildCost)) {
+    out[res as keyof CostBundle] =
+      Math.round((qty as number) * (1 - BULK_M_DISCOUNT) * 100) / 100;
+  }
+  return out;
+}
+
+/**
+ * Temps de chantier par taille de coque, en heures. [TUNE-GAP : le guide ne
+ * chiffre pas les temps de construction navale — proposition alignée sur le
+ * ladder bâtiments 6/24/72 h, en attente d'un tour d'équilibrage.]
+ */
+export const SHIP_BUILD_HOURS: Record<HullSize, number> = {
+  s: 12,
+  m: 24,
+  l: 72,
+};
+
 /** Usure d'atterrissage : 1 % d'armure par atterrissage. [TUNE] DG §8.6 */
 export const LANDING_WEAR_RATIO = 0.01;
 

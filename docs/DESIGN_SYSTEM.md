@@ -135,6 +135,11 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   "Market offers" cards in the docked ship panel (`give → get @ rate ·
   stock T` in mono, tons input + accent `Trade`), refusals surface the
   server's reason verbatim in the notice bar.
+- **Shipyard panel (implemented, chunk M)** — "lay a keel" section in the
+  shipyard building panel: category/size selects (locked sizes disabled
+  WITH the reason — L hulls need a level 3 yard), live cost line in mono,
+  name input, primary `Lay the keel`; the under-construction queue lists
+  `name (category SIZE) — ETA` in warning color.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

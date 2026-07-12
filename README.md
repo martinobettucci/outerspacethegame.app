@@ -93,6 +93,7 @@ quota is 20/day per player, so after ~20 same-day reruns run `pnpm resetDb`.
 | Variable | Role | Required | Notes |
 |---|---|---|---|
 | `OPEN_AI_KEY` | OpenAI Images key for UI prototypes (preproduction only) | Optional | Never committed; provided by the cloud-worker environment |
+| `ATG_TEST_ENDPOINTS` | Enables E2E-only test instrumentation (`/test/grant`) | Never in production | Set to `1` by the Playwright config only |
 
 Game-runtime variables (database, Stripe, chain relayer) will be documented in
 `docs/DAT.md` when implementation starts.

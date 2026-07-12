@@ -5,8 +5,17 @@
  * facteur dominant »).
  */
 import { useState } from 'react';
-import { ChevronsUp, Store, Trash2, X } from 'lucide-react';
-import { ALL_RESOURCE_IDS, BUILDINGS, type CostBundle } from '@atg/shared';
+import { Anchor, ChevronsUp, Store, Trash2, X } from 'lucide-react';
+import {
+  ALL_RESOURCE_IDS,
+  buildableSizes,
+  BUILDINGS,
+  HULLS,
+  shipBuildCost,
+  type CostBundle,
+  type HullCategory,
+  type HullSize,
+} from '@atg/shared';
 import type { PlanetBuilding } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
@@ -24,6 +33,8 @@ export function BuildingPanel({
   maxLevelBySeed,
   onApply,
   onSaveMarketSlot,
+  onBuildShip,
+  shipBuilds,
   onLevelUp,
   onDemolish,
   onClose,
@@ -44,6 +55,12 @@ export function BuildingPanel({
     rate: number;
     dailyLimitT: number;
   }) => void;
+  onBuildShip?: (input: {
+    category: 'combat' | 'cargo' | 'civil';
+    size: 's' | 'm' | 'l';
+    name: string;
+  }) => void;
+  shipBuilds?: { name: string; category: string; size: string; completesAt: string }[];
   onLevelUp: () => void;
   onDemolish: () => void;
   onClose: () => void;
@@ -56,6 +73,9 @@ export function BuildingPanel({
   const [slotGet, setSlotGet] = useState(slot0?.get ?? 'water');
   const [slotRate, setSlotRate] = useState(String(slot0?.rate ?? '0.5'));
   const [slotDaily, setSlotDaily] = useState(String(slot0?.dailyLimitT ?? '0'));
+  const [yardCategory, setYardCategory] = useState<'combat' | 'cargo' | 'civil'>('cargo');
+  const [yardSize, setYardSize] = useState<'s' | 'm' | 'l'>('s');
+  const [yardName, setYardName] = useState('');
   const def = BUILDINGS[building.key];
   const isIndustry = !!def.batchesPerDayByLevel;
   const levelCap = Math.min(3, maxLevelBySeed);
@@ -151,6 +171,113 @@ export function BuildingPanel({
             <option value="everyone">{t.planet.landingEveryone}</option>
           </select>
         </label>
+      )}
+
+      {building.key === 'shipyard' && building.status === 'active' && onBuildShip && (
+        <section
+          aria-label={t.planet.yardTitle}
+          style={{ display: 'grid', gap: 6, fontSize: 12 }}
+        >
+          <strong style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <Anchor size={13} aria-hidden /> {t.planet.yardTitle}
+          </strong>
+          {shipBuilds && shipBuilds.length > 0 && (
+            <div style={{ display: 'grid', gap: 3 }}>
+              <span style={{ color: 'var(--text-secondary)' }}>{t.planet.yardPending}</span>
+              {shipBuilds.map((b) => (
+                <span key={b.name} style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning-500)' }}>
+                  {b.name} ({b.category} {b.size.toUpperCase()}) —{' '}
+                  {new Date(b.completesAt).toLocaleTimeString('en-US')}
+                </span>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <select
+              aria-label={t.planet.yardCategory}
+              value={yardCategory}
+              onChange={(e) => setYardCategory(e.target.value as typeof yardCategory)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 6px',
+              }}
+            >
+              {(['cargo', 'civil', 'combat'] as const).map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={t.planet.yardSize}
+              value={yardSize}
+              onChange={(e) => setYardSize(e.target.value as typeof yardSize)}
+              style={{
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                color: 'var(--text-primary)',
+                padding: '4px 6px',
+              }}
+            >
+              {(['s', 'm', 'l'] as const).map((s) => (
+                <option
+                  key={s}
+                  value={s}
+                  disabled={
+                    !buildableSizes(building.level as 1 | 2 | 3).includes(s)
+                  }
+                >
+                  {s.toUpperCase()}
+                  {!buildableSizes(building.level as 1 | 2 | 3).includes(s)
+                    ? ` — ${t.planet.yardSizeLocked}`
+                    : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+            {costText(
+              shipBuildCost(
+                HULLS[`${yardCategory}_${yardSize}` as `${HullCategory}_${HullSize}`],
+                building.level as 1 | 2 | 3,
+              ),
+            )}
+          </span>
+          <input
+            aria-label={t.planet.yardName}
+            placeholder={t.planet.yardName}
+            value={yardName}
+            onChange={(e) => setYardName(e.target.value)}
+            style={{
+              background: 'var(--bg-overlay)',
+              border: '1px solid var(--stroke-subtle)',
+              borderRadius: 'var(--radius-button)',
+              color: 'var(--text-primary)',
+              padding: '4px 8px',
+            }}
+          />
+          <button
+            type="button"
+            onClick={() =>
+              onBuildShip({ category: yardCategory, size: yardSize, name: yardName })
+            }
+            style={{
+              background: 'var(--primary-400)',
+              color: 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-button)',
+              padding: '6px 12px',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            {t.planet.yardBuild}
+          </button>
+        </section>
       )}
 
       {building.key === 'market' && building.marketSlots && onSaveMarketSlot && (

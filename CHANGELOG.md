@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Chantier naval (chunk M)** : construction de coques (GB §14, DG §381)
+  — L1 construit S+M, L2 = M en masse (−25 %), L3 construit L (gate
+  serveur) ; coût payé au lancement, événement ship_built → le vaisseau
+  naît À QUAI, réservoirs et soute vides ; propriété à l'achèvement = le
+  propriétaire ACTUEL du monde (une conquête capture les chantiers) ;
+  temps S/M/L = 12/24/72 h [TUNE-GAP proposé] ; MIN_CREW différé (annoncé,
+  lifecycle NPC) ; UI : section « lay a keel » + file d'attente dans le
+  panneau du chantier. Instrumentation §15 : endpoint /test/grant activé
+  par ATG_TEST_ENDPOINTS=1 (E2E uniquement, jamais en production).
+  3 unit + 6 intégration + E2E ×2 chemins, captures 36–38 observées.
 - **Hospitalité du monde marchand (chunk L)** : migration 006
   (`bodies.config` + journal `trades` sans bâtiment) ; sous gouvernance
   TOUTE mercantile (re-vérifiée à chaque achat), survie + carburant se

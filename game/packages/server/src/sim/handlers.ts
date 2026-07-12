@@ -139,6 +139,40 @@ export const shipArrival: EventHandler = async (client, event) => {
   );
 };
 
+/**
+ * ship_built { planetId, playerId, category, size, name } — fin de chantier
+ * naval : le vaisseau naît À QUAI, réservoirs et soute vides (GB §14).
+ * Exactement-une-fois par la transaction du processeur (handler + marquage
+ * processed_at commitent ensemble).
+ */
+export const shipBuilt: EventHandler = async (client, event) => {
+  const p = event.payload;
+  const planetId = String(p.planetId ?? '');
+  if (!planetId) return;
+  const { rows: planet } = await client.query(
+    `SELECT x, y, owner_id FROM bodies WHERE id = $1`,
+    [planetId],
+  );
+  if (!planet[0]) return;
+  await client.query(
+    `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
+                        status, docked_body_id, fuel, cargo)
+     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, '{}', '{}')`,
+    [
+      // Le vaisseau appartient au PROPRIÉTAIRE ACTUEL du monde (une
+      // conquête pendant le chantier capture la production — GB §9,
+      // les chantiers sont le butin).
+      planet[0].owner_id ?? String(p.playerId),
+      String(p.category),
+      String(p.size),
+      String(p.name),
+      planet[0].x,
+      planet[0].y,
+      planetId,
+    ],
+  );
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -147,6 +181,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     deposit_dry: depositDry,
     pop_daily: popDaily,
     ship_arrival: shipArrival,
+    ship_built: shipBuilt,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

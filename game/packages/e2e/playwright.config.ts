@@ -28,8 +28,9 @@ export default defineConfig({
   },
   webServer: [
     {
-      // TIME_SCALE : instrumentation de test (6 h de chantier → 3 s).
-      command: 'TIME_SCALE=7200 pnpm --filter @atg/server dev:api',
+      // TIME_SCALE + endpoints de test : instrumentation §15 (6 h → 3 s ;
+      // grants déterministes pour les parcours coûteux type chantier naval).
+      command: 'TIME_SCALE=7200 ATG_TEST_ENDPOINTS=1 pnpm --filter @atg/server dev:api',
       cwd: '../..',
       url: 'http://localhost:8080/health',
       reuseExistingServer: false,

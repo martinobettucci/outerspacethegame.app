@@ -279,6 +279,19 @@ export const api = {
       `/bodies/${bodyId}/innate-trade`,
       input,
     ),
+  buildShip: (
+    planetId: string,
+    input: { category: 'combat' | 'cargo' | 'civil'; size: 's' | 'm' | 'l'; name: string },
+  ) =>
+    call<{ completesAt: string; cost: Record<string, number> }>(
+      'POST',
+      `/planets/${planetId}/ships`,
+      input,
+    ),
+  shipBuilds: (planetId: string) =>
+    call<{
+      builds: { category: string; size: string; name: string; completesAt: string }[];
+    }>('GET', `/planets/${planetId}/ship-builds`),
   comms: () =>
     call<{
       incoming: { id: string; fromName: string; bodyName: string; createdAt: string }[];
