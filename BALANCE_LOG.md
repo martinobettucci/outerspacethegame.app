@@ -354,6 +354,32 @@ re-run** (Voyager+Industrialist merged) and a **combat/exploit re-audit**
 - §22: stars flare visibly below ~5% fuel (the one warning the universe
   gives); harvest attribution readable at high telescope levels.
 
-## Round 3 — verification of v0.3 (2026-07-12)
+## Round 3 — verification of v0.3 (2026-07-12) — **VERDICT: SATISFACTORY**
 
-Pending: one focused verifier over the patched surfaces only.
+Focused verifier over patches 39–55: **all 17 present in the text and
+arithmetically closing.** Key confirmations:
+- Free (Civic) colonization chain end-to-end: colony lands **day ~32–43** —
+  inside the 30–45 d target; workforce and refinery never bind; crystal
+  extraction is the pacing input (as intended).
+- First contact < 3 d; first physical trade **~7 d median** (meet-in-middle),
+  far-shell one-sided ≈ 10 d — targets pass.
+- Disengage v0.3: armored haulers escape, unarmored die, initiators commit,
+  sieges favor defense (crusader vs 3 heavy turrets now loses) — no new
+  degenerate found.
+- Piracy ROI **~1.5–2.7×** hauling — inside the 2–3× professional band.
+- Vaults closed: extraction needs 48 h undamaged; frozen/auctioned planets
+  stay conquerable; pod-NPC laundering bound; shield mules geometrically
+  impossible.
+
+Six polish items found (all trivial/minor), applied immediately:
+1. §17 stale "day 5" cross-ref → aligned with §19 targets.
+2. `colony_program` declared **tile-free** (chain = 10 tiles = guarantee).
+3. Host transfers inherit the **strictest account-bind** of bound NPCs.
+4. Auction escrow ~50% uptime weak-vault → added to monitors (M5).
+5. Colony grace defined: **no conquest and no a2g bombardment** for 14 d;
+   blockade/tolls legal.
+6. §18 summary now states the shield's void conditions.
+
+**The balancing loop is closed. DESIGN_GUIDE v0.3 is the foundation spec.**
+All [TUNE] values remain tunable by construction; monitors M1–M5 carry into
+implementation playtesting.

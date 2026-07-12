@@ -265,7 +265,8 @@ seed-locked].
   `military_district`, `weapon_foundry`, `turret_heavy`, `tank_*`
   (Militarist), `research_center` (Scientific), `diplomatic_district`
   (Diplomatic), `casino` (Mercantile), `residential_T3` (Civic),
-  **`colony_program` (never masked)** — enables colony fitting.
+  **`colony_program` (never masked; tile-free** — it is a program, not a
+  structure**)** — enables colony fitting.
 
 **T4**
 - `shipyard_L`, `stargate_yard` (§9.3), `terraformer` (Civic; +1 quality grade
@@ -476,7 +477,8 @@ buildings (HP §6) only (canon).
   stay, **planet-bound governors transfer with the world** (§4.1), ship/
   building-bound NPCs die with their hosts (canon), stock plunder **25%**
   [TUNE]. Starter-only-planet exemption (§2.2). **Fresh colonies carry a
-  14-day conquest grace** (blockade legal, conquest not) [TUNE].
+  14-day grace: no conquest and no a2g bombardment of their buildings**
+  (blockade and tolls remain legal — siege the cradle, don't burn it) [TUNE].
 - **Personal ship** unattackable/unhijackable everywhere (canon).
 
 ### 10.4 Junk fields
@@ -538,7 +540,9 @@ Stop-price buy-now, or sealed max-bid auction (24/48/72 h):
   Epic 3.4 / Legendary 0.6 (%) [TUNE]; role uniform; people 60/30/10
   human/Forged/Vess [TUNE]. Governor-grade = Rare+. Bonuses +4%/tier [TUNE].
 - **Pod-sourced NPCs are account-bound for 60 days** (no trade, auction, or
-  NFT mint until aged) [TUNE] — recruitment is a sink, not a mint.
+  NFT mint until aged) [TUNE] — recruitment is a sink, not a mint. **Host
+  transfers inherit the strictest account-bind of any bound NPC** (no
+  laundering an NPC by auctioning the ship it's bound to).
 
 ### 11.5 Global supply census
 4×/day aggregation over planet stocks + cargo + pools + escrow → per-resource
@@ -640,10 +644,11 @@ visible) → probe the ≤60 pc uninhabited worlds → mine/farm → the efficie
 lesson (UI: "mine at 34% — assign workforce"). Session-one takeaways: tilted
 bell + finite deposits + *someone is out there*.
 
-**First contact (≤ day 5 target):** scope finds a banner → ping → ping-back →
-chat → share → first trade (Cargo-S, 240 pc range, 336 pc survival ceiling —
-the trip is real but safe if planned). Traders open, warlords stalk, hermits
-go dark: all valid.
+**First contact (< 3 days; first physical trade ~7–8 days median):** scope
+finds a banner → ping → ping-back → chat → share → first trade (Cargo-S,
+240 pc fuel range, 336 pc survival ceiling — carry a container of fuel or
+refuel at the neighbor for the return leg; the trip is real but safe if
+planned). Traders open, warlords stalk, hermits go dark: all valid.
 
 **The trade loop (mid):** scripted Cargo-M: "load steel at A → gate to B (pay
 toll) → sell vs cells → buy Glace → home → refuel < 30%" + Combat-M escort
@@ -673,7 +678,8 @@ left.
 - Starter: account-bound 45 d; unconquerable while only-planet; never
   mintable; 50 pc junk-free zone.
 - New accounts: no pods/mint < 45 d; can't be engaged < 14 d unless they fire
-  first; receive-cap 100 T/day for 14 d [TUNE].
+  first (shield **voids beyond 100 pc of own starter or on inter-account
+  transfer**); receive-cap 100 T/day for 14 d [TUNE].
 - Burn-to-minter-only 60 d (bridge ≠ transfer channel).
 - No teleporting value (canon co-location) — escrow is the sole, system-held
   exception.
