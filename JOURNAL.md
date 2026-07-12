@@ -1026,3 +1026,16 @@ d'offres, intel via browse, réserve privée vs census).
 - GAMEBOOK (bloc Markets & manual trade) + DESIGN_GUIDE v0.8.1 ; moniteur
   M11 (cannibalisation éventuelle des paires food/water — vérif au prochain
   tour complet, pas de sim dédiée pour une règle unique).
+
+---
+
+## 2026-07-12 — Session 25 (fuel inné confirmé, slots de trade par niveau)
+
+- **Fuel EST marchandable en inné sur planète marchande** (correction de mon
+  interprétation stricte) : liste innée = eau, nourriture, oxygène, fuel.
+- **Upgrader un trade centre ajoute un slot** : market L1/L2/L3 = 1/2/3
+  canaux (listing item OU paire) — la topologie du tour 7 se détend dans le
+  sens déjà vérifié (max-hub : 3 bâtiments au lieu de 7) ; pas de re-sim.
+- Ouvert en discussion : spécialisations des gouvernances restantes
+  (Industrielle, Scientifique, Civique, Diplomatique) — proposition soumise
+  au responsable dans le chat, PAS encore canon.

@@ -620,3 +620,13 @@ pairs? — expected no: it *frees* merchant tiles for value pairs) — verify in
 the next full round rather than a dedicated sim (single small rule).
 Flagged interpretations: merchant = effective Mercantile governance; strict
 survival list (no fuel); pricing = fixed-rate + house cut.
+
+### Addendum round 7 (owner amendments)
+
+- **Fuel joins the merchant innate list** (water/food/oxygen/fuel) — the
+  whole hospitality triad is redundant on merchant worlds.
+- **Market trade slots = building level (1/2/3)** — round-7 tile arithmetic
+  improves a fortiori: max-hub 7 channels now = 3 buildings (L3+L3+L1)
+  instead of 7; the cells-star remains optimal (N−1 SLOTS, fewer tiles);
+  F1/F2 conclusions hold with more headroom. No re-simulation required —
+  the constraint only loosened in the already-verified direction.
