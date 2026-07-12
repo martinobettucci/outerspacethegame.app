@@ -1008,3 +1008,21 @@ d'offres, intel via browse, réserve privée vs census).
   totaux globaux uniquement, jamais de ventilation par planète/warehouse ;
   le canal manuel ne peut pas contourner l'AMM (les fongibles n'entrent
   jamais en warehouse).
+
+---
+
+## 2026-07-12 — Session 24 (exception planète marchande)
+
+- Responsable : le résultat du tour 7 est voulu — la lore vit hors des
+  mécaniques hardcodées. **Une exception canon** : la **planète marchande**
+  (gouvernance Mercantile effective) trade les **ressources de survie**
+  (eau, nourriture, oxygène) de façon **innée** — toujours disponible, sans
+  bâtiment market ; le joueur fixe un **plancher de réserve personnelle**
+  par ressource, le surplus est marchandable. Le vrai privilège du monde
+  marchand.
+- Interprétations signalées : marchande = gouvernance Mercantile effective ;
+  liste de survie stricte (fuel exclu — à confirmer) ; prix = taux fixe du
+  propriétaire + house cut standard.
+- GAMEBOOK (bloc Markets & manual trade) + DESIGN_GUIDE v0.8.1 ; moniteur
+  M11 (cannibalisation éventuelle des paires food/water — vérif au prochain
+  tour complet, pas de sim dédiée pour une règle unique).

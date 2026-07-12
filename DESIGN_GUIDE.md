@@ -5,7 +5,7 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.8** — round-7 market-topology patches + rounds 1–2 system patches + round-4 content patches +
+> **Version v0.8.1** — merchant-planet innate survival trading (owner) + rounds 1–2 system patches + round-4 content patches +
 > the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
 > `BALANCE_LOG.md`.
 >

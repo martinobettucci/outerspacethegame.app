@@ -233,6 +233,12 @@ ready-to-use, undamaged materiel.** The siege lock applies to warehouses too
   **only by a buyer docked at a commerce dock** of the planet. Private:
   content hidden, **cannot be used as sales stock** — a strategic reserve
   with **exclusively manual entry/exit**.
+- **The merchant-planet exception (canon).** A planet under **Mercantile
+  governance** trades **survival resources (water, food, oxygen)** innately —
+  **always available to trade, no market building required**. The owner sets
+  a **minimum keep-for-self floor per resource**; everything above the floor
+  is available to trade. This is the true privilege of a merchant world —
+  hospitality is its nature, not its infrastructure.
 
 **Spaceport docks = trade throughput (canon).** The number of docks limits
 how many ships sit grounded WITHOUT entering a warehouse — i.e. **the max

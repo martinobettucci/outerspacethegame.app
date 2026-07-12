@@ -608,3 +608,15 @@ Monitors: M1–M8. Guide at v0.5.1.
   allies with a share grant browse from orbit (no dock); reserve 1–2 docks.
 
 **VERDICT: topology viable — guide v0.8. No prior round re-opened.**
+
+### Addendum round 7 — merchant-planet exception (owner canon)
+
+Mercantile-governed planets trade survival resources (water/food/oxygen)
+innately: no market building, owner-set keep-floor, surplus tradeable at
+owner-set fixed rate. Round-7 stance confirmed by owner: everything else
+stays player-lore outside hardcoded mechanics. **Monitor M11:** innate
+survival trading vs market-building economy (does it cannibalize food/water
+pairs? — expected no: it *frees* merchant tiles for value pairs) — verify in
+the next full round rather than a dedicated sim (single small rule).
+Flagged interpretations: merchant = effective Mercantile governance; strict
+survival list (no fuel); pricing = fixed-rate + house cut.
