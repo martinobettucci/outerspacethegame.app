@@ -9,6 +9,7 @@ import {
   BUILDINGS,
   efficiency,
   GAME_DAY_SECONDS,
+  hoverIdleFuelUPerDay,
   popCap,
   type BuildingKey,
   type PlanetSize,
@@ -24,6 +25,20 @@ import {
   type IndustryState,
   type RatesResult,
 } from './production.js';
+import { rebaseShipDrain, shipFuelState } from './shipDrain.js';
+
+/** Coque du propriétaire en survol — candidate au drain planétaire (GB §7). */
+interface HoverShip {
+  id: string;
+  hull_category: string;
+  hull_size: string | null;
+  fuel: Record<string, number> | null;
+  fuel_rate_u_per_day: number | string | null;
+  fuel_as_of: Date | string | null;
+  /** fuel_<type> consommé par cette coque. */
+  resource: ResourceId;
+  needPerDay: number;
+}
 
 export interface ProductionSnapshot {
   bodyId: string;
@@ -47,6 +62,7 @@ export interface ProductionSnapshot {
     runPct: number;
     recipe: string | null;
   }[];
+  hoverShips: HoverShip[];
   rates: RatesResult;
 }
 
@@ -107,6 +123,28 @@ export async function loadProductionSnapshot(
     [bodyId],
   );
 
+  // Coques du PROPRIÉTAIRE en survol : leur drain de loitering frappe le
+  // stock planétaire (GB §7 — resupply round-trips). Les coques d'autrui
+  // en survol paient leur propre réservoir (jamais le stock d'ici).
+  const hoverShips: HoverShip[] = [];
+  const hoverFuelNeeds: Partial<Record<ResourceId, number>> = {};
+  if (body.owner_id) {
+    const { rows: shipRows } = await client.query(
+      `SELECT id, hull_category, hull_size, fuel, fuel_rate_u_per_day, fuel_as_of
+       FROM ships
+       WHERE hover_body_id = $1 AND owner_id = $2 AND status = 'hovering'
+       ORDER BY id${lock}`,
+      [bodyId, body.owner_id],
+    );
+    for (const s of shipRows) {
+      const needPerDay = hoverIdleFuelUPerDay(s.hull_category, s.hull_size);
+      if (needPerDay <= 0) continue;
+      const resource = `fuel_${shipFuelState(s).type}` as ResourceId;
+      hoverShips.push({ ...s, resource, needPerDay });
+      hoverFuelNeeds[resource] = (hoverFuelNeeds[resource] ?? 0) + needPerDay;
+    }
+  }
+
   let depotBonus = 0;
   const industries: IndustryState[] = [];
   for (const b of buildingRows) {
@@ -146,6 +184,7 @@ export async function loadProductionSnapshot(
     stocks,
     deposits,
     industries,
+    hoverFuelNeeds,
   });
 
   return {
@@ -170,6 +209,7 @@ export async function loadProductionSnapshot(
       runPct: b.run_pct,
       recipe: b.recipe,
     })),
+    hoverShips,
     rates,
   };
 }
@@ -212,6 +252,22 @@ export async function recomputePlanetRates(
        WHERE body_id = $1 AND resource = $2`,
       [bodyId, res, remaining, rate, nowMs],
     );
+  }
+
+  // Drains de loitering (GB §7) : chaque coque en survol du propriétaire
+  // est rebasée — servie par le stock ⇒ réservoir figé ; non servie
+  // (fuel_x à sec sans arrivage) ⇒ le réservoir paie. Tout-ou-rien par
+  // ressource [TUNE-v1, JOURNAL] ; le bord de stock à 0 déclenchera la
+  // bascule planète→réservoir au prochain recompute.
+  const hoverNeedByRes: Partial<Record<ResourceId, number>> = {};
+  for (const s of snap.hoverShips) {
+    hoverNeedByRes[s.resource] = (hoverNeedByRes[s.resource] ?? 0) + s.needPerDay;
+  }
+  for (const s of snap.hoverShips) {
+    const served =
+      (snap.rates.hoverConsumption[s.resource] ?? 0) >=
+      (hoverNeedByRes[s.resource] ?? 0) - 1e-9;
+    await rebaseShipDrain(client, s, nowMs, served ? 'none' : 'tank');
   }
 
   // Replanifie les bords : on purge les bords futurs de CETTE planète puis

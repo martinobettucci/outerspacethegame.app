@@ -15,6 +15,7 @@ import {
 import type pg from 'pg';
 import type { EventHandler } from './events.js';
 import { recomputePlanetRates } from './rebase.js';
+import { evalShipFuel, rebaseShipDrain } from './shipDrain.js';
 
 /**
  * construction_complete { buildingId } — active un bâtiment échu puis
@@ -197,6 +198,60 @@ export const shipArrival: EventHandler = async (client, event) => {
      WHERE id = $1 AND status = 'transit' AND arrives_at <= now()`,
     [shipId],
   );
+
+  // Armement du drain de loitering (GB §7) : survol de SON monde ⇒ le
+  // rebase planétaire décide (stock ou réservoir) ; survol étranger/
+  // sauvage ou vide ⇒ le réservoir paie (0 pour probe/personal).
+  const nowMs = event.dueAt.getTime();
+  const { rows: landedRows } = await client.query(
+    `SELECT id, owner_id, hull_category, hull_size, status, hover_body_id,
+            fuel, fuel_rate_u_per_day, fuel_as_of
+     FROM ships WHERE id = $1`,
+    [shipId],
+  );
+  const landed = landedRows[0];
+  if (!landed) return;
+  if (landed.status === 'hovering' && landed.hover_body_id) {
+    const { rows: over } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1`,
+      [landed.hover_body_id],
+    );
+    if (over[0]?.owner_id === landed.owner_id) {
+      await recomputePlanetRates(client, landed.hover_body_id, nowMs);
+      return;
+    }
+  }
+  if (landed.status === 'hovering' || landed.status === 'idle') {
+    await rebaseShipDrain(client, landed, nowMs, 'tank');
+  }
+};
+
+/**
+ * ship_fuel_out { shipId } — le réservoir d'une coque en loitering touche
+ * zéro : échouage (GB §13). Idempotent et tolérant au rejeu : si un
+ * ravitaillement a rebasé le réservoir entre-temps, l'événement est
+ * périmé (no-op) — rebaseShipDrain purge d'ailleurs les bords obsolètes.
+ */
+export const shipFuelOut: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const nowMs = event.dueAt.getTime();
+  const { rows } = await client.query(
+    `SELECT id, hull_category, hull_size, status, fuel,
+            fuel_rate_u_per_day, fuel_as_of
+     FROM ships WHERE id = $1 AND status IN ('hovering', 'idle') FOR UPDATE`,
+    [shipId],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  const { type, units } = evalShipFuel(ship, nowMs);
+  if (units > 1e-9) return; // périmé : un refuel a replanifié le bord
+  await client.query(
+    `UPDATE ships SET status = 'stranded', fuel = $2,
+        fuel_rate_u_per_day = 0, fuel_as_of = to_timestamp($3 / 1000.0)
+     WHERE id = $1`,
+    [shipId, JSON.stringify({ [type]: 0 }), nowMs],
+  );
 };
 
 /**
@@ -233,6 +288,8 @@ export const colonyEstablished: EventHandler = async (client, event) => {
          docked_body_id = NULL WHERE id = $1`,
       [shipId, bodyId],
     );
+    // Survol d'un monde d'autrui : le réservoir paie (GB §7).
+    await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
     return;
   }
 
@@ -262,17 +319,17 @@ export const colonyEstablished: EventHandler = async (client, event) => {
   }
 
   // Déchargement intégral : provisions du kit (30 food + 30 water — payées
-  // au fitting, [TUNE interp]) + cargo (T) + reliquat de carburant (1 u = 1 T).
+  // au fitting, [TUNE interp]) + cargo (T) + reliquat de carburant (1 u =
+  // 1 T, réservoir ÉVALUÉ — le drain de survol a pu l'entamer avant le
+  // colonize).
   const cargo: Record<string, number> = ship.cargo ?? {};
-  const fuel: Record<string, number> = ship.fuel ?? {};
+  const tank = evalShipFuel(ship, nowMs);
   const unload: Record<string, number> = { ...cargo };
   for (const [res, qty] of Object.entries(COLONY_SEED_STOCK)) {
     unload[res] = (unload[res] ?? 0) + (qty as number);
   }
-  for (const [type, units] of Object.entries(fuel)) {
-    if (units > 0) {
-      unload[`fuel_${type}`] = (unload[`fuel_${type}`] ?? 0) + units;
-    }
+  if (tank.units > 0) {
+    unload[`fuel_${tank.type}`] = (unload[`fuel_${tank.type}`] ?? 0) + tank.units;
   }
   for (const [resource, tons] of Object.entries(unload)) {
     if (tons <= 0) continue;
@@ -353,6 +410,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     pop_daily: popDaily,
     ship_arrival: shipArrival,
     ship_built: shipBuilt,
+    ship_fuel_out: shipFuelOut,
     colony_established: colonyEstablished,
     noop: async (_client: pg.PoolClient) => undefined,
   };

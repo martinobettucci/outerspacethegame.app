@@ -16,6 +16,7 @@ import {
   buildableSizes,
   canLand,
   containersUsed,
+  FUEL_TRANSFER_RADIUS_PC,
   GAME_DAY_SECONDS,
   HULLS,
   PROBE,
@@ -31,6 +32,7 @@ import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
+import { evalShipFuel, rebaseShipDrain } from '../sim/shipDrain.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -49,7 +51,12 @@ export interface ShipView {
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
+  /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
+  fuelType: string;
+  fuelRatePerDay: number;
+  fuelAsOf: string | null;
+  tankU: number;
   mission: {
     originX: number;
     originY: number;
@@ -123,6 +130,7 @@ export async function fleet(
   );
   return rows.map((r) => {
     const pos = shipPosition(r, nowMs);
+    const tank = evalShipFuel(r, nowMs);
     return {
       id: r.id,
       hullCategory: r.hull_category,
@@ -141,7 +149,16 @@ export async function fleet(
           ?.pax ?? 0,
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
-      fuel: r.fuel ?? {},
+      fuel: { [tank.type]: tank.units },
+      fuelType: tank.type,
+      fuelRatePerDay: Number(r.fuel_rate_u_per_day ?? 0),
+      fuelAsOf: r.fuel_as_of ? new Date(r.fuel_as_of).toISOString() : null,
+      tankU:
+        r.hull_category === 'probe' || r.hull_category === 'personal'
+          ? 0
+          : (HULLS[
+              `${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`
+            ]?.tankU ?? 0),
       mission:
         r.status === 'transit' && r.departed_at
           ? {
@@ -266,13 +283,18 @@ export async function moveShip(
 
     const stats = hullStats(ship.hull_category, ship.hull_size);
     let fuelBurned = 0;
+    let stockMutatedBodyId: string | null = null;
     if (stats.burnPerPc > 0) {
       const needed = distance * stats.burnPerPc; // matrice 1.0 [TUNE-v1]
-      const fuelObj: Record<string, number> = ship.fuel ?? {};
-      const fuelType = Object.keys(fuelObj)[0] ?? 'cold';
-      let inTank = fuelObj[fuelType] ?? 0;
-      // Auto-chargement au départ d'un monde possédé (v1 documentée).
-      if (inTank < needed && ship.docked_body_id) {
+      // Réservoir ÉVALUÉ : le drain de loitering a pu l'entamer.
+      const tank = evalShipFuel(ship, nowMs);
+      const fuelType = tank.type;
+      const fuelObj: Record<string, number> = { [fuelType]: tank.units };
+      let inTank = tank.units;
+      // Auto-chargement au départ d'un monde possédé (v1 documentée) :
+      // PLEIN réservoir — charger juste le trajet échouerait la coque dès
+      // l'arrivée (le loitering consomme, GB §7).
+      if (inTank < stats.tank && ship.docked_body_id) {
         const { rows: owned } = await client.query(
           'SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2',
           [ship.docked_body_id, playerId],
@@ -295,7 +317,7 @@ export async function moveShip(
                 { min: 0 },
               )
             : 0;
-          const load = Math.min(stats.tank - inTank, needed - inTank, available);
+          const load = Math.min(stats.tank - inTank, available);
           if (load > 0) {
             await client.query(
               `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
@@ -303,6 +325,7 @@ export async function moveShip(
               [ship.docked_body_id, resource, available - load, nowMs],
             );
             inTank += load;
+            stockMutatedBodyId = ship.docked_body_id;
           }
         }
       }
@@ -314,16 +337,20 @@ export async function moveShip(
       }
       fuelBurned = needed;
       fuelObj[fuelType] = inTank - needed; // pré-brûlage v1
-      await client.query('UPDATE ships SET fuel = $2 WHERE id = $1', [
-        shipId,
-        JSON.stringify(fuelObj),
-      ]);
+      // Transit : drain désarmé (le vol paie en pré-brûlage, pas en taux).
+      await client.query(
+        `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
+            fuel_as_of = to_timestamp($3 / 1000.0)
+         WHERE id = $1`,
+        [shipId, JSON.stringify(fuelObj), nowMs],
+      );
     }
 
     const travelDays = distance / stats.speed;
     const arrivesAt = new Date(
       nowMs + (travelDays * GAME_DAY_SECONDS * 1000) / timeScale,
     );
+    const wasHoverOwnBodyId = ship.status === 'hovering' ? ship.hover_body_id : null;
     await client.query(
       `UPDATE ships SET status = 'transit', docked_body_id = NULL,
          hover_body_id = NULL,
@@ -334,6 +361,24 @@ export async function moveShip(
       [shipId, origin.x, origin.y, destX, destY, destBodyId, nowMs, arrivesAt],
     );
     await enqueue(client, 'ship_arrival', arrivesAt, { shipId });
+    // Le départ désarme le drain de loitering : purge du bord obsolète, et
+    // rebase des mondes dont le stock ou la charge de survol a changé
+    // (auto-chargement, fin d'un survol possédé servi par la planète).
+    await client.query(
+      `DELETE FROM events WHERE processed_at IS NULL
+         AND kind = 'ship_fuel_out' AND payload->>'shipId' = $1`,
+      [shipId],
+    );
+    const toRebase = new Set(
+      [stockMutatedBodyId, wasHoverOwnBodyId].filter((v): v is string => !!v),
+    );
+    for (const bodyId of toRebase) {
+      const { rows: owned } = await client.query(
+        `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+        [bodyId, playerId],
+      );
+      if (owned[0]) await recomputePlanetRates(client, bodyId, nowMs);
+    }
     await client.query('COMMIT');
     return { arrivesAt, fuelBurned, distancePc: distance };
   } catch (err) {
@@ -508,6 +553,11 @@ export async function landShip(
        WHERE id = $1`,
       [shipId, body.id],
     );
+    // À quai : drain désarmé (réservoir matérialisé, taux 0, bord purgé) ;
+    // sur SON monde, rebase — la planète cesse de payer le survol.
+    const nowMs = Date.now();
+    await rebaseShipDrain(client, ship, nowMs, 'none');
+    if (owned) await recomputePlanetRates(client, body.id, nowMs);
     await client.query('COMMIT');
     return { bodyId: body.id };
   } catch (err) {
@@ -537,8 +587,296 @@ export async function undockShip(
        WHERE id = $1`,
       [shipId],
     );
+    // Armer le drain de loitering (GB §7) : sur SON monde le rebase
+    // planétaire décide (stock ou réservoir) ; ailleurs le réservoir paie.
+    const nowMs = Date.now();
+    const { rows: over } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1`,
+      [ship.docked_body_id],
+    );
+    if (over[0]?.owner_id === playerId) {
+      await recomputePlanetRates(client, ship.docked_body_id, nowMs);
+    } else {
+      await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+    }
     await client.query('COMMIT');
     return { bodyId: ship.docked_body_id };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Ravitaillement depuis un monde POSSÉDÉ (GB §13) — à quai, en survol ou
+ * échoué au-dessus. v1 : jamais depuis le monde d'autrui (le commerce de
+ * carburant passe par le marché/l'hospitalité). Un échoué ravitaillé
+ * repasse en survol. Verrou corps AVANT vaisseau (convention anti-deadlock,
+ * DAT §8).
+ */
+export async function refuelShip(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { units?: number; nowMs?: number } = {},
+): Promise<{ loaded: number; fuelType: string; units: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Pré-lecture sans verrou pour connaître le corps source, puis verrou
+    // corps → vaisseau ; l'état du vaisseau est re-vérifié après verrou.
+    const { rows: pre } = await client.query(
+      `SELECT docked_body_id, hover_body_id FROM ships WHERE id = $1`,
+      [shipId],
+    );
+    if (!pre[0]) throw new CommandError('not_found', 'Vaisseau inconnu');
+    const sourceBodyId = pre[0].docked_body_id ?? pre[0].hover_body_id;
+    if (!sourceBodyId) {
+      throw new CommandError('not_available', 'Aucun monde sous la coque');
+    }
+    const { rows: bodies } = await client.query(
+      `SELECT id, owner_id FROM bodies WHERE id = $1 FOR UPDATE`,
+      [sourceBodyId],
+    );
+    if (!bodies[0] || bodies[0].owner_id !== playerId) {
+      throw new CommandError(
+        'forbidden',
+        'Ravitaillement sur vos mondes seulement (v1)',
+      );
+    }
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (
+      (ship.docked_body_id ?? ship.hover_body_id) !== sourceBodyId ||
+      !['docked', 'hovering', 'stranded'].includes(ship.status)
+    ) {
+      throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    if (ship.hull_category === 'probe' || ship.hull_category === 'personal') {
+      throw new CommandError('not_available', 'Cette coque n\'a pas de réservoir');
+    }
+    const tankU =
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
+        ?.tankU ?? 0;
+    const tank = evalShipFuel(ship, nowMs);
+    const resource = `fuel_${tank.type}`;
+    const capLeft = tankU - tank.units;
+    const want = Math.min(opts.units ?? Number.POSITIVE_INFINITY, capLeft);
+    if (want <= 1e-9) {
+      throw new CommandError('not_available', 'Réservoir déjà plein');
+    }
+    const { rows: stockRows } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [sourceBodyId, resource],
+    );
+    const available = stockRows[0]
+      ? evalLazy(
+          {
+            amount: stockRows[0].amount_t,
+            ratePerDay: stockRows[0].rate_t_per_day,
+            asOfMs: new Date(stockRows[0].as_of).getTime(),
+          },
+          nowMs,
+          { min: 0 },
+        )
+      : 0;
+    const take = Math.min(want, available);
+    if (take <= 1e-9) {
+      throw new CommandError(
+        'insufficient_resources',
+        `Pas de ${resource} dans le stock de ce monde`,
+      );
+    }
+    await client.query(
+      `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+       WHERE body_id = $1 AND resource = $2`,
+      [sourceBodyId, resource, available - take, nowMs],
+    );
+    if (ship.status === 'stranded') {
+      await client.query(
+        `UPDATE ships SET status = 'hovering', hover_body_id = $2
+         WHERE id = $1`,
+        [shipId, sourceBodyId],
+      );
+    }
+    // Réservoir écrit figé ; le rebase planétaire qui suit décide de la
+    // vraie cible (servi par le stock, ou réservoir si le monde est à sec).
+    await rebaseShipDrain(client, ship, nowMs, 'none', {
+      setUnits: tank.units + take,
+    });
+    await recomputePlanetRates(client, sourceBodyId, nowMs);
+    await client.query('COMMIT');
+    return { loaded: take, fuelType: tank.type, units: tank.units + take };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Transfert de carburant vaisseau→vaisseau (GB §13) : v1 entre VOS coques,
+ * à ≤ FUEL_TRANSFER_RADIUS_PC [TUNE-GAP], même type de carburant, cap du
+ * réservoir receveur, instantané [TUNE-v1]. Un receveur échoué repart en
+ * survol (ou à l'arrêt dans le vide). Verrouillage des deux coques par id
+ * CROISSANT (anti-deadlock).
+ */
+export async function transferFuel(
+  pool: pg.Pool,
+  playerId: string,
+  fromShipId: string,
+  opts: { toShipId: string; units: number; nowMs?: number },
+): Promise<{ transferred: number; fuelType: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  if (fromShipId === opts.toShipId) {
+    throw new CommandError('not_available', 'Un vaisseau ne se ravitaille pas lui-même');
+  }
+  if (!(opts.units > 0)) {
+    throw new CommandError('not_available', 'Quantité invalide');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+      [[fromShipId, opts.toShipId]],
+    );
+    const from = rows.find((r) => r.id === fromShipId);
+    const to = rows.find((r) => r.id === opts.toShipId);
+    if (!from || !to) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (from.owner_id !== playerId || to.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'v1 : transfert entre VOS coques seulement');
+    }
+    for (const s of [from, to]) {
+      if (!['docked', 'hovering', 'idle', 'stranded'].includes(s.status)) {
+        throw new CommandError('not_available', `Vaisseau indisponible (${s.status})`);
+      }
+      if (s.hull_category === 'probe' || s.hull_category === 'personal') {
+        throw new CommandError('not_available', 'Cette coque n\'a pas de réservoir');
+      }
+    }
+    const fromTank = evalShipFuel(from, nowMs);
+    const toTank = evalShipFuel(to, nowMs);
+    if (fromTank.type !== toTank.type) {
+      throw new CommandError(
+        'not_available',
+        `Types de carburant incompatibles (${fromTank.type} → ${toTank.type})`,
+      );
+    }
+    const a = shipPosition(from, nowMs);
+    const b = shipPosition(to, nowMs);
+    const distance = Math.hypot(a.x - b.x, a.y - b.y);
+    if (distance > FUEL_TRANSFER_RADIUS_PC + 1e-9) {
+      throw new CommandError(
+        'not_available',
+        `Trop loin pour transférer : ${distance.toFixed(2)} pc (max ${FUEL_TRANSFER_RADIUS_PC} pc)`,
+      );
+    }
+    const toTankU =
+      HULLS[`${to.hull_category}_${to.hull_size}` as `${HullCategory}_${HullSize}`]
+        ?.tankU ?? 0;
+    const capLeft = toTankU - toTank.units;
+    const take = Math.min(opts.units, fromTank.units, capLeft);
+    if (capLeft <= 1e-9) {
+      throw new CommandError('not_available', 'Réservoir receveur déjà plein');
+    }
+    if (take <= 1e-9) {
+      throw new CommandError('insufficient_resources', 'Réservoir donneur vide');
+    }
+
+    // Receveur échoué : il repart (survol si un monde est dessous, sinon
+    // à l'arrêt dans le vide).
+    let toStatus = to.status;
+    if (to.status === 'stranded' && take > 1e-9) {
+      toStatus = to.hover_body_id ? 'hovering' : 'idle';
+      await client.query(`UPDATE ships SET status = $2 WHERE id = $1`, [
+        to.id,
+        toStatus,
+      ]);
+    }
+
+    // Écritures + re-armement : cible réservoir pour les coques en
+    // loitering hors monde possédé ; les survols de MONDES POSSÉDÉS sont
+    // rebasés par recomputePlanetRates (le stock décide).
+    const ownHoverBodies = new Set<string>();
+    const applyDrain = async (
+      shipRow: Record<string, unknown>,
+      status: string,
+      units: number,
+    ) => {
+      const hoverBodyId = shipRow.hover_body_id as string | null;
+      let overOwn = false;
+      if (status === 'hovering' && hoverBodyId) {
+        const { rows: over } = await client.query(
+          `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+          [hoverBodyId, playerId],
+        );
+        overOwn = !!over[0];
+        if (overOwn) ownHoverBodies.add(hoverBodyId);
+      }
+      const target =
+        !overOwn && (status === 'hovering' || status === 'idle') ? 'tank' : 'none';
+      await rebaseShipDrain(
+        client,
+        shipRow as Parameters<typeof rebaseShipDrain>[1],
+        nowMs,
+        target,
+        { setUnits: units },
+      );
+    };
+    await applyDrain(from, from.status, fromTank.units - take);
+    await applyDrain(to, toStatus, toTank.units + take);
+    for (const bodyId of ownHoverBodies) {
+      await recomputePlanetRates(client, bodyId, nowMs);
+    }
+    await client.query('COMMIT');
+    return { transferred: take, fuelType: fromTank.type };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Instrumentation §15 (ATG_TEST_ENDPOINTS uniquement — la route n'existe
+ * pas hors test) : fixe le réservoir au u près puis RE-ARME le drain selon
+ * l'état réel — l'échouage E2E devient déterministe sans attendre des
+ * jours réels de drain.
+ */
+export async function setShipFuelForTest(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { units: number; nowMs?: number },
+): Promise<void> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    let overOwn = false;
+    if (ship.status === 'hovering' && ship.hover_body_id) {
+      const { rows } = await client.query(
+        `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+        [ship.hover_body_id, playerId],
+      );
+      overOwn = !!rows[0];
+    }
+    if (overOwn) {
+      await rebaseShipDrain(client, ship, nowMs, 'none', { setUnits: opts.units });
+      await recomputePlanetRates(client, ship.hover_body_id, nowMs);
+    } else {
+      const target =
+        ship.status === 'hovering' || ship.status === 'idle' ? 'tank' : 'none';
+      await rebaseShipDrain(client, ship, nowMs, target, { setUnits: opts.units });
+    }
+    await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

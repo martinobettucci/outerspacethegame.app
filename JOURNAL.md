@@ -1727,3 +1727,78 @@ Arche parée (300/800 + kit), survol du sauvage (296 — péage exact de 4),
 compte à rebours d'établissement, Dratath au rail avec badge de grâce,
 population 296, provisions 30+30 en stock. Vidéo .webm du parcours
 complet conservée (preuve n°12).
+
+---
+
+## 2026-07-13 — Session 30 (suite) : chunk O — drains de loitering, échouage & ravitaillement
+
+### Canon appliqué (GB §7/§13/§21, DG §3.5/§9.1)
+« A ship is either in space or hovering over a planet; both consume
+resources » : hovering ET idle drainent, au même taux (le guide n'en
+chiffre qu'un — 0.2 u/j × {1,2,4} par taille [TUNE]). Sur SON monde, le
+drain frappe le stock planétaire (resupply round-trips) ; sur monde
+étranger, sauvage, à sec, ou dans le vide, le réservoir paie. Le
+personnel ne consomme rien (GB §21) ; la sonde n'a pas de réservoir.
+
+### Architecture — le réservoir devient paresseux (migration 008)
+Le montant reste dans `ships.fuel` (jsonb mono-type v1) ; le taux et
+l'as_of gagnent leurs colonnes. `rebaseShipDrain` suit EXACTEMENT le
+patron des bords de stock : matérialiser, écrire le taux, purger les
+`ship_fuel_out` non traités, replanifier via whenReaches. Le drain
+planétaire s'injecte dans `computeRates` (hoverFuelNeeds, servi APRÈS la
+survie de la population, même règle « stock > 0 OU arrivage ») ; le
+rebase planétaire re-base ensuite CHAQUE coque en survol — servie ⇒
+réservoir figé, non servie ⇒ réservoir paie. Tout-ou-rien par ressource
+[TUNE-v1] : le bord de stock à 0 déclenche la bascule au recompute
+suivant.
+
+### Découverte majeure — TIME_SCALE n'accélère pas la dérive lazy
+Le vérificateur adverse de la spec étant tombé sur la limite de session,
+la vérification inline a attrapé une affirmation FAUSSE : « TIME_SCALE=
+7200 ⇒ 1 jour jeu = 12 s réels » ne vaut que pour les ÉVÉNEMENTS
+(construction, vols, établissement) — evalLazy/whenReaches courent en
+jours RÉELS (GAME_DAY_SECONDS fixe). Un drain de 0.2 u/j met des heures
+réelles à échouer une coque, quelle que soit l'échelle. Décision :
+l'échouage E2E est rendu déterministe par l'instrumentation
+POST /test/ship-fuel (fixe le réservoir à 1e-6 u → bord en ~0,4 s), qui
+RE-ARME le drain selon l'état réel. Leçon consignée : toute future
+horloge (survie, transit) devra choisir explicitement son référentiel.
+
+### Décisions v1
+- **Auto-chargement = plein réservoir** [TUNE-v1] : charger exactement le
+  trajet laissait 0 u à l'arrivée — la coque s'échouait au premier survol
+  (uniforme : whenReaches d'un montant nul → asOfMs, échouage immédiat,
+  voulu). Correctif au passage : le monde quitté est rebasé au départ
+  (le rebase manquait après l'auto-chargement, taux planétaires
+  mensongers).
+- **Transfert vaisseau→vaisseau** : entre VOS coques (v1), ≤ 1 pc
+  [TUNE-GAP — le guide ne chiffre aucun rayon], même type de carburant
+  [TUNE-v1], instantané [TUNE-v1] ; verrouillage des deux lignes par id
+  CROISSANT. Un receveur échoué repart (survol si un monde est dessous,
+  sinon idle).
+- **Refuel** : monde POSSÉDÉ seulement (v1 — le carburant d'autrui
+  s'achète au marché/à l'hospitalité) ; à quai, en survol ou échoué
+  au-dessus ; verrou corps AVANT vaisseau. Convention de verrouillage
+  consignée : les nouvelles commandes prennent corps→vaisseau ; les
+  commandes historiques (moveShip…) prennent vaisseau→corps — fenêtre de
+  deadlock rare assumée : PG avorte l'un, la file at-least-once rejoue,
+  l'API renvoie une erreur re-tentable (compromis connu, DAT §11).
+- **Drain de survie INERTE** : la constante reste exportée mais 0.01 T ×
+  0 équipage = 0 — s'active avec le chunk NPC/équipages [TUNE-GAP].
+
+### Vérifications & correctifs de tests
+15 unit shared (taux par taille, exemptions, table de vérité COMPLÈTE de
+shipDrainTarget) ; 12 intégration (planète paie/à sec/idle/échouage/
+refuel/transfert + refus directs §10 : monde d'autrui, coque d'autrui,
+trop loin, type incompatible, caps) ; E2E hover-drain ×2 (1,4 min) +
+suite complète 14/14. Deux bugs de TEST préexistants attrapés :
+(a) ships.test.ts comparait `bodies[1]` d'un `IN (...)` SANS ORDER BY
+(l'ordre de heap a tourné — résolution par id désormais) ; (b) mon
+premier « clic de vide » E2E ignorait la taille des SPRITES (une étoile
+fait ~150 px au zoom par défaut) — le point de vide est maintenant
+CALCULÉ : projection affine ancrée sur deux labels + dégagement par
+rayon de sprite, destination re-vérifiée par l'API (destBodyId null).
+Captures hov-01..04 observées à la vision (§16) : « loitering paid by
+the planet below », chip rouge « Stranded — out of fuel » sans boutons
+de départ, transfert 20 u à taux −0.2 u/j affiché, jauge pleine 60/60
+après Refuel. Vidéo .webm conservée (preuve n°13).

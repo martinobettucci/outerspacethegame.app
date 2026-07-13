@@ -108,6 +108,22 @@ evaluated stock.
   cohorts"). Expectation is quantized to 1e-9 in code before flooring —
   the toll must not depend on IEEE dust.
 
+## 008_hover_drain (loitering drains & stranding, GB §7/§13, DG §3.5)
+
+- `ships.fuel_rate_u_per_day` + `ships.fuel_as_of` — the tank becomes a
+  LAZY quantity (amount stays in `ships.fuel` jsonb, mono-type v1):
+  hovering/idle hulls burn 0.2/0.4/0.8 u/day (S/M/L [TUNE]) continuously.
+  Hovering over your OWN world drains the planet's `fuel_<type>` stock
+  instead (GB §7 — resupply round-trips), computed inside the planet's
+  rate rebase; the ship's tank is then frozen (rate 0).
+- `ships_hover` index — aggregating an owner's hovering hulls per body at
+  rebase time.
+- Edge event `ship_fuel_out` (events table, no schema change): purge +
+  reschedule on every tank rebase (same pattern as `stock_edge`); firing
+  with an empty tank flips the hull to `stranded` (status existed since
+  001). Recovery paths: `refuel` from an owned world below, or
+  ship-to-ship `transfer-fuel` within 1 pc [TUNE-GAP].
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

@@ -156,6 +156,16 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
 - **Colony grace badge (implemented, chunk N)** — violet chip in the
   planet header ("Colony grace until <date>", title = the protection
   hint). Starters wear it too: a starter IS a fresh colony.
+- **Ship panel: fuel gauge & stranding (implemented, chunk O)** — "Fuel —
+  x/tank u <type>" in mono with a 6 px progress bar (success-green fill;
+  danger-red when stranded); beneath it either the amber mono drain rate
+  ("−0.2 u/day") or the explanatory "loitering paid by the planet below"
+  when hovering an owned world. `stranded` replaces the status line with
+  a danger chip ("Stranded — out of fuel", title = recovery hint) and
+  hides every movement button (server refuses regardless — §10). Neutral
+  `Refuel` button (Fuel icon) when docked/hovering/stranded on an owned
+  world; "Transfer fuel" mini-form (target select limited to own hulls
+  within 1 pc + units + accent Transfer) on tank-bearing hulls.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

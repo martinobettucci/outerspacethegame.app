@@ -27,7 +27,10 @@ import {
   listNpcs,
   moveShip,
   pendingShipBuilds,
+  refuelShip,
+  setShipFuelForTest,
   transferCargo,
+  transferFuel,
   undockShip,
 } from '../services/ships.js';
 import {
@@ -143,6 +146,11 @@ const settlersSchema = z.object({
   direction: z.enum(['embark', 'disembark']),
 });
 const crewSchema = z.object({ npcId: z.string().uuid() });
+const refuelSchema = z.object({ units: z.number().positive().optional() });
+const transferFuelSchema = z.object({
+  toShipId: z.string().uuid(),
+  units: z.number().positive(),
+});
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
   not_found: 404,
@@ -536,7 +544,44 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       );
       return { ok: true };
     });
+
+    // Fixe le réservoir d'une coque au u près (propriétaire seulement) —
+    // rend l'échouage E2E déterministe sans attendre des jours réels.
+    app.post('/test/ship-fuel', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          shipId: z.string().uuid(),
+          units: z.number().min(0).max(10_000),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        await setShipFuelForTest(deps.pool, player.id, parsed.data.shipId, {
+          units: parsed.data.units,
+        });
+        return { ok: true };
+      });
+    });
   }
+
+  app.post('/ships/:id/refuel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = refuelSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      refuelShip(deps.pool, player.id, id, { units: parsed.data.units }),
+    );
+  });
+
+  app.post('/ships/:id/transfer-fuel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = transferFuelSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () => transferFuel(deps.pool, player.id, id, parsed.data));
+  });
 
   app.get('/npcs', async (req) => {
     const player = await requirePlayer(req);

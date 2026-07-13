@@ -31,6 +31,7 @@ import {
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { recomputePlanetRates } from '../sim/rebase.js';
+import { rebaseShipDrain } from '../sim/shipDrain.js';
 import { CommandError, payCost } from './planets.js';
 
 /** Verrouille un vaisseau possédé (patron ships.ts). */
@@ -329,12 +330,14 @@ export async function colonizeShip(
     const completesAt = new Date(
       nowMs + (COLONY_ESTABLISH_HOURS * 3600 * 1000) / timeScale,
     );
-    // La coque se pose (droit sauvage du fitting colonie — GB §14/DG §8.6).
+    // La coque se pose (droit sauvage du fitting colonie — GB §14/DG §8.6) ;
+    // le drain de survol se désarme (statut colonizing exempt, GB §7).
     await client.query(
       `UPDATE ships SET status = 'colonizing', docked_body_id = $2,
          hover_body_id = NULL WHERE id = $1`,
       [shipId, body.id],
     );
+    await rebaseShipDrain(client, ship, nowMs, 'none');
     await enqueue(client, 'colony_established', completesAt, {
       shipId,
       bodyId: body.id,

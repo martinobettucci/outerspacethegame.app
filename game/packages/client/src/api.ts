@@ -147,7 +147,12 @@ export interface ShipView {
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
+  /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
+  fuelType: string;
+  fuelRatePerDay: number;
+  fuelAsOf: string | null;
+  tankU: number;
   mission: {
     originX: number;
     originY: number;
@@ -319,6 +324,18 @@ export const api = {
     call<{ completesAt: string; bodyId: string }>(
       'POST',
       `/ships/${shipId}/colonize`,
+    ),
+  refuel: (shipId: string, units?: number) =>
+    call<{ loaded: number; fuelType: string; units: number }>(
+      'POST',
+      `/ships/${shipId}/refuel`,
+      units !== undefined ? { units } : {},
+    ),
+  transferFuel: (shipId: string, input: { toShipId: string; units: number }) =>
+    call<{ transferred: number; fuelType: string }>(
+      'POST',
+      `/ships/${shipId}/transfer-fuel`,
+      input,
     ),
   shipBuilds: (planetId: string) =>
     call<{

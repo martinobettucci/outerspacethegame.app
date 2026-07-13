@@ -6,41 +6,26 @@
  * Échelle test : TIME_SCALE=7200 (72 h → 36 s) ; grants via /test/grant
  * (instrumentation §15).
  */
-import { expect, test, type Page } from '@playwright/test';
-import { planetTechAvailability, settlerLosses, settlerTripRisk } from '@atg/shared';
-import { mkdirSync } from 'node:fs';
-
-const CAPTURES = new URL('../captures/', import.meta.url).pathname;
-mkdirSync(CAPTURES, { recursive: true });
+import { expect, test } from '@playwright/test';
+import { settlerLosses, settlerTripRisk } from '@atg/shared';
+import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
-const password = 'motdepasse-e2e-solide';
 
 /**
- * Le seed du starter est universe:starter:email (fonction PURE) : on
- * choisit un e-mail dont l'ADN tech contient déjà toute la chaîne
- * (spaceport, shipyard, workshop) AVANT d'inscrire — zéro roll perdu.
+ * E-mail dont l'ADN tech contient déjà toute la chaîne (spaceport,
+ * shipyard, workshop L2) AVANT d'inscrire — zéro roll perdu.
  */
-function pickColonyEmail(nth: number): string {
-  let seen = 0;
-  for (let i = 0; i < 800; i++) {
-    const email = `e2e-colony-${runId}-${i}@test.local`;
-    const av = planetTechAvailability(`atg-dev-universe-0001:starter:${email}`);
-    if (
+const pickColonyEmail = (nth: number): string =>
+  pickEmailByDna(
+    `e2e-colony-${runId}`,
+    (av) =>
       av.available.has('spaceport') &&
       av.available.has('shipyard') &&
       av.available.has('workshop') &&
-      (av.maxLevel.get('workshop') ?? 0) >= 2
-    ) {
-      if (seen === nth) return email;
-      seen++;
-    }
-  }
-  throw new Error('aucun e-mail candidat avec la chaîne tech complète');
-}
-
-const shot = (page: Page, name: string) =>
-  page.screenshot({ path: `${CAPTURES}/${name}.jpeg`, type: 'jpeg', quality: 90 });
+      (av.maxLevel.get('workshop') ?? 0) >= 2,
+    nth,
+  );
 
 test('colonisation : de la première colonie à la deuxième planète', async ({
   page,
@@ -54,22 +39,7 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
   let wild: { id: string; name: string } | null = null;
   for (let attempt = 0; attempt < 3 && !wild; attempt++) {
     const email = pickColonyEmail(attempt);
-    await page.goto('/');
-    await page
-      .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
-      .click();
-    await page.getByLabel('E-mail').fill(email);
-    await page.getByLabel('Password').fill(password);
-    await page.getByLabel('Sovereign name').fill(`Pathfinder ${attempt}`);
-    await page.getByLabel('Industrialist').check();
-    await page.getByRole('button', { name: 'Awaken' }).click();
-    await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible({
-      timeout: 10_000,
-    });
-    const me = (await page.request.get('/api/me').then((r) => r.json())) as {
-      planets: { id: string }[];
-    };
-    planetId = me.planets[0]!.id;
+    planetId = await registerSovereign(page, email, `Pathfinder ${attempt}`);
     const galaxy = (await page.request.get('/api/galaxy').then((r) => r.json())) as {
       bodies: {
         id: string;
@@ -114,80 +84,11 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
     .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
     .first()
     .click();
-  await expect(page.getByTestId('planet-canvas')).toBeVisible();
-  const box = (await page.getByTestId('planet-canvas').boundingBox())!;
-  // Géométrie EXACTE du plateau (mêmes formules que PlanetView) : le
-  // nombre de tuiles varie par starter — on ne devine jamais les pixels.
-  const detail0 = (await page.request
-    .get(`/api/planets/${planetId}`)
-    .then((r) => r.json())) as { tiles: number };
-  const tilePx = (index: number): readonly [number, number] => {
-    const TILE_W = 148;
-    const TILE_H = 74;
-    const cols = Math.ceil(Math.sqrt(detail0.tiles));
-    const rows = Math.ceil(detail0.tiles / cols);
-    const isoX = (c: number, r: number) => ((c - r) * TILE_W) / 2;
-    const isoY = (c: number, r: number) => ((c + r) * TILE_H) / 2;
-    const centerX = isoX(cols - 1, 0) / 2 + isoX(0, rows - 1) / 2;
-    const centerY = isoY(cols - 1, rows - 1) / 2;
-    const col = index % cols;
-    const row = Math.floor(index / cols);
-    return [
-      box.x + box.width / 2 - centerX + isoX(col, row),
-      box.y + box.height / 2 - centerY - 20 + isoY(col, row),
-    ] as const;
-  };
+  const { tilePx, panel, unlockCard, placeCard, openPanel } = await boardHelpers(
+    page,
+    planetId,
+  );
   const TILE = { a: tilePx(0), b: tilePx(1), c: tilePx(2) } as const;
-  const hand = page.getByRole('region', { name: 'Construction cards' });
-  const panel = page.getByRole('region', { name: 'Building settings' });
-
-  const unlockCard = async (key: string) => {
-    const card = hand
-      .getByRole('article')
-      .filter({ hasText: new RegExp(`^${key}`) })
-      .first();
-    await expect(async () => {
-      const btn = card.getByRole('button', { name: 'Unlock' });
-      if (await btn.isVisible().catch(() => false)) {
-        await btn.click().catch(() => undefined);
-      }
-      await expect(card.getByRole('button', { name: 'Place' })).toBeVisible({
-        timeout: 3_000,
-      });
-    }).toPass({ timeout: 30_000 });
-  };
-  const hasBuilding = async (key: string) => {
-    const d = (await page.request
-      .get(`/api/planets/${planetId}`)
-      .then((r) => r.json())) as { buildings: { key: string }[] };
-    return d.buildings.some((b) => b.key === key);
-  };
-  // Pose vérifiée par l'ÉTAT (API), jamais par la notice : le texte
-  // « Construction started. » persiste d'une pose à l'autre et un clic
-  // tombé pendant la reconstruction du plateau passerait inaperçu.
-  const placeCard = async (key: string, tile: readonly [number, number]) => {
-    await expect(async () => {
-      if (!(await hasBuilding(key))) {
-        const btn = hand
-          .getByRole('article')
-          .filter({ hasText: new RegExp(`^${key}`) })
-          .first()
-          .getByRole('button', { name: 'Place' });
-        if ((await btn.getAttribute('aria-pressed')) !== 'true') {
-          await btn.click().catch(() => undefined);
-        }
-        await page.mouse.click(tile[0], tile[1]);
-        await page.waitForTimeout(400);
-      }
-      expect(await hasBuilding(key)).toBe(true);
-    }).toPass({ timeout: 40_000 });
-  };
-  const openPanel = async (tile: readonly [number, number], text: RegExp) => {
-    await expect(async () => {
-      await page.mouse.click(tile[0], tile[1]);
-      await expect(panel.getByText(text)).toBeVisible({ timeout: 2_000 });
-    }).toPass({ timeout: 40_000 });
-  };
 
   // Chaîne de prérequis réelle : depot → spaceport → shipyard ; mine →
   // workshop (mine et depot sont never-masked — déterministes).

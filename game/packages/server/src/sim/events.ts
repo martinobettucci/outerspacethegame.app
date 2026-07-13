@@ -15,6 +15,7 @@ export type EventKind =
   | 'deposit_dry'
   | 'ship_arrival'
   | 'ship_built'
+  | 'ship_fuel_out'
   | 'colony_established'
   | 'noop';
 

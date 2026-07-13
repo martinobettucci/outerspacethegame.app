@@ -17,12 +17,14 @@ import {
   Package,
   Users,
   Flag,
+  Fuel,
 } from 'lucide-react';
 import {
   ALL_RESOURCE_IDS,
   canFitColonyKit,
   COLONY_MIN_SETTLERS,
   containersUsed,
+  FUEL_TRANSFER_RADIUS_PC,
 } from '@atg/shared';
 import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import { t } from '../i18n/en.js';
@@ -67,6 +69,8 @@ export function GalaxyMap() {
   >([]);
   const [tradeT, setTradeT] = useState('1');
   const [settlersN, setSettlersN] = useState('200');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferUnits, setTransferUnits] = useState('10');
   const [npcs, setNpcs] = useState<
     Awaited<ReturnType<typeof api.npcs>>['npcs']
   >([]);
@@ -565,13 +569,92 @@ export function GalaxyMap() {
             </h2>
           </header>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
-            {selectedShip.status}
+            {selectedShip.status === 'stranded' ? (
+              <span
+                title={t.galaxy.strandedHint}
+                style={{
+                  background: 'var(--danger-700, #7f1d1d)',
+                  color: '#ffd7d7',
+                  borderRadius: 'var(--radius-chip)',
+                  padding: '2px 10px',
+                  fontSize: 11,
+                }}
+              >
+                {t.galaxy.stranded}
+              </span>
+            ) : (
+              selectedShip.status
+            )}
             {selectedShip.mission &&
               ` — ${t.galaxy.eta} ${new Date(selectedShip.mission.arrivesAt).toLocaleString('en-US')}`}
-            {Object.entries(selectedShip.fuel).map(
-              ([type, u]) => ` · ${Math.floor(u)} u ${type}`,
-            )}
           </p>
+          {selectedShip.tankU > 0 && (
+            <section
+              aria-label={t.galaxy.fuelTitle}
+              style={{
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                display: 'grid',
+                gap: 4,
+              }}
+            >
+              <strong
+                style={{
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Fuel size={13} aria-hidden /> {t.galaxy.fuelTitle} —{' '}
+                <span style={{ fontFamily: 'var(--font-mono)' }}>
+                  {(selectedShip.fuel[selectedShip.fuelType] ?? 0).toFixed(1)}/
+                  {selectedShip.tankU} u {selectedShip.fuelType}
+                </span>
+              </strong>
+              <div
+                role="progressbar"
+                aria-label={t.galaxy.fuelTitle}
+                aria-valuemin={0}
+                aria-valuemax={selectedShip.tankU}
+                aria-valuenow={Math.round(
+                  selectedShip.fuel[selectedShip.fuelType] ?? 0,
+                )}
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: 'var(--bg-overlay)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.min(
+                      100,
+                      (100 * (selectedShip.fuel[selectedShip.fuelType] ?? 0)) /
+                        Math.max(1, selectedShip.tankU),
+                    )}%`,
+                    background:
+                      selectedShip.status === 'stranded'
+                        ? 'var(--danger-500, #F24141)'
+                        : 'var(--success-500, #238C33)',
+                  }}
+                />
+              </div>
+              {selectedShip.fuelRatePerDay < 0 ? (
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning-400, #D9CF4A)' }}>
+                  {selectedShip.fuelRatePerDay.toFixed(1)} {t.galaxy.fuelPerDay}
+                </span>
+              ) : selectedShip.status === 'hovering' &&
+                selectedShip.hoverBodyId &&
+                bodies.some(
+                  (b) => b.id === selectedShip.hoverBodyId && b.owned,
+                ) ? (
+                <span>{t.galaxy.fuelServedByPlanet}</span>
+              ) : null}
+            </section>
+          )}
           {selectedShip.containers > 0 && (
             <section
               aria-label={t.galaxy.cargoTitle}
@@ -1148,6 +1231,157 @@ export function GalaxyMap() {
               <ArrowUpFromLine size={14} aria-hidden /> {t.galaxy.undock}
             </button>
           )}
+          {selectedShip.tankU > 0 &&
+            ['docked', 'hovering', 'stranded'].includes(selectedShip.status) &&
+            (() => {
+              const siteId =
+                selectedShip.dockedBodyId ?? selectedShip.hoverBodyId;
+              const ownSite =
+                !!siteId && bodies.some((b) => b.id === siteId && b.owned);
+              if (!ownSite) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .refuel(selectedShip.id)
+                      .then(() => {
+                        setNotice(t.galaxy.refueled);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.refuelRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Fuel size={14} aria-hidden /> {t.galaxy.refuel}
+                </button>
+              );
+            })()}
+          {selectedShip.tankU > 0 &&
+            ['docked', 'hovering', 'idle', 'stranded'].includes(
+              selectedShip.status,
+            ) &&
+            (() => {
+              const nearby = ships.filter(
+                (s) =>
+                  s.id !== selectedShip.id &&
+                  s.tankU > 0 &&
+                  s.fuelType === selectedShip.fuelType &&
+                  ['docked', 'hovering', 'idle', 'stranded'].includes(s.status) &&
+                  Math.hypot(s.x - selectedShip.x, s.y - selectedShip.y) <=
+                    FUEL_TRANSFER_RADIUS_PC,
+              );
+              if (nearby.length === 0) return null;
+              const target = nearby.some((s) => s.id === transferTo)
+                ? transferTo
+                : nearby[0]!.id;
+              return (
+                <section
+                  aria-label={t.galaxy.transferFuelTitle}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    display: 'grid',
+                    gap: 6,
+                  }}
+                >
+                  <strong
+                    style={{
+                      color: 'var(--text-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Fuel size={13} aria-hidden /> {t.galaxy.transferFuelTitle}
+                  </strong>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select
+                      aria-label={t.galaxy.transferTarget}
+                      value={target}
+                      onChange={(e) => setTransferTo(e.target.value)}
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                        maxWidth: 120,
+                      }}
+                    >
+                      {nearby.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      aria-label={t.galaxy.transferUnits}
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={transferUnits}
+                      onChange={(e) => setTransferUnits(e.target.value)}
+                      style={{
+                        width: 58,
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        api
+                          .transferFuel(selectedShip.id, {
+                            toShipId: target,
+                            units: Number(transferUnits),
+                          })
+                          .then(() => {
+                            setNotice(t.galaxy.transferDone);
+                            void refreshShips();
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.transferRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--accent-500, #D9CF4A)',
+                        color: '#0D0D0D',
+                        border: 'none',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.galaxy.transferDo}
+                    </button>
+                  </div>
+                </section>
+              );
+            })()}
           {['docked', 'hovering', 'idle'].includes(selectedShip.status) && (
             <button
               type="button"

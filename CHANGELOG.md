@@ -4,6 +4,33 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Drains de loitering, échouage & ravitaillement (chunk O)** : migration
+  008 — le réservoir devient une quantité PARESSEUSE
+  (`fuel_rate_u_per_day` + `fuel_as_of`, montant dans `ships.fuel`) ;
+  hovering ET idle consomment 0.2/0.4/0.8 u/j (S/M/L [TUNE], GB §7
+  « both consume ») ; exemptions canon : personal (GB §21), probe,
+  docked/warehoused/colonizing/stranded/derelict. Survol de SON monde :
+  le stock planétaire paie (« resupply round-trips » — besoin injecté
+  dans computeRates après la survie de la population, tout-ou-rien par
+  ressource [TUNE-v1]) ; monde à sec, monde d'autrui, sauvage ou vide :
+  le réservoir paie, bord `ship_fuel_out` (purge + replanification,
+  patron stock_edge) → statut `stranded`, réservoir figé à 0, aucun
+  départ. Récupération : POST /ships/:id/refuel (monde POSSÉDÉ sous la
+  coque — à quai, en survol ou échoué ; cap réservoir) et
+  /ships/:id/transfer-fuel (entre VOS coques, ≤ 1 pc [TUNE-GAP], même
+  type [TUNE-v1], instantané [TUNE-v1], verrous par id croissant).
+  L'auto-chargement au départ passe au PLEIN réservoir [TUNE-v1 — charger
+  le trajet exact échouerait la coque au premier survol] et rebase le
+  monde quitté (correctif : le rebase manquait après l'auto-chargement).
+  Découverte d'architecture consignée : TIME_SCALE n'accélère QUE les
+  événements — la dérive lazy court en jours réels (l'E2E échoue la coque
+  par l'instrumentation /test/ship-fuel, 1e-6 u → bord en ~0,4 s). UI :
+  jauge de réservoir + taux, chip danger « Stranded — out of fuel »,
+  boutons Refuel et Transfer fuel (cible + unités). Correctif de test au
+  passage : `IN (...)` sans ORDER BY dans ships.test.ts (ordre de heap
+  non garanti). 15 unit shared + 12 intégration (refus directs §10) +
+  E2E strand→sauvetage→plein ×2, suites complètes vertes (75/27/105/14),
+  captures hov-01..04 observées.
 - **Colonisation v1 : la deuxième planète (chunk N)** : migration 007
   (`ships.settlers/settlers_origin_body_id/colony_kit`, statut
   `colonizing`, table `settler_routes` — accumulateur fractionnaire par

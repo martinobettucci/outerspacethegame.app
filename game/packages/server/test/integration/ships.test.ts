@@ -82,7 +82,10 @@ describe('vol libre (GB §6)', () => {
       `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = $2`,
       [starterId, fuelBefore[0].resource],
     );
-    expect(Number(fuelAfter[0].amount_t)).toBeCloseTo(150 - r.fuelBurned, 2);
+    // Auto-chargement PLEIN réservoir (GB §7 — chunk O : arriver au trajet
+    // près échouerait la coque au premier survol) : 60 u (tank Cargo-S)
+    // chargés, le trajet se pré-brûle ensuite depuis le réservoir.
+    expect(Number(fuelAfter[0].amount_t)).toBeCloseTo(150 - 60, 2);
 
     // Position interpolée à mi-parcours (fonction pure).
     const { rows: shipRows } = await pool.query('SELECT * FROM ships WHERE id = $1', [cargoId]);
@@ -90,18 +93,27 @@ describe('vol libre (GB §6)', () => {
     expect(ship.status).toBe('transit');
     const midMs = (new Date(ship.departed_at).getTime() + new Date(ship.arrives_at).getTime()) / 2;
     const mid = shipPosition(ship, midMs);
-    const { rows: bodies } = await pool.query('SELECT x, y FROM bodies WHERE id IN ($1, $2)', [starterId, wildId]);
-    const dTotal = Math.hypot(bodies[0].x - bodies[1].x, bodies[0].y - bodies[1].y);
+    // IN (...) ne garantit AUCUN ordre : on résout chaque corps par id.
+    const { rows: bodyRows } = await pool.query(
+      'SELECT id, x, y FROM bodies WHERE id IN ($1, $2)',
+      [starterId, wildId],
+    );
+    const starterB = bodyRows.find((b) => b.id === starterId)!;
+    const wildB = bodyRows.find((b) => b.id === wildId)!;
+    const dTotal = Math.hypot(starterB.x - wildB.x, starterB.y - wildB.y);
     const dFromStart = Math.hypot(mid.x - ship.origin_x, mid.y - ship.origin_y);
     expect(dFromStart / dTotal).toBeGreaterThan(0.45);
     expect(dFromStart / dTotal).toBeLessThan(0.55);
 
-    // Arrivée par événement.
+    // Arrivée par événement — survol d'un monde SAUVAGE : le réservoir
+    // paie le loitering (GB §7, chunk O).
     await waitArrived(cargoId);
     const ships = await fleet(pool, playerId);
     const cargo = ships.find((s) => s.id === cargoId)!;
     expect(cargo.status).toBe('hovering');
-    expect(cargo.x).toBeCloseTo(bodies[1].x, 6);
+    expect(cargo.x).toBeCloseTo(wildB.x, 6);
+    expect(cargo.fuelRatePerDay).toBeCloseTo(-0.2, 9);
+    expect(cargo.fuel[cargo.fuelType]).toBeCloseTo(60 - r.fuelBurned, 1);
   });
 
   it('carburant insuffisant (loin, hors monde possédé) : refus explicite, rien ne part', async () => {

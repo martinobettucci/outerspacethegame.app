@@ -69,6 +69,11 @@ export interface RatesInput {
   /** Gisements matérialisés (T restants). */
   deposits: Partial<Record<ResourceId, number>>;
   industries: IndustryState[];
+  /**
+   * Besoins de loitering des coques du propriétaire en survol (GB §7 :
+   * « drains that planet's stock ») — T/jour par fuel_x (1 u = 1 T).
+   */
+  hoverFuelNeeds?: Partial<Record<ResourceId, number>>;
 }
 
 export interface RatesResult {
@@ -81,6 +86,8 @@ export interface RatesResult {
   popConsumption: { food: number; water: number; medicine: number };
   /** Besoins théoriques (pour les saturations). */
   popNeeds: { food: number; water: number; medicine: number };
+  /** Drain de loitering SERVI par le stock, par fuel_x (T/jour). */
+  hoverConsumption: Partial<Record<ResourceId, number>>;
   /** Utilisation du stockage total au moment du calcul. */
   storageU: number;
 }
@@ -294,12 +301,24 @@ export function computeRates(input: RatesInput): RatesResult {
     medicine: consumeFamily(MEDICINE_RESOURCES, popNeeds.medicine),
   };
 
+  // Drain de loitering des coques en survol (GB §7) : après la survie de
+  // la population, même règle « puise si stock > 0 OU arrivage ».
+  const hoverConsumption: Partial<Record<ResourceId, number>> = {};
+  for (const [res, need] of Object.entries(input.hoverFuelNeeds ?? {})) {
+    if ((need ?? 0) <= EMPTY) continue;
+    hoverConsumption[res as ResourceId] = consumeFamily(
+      [res as ResourceId],
+      need as number,
+    );
+  }
+
   return {
     stockRates,
     depositRates,
     industries,
     popConsumption,
     popNeeds,
+    hoverConsumption,
     storageU,
   };
 }

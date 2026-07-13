@@ -82,6 +82,10 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
 - `settler_routes` (implemented, 007): deterministic settler-toll
   accumulator per (origin, destination) pair — fractional expectation
   carried between trips so small cohorts still pay (DG §3.2).
+- Lazy ship tank (implemented, 008): `ships.fuel` (amount, jsonb) +
+  `fuel_rate_u_per_day`/`fuel_as_of`. Loitering (hovering/idle) drains
+  continuously; `ship_fuel_out` edge events follow the stock_edge
+  purge-and-reschedule pattern; empty tank ⇒ status `stranded`.
 - `events` queue; `census` snapshots; `nft_locks` (packing/frozen state).
 - Spatial index (grid hash 64 pc) for interception queries.
 
@@ -109,6 +113,21 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    `settler_routes` accumulator quantized 1e-9). Fresh colonies carry a
    14-day grace (`colonized_at`; badge + API today, enforcement lands
    with combat).
+7. **Loitering drains (implemented, chunk O):** hovering/idle hulls burn
+   fuel continuously (0.2/0.4/0.8 u/day S/M/L [TUNE]; personal & probe
+   exempt). Over your OWN world the planet's `fuel_<type>` stock pays
+   (need injected into the rate rebase, served after population
+   survival, all-or-nothing per resource [TUNE-v1]); over a foreign/wild
+   world, a dry own world, or in the void, the tank pays and a
+   `ship_fuel_out` edge is scheduled — firing empty flips the hull to
+   `stranded` (frozen tank, no departures). Recovery: `refuel` from an
+   owned world below (docked/hovering/stranded) or ship-to-ship
+   `transfer-fuel` (own hulls, ≤ 1 pc [TUNE-GAP], same fuel type,
+   instantaneous [TUNE-v1]). Departure auto-load fills the FULL tank
+   from an owned world's stock and rebases the departed world.
+   IMPORTANT time-model note: TIME_SCALE accelerates EVENTS only — lazy
+   drift (stocks, tanks, population) runs in real days (JOURNAL
+   2026-07-13).
 
 ## 5. Authentication & authorization
 
@@ -209,3 +228,10 @@ Site (current): `bundle exec jekyll serve`. Game (from `game/`):
   finalized in the auth chunk; documented here before implementation (§5).
 - Artificial-planet NFT deed semantics under war need v2 UX review
   (BALANCE_LOG round-2 patch 47).
+- Row-lock ordering (chunk O): new commands take BODY before SHIP
+  (refuel), while historic commands (moveShip, land, undock) lock the
+  ship first and may rebase a body afterwards. A rare deadlock window
+  exists between a command and a worker rebase touching the same
+  (body, hovering ship) pair: PostgreSQL aborts one side, the
+  at-least-once event queue replays, the API surfaces a retryable
+  error. Accepted for v1; revisit if observed in telemetry.

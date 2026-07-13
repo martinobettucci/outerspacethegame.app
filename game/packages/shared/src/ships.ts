@@ -272,5 +272,54 @@ export function derivedRangePc(
 /** Conso à l'arrêt en survol : 0.2 u/jour × sizeMult {1,2,4}. [TUNE] DG §3.5 */
 export const HOVER_IDLE_FUEL_U_PER_DAY = 0.2;
 export const HOVER_SIZE_MULT: Record<HullSize, number> = { s: 1, m: 2, l: 4 };
-/** Survie en survol : 0.01 T food + 0.01 T water / membre d'équipage / jour. [TUNE] */
+/**
+ * Survie en survol : 0.01 T food + 0.01 T water / membre d'équipage / jour.
+ * [TUNE-GAP] Exportée mais INERTE en v1 : aucun équipage embarqué en base
+ * (0.01 × 0 = 0) — s'active avec le chunk lifecycle NPC/équipages.
+ */
 export const HOVER_SURVIVAL_T_PER_CREW_PER_DAY = 0.01;
+
+/**
+ * Conso de loitering d'une coque (hovering OU idle — GB §7 : « both consume
+ * resources » ; le guide ne chiffre qu'un taux, appliqué aux deux).
+ * 0 pour probe (sans réservoir) et personal (GB §21 : ne consomme rien).
+ */
+export function hoverIdleFuelUPerDay(
+  category: HullCategory | string,
+  size: HullSize | string | null,
+): number {
+  if (category === 'probe' || category === 'personal') return 0;
+  const mult = HOVER_SIZE_MULT[size as HullSize];
+  if (!mult) return 0;
+  return HOVER_IDLE_FUEL_U_PER_DAY * mult;
+}
+
+/**
+ * Cible du drain de loitering — table de vérité PURE (GB §7) :
+ * - docked / transit / warehoused / derelict / stranded / colonizing → rien
+ *   (un échoué ne draine plus : réservoir figé à 0) ;
+ * - hovering sur SON monde qui peut servir → le stock planétaire paie
+ *   (« as if running resupply round-trips ») ;
+ * - hovering sur son monde à sec, hovering étranger/sauvage, idle dans le
+ *   vide → le réservoir du vaisseau paie.
+ */
+export function shipDrainTarget(input: {
+  status: string;
+  category: HullCategory | string;
+  size: HullSize | string | null;
+  overOwnPlanet: boolean;
+  planetCanServe: boolean;
+}): 'planet' | 'tank' | 'none' {
+  if (hoverIdleFuelUPerDay(input.category, input.size) <= 0) return 'none';
+  if (input.status === 'idle') return 'tank';
+  if (input.status !== 'hovering') return 'none';
+  if (input.overOwnPlanet && input.planetCanServe) return 'planet';
+  return 'tank';
+}
+
+/**
+ * Rayon de transfert de carburant vaisseau→vaisseau : 1 pc.
+ * [TUNE-GAP] Le guide ne chiffre AUCUN rayon — proposition à valider par
+ * un tour d'équilibrage avant d'être considérée fiable.
+ */
+export const FUEL_TRANSFER_RADIUS_PC = 1;
