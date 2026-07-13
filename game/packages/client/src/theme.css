@@ -1,50 +1,69 @@
 /*
- * Tokens du design system « groovy dark » — docs/DESIGN_SYSTEM.md §2–§4.
- * Thème sombre : exception documentée à la charte claire P2Enjoy
- * (décision du responsable, DESIGN_SYSTEM §12).
+ * The Luminous Silence — shared presentation tokens.
+ *
+ * The simulation deliberately stays outside this file. These tokens only
+ * describe the command deck that frames it: near-black space, dense readable
+ * instruments, cell-gold for historic actions, and sovereign blue for self.
  */
 :root {
-  /* Charte P2Enjoy (ancres) */
+  color-scheme: dark;
+
+  /* Canonical semantic anchors. */
   --brand-blue: #23468c;
   --brand-green: #238c33;
   --brand-yellow: #d9cf4a;
   --brand-red: #f24141;
   --brand-black: #0d0d0d;
 
-  /* Rampes sombres dérivées */
-  --bg-space: #060810;
-  --bg-base: #0d0d0d;
-  --bg-raised: #111a30;
-  --bg-overlay: #16223f;
-  --stroke-subtle: #24314f;
-  --primary-600: #23468c;
-  --primary-400: #3e6bc7;
-  --primary-300: #6e96e8;
-  --violet-700: #2a1b52;
-  --violet-500: #4a2d8c;
-  --accent-400: #d9cf4a;
-  --accent-200: #f2ec9b;
-  --success-500: #2fb544;
-  --success-700: #238c33;
-  --danger-500: #f24141;
-  --danger-700: #b32626;
-  --warning-500: #e8a33d;
-  --text-primary: #f2f4fa;
-  --text-secondary: #a9b4ce;
-  --text-disabled: #5d6883;
+  /* Void and command-deck surfaces. */
+  --bg-void: #03050a;
+  --bg-space: #050710;
+  --bg-base: #080c15;
+  --bg-raised: #0d1526;
+  --bg-overlay: #14203a;
+  --bg-elevated: #182746;
+  --surface-glass: rgba(10, 17, 31, 0.94);
+  --surface-glass-soft: rgba(12, 21, 38, 0.86);
+  --surface-input: rgba(16, 29, 52, 0.9);
+  --stroke-faint: rgba(119, 157, 219, 0.12);
+  --stroke-subtle: #283857;
+  --stroke-strong: #3b527d;
 
-  /* Climats (cartes uniquement — jamais pour les états UI) */
+  /* Interaction and meaning. */
+  --primary-700: #1b376f;
+  --primary-600: #28539e;
+  --primary-500: #3471d4;
+  --primary-400: #5790ed;
+  --primary-300: #8bb5fb;
+  --violet-800: #1b1233;
+  --violet-700: #2a1b52;
+  --violet-500: #6341a8;
+  --accent-500: #c7b92c;
+  --accent-400: #e1d446;
+  --accent-300: #eee477;
+  --accent-200: #f7f0a5;
+  --success-500: #42ce6a;
+  --success-700: #238c33;
+  --danger-400: #ff6868;
+  --danger-500: #f24141;
+  --danger-700: #a8262c;
+  --warning-400: #f1bc62;
+  --warning-500: #e8a33d;
+  --text-primary: #f4f7ff;
+  --text-secondary: #aebbd2;
+  --text-tertiary: #7f8ca8;
+  --text-disabled: #59657e;
+
+  /* Climate is scenery, never UI state. */
   --climate-hot: #e86a4a;
   --climate-cold: #6ec6e8;
   --climate-temperate: #57c785;
   --climate-poison: #9be84a;
 
-  /* Typographie — DESIGN_SYSTEM §3 */
   --font-display: 'Orbitron', sans-serif;
   --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Espacements & rayons — DESIGN_SYSTEM §4 */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -52,60 +71,201 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
-  --radius-card: 12px;
-  --radius-button: 8px;
+  --radius-card: 14px;
+  --radius-button: 9px;
   --radius-chip: 999px;
-  --radius-game-card: 16px;
+  --radius-game-card: 18px;
 
-  /* Élévation sombre = glow + hairline, pas d'ombre grise */
-  --elevation-raised: 0 0 0 1px var(--stroke-subtle),
-    0 8px 24px rgba(6, 8, 16, 0.6);
-  --glow-accent: 0 0 12px rgba(217, 207, 74, 0.25);
+  --ease-command: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-medium: 240ms;
+  --elevation-raised: 0 0 0 1px rgba(99, 139, 204, 0.18),
+    0 18px 46px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(176, 208, 255, 0.055);
+  --elevation-floating: 0 0 0 1px rgba(109, 151, 220, 0.22),
+    0 28px 80px rgba(0, 0, 0, 0.64),
+    inset 0 1px 0 rgba(190, 218, 255, 0.075);
+  --glow-accent: 0 0 22px rgba(217, 207, 74, 0.24);
+  --glow-primary: 0 0 26px rgba(62, 107, 199, 0.22);
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html,
 body,
 #root {
+  width: 100%;
   height: 100%;
   margin: 0;
 }
 
+html {
+  background: var(--bg-void);
+}
+
 body {
-  background: var(--bg-space);
+  min-width: 1000px;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(55, 37, 105, 0.22), transparent 38%),
+    radial-gradient(circle at 85% 80%, rgba(35, 70, 140, 0.14), transparent 42%),
+    var(--bg-space);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.5;
-  /* Jamais de scroll horizontal du body (DESIGN_SYSTEM §7) */
-  overflow-x: hidden;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  color: var(--bg-void);
+  background: var(--accent-300);
 }
 
 h1,
 h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
+h3,
+h4 {
   margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.035em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 button {
-  font-family: var(--font-body);
+  min-height: 36px;
+  touch-action: manipulation;
+  transition:
+    color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    opacity var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-command);
 }
 
-/* Focus toujours visible — DESIGN_SYSTEM §6 */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  accent-color: var(--accent-400);
+  caret-color: var(--accent-300);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent-400);
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(3, 5, 10, 0.46);
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(116, 146, 199, 0.42);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(151, 181, 232, 0.6);
+  background-clip: padding-box;
+}
+
+.app-state {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--text-secondary);
+  background: var(--bg-space);
+}
+
+.app-state__beacon {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.app-state__beacon::before {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(110, 150, 224, 0.3);
+  border-top-color: var(--accent-400);
+  border-radius: 50%;
+  box-shadow: 0 0 26px rgba(217, 207, 74, 0.18);
+  content: '';
+  animation: command-spin 1.2s linear infinite;
+}
+
+@keyframes command-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  input,
+  select {
+    min-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

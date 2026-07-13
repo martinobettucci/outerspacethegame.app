@@ -38,9 +38,75 @@ import {
   planetSprite,
   starSprite,
 } from './assets.ts';
+import '../styles/scenes.css';
 
 /** Taille visuelle des sprites en unités-monde (pc) — lisibilité carte. */
 const SPRITE_PC: Record<string, number> = { s: 10, m: 16, l: 24, star: 44 };
+
+/** Soft procedural plate: atmosphere without a video competing with play. */
+function makeNebulaTexture(primary: string, secondary: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 768;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.globalCompositeOperation = 'screen';
+  const clouds = [
+    [0.28, 0.54, 0.42, primary],
+    [0.55, 0.42, 0.34, secondary],
+    [0.76, 0.62, 0.36, primary],
+    [0.48, 0.7, 0.24, secondary],
+  ] as const;
+  for (const [u, v, radius, color] of clouds) {
+    const x = u * canvas.width;
+    const y = v * canvas.height;
+    const r = radius * canvas.width;
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+    gradient.addColorStop(0, `${color}66`);
+    gradient.addColorStop(0.34, `${color}26`);
+    gradient.addColorStop(1, `${color}00`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Wispy filaments keep the plate from reading as a flat colored circle.
+  ctx.globalAlpha = 0.12;
+  ctx.strokeStyle = '#b8cfff';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 14; i++) {
+    const y = 120 + i * 18;
+    ctx.beginPath();
+    ctx.moveTo(-80, y + Math.sin(i) * 24);
+    ctx.bezierCurveTo(190, y - 110, 480, y + 96, 850, y - 40);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+function makeGlowTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 126);
+    gradient.addColorStop(0, 'rgba(255,255,255,.86)');
+    gradient.addColorStop(0.16, 'rgba(255,255,255,.28)');
+    gradient.addColorStop(0.48, 'rgba(255,255,255,.08)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 256, 256);
+  }
+  return new THREE.CanvasTexture(canvas);
+}
 
 interface SceneRefs {
   renderer: THREE.WebGLRenderer;
@@ -106,6 +172,10 @@ export function GalaxyMap() {
   }, []);
   const targetingRef = useRef<typeof targeting>(null);
   targetingRef.current = targeting;
+  const selectedRef = useRef<GalaxyBody | null>(null);
+  selectedRef.current = selected;
+  const selectedShipRef = useRef<ShipView | null>(null);
+  selectedShipRef.current = selectedShip;
   const shipsRef = useRef<ShipView[]>([]);
   shipsRef.current = ships;
   const [labels, setLabels] = useState<
@@ -160,12 +230,55 @@ export function GalaxyMap() {
       })
       .catch(() => undefined);
 
+  const chooseBody = (body: GalaxyBody) => {
+    if (!targeting) {
+      setSelectedShip(null);
+      setSelected(body);
+      return;
+    }
+    const done = (message: string) => {
+      setNotice(message);
+      setTargeting(null);
+      void refreshShips();
+    };
+    if (targeting.kind === 'ship') {
+      void api
+        .moveShip(targeting.shipId, { bodyId: body.id })
+        .then((result) =>
+          done(
+            `${t.galaxy.departed} ${t.galaxy.eta} ${new Date(result.arrivesAt).toLocaleString('en-US')} · ${result.fuelBurned} u ${t.galaxy.fuelCost}`,
+          ),
+        )
+        .catch((err: ApiError) =>
+          done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+        );
+      return;
+    }
+    void api
+      .launchProbe(targeting.planetId, { x: body.x, y: body.y })
+      .then((result) =>
+        done(
+          `${t.galaxy.probeLaunched} ${t.galaxy.eta} ${new Date(result.arrivesAt).toLocaleString('en-US')}`,
+        ),
+      )
+      .catch((err: ApiError) =>
+        done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+      );
+  };
+
   useEffect(() => {
     let cancelled = false;
     const load = () => {
       api
         .galaxy()
-        .then((r) => !cancelled && setBodies(r.bodies))
+        .then((r) => {
+          if (cancelled) return;
+          setBodies((current) =>
+            current && JSON.stringify(current) === JSON.stringify(r.bodies)
+              ? current
+              : r.bodies,
+          );
+        })
         .catch(() => !cancelled && setError(true));
       api
         .fleet()
@@ -197,9 +310,14 @@ export function GalaxyMap() {
 
     const width = mount.clientWidth;
     const height = mount.clientHeight;
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.setSize(width, height);
-    renderer.setClearColor(new THREE.Color('#060810'));
+    renderer.setClearColor(new THREE.Color('#03050a'));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -223,35 +341,99 @@ export function GalaxyMap() {
     camera.position.set(cx, cy, 100);
     camera.lookAt(cx, cy, 0);
 
-    // Fond : poussière d'étoiles décorative + profondeur violette.
-    const starCount = 2200;
-    const positions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-      positions[i * 3] = cx + (Math.random() - 0.5) * 2400;
-      positions[i * 3 + 1] = cy + (Math.random() - 0.5) * 2400;
-      positions[i * 3 + 2] = -50 - Math.random() * 40;
-    }
-    const dustGeo = new THREE.BufferGeometry();
-    dustGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const dust = new THREE.Points(
-      dustGeo,
-      new THREE.PointsMaterial({ color: 0x8a93b8, size: 1.4, sizeAttenuation: false }),
-    );
-    scene.add(dust);
+    // Three depth planes: the void should feel vast while labels remain crisp.
+    const starLayers: THREE.Points[] = [];
+    const addStarLayer = (
+      count: number,
+      spread: number,
+      z: number,
+      size: number,
+      opacity: number,
+    ) => {
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const palette = [
+        new THREE.Color('#8ba6d8'),
+        new THREE.Color('#f2f4fa'),
+        new THREE.Color('#7a62b8'),
+        new THREE.Color('#d9cf9b'),
+      ];
+      for (let i = 0; i < count; i++) {
+        positions[i * 3] = cx + (Math.random() - 0.5) * spread;
+        positions[i * 3 + 1] = cy + (Math.random() - 0.5) * spread;
+        positions[i * 3 + 2] = z - Math.random() * 8;
+        const c = palette[Math.floor(Math.random() * palette.length)]!;
+        const luminosity = 0.45 + Math.random() * 0.55;
+        colors[i * 3] = c.r * luminosity;
+        colors[i * 3 + 1] = c.g * luminosity;
+        colors[i * 3 + 2] = c.b * luminosity;
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const points = new THREE.Points(
+        geometry,
+        new THREE.PointsMaterial({
+          size,
+          sizeAttenuation: false,
+          vertexColors: true,
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      starLayers.push(points);
+      scene.add(points);
+    };
+    addStarLayer(1500, 2800, -88, 0.75, 0.62);
+    addStarLayer(560, 2100, -72, 1.25, 0.78);
+    addStarLayer(120, 1600, -58, 2.1, 0.92);
 
-    const nebGeo = new THREE.CircleGeometry(700, 48);
-    const neb = new THREE.Mesh(
-      nebGeo,
-      new THREE.MeshBasicMaterial({
-        color: 0x2a1b52,
+    const nebulaMaterials: THREE.SpriteMaterial[] = [];
+    const addNebula = (
+      texture: THREE.Texture,
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      opacity: number,
+      rotation: number,
+    ) => {
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        color: 0xffffff,
         transparent: true,
-        opacity: 0.35,
-      }),
-    );
-    neb.position.set(cx - 180, cy + 140, -60);
-    scene.add(neb);
+        opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        rotation,
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.position.set(x, y, -78);
+      sprite.scale.set(w, h, 1);
+      nebulaMaterials.push(material);
+      scene.add(sprite);
+    };
+    const purpleNebula = makeNebulaTexture('#482a86', '#173e78');
+    const blueNebula = makeNebulaTexture('#173b70', '#4b2c72');
+    addNebula(purpleNebula, cx - 340, cy + 210, 1350, 760, 0.36, -0.18);
+    addNebula(blueNebula, cx + 480, cy - 260, 1500, 820, 0.25, 0.32);
+    addNebula(purpleNebula, cx + 80, cy + 560, 980, 560, 0.16, 0.8);
+
+    // A near-invisible navigation lattice gives scale without pretending the
+    // universe is a neat graph.
+    const grid = new THREE.GridHelper(2400, 24, 0x365783, 0x24344f);
+    grid.rotation.x = Math.PI / 2;
+    grid.position.set(cx, cy, -44);
+    const gridMaterial = grid.material as THREE.LineBasicMaterial;
+    gridMaterial.transparent = true;
+    gridMaterial.opacity = 0.055;
+    gridMaterial.depthWrite = false;
+    scene.add(grid);
 
     const meshes = new Map<string, THREE.Mesh>();
+    const glowTexture = makeGlowTexture();
 
     // Sprites des corps (première frame des stubs GIF).
     for (const body of bodies) {
@@ -270,6 +452,28 @@ export function GalaxyMap() {
       const mesh = new THREE.Mesh(geo, mat);
       mesh.position.set(body.x, body.y, body.bodyType === 'star' ? -5 : 0);
       mesh.userData.bodyId = body.id;
+
+      const auraMaterial = new THREE.SpriteMaterial({
+        map: glowTexture,
+        color:
+          body.bodyType === 'star'
+            ? 0xe8bc69
+            : body.owned
+              ? 0x3e6bc7
+              : 0x6d51a4,
+        transparent: true,
+        opacity: body.bodyType === 'star' ? 0.34 : body.owned ? 0.25 : 0.14,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const aura = new THREE.Sprite(auraMaterial);
+      aura.position.set(body.x, body.y, -7);
+      aura.scale.set(sizePc * 2.7, sizePc * 2.7, 1);
+      aura.userData.baseOpacity = auraMaterial.opacity;
+      aura.userData.baseScaleX = aura.scale.x;
+      aura.userData.baseScaleY = aura.scale.y;
+      scene.add(aura);
+      mesh.userData.aura = aura;
       scene.add(mesh);
       meshes.set(body.id, mesh);
       void loadSpriteCanvas(spritePath).then((canvas) => {
@@ -282,10 +486,28 @@ export function GalaxyMap() {
       if (body.owned) {
         const ring = new THREE.Mesh(
           new THREE.RingGeometry(sizePc * 0.62, sizePc * 0.7, 40),
-          new THREE.MeshBasicMaterial({ color: 0x3e6bc7, side: THREE.DoubleSide }),
+          new THREE.MeshBasicMaterial({
+            color: 0x5790ed,
+            transparent: true,
+            opacity: 0.86,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+          }),
         );
         ring.position.set(body.x, body.y, 1);
         scene.add(ring);
+
+        const echo = new THREE.Mesh(
+          new THREE.RingGeometry(sizePc * 0.82, sizePc * 0.845, 48),
+          new THREE.MeshBasicMaterial({
+            color: 0x3e6bc7,
+            transparent: true,
+            opacity: 0.28,
+            side: THREE.DoubleSide,
+          }),
+        );
+        echo.position.set(body.x, body.y, 0.5);
+        scene.add(echo);
       }
     }
 
@@ -294,6 +516,11 @@ export function GalaxyMap() {
     let lastX = 0;
     let lastY = 0;
     const el = renderer.domElement;
+    el.tabIndex = 0;
+    el.setAttribute(
+      'aria-label',
+      'Interactive galaxy map. Use arrow keys to pan and plus or minus to zoom. When choosing a destination, press Enter or Space to target the map center.',
+    );
     const worldPerPixel = () =>
       (camera.right - camera.left) / (el.clientWidth * camera.zoom);
 
@@ -319,6 +546,63 @@ export function GalaxyMap() {
       camera.zoom = Math.min(8, Math.max(0.15, camera.zoom * factor));
       camera.updateProjectionMatrix();
     };
+    const targetMapCenter = () => {
+      const currentTargeting = targetingRef.current;
+      if (!currentTargeting) return false;
+
+      const coords = { x: camera.position.x, y: camera.position.y };
+      const done = (message: string) => {
+        setNotice(message);
+        setTargeting(null);
+        void api.fleet().then((result) => setShips(result.ships));
+      };
+      if (currentTargeting.kind === 'ship') {
+        void api
+          .moveShip(currentTargeting.shipId, coords)
+          .then((result) =>
+            done(
+              `${t.galaxy.departed} ${t.galaxy.eta} ${new Date(result.arrivesAt).toLocaleString('en-US')} · ${result.fuelBurned} u ${t.galaxy.fuelCost}`,
+            ),
+          )
+          .catch((err: ApiError) =>
+            done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+          );
+      } else {
+        void api
+          .launchProbe(currentTargeting.planetId, coords)
+          .then((result) =>
+            done(
+              `${t.galaxy.probeLaunched} ${t.galaxy.eta} ${new Date(result.arrivesAt).toLocaleString('en-US')}`,
+            ),
+          )
+          .catch((err: ApiError) =>
+            done(`${t.galaxy.moveFailed} — ${err.message ?? err.error}`),
+          );
+      }
+      return true;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      const step = worldPerPixel() * 48;
+      if (event.key === 'ArrowLeft') camera.position.x -= step;
+      else if (event.key === 'ArrowRight') camera.position.x += step;
+      else if (event.key === 'ArrowUp') camera.position.y += step;
+      else if (event.key === 'ArrowDown') camera.position.y -= step;
+      else if (event.key === '+' || event.key === '=') {
+        camera.zoom = Math.min(8, camera.zoom * 1.1);
+        camera.updateProjectionMatrix();
+      } else if (event.key === '-' || event.key === '_') {
+        camera.zoom = Math.max(0.15, camera.zoom * 0.9);
+        camera.updateProjectionMatrix();
+      } else if (
+        (event.key === 'Enter' || event.key === ' ') &&
+        targetMapCenter()
+      ) {
+        // The map center acts as a keyboard cursor for free-flight and probes.
+      } else if (event.key === 'Escape' && targetingRef.current) {
+        setTargeting(null);
+      } else return;
+      event.preventDefault();
+    };
     // Flotte : marqueurs + lignes de transit, mis à jour chaque frame.
     const fleetGroup = new THREE.Group();
     scene.add(fleetGroup);
@@ -335,11 +619,15 @@ export function GalaxyMap() {
         if (!mesh) {
           const isProbe = ship.hullCategory === 'probe';
           mesh = new THREE.Mesh(
-            new THREE.CircleGeometry(isProbe ? 2.6 : 4, 3),
+            new THREE.CircleGeometry(isProbe ? 2.8 : 4.4, 4),
             new THREE.MeshBasicMaterial({
               color: isProbe ? 0x6ec6e8 : 0xd9cf4a,
+              transparent: true,
+              opacity: 0.94,
+              blending: THREE.AdditiveBlending,
             }),
           );
+          mesh.rotation.z = Math.PI / 4;
           mesh.userData.shipId = ship.id;
           fleetGroup.add(mesh);
           shipMeshes.set(ship.id, mesh);
@@ -368,7 +656,13 @@ export function GalaxyMap() {
             ]);
             line = new THREE.Line(
               geo,
-              new THREE.LineDashedMaterial({ color: 0x6e96e8, dashSize: 4, gapSize: 3 }),
+              new THREE.LineDashedMaterial({
+                color: 0x8bb5fb,
+                dashSize: 4,
+                gapSize: 3,
+                transparent: true,
+                opacity: 0.72,
+              }),
             );
             line.computeLineDistances();
             fleetGroup.add(line);
@@ -467,13 +761,66 @@ export function GalaxyMap() {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('keydown', onKeyDown);
     el.addEventListener('click', onClick);
+
+    const resizeObserver = new ResizeObserver(() => {
+      const nextWidth = mount.clientWidth;
+      const nextHeight = mount.clientHeight;
+      if (!nextWidth || !nextHeight) return;
+      const nextAspect = nextWidth / nextHeight;
+      camera.left = -viewHalf * nextAspect;
+      camera.right = viewHalf * nextAspect;
+      camera.top = viewHalf;
+      camera.bottom = -viewHalf;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nextWidth, nextHeight, false);
+    });
+    resizeObserver.observe(mount);
 
     // Boucle de rendu + projection des labels DOM.
     let raf = 0;
     const v = new THREE.Vector3();
+    const clock = new THREE.Clock();
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
     const tick = () => {
       syncFleet();
+      const elapsed = clock.getElapsedTime();
+      if (!reduceMotion) {
+        nebulaMaterials.forEach((material, index) => {
+          material.rotation += (index % 2 === 0 ? 1 : -1) * 0.000025;
+        });
+        starLayers.forEach((layer, index) => {
+          const material = layer.material as THREE.PointsMaterial;
+          material.opacity =
+            [0.62, 0.78, 0.92][index]! *
+            (0.97 + Math.sin(elapsed * (0.22 + index * 0.08) + index) * 0.03);
+        });
+      }
+      for (const [bodyId, mesh] of meshes) {
+        const aura = mesh.userData.aura as THREE.Sprite | undefined;
+        if (!aura) continue;
+        const material = aura.material as THREE.SpriteMaterial;
+        const baseOpacity = aura.userData.baseOpacity as number;
+        const isSelected = selectedRef.current?.id === bodyId;
+        material.opacity = isSelected
+          ? baseOpacity * (reduceMotion ? 1.75 : 1.75 + Math.sin(elapsed * 3.2) * 0.16)
+          : baseOpacity;
+        const scale = isSelected ? 1.14 : 1;
+        aura.scale.set(
+          aura.userData.baseScaleX as number,
+          aura.userData.baseScaleY as number,
+          1,
+        );
+        aura.scale.multiplyScalar(scale);
+      }
+      for (const mesh of shipMeshes.values()) {
+        const selectedNow = selectedShipRef.current?.id === mesh.userData.shipId;
+        const pulse = selectedNow && !reduceMotion ? 1 + Math.sin(elapsed * 3) * 0.12 : 1;
+        mesh.scale.setScalar(pulse);
+      }
       renderer.render(scene, camera);
       const next: { id: string; name: string; x: number; y: number; owned: boolean }[] = [];
       for (const body of bodies) {
@@ -496,11 +843,34 @@ export function GalaxyMap() {
 
     const dispose = () => {
       cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
       el.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('keydown', onKeyDown);
       el.removeEventListener('click', onClick);
+      const textures = new Set<THREE.Texture>();
+      scene.traverse((object) => {
+        if ('geometry' in object) {
+          (object as THREE.Mesh).geometry?.dispose?.();
+        }
+        if ('material' in object) {
+          const rawMaterial = (object as THREE.Mesh).material as
+            | THREE.Material
+            | THREE.Material[];
+          const materials: THREE.Material[] = Array.isArray(rawMaterial)
+            ? rawMaterial
+            : [rawMaterial];
+          for (const material of materials) {
+            if (!material) continue;
+            const map = (material as THREE.MeshBasicMaterial).map;
+            if (map) textures.add(map);
+            material.dispose();
+          }
+        }
+      });
+      textures.forEach((texture) => texture.dispose());
       renderer.dispose();
       mount.removeChild(el);
     };
@@ -510,67 +880,115 @@ export function GalaxyMap() {
 
   if (error) {
     return (
-      <div role="alert" style={{ padding: 'var(--space-6)', color: 'var(--danger-500)' }}>
+      <div role="alert" className="scene-state scene-state--error">
         {t.errors.generic}
       </div>
     );
   }
   if (!bodies) {
     return (
-      <div style={{ padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>
+      <div className="scene-state">
         {t.status.loading}
       </div>
     );
   }
 
   return (
-    <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
-      <div ref={mountRef} style={{ position: 'absolute', inset: 0 }} data-testid="galaxy-canvas" />
+    <div className="galaxy-scene">
+      <div ref={mountRef} className="galaxy-canvas" data-testid="galaxy-canvas" />
+      <div className="galaxy-scene__readout" aria-hidden="true">
+        <span>Deep-space cartography</span>
+        <span>Drag to pan · wheel to focus</span>
+      </div>
+      <label className="galaxy-contact-index">
+        <span>{targeting ? 'Choose destination' : 'Contact index'}</span>
+        <select
+          aria-label={targeting ? 'Choose destination' : 'Galaxy contact index'}
+          value={
+            targeting
+              ? ''
+              : selectedShip
+                ? `ship:${selectedShip.id}`
+                : selected
+                  ? `body:${selected.id}`
+                  : ''
+          }
+          onChange={(event) => {
+            const [kind, id] = event.target.value.split(':');
+            if (kind === 'body') {
+              const body = bodies.find((candidate) => candidate.id === id);
+              if (body) chooseBody(body);
+            } else if (kind === 'ship' && !targeting) {
+              setSelected(null);
+              setSelectedShip(
+                ships.find((candidate) => candidate.id === id) ?? null,
+              );
+            } else if (!event.target.value && !targeting) {
+              setSelected(null);
+              setSelectedShip(null);
+            }
+          }}
+        >
+          <option value="">
+            {targeting ? 'Select a known body…' : 'Select contact…'}
+          </option>
+          <optgroup label="Known bodies">
+            {bodies.map((body) => (
+              <option key={body.id} value={`body:${body.id}`}>
+                {body.name}
+              </option>
+            ))}
+          </optgroup>
+          {!targeting && ships.length > 0 && (
+            <optgroup label="Fleet">
+              {ships.map((ship) => (
+                <option key={ship.id} value={`ship:${ship.id}`}>
+                  {ship.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </label>
       {/* Labels projetés */}
-      {labels.map((l) => (
-        <span
-          key={l.id}
-          style={{
-            position: 'absolute',
-            left: l.x,
-            top: l.y + 26,
-            transform: 'translateX(-50%)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: l.owned ? 'var(--primary-300)' : 'var(--text-secondary)',
-            pointerEvents: 'none',
-            textShadow: '0 1px 3px #060810',
-          }}
-        >
-          {l.name}
-        </span>
-      ))}
+      {labels.map((label) => {
+        const body = bodies.find((candidate) => candidate.id === label.id);
+        if (!body) return null;
+        return (
+          <button
+            key={label.id}
+            type="button"
+            className={`galaxy-label${label.owned ? ' galaxy-label--owned' : ''}${
+              selected?.id === label.id ? ' galaxy-label--selected' : ''
+            }`}
+            style={{
+              left: label.x,
+              top: label.y + 26,
+            }}
+            aria-label={`${targeting ? 'Target' : 'Inspect'} ${label.name}`}
+            aria-pressed={!targeting && selected?.id === label.id}
+            onClick={() => chooseBody(body)}
+          >
+            {label.name}
+          </button>
+        );
+      })}
       {notice && (
-        <p
-          role="status"
-          style={{
-            position: 'absolute',
-            bottom: 14,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'var(--bg-overlay)',
-            borderRadius: 'var(--radius-chip)',
-            padding: '5px 16px',
-            fontSize: 12,
-            maxWidth: '70%',
-          }}
-        >
+        <p role="status" className="galaxy-notice">
           {notice}
         </p>
       )}
       {selectedShip && (
         <aside
           aria-label={selectedShip.name}
+          className="galaxy-panel galaxy-panel--ship"
           style={{
             position: 'absolute',
-            left: 16,
-            top: 16,
-            width: 260,
+            left: 18,
+            top: 18,
+            width: 310,
+            maxHeight: 'calc(100% - 36px)',
+            overflowY: 'auto',
             background: 'var(--bg-raised)',
             borderRadius: 'var(--radius-card)',
             boxShadow: 'var(--elevation-raised)',
@@ -1443,11 +1861,14 @@ export function GalaxyMap() {
       {selected && (
         <aside
           aria-label={selected.name}
+          className="galaxy-panel galaxy-panel--body"
           style={{
             position: 'absolute',
-            right: 16,
-            top: 16,
-            width: 280,
+            right: 18,
+            top: 18,
+            width: 318,
+            maxHeight: 'calc(100% - 36px)',
+            overflowY: 'auto',
             background: 'var(--bg-raised)',
             borderRadius: 'var(--radius-card)',
             boxShadow: 'var(--elevation-raised)',

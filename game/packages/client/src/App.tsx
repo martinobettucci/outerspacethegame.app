@@ -2,20 +2,17 @@ import { t } from './i18n/en.js';
 import { AppStateProvider, useAppState } from './state.tsx';
 import { LoginScreen } from './screens/LoginScreen.tsx';
 import { GameShell } from './screens/GameShell.tsx';
+import './styles/shell.css';
 
 function Root() {
   const { me, authChecked } = useAppState();
   if (!authChecked) {
     return (
-      <main
-        style={{
-          height: '100%',
-          display: 'grid',
-          placeItems: 'center',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        {t.status.loading}
+      <main className="ls-bootstrap" aria-live="polite">
+        <div className="ls-bootstrap__signal" aria-hidden="true">
+          <span />
+        </div>
+        <p>{t.status.loading}</p>
       </main>
     );
   }

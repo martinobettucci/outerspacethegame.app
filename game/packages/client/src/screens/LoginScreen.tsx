@@ -1,23 +1,30 @@
 import { useState, type FormEvent } from 'react';
-import { Rocket, Satellite } from 'lucide-react';
+import {
+  Atom,
+  BadgeDollarSign,
+  Factory,
+  Handshake,
+  Landmark,
+  LoaderCircle,
+  LogIn,
+  Orbit,
+  Rocket,
+  Satellite,
+  Shield,
+  type LucideIcon,
+} from 'lucide-react';
 import { ARCHETYPES, type Archetype } from '@atg/shared';
 import { api, type ApiError } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 
-const field: React.CSSProperties = {
-  display: 'grid',
-  gap: 4,
-  textAlign: 'left',
-};
-const input: React.CSSProperties = {
-  background: 'var(--bg-overlay)',
-  border: '1px solid var(--stroke-subtle)',
-  borderRadius: 'var(--radius-button)',
-  color: 'var(--text-primary)',
-  padding: '8px 12px',
-  fontSize: 14,
-  fontFamily: 'var(--font-body)',
+const ARCHETYPE_ICONS: Record<Archetype, LucideIcon> = {
+  militarist: Shield,
+  industrialist: Factory,
+  mercantile: BadgeDollarSign,
+  scientific: Atom,
+  civic: Landmark,
+  diplomatic: Handshake,
 };
 
 export function LoginScreen() {
@@ -54,166 +61,161 @@ export function LoginScreen() {
   };
 
   return (
-    <main
-      style={{
-        height: '100%',
-        display: 'grid',
-        placeItems: 'center',
-        background:
-          'radial-gradient(ellipse at 30% 20%, rgba(42,27,82,.55), transparent 60%), radial-gradient(ellipse at 75% 80%, rgba(35,70,140,.25), transparent 55%), var(--bg-space)',
-      }}
-    >
-      <form
-        onSubmit={submit}
-        aria-label={mode === 'login' ? t.auth.login : t.auth.register}
-        style={{
-          background: 'var(--bg-raised)',
-          borderRadius: 'var(--radius-card)',
-          boxShadow: 'var(--elevation-raised)',
-          padding: 'var(--space-6)',
-          width: 420,
-          display: 'grid',
-          gap: 'var(--space-4)',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ display: 'grid', justifyItems: 'center', gap: 8 }}>
-          {mode === 'login' ? (
-            <Satellite size={36} color="var(--accent-400)" aria-hidden />
-          ) : (
-            <Rocket size={36} color="var(--accent-400)" aria-hidden />
-          )}
-          <h1 style={{ fontSize: 20, letterSpacing: '0.08em' }}>{t.appName}</h1>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 13 }}>
-            {t.tagline}
-          </p>
+    <main className={`ls-auth ls-auth--${mode}`}>
+      <div className="ls-auth__ambience" aria-hidden="true">
+        <div className="ls-auth__stars ls-auth__stars--near" />
+        <div className="ls-auth__stars ls-auth__stars--far" />
+        <div className="ls-auth__nebula" />
+        <div className="ls-auth__orbit ls-auth__orbit--outer" />
+        <div className="ls-auth__orbit ls-auth__orbit--inner" />
+        <div className="ls-auth__planet">
+          <span className="ls-auth__planet-glow" />
+          <span className="ls-auth__planet-shade" />
         </div>
+        <div className="ls-auth__vessel">
+          <Rocket size={32} strokeWidth={1.25} />
+          <span />
+        </div>
+      </div>
 
-        <label style={field}>
-          <span>{t.auth.email}</span>
-          <input
-            style={input}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-        </label>
-        <label style={field}>
-          <span>{t.auth.password}</span>
-          <input
-            style={input}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            minLength={mode === 'register' ? 10 : 1}
-            required
-          />
-        </label>
+      <section className="ls-auth__story" aria-hidden="true">
+        <div className="ls-auth__story-mark">
+          <Orbit size={18} strokeWidth={1.5} />
+          <span>OUTERSPACE / COMMAND</span>
+        </div>
+        <p className="ls-auth__coordinates">ORBITAL RELAY · 07 / 34.82 PC</p>
+        <h2>
+          THE LUMINOUS
+          <span>SILENCE</span>
+        </h2>
+        <p>{t.tagline}</p>
+        <div className="ls-auth__signal-line">
+          <span />
+          <span />
+          <span />
+        </div>
+      </section>
 
-        {mode === 'register' && (
-          <>
-            <label style={field}>
-              <span>{t.auth.displayName}</span>
+      <section className="ls-auth__deck">
+        <div className="ls-auth__deck-edge" aria-hidden="true" />
+        <form
+          className={`ls-auth-form ls-auth-form--${mode}`}
+          onSubmit={submit}
+          aria-label={mode === 'login' ? t.auth.login : t.auth.register}
+          aria-busy={busy}
+        >
+          <header className="ls-auth-form__header">
+            <span className="ls-auth-form__emblem" aria-hidden="true">
+              {mode === 'login' ? (
+                <Satellite size={27} strokeWidth={1.5} />
+              ) : (
+                <Rocket size={27} strokeWidth={1.5} />
+              )}
+            </span>
+            <div>
+              <p>{mode === 'login' ? t.auth.login : t.auth.register}</p>
+              <h1>{t.appName}</h1>
+            </div>
+          </header>
+
+          <p className="ls-auth-form__tagline">{t.tagline}</p>
+
+          <div className="ls-auth-form__fields">
+            <label className="ls-auth-field">
+              <span>{t.auth.email}</span>
               <input
-                style={input}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                minLength={2}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </label>
-            <fieldset
-              style={{
-                border: '1px solid var(--stroke-subtle)',
-                borderRadius: 'var(--radius-button)',
-                padding: 'var(--space-3)',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 6,
+            <label className="ls-auth-field">
+              <span>{t.auth.password}</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                minLength={mode === 'register' ? 10 : 1}
+                required
+              />
+            </label>
+
+            {mode === 'register' && (
+              <label className="ls-auth-field ls-auth-field--wide">
+                <span>{t.auth.displayName}</span>
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  minLength={2}
+                  required
+                />
+              </label>
+            )}
+          </div>
+
+          {mode === 'register' && (
+            <fieldset className="ls-archetypes">
+              <legend>{t.auth.politics}</legend>
+              <div className="ls-archetypes__grid">
+                {ARCHETYPES.map((a) => {
+                  const ArchetypeIcon = ARCHETYPE_ICONS[a];
+                  return (
+                    <label key={a} className="ls-archetype" data-archetype={a}>
+                      <input
+                        type="radio"
+                        name="politics"
+                        value={a}
+                        checked={politics === a}
+                        onChange={() => setPolitics(a)}
+                      />
+                      <span className="ls-archetype__surface">
+                        <span className="ls-archetype__icon" aria-hidden="true">
+                          <ArchetypeIcon size={19} strokeWidth={1.6} />
+                        </span>
+                        <span>{t.archetypes[a]}</span>
+                        <span className="ls-archetype__check" aria-hidden="true" />
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+
+          {error && (
+            <p className="ls-auth-form__error" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="ls-auth-form__actions">
+            <button className="ls-auth-form__submit" type="submit" disabled={busy}>
+              {busy ? (
+                <LoaderCircle className="ls-spin" size={17} aria-hidden="true" />
+              ) : mode === 'login' ? (
+                <LogIn size={17} aria-hidden="true" />
+              ) : (
+                <Rocket size={17} aria-hidden="true" />
+              )}
+              <span>{mode === 'login' ? t.auth.submitLogin : t.auth.submitRegister}</span>
+            </button>
+
+            <button
+              className="ls-auth-form__switch"
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login');
+                setError(null);
               }}
             >
-              <legend
-                style={{
-                  fontSize: 12,
-                  color: 'var(--text-secondary)',
-                  padding: '0 6px',
-                }}
-              >
-                {t.auth.politics}
-              </legend>
-              {ARCHETYPES.map((a) => (
-                <label
-                  key={a}
-                  style={{
-                    display: 'flex',
-                    gap: 6,
-                    alignItems: 'center',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    color:
-                      politics === a
-                        ? 'var(--accent-200)'
-                        : 'var(--text-secondary)',
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="politics"
-                    value={a}
-                    checked={politics === a}
-                    onChange={() => setPolitics(a)}
-                  />
-                  {t.archetypes[a]}
-                </label>
-              ))}
-            </fieldset>
-          </>
-        )}
-
-        {error && (
-          <p role="alert" style={{ color: 'var(--danger-500)', margin: 0 }}>
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={busy}
-          style={{
-            background: busy ? 'var(--primary-600)' : 'var(--primary-400)',
-            color: 'var(--text-primary)',
-            border: 'none',
-            borderRadius: 'var(--radius-button)',
-            padding: '10px 16px',
-            cursor: busy ? 'wait' : 'pointer',
-            fontSize: 14,
-            fontFamily: 'var(--font-display)',
-            letterSpacing: '0.06em',
-          }}
-        >
-          {mode === 'login' ? t.auth.submitLogin : t.auth.submitRegister}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === 'login' ? 'register' : 'login');
-            setError(null);
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--primary-300)',
-            cursor: 'pointer',
-            fontSize: 13,
-          }}
-        >
-          {mode === 'login' ? t.auth.switchToRegister : t.auth.switchToLogin}
-        </button>
-      </form>
+              {mode === 'login' ? t.auth.switchToRegister : t.auth.switchToLogin}
+            </button>
+          </div>
+        </form>
+      </section>
     </main>
   );
 }

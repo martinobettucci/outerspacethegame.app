@@ -3,9 +3,20 @@
  * entrants (ping-back = l'événement historique), canaux, chat.
  */
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { MessagesSquare, Reply, Satellite } from 'lucide-react';
+import {
+  Activity,
+  Antenna,
+  CircleDot,
+  MessagesSquare,
+  Radio,
+  Reply,
+  Satellite,
+  Send,
+  Signal,
+} from 'lucide-react';
 import { api, type ApiError } from '../api.js';
 import { t } from '../i18n/en.js';
+import '../styles/operations.css';
 
 type Comms = Awaited<ReturnType<typeof api.comms>>;
 type Message = Awaited<ReturnType<typeof api.messages>>['messages'][number];
@@ -68,9 +79,12 @@ export function CommsScreen() {
 
   if (!comms) {
     return (
-      <p style={{ padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>
-        {t.status.loading}
-      </p>
+      <div className="operations-page comms-loading">
+        <div className="ops-state ops-panel">
+          <span className="ops-loader" aria-hidden="true" />
+          <p>{t.status.loading}</p>
+        </div>
+      </div>
     );
   }
 
@@ -78,184 +92,193 @@ export function CommsScreen() {
     comms.incoming.length === 0 &&
     comms.channels.length === 0 &&
     comms.outgoing.length === 0;
+  const selectedChannel = comms.channels.find((channel) => channel.id === channelId);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '300px 1fr',
-        height: '100%',
-        minHeight: 0,
-      }}
-    >
-      <aside
-        style={{
-          borderRight: '1px solid var(--stroke-subtle)',
-          padding: 'var(--space-4)',
-          overflowY: 'auto',
-          display: 'grid',
-          gap: 'var(--space-4)',
-          alignContent: 'start',
-        }}
-      >
-        <h2 style={{ fontSize: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Satellite size={16} color="var(--accent-400)" aria-hidden /> {t.comms.title}
-        </h2>
+    <div className="operations-page comms-screen">
+      <aside className="comms-rail" aria-label={t.comms.title}>
+        <header className="comms-rail__header">
+          <div className="comms-title">
+            <span className="ops-icon-well ops-icon-well--accent">
+              <Satellite size={21} aria-hidden />
+            </span>
+            <h2>{t.comms.title}</h2>
+          </div>
+          <div className="signal-scope signal-scope--small" aria-hidden="true">
+            <span className="signal-scope__orbit signal-scope__orbit--one" />
+            <span className="signal-scope__orbit signal-scope__orbit--two" />
+            <span className="signal-scope__sweep" />
+            <span className="signal-scope__contact" />
+            <Radio size={16} />
+          </div>
+        </header>
+
         {isEmpty && (
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.comms.empty}</p>
+          <div className="comms-silence-card">
+            <Activity size={17} aria-hidden />
+            <p>{t.comms.empty}</p>
+          </div>
         )}
+
         {comms.incoming.length > 0 && (
-          <section aria-label={t.comms.incoming} style={{ display: 'grid', gap: 8 }}>
-            <h3 style={{ fontSize: 12, color: 'var(--accent-200)' }}>{t.comms.incoming}</h3>
-            {comms.incoming.map((p) => (
-              <div
-                key={p.id}
-                style={{
-                  background: 'var(--bg-raised)',
-                  border: '1px solid var(--accent-400)',
-                  borderRadius: 'var(--radius-card)',
-                  padding: 10,
-                  display: 'grid',
-                  gap: 6,
-                }}
-              >
-                <span style={{ fontSize: 12 }}>
-                  <strong>{p.fromName}</strong> — {p.bodyName}
-                </span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const r = await api.pingBack(p.id);
-                      setNotice(t.comms.channelOpened);
-                      setChannelId(r.channelId);
-                      await refresh();
-                    } catch (err) {
-                      setNotice((err as ApiError).message ?? t.errors.generic);
-                    }
-                  }}
-                  style={{
-                    display: 'flex',
-                    gap: 6,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'var(--accent-400)',
-                    color: '#0D0D0D',
-                    border: 'none',
-                    borderRadius: 'var(--radius-button)',
-                    padding: '6px 10px',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Reply size={12} aria-hidden /> {t.comms.pingBack}
-                </button>
-              </div>
-            ))}
+          <section aria-label={t.comms.incoming} className="comms-rail__section">
+            <h3>
+              <Signal size={14} aria-hidden />
+              {t.comms.incoming}
+            </h3>
+            <div className="hail-list">
+              {comms.incoming.map((p) => (
+                <article key={p.id} className="hail-card">
+                  <span className="hail-card__beacon" aria-hidden="true">
+                    <span />
+                    <Antenna size={17} />
+                  </span>
+                  <div className="hail-card__source">
+                    <strong>{p.fromName}</strong>
+                    <span>{p.bodyName}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="ops-button ops-button--historic hail-card__action"
+                    onClick={async () => {
+                      try {
+                        const r = await api.pingBack(p.id);
+                        setNotice(t.comms.channelOpened);
+                        setChannelId(r.channelId);
+                        await refresh();
+                      } catch (err) {
+                        setNotice((err as ApiError).message ?? t.errors.generic);
+                      }
+                    }}
+                  >
+                    <Reply size={14} aria-hidden />
+                    {t.comms.pingBack}
+                  </button>
+                </article>
+              ))}
+            </div>
           </section>
         )}
+
         {comms.channels.length > 0 && (
-          <section aria-label={t.comms.channels} style={{ display: 'grid', gap: 6 }}>
-            <h3 style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.comms.channels}</h3>
-            {comms.channels.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setChannelId(c.id)}
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'center',
-                  background: channelId === c.id ? 'var(--primary-600)' : 'var(--bg-raised)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--stroke-subtle)',
-                  borderRadius: 'var(--radius-button)',
-                  padding: '8px 10px',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <MessagesSquare size={14} aria-hidden /> {c.withName}
-              </button>
-            ))}
+          <section aria-label={t.comms.channels} className="comms-rail__section">
+            <h3>
+              <MessagesSquare size={14} aria-hidden />
+              {t.comms.channels}
+            </h3>
+            <div className="channel-list">
+              {comms.channels.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setChannelId(c.id)}
+                  aria-pressed={channelId === c.id}
+                  className="channel-button"
+                  data-active={channelId === c.id || undefined}
+                >
+                  <span className="channel-button__signal" aria-hidden="true">
+                    <CircleDot size={15} />
+                  </span>
+                  <span>{c.withName}</span>
+                  <Signal size={14} aria-hidden />
+                </button>
+              ))}
+            </div>
           </section>
         )}
+
         {comms.outgoing.length > 0 && (
-          <section aria-label={t.comms.outgoing} style={{ display: 'grid', gap: 4 }}>
-            <h3 style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.comms.outgoing}</h3>
-            {comms.outgoing.slice(0, 5).map((p) => (
-              <span key={p.id} style={{ fontSize: 11, color: 'var(--text-disabled)' }}>
-                {p.bodyName} — {p.status}
-              </span>
-            ))}
+          <section aria-label={t.comms.outgoing} className="comms-rail__section">
+            <h3>
+              <Antenna size={14} aria-hidden />
+              {t.comms.outgoing}
+            </h3>
+            <div className="outgoing-list">
+              {comms.outgoing.slice(0, 5).map((p) => (
+                <span key={p.id} className="outgoing-item">
+                  <i aria-hidden="true" />
+                  <span>{p.bodyName}</span>
+                  <em>{p.status}</em>
+                </span>
+              ))}
+            </div>
           </section>
         )}
       </aside>
 
-      <main style={{ display: 'grid', gridTemplateRows: '1fr auto', minHeight: 0 }}>
-        <div style={{ overflowY: 'auto', padding: 'var(--space-4)', display: 'grid', gap: 8, alignContent: 'start' }}>
-          {!channelId && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{t.comms.noChannel}</p>
-          )}
-          {messages.map((m) => (
-            <div
-              key={m.id}
-              style={{
-                justifySelf: m.mine ? 'end' : 'start',
-                maxWidth: '70%',
-                background: m.mine ? 'var(--primary-600)' : 'var(--bg-raised)',
-                borderRadius: 'var(--radius-card)',
-                padding: '8px 12px',
-                fontSize: 13,
-              }}
-            >
-              {!m.mine && (
-                <strong style={{ fontSize: 11, color: 'var(--accent-200)', display: 'block' }}>
-                  {m.authorName}
-                </strong>
-              )}
-              {m.body}
+      <main className="comms-workspace">
+        <header className="conversation-header">
+          <div className="conversation-header__identity">
+            <span className="ops-section-icon">
+              <MessagesSquare size={18} aria-hidden />
+            </span>
+            <div>
+              <span>{t.comms.channels}</span>
+              <strong>{selectedChannel?.withName ?? t.comms.noChannel}</strong>
             </div>
-          ))}
-          <div ref={bottomRef} />
+          </div>
+          <div className="conversation-header__signal" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <Signal size={16} />
+          </div>
+        </header>
+
+        <div className="message-stage">
+          <div className="message-stage__atmosphere" aria-hidden="true">
+            <span className="message-stage__planet" />
+            <span className="message-stage__beam" />
+          </div>
+          {!channelId && (
+            <div className="silence-state">
+              <div className="signal-scope" aria-hidden="true">
+                <span className="signal-scope__orbit signal-scope__orbit--one" />
+                <span className="signal-scope__orbit signal-scope__orbit--two" />
+                <span className="signal-scope__sweep" />
+                <Radio size={27} />
+              </div>
+              <p>{t.comms.noChannel}</p>
+            </div>
+          )}
+          <div className="message-list">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`message-bubble ${m.mine ? 'message-bubble--mine' : 'message-bubble--theirs'}`}
+              >
+                {!m.mine && <strong>{m.authorName}</strong>}
+                <span>{m.body}</span>
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </div>
         </div>
+
         {channelId && (
-          <form onSubmit={send} style={{ display: 'flex', gap: 8, padding: 'var(--space-3)' }}>
+          <form onSubmit={send} className="message-composer">
+            <span className="message-composer__antenna" aria-hidden="true">
+              <Antenna size={18} />
+            </span>
             <input
               aria-label={t.comms.messagePlaceholder}
               placeholder={t.comms.messagePlaceholder}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              style={{
-                flex: 1,
-                background: 'var(--bg-overlay)',
-                border: '1px solid var(--stroke-subtle)',
-                borderRadius: 'var(--radius-button)',
-                color: 'var(--text-primary)',
-                padding: '8px 12px',
-                fontSize: 13,
-              }}
+              name="message"
+              autoComplete="off"
             />
-            <button
-              type="submit"
-              style={{
-                background: 'var(--primary-400)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                borderRadius: 'var(--radius-button)',
-                padding: '8px 16px',
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
-            >
+            <button type="submit" className="ops-button message-composer__send">
+              <Send size={16} aria-hidden />
               {t.comms.send}
             </button>
           </form>
         )}
+
         {notice && (
-          <p role="status" style={{ padding: '0 var(--space-4) var(--space-3)', fontSize: 12, color: 'var(--accent-200)' }}>
-            {notice}
+          <p role="status" aria-live="polite" className="ops-notice comms-notice">
+            <Radio size={14} aria-hidden />
+            <span>{notice}</span>
           </p>
         )}
       </main>

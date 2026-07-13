@@ -85,9 +85,11 @@ export const t = {
     title: 'Known sky',
     fleet: 'Fleet',
     sendShip: 'Send ship',
-    sendHint: 'Click a destination (a body, or empty void) to plot the course.',
+    sendHint:
+      'Click a destination, or pan the map and press Enter, to plot the course.',
     launchProbe: 'Launch probe',
-    probeHint: 'Click anywhere: the probe will sail there and open your sky.',
+    probeHint:
+      'Click anywhere, or pan the map and press Enter: the probe will sail there and open your sky.',
     inTransit: 'in transit',
     eta: 'ETA',
     fuelCost: 'fuel',

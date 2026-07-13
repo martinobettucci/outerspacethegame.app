@@ -27,15 +27,28 @@ import {
   loadSpriteCanvas,
 } from './assets.ts';
 import { extractLights, makeBumpFilter, makeHaloSprite } from './lighting.ts';
+import '../styles/scenes.css';
 
 const TILE_W = 148;
 const TILE_H = 74;
 
 const CLIMATE_TILE_FILL: Record<string, number> = {
-  temperate: 0x14351f,
-  hot: 0x3a1a12,
-  cold: 0x12283a,
-  poison: 0x243a12,
+  temperate: 0x173b27,
+  hot: 0x482218,
+  cold: 0x16344a,
+  poison: 0x2c4518,
+};
+
+const CLIMATE_TILE_EDGE: Record<string, { left: number; right: number; accent: number }> = {
+  temperate: { left: 0x0a1e15, right: 0x10291a, accent: 0x57c785 },
+  hot: { left: 0x24100c, right: 0x32150f, accent: 0xe86a4a },
+  cold: { left: 0x0a1d2b, right: 0x10283a, accent: 0x6ec6e8 },
+  poison: { left: 0x17250b, right: 0x20340e, accent: 0x9be84a },
+};
+
+const stableNoise = (value: number) => {
+  const raw = Math.sin(value * 12.9898) * 43758.5453;
+  return raw - Math.floor(raw);
 };
 
 function tileGridPositions(count: number): { col: number; row: number }[] {
@@ -136,10 +149,12 @@ export function PlanetView({ planetId }: { planetId: string }) {
     const app = new Application();
     app
       .init({
-        background: '#060810',
+        background: '#03050a',
         resizeTo: mount,
         antialias: true,
         preference: 'webgl',
+        resolution: Math.min(window.devicePixelRatio, 1.75),
+        autoDensity: true,
       })
       .then(() => {
         if (destroyed) {
@@ -175,6 +190,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
     const app = appRef.current;
     const board = boardRef.current;
     if (!app || !board || !planet || !pixiReady) return;
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
 
     board.removeChildren().forEach((c) => c.destroy({ children: true }));
 
@@ -185,13 +203,56 @@ export function PlanetView({ planetId }: { planetId: string }) {
         .map((b) => [b.tileIndex as number, b]),
     );
 
-    // Halo d'ambiance sous l'île (profondeur violette du design system).
-    const halo = new Graphics();
-    halo.ellipse(0, (isoY(positions.length, positions.length) / positions.length) * 1.2, 340, 150);
-    halo.fill({ color: 0x2a1b52, alpha: 0.35 });
-    board.addChild(halo);
+    // Deep scenery plate. It moves with the diorama but never handles input.
+    const starfield = new Graphics();
+    for (let i = 0; i < 150; i++) {
+      const x = -760 + stableNoise(i + planet.tiles * 13) * 1520;
+      const y = -430 + stableNoise(i * 3.7 + planet.population) * 860;
+      const radius = 0.35 + stableNoise(i * 8.1) * 1.2;
+      const color = i % 11 === 0 ? 0x8c6ac8 : i % 7 === 0 ? 0x6ec6e8 : 0xb9c8e5;
+      starfield.circle(x, y, radius);
+      starfield.fill({ color, alpha: 0.18 + stableNoise(i * 5.3) * 0.48 });
+    }
+    board.addChild(starfield);
+
+    const edge =
+      CLIMATE_TILE_EDGE[planet.climate] ?? CLIMATE_TILE_EDGE.temperate!;
+    const aura = new Graphics();
+    aura.ellipse(0, 74, 410, 188);
+    aura.fill({ color: 0x2a1b52, alpha: 0.16 });
+    aura.ellipse(0, 68, 350, 150);
+    aura.fill({ color: edge.accent, alpha: 0.055 });
+    aura.ellipse(0, 96, 320, 94);
+    aura.fill({ color: 0x000000, alpha: 0.46 });
+    board.addChild(aura);
+
+    const motes: {
+      graphic: Graphics;
+      phase: number;
+      speed: number;
+      baseX: number;
+      baseY: number;
+    }[] = [];
+    for (let i = 0; i < 26; i++) {
+      const mote = new Graphics();
+      const radius = 0.6 + stableNoise(i * 4.4) * 1.35;
+      mote.circle(0, 0, radius);
+      mote.fill({ color: edge.accent, alpha: 0.24 + stableNoise(i * 9.1) * 0.3 });
+      const baseX = -390 + stableNoise(i * 6.7) * 780;
+      const baseY = -155 + stableNoise(i * 2.9) * 360;
+      mote.position.set(baseX, baseY);
+      board.addChild(mote);
+      motes.push({
+        graphic: mote,
+        phase: stableNoise(i * 1.7) * Math.PI * 2,
+        speed: 0.18 + stableNoise(i * 7.3) * 0.24,
+        baseX,
+        baseY,
+      });
+    }
 
     const fill = CLIMATE_TILE_FILL[planet.climate] ?? CLIMATE_TILE_FILL.temperate!;
+    const extrusion = 12;
 
     // Couche de lumière ADDITIVE (propagation aux tuiles et sprites
     // voisins — ASSET_PIPELINE §3), au-dessus du plateau.
@@ -200,6 +261,28 @@ export function PlanetView({ planetId }: { planetId: string }) {
     positions.forEach(({ col, row }, index) => {
       const x = isoX(col, row);
       const y = isoY(col, row);
+
+      // Apparent depth only: the interactive top diamond and its 148×74
+      // geometry stay exactly unchanged for pointer and E2E contracts.
+      const cliff = new Graphics();
+      cliff.poly([
+        -TILE_W / 2, 0,
+        0, TILE_H / 2,
+        0, TILE_H / 2 + extrusion,
+        -TILE_W / 2, extrusion,
+      ]);
+      cliff.fill({ color: edge.left });
+      cliff.poly([
+        TILE_W / 2, 0,
+        0, TILE_H / 2,
+        0, TILE_H / 2 + extrusion,
+        TILE_W / 2, extrusion,
+      ]);
+      cliff.fill({ color: edge.right });
+      cliff.stroke({ color: 0x101a2b, width: 1, alpha: 0.82 });
+      cliff.position.set(x, y);
+      board.addChild(cliff);
+
       const tile = new Graphics();
       tile.poly([
         0, -TILE_H / 2,
@@ -208,7 +291,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
         -TILE_W / 2, 0,
       ]);
       tile.fill({ color: fill });
-      tile.stroke({ color: 0x24314f, width: 1.5 });
+      tile.stroke({ color: edge.accent, width: 1.1, alpha: 0.32 });
       tile.position.set(x, y);
       tile.eventMode = 'static';
       tile.cursor = 'pointer';
@@ -225,17 +308,40 @@ export function PlanetView({ planetId }: { planetId: string }) {
       });
       board.addChild(tile);
 
+      // Low-frequency surface variation keeps empty tiles from looking like
+      // flat UI diamonds. It is deliberately subtle so props own the scene.
+      const surface = new Graphics();
+      for (let detailIndex = 0; detailIndex < 7; detailIndex++) {
+        const dx = -42 + stableNoise(index * 31 + detailIndex * 5.2) * 84;
+        const dy = -17 + stableNoise(index * 17 + detailIndex * 8.4) * 34;
+        const r = 0.8 + stableNoise(index * 7 + detailIndex * 11.3) * 2.1;
+        surface.circle(dx, dy, r);
+        surface.fill({
+          color: detailIndex % 3 === 0 ? edge.accent : 0x02050a,
+          alpha: detailIndex % 3 === 0 ? 0.07 : 0.12,
+        });
+      }
+      surface.position.set(x, y);
+      surface.eventMode = 'none';
+      board.addChild(surface);
+
       const building = byTile.get(index);
       if (building) {
         const container = new Container();
         container.position.set(x, y);
         board.addChild(container);
+        const contact = new Graphics();
+        contact.ellipse(0, 11, TILE_W * 0.34, TILE_H * 0.22);
+        contact.fill({ color: 0x000000, alpha: 0.5 });
+        contact.ellipse(0, 6, TILE_W * 0.27, TILE_H * 0.16);
+        contact.stroke({ color: edge.accent, width: 1, alpha: 0.18 });
+        container.addChild(contact);
         const spritePath = buildingSprite(building.key, building.level);
         // Sprite ANIMÉ (pixi.js/gif) — l'idle fait partie de l'identité
         // (ASSET_PIPELINE §1bis).
         void loadGifSource(spritePath)
           .then(async (source) => {
-            const sprite = new GifSprite({ source, autoPlay: true });
+            const sprite = new GifSprite({ source, autoPlay: !reduceMotion });
             sprite.anchor.set(0.5, 0.72);
             sprite.width = TILE_W * 1.06;
             sprite.height = (TILE_W * 1.06) / 2;
@@ -305,45 +411,101 @@ export function PlanetView({ planetId }: { planetId: string }) {
       app.screen.width / 2 - centerX,
       app.screen.height / 2 - centerY - 20,
     );
+
+    let ambientTime = 0;
+    const animateMotes = () => {
+      ambientTime += app.ticker.deltaTime / 60;
+      motes.forEach((mote, index) => {
+        const wave = ambientTime * mote.speed + mote.phase;
+        mote.graphic.position.set(
+          mote.baseX + Math.sin(wave * 0.7) * (3 + (index % 4)),
+          mote.baseY - ((ambientTime * (1.2 + (index % 3) * 0.35)) % 28),
+        );
+        mote.graphic.alpha = 0.5 + Math.sin(wave) * 0.22;
+      });
+    };
+    if (!reduceMotion) {
+      app.ticker.add(animateMotes);
+    }
+    return () => {
+      // The renderer-owning effect is declared before this scenery effect,
+      // so unmount may already have destroyed Pixi's ticker. Only detach the
+      // callback while this is still the live application; renderer teardown
+      // disposes every listener itself.
+      if (!reduceMotion && appRef.current === app) {
+        app.ticker.remove(animateMotes);
+      }
+    };
   }, [planet, pixiReady, placeAt]);
 
   if (error) {
     return (
-      <div role="alert" style={{ padding: 'var(--space-6)', color: 'var(--danger-500)' }}>
+      <div role="alert" className="scene-state scene-state--error">
         {error}
       </div>
     );
   }
   if (!planet) {
     return (
-      <div style={{ padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>
+      <div className="scene-state">
         {t.status.loading}
       </div>
     );
   }
 
   const usedTiles = planet.buildings.filter((b) => b.tileIndex !== null).length;
+  const keyboardPositions = tileGridPositions(planet.tiles);
+  const keyboardCols = Math.ceil(Math.sqrt(planet.tiles));
+  const keyboardRows = Math.ceil(planet.tiles / keyboardCols);
+  const keyboardCenterX =
+    isoX(keyboardCols - 1, 0) / 2 + isoX(0, keyboardRows - 1) / 2;
+  const keyboardCenterY = isoY(keyboardCols - 1, keyboardRows - 1) / 2;
+  const keyboardBuildings = new Map(
+    planet.buildings
+      .filter((building) => building.tileIndex !== null)
+      .map((building) => [building.tileIndex as number, building]),
+  );
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: '1fr auto', height: '100%' }}>
-      <div style={{ position: 'relative', overflow: 'hidden' }}>
-        <div ref={mountRef} style={{ position: 'absolute', inset: 0 }} data-testid="planet-canvas" />
+    <div className="planet-scene" data-climate={planet.climate}>
+      <div className="planet-stage">
+        <div ref={mountRef} className="planet-canvas" data-testid="planet-canvas" />
+        <div
+          className="planet-tile-keyboard-layer"
+          role="group"
+          aria-label="Planet surface tiles"
+        >
+          {keyboardPositions.map(({ col, row }, index) => {
+            const building = keyboardBuildings.get(index);
+            if (!building && !selectedCard) return null;
+            const label = building
+              ? `Tile ${index + 1} — ${building.key.replace(/_/g, ' ')} L${building.level}`
+              : `Tile ${index + 1} — build ${selectedCard!.building.replace(/_/g, ' ')}`;
+            return (
+              <button
+                key={index}
+                type="button"
+                className="planet-tile-keyboard-target"
+                data-occupied={building ? 'true' : 'false'}
+                aria-label={label}
+                title={label}
+                style={{
+                  left: `calc(50% + ${isoX(col, row) - keyboardCenterX}px)`,
+                  top: `calc(50% + ${isoY(col, row) - keyboardCenterY - 20}px)`,
+                }}
+                onClick={() => {
+                  if (building) setSelectedBuildingId(building.id);
+                  else void placeAt(index);
+                }}
+              >
+                <span aria-hidden="true">{index + 1}</span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* Bandeau d'en-tête planète */}
-        <header
-          style={{
-            position: 'absolute',
-            left: 16,
-            top: 16,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            background: 'var(--bg-raised)',
-            borderRadius: 'var(--radius-card)',
-            boxShadow: 'var(--elevation-raised)',
-            padding: '8px 14px',
-          }}
-        >
+        <header className="planet-plaque">
           <button
             type="button"
             onClick={() => setView({ kind: 'galaxy' })}
@@ -402,53 +564,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
         </header>
 
         {selectedCard && (
-          <p
-            style={{
-              position: 'absolute',
-              top: 70,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--bg-overlay)',
-              border: '1px solid var(--accent-400)',
-              borderRadius: 'var(--radius-chip)',
-              padding: '4px 14px',
-              fontSize: 12,
-              color: 'var(--accent-200)',
-            }}
-          >
+          <p className="planet-placement-hint">
             {t.planet.selectCardHint}
           </p>
         )}
         {notice && (
-          <p
-            role="status"
-            style={{
-              position: 'absolute',
-              bottom: 12,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--bg-overlay)',
-              borderRadius: 'var(--radius-chip)',
-              padding: '4px 14px',
-              fontSize: 12,
-            }}
-          >
+          <p role="status" className="planet-notice">
             {notice}
           </p>
         )}
 
-        {statsOpen && <PlanetStats planet={planet} onClose={() => setStatsOpen(false)} />}
-        {recipePickerFor && (
-          <RecipePicker
-            planet={planet}
-            building={recipePickerFor}
-            onPick={(recipe) => {
-              setSelectedCard({ building: recipePickerFor, recipe });
-              setRecipePickerFor(null);
-            }}
-            onCancel={() => setRecipePickerFor(null)}
-          />
-        )}
         {selectedBuildingId &&
           (() => {
             const b = planet.buildings.find((x) => x.id === selectedBuildingId);
@@ -513,23 +638,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
           })()}
 
         {/* Panneau stats (droite) */}
-        <aside
-          style={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            bottom: 12,
-            width: 300,
-            overflowY: 'auto',
-            background: 'var(--bg-raised)',
-            borderRadius: 'var(--radius-card)',
-            boxShadow: 'var(--elevation-raised)',
-            padding: 'var(--space-4)',
-            display: 'grid',
-            gap: 'var(--space-4)',
-            alignContent: 'start',
-          }}
-        >
+        <aside className="planet-inspector">
           <div style={{ display: 'grid', gap: 6 }}>
             <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
               <Users size={14} color="var(--primary-300)" aria-hidden />
@@ -949,6 +1058,20 @@ export function PlanetView({ planetId }: { planetId: string }) {
           }
         }}
       />
+      {statsOpen && (
+        <PlanetStats planet={planet} onClose={() => setStatsOpen(false)} />
+      )}
+      {recipePickerFor && (
+        <RecipePicker
+          planet={planet}
+          building={recipePickerFor}
+          onPick={(recipe) => {
+            setSelectedCard({ building: recipePickerFor, recipe });
+            setRecipePickerFor(null);
+          }}
+          onCancel={() => setRecipePickerFor(null)}
+        />
+      )}
     </div>
   );
 }

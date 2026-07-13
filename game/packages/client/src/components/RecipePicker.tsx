@@ -9,8 +9,12 @@ import {
   TRACE_MINING_T_PER_DAY,
   type BuildingKey,
 } from '@atg/shared';
+import { ArrowRight, Factory, Pickaxe, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import type { PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
+import { useDialogFocus } from './useDialogFocus.ts';
+import '../styles/planet-panels.css';
 
 export function RecipePicker({
   planet,
@@ -23,6 +27,7 @@ export function RecipePicker({
   onPick: (recipe: string) => void;
   onCancel: () => void;
 }) {
+  const dialogRef = useDialogFocus(onCancel);
   const options: { recipe: string; label: string; hint: string }[] = [];
 
   if (building === 'mine' || building === 'crystal_extractor') {
@@ -68,76 +73,71 @@ export function RecipePicker({
     }
   }
 
-  return (
+  return createPortal(
     <div
+      ref={dialogRef}
       role="dialog"
       aria-label={t.planet.chooseRecipe}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'grid',
-        placeItems: 'center',
-        background: 'rgba(6,8,16,.7)',
-        zIndex: 10,
-      }}
+      aria-modal="true"
+      tabIndex={-1}
+      className="ls-modal-layer"
     >
-      <div
-        style={{
-          width: 460,
-          maxHeight: '70%',
-          overflowY: 'auto',
-          background: 'var(--bg-overlay)',
-          borderRadius: 'var(--radius-card)',
-          boxShadow: 'var(--elevation-raised)',
-          padding: 'var(--space-4)',
-          display: 'grid',
-          gap: 'var(--space-2)',
-        }}
-      >
-        <h3 style={{ fontSize: 14 }}>{building.replace(/_/g, ' ')}</h3>
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
-          {t.planet.chooseRecipe}
-        </p>
-        {options.map((o) => (
+      <div className="ls-command-panel ls-recipe-modal">
+        <header className="ls-modal-header">
+          <div className="ls-modal-heading">
+            <span className="ls-panel-kicker">Production routing</span>
+            <h3 className="ls-modal-title">{building.replace(/_/g, ' ')}</h3>
+            <p className="ls-muted-copy">{t.planet.chooseRecipe}</p>
+          </div>
           <button
-            key={o.recipe}
             type="button"
-            onClick={() => onPick(o.recipe)}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: 12,
-              background: 'var(--bg-raised)',
-              border: '1px solid var(--stroke-subtle)',
-              borderRadius: 'var(--radius-button)',
-              color: 'var(--text-primary)',
-              padding: '8px 12px',
-              fontSize: 12,
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
+            className="ls-icon-button"
+            onClick={onCancel}
+            aria-label={t.planet.cancel}
           >
-            <span>{o.label}</span>
-            <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-              {o.hint}
-            </span>
+            <X size={16} aria-hidden />
           </button>
-        ))}
-        <button
-          type="button"
-          onClick={onCancel}
-          style={{
-            justifySelf: 'end',
-            background: 'none',
-            border: 'none',
-            color: 'var(--primary-300)',
-            cursor: 'pointer',
-            fontSize: 12,
-          }}
-        >
-          {t.planet.cancel}
-        </button>
+        </header>
+
+        <div className="ls-recipe-list">
+          {options.map((o) => (
+            <button
+              key={o.recipe}
+              type="button"
+              className="ls-recipe-option"
+              onClick={() => onPick(o.recipe)}
+            >
+              <span className="ls-recipe-option__icon" aria-hidden="true">
+                {o.recipe.startsWith('extract:') ? (
+                  <Pickaxe size={17} />
+                ) : (
+                  <Factory size={17} />
+                )}
+              </span>
+              <span className="ls-recipe-option__copy">
+                <span className="ls-recipe-option__label">{o.label}</span>
+                <span className="ls-recipe-option__hint">{o.hint}</span>
+              </span>
+              <ArrowRight
+                className="ls-recipe-option__arrow"
+                size={15}
+                aria-hidden
+              />
+            </button>
+          ))}
+        </div>
+
+        <footer className="ls-modal-footer">
+          <button
+            type="button"
+            className="ls-button ls-button--neutral"
+            onClick={onCancel}
+          >
+            {t.planet.cancel}
+          </button>
+        </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
