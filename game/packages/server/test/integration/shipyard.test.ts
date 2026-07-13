@@ -106,7 +106,9 @@ describe('chantier naval (DG §381)', () => {
     expect(mule).toBeTruthy();
     expect(mule!.status).toBe('docked');
     expect(mule!.dockedBodyId).toBe(starter);
-    expect(mule!.fuel).toEqual({});
+    // Réservoir vide mais TYPÉ sur l'étoile natale (auto-chargement).
+    expect(Object.values(mule!.fuel)).toEqual([0]);
+    expect(['cold', 'hot', 'gas']).toContain(Object.keys(mule!.fuel)[0]);
     expect(mule!.cargo).toEqual({});
     const after = Number(
       (await pool.query(

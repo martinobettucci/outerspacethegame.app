@@ -140,6 +140,22 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   WITH the reason — L hulls need a level 3 yard), live cost line in mono,
   name input, primary `Lay the keel`; the under-construction queue lists
   `name (category SIZE) — ETA` in warning color.
+- **Ship panel: settlers & colonization (implemented, chunk N)** —
+  "Settlers — n/pax" section with the violet `Colony kit` chip once
+  fitted; docked-owned controls: spinbutton + `Embark`/`Disembark`,
+  `Fit colony kit`, `Assign pilot` (shows the NPC's rarity and risk
+  reduction %); hovering an eligible wild world surfaces the accent
+  `Colonize` button (accent = the historic gesture); while `colonizing`,
+  the panel shows the warning-colored "Establishing colony — ETA"
+  countdown and no movement controls.
+- **Programs section (implemented, chunk N)** — planet sidebar region
+  (FlaskConical icon) for tile-less tech programs (today:
+  `colony program`): unlock button with cost, or the success-green
+  "Unlocked — colony fittings enabled here." line. Programs are never
+  hidden by the mask — locked states carry the reason.
+- **Colony grace badge (implemented, chunk N)** — violet chip in the
+  planet header ("Colony grace until <date>", title = the protection
+  hint). Starters wear it too: a starter IS a fresh colony.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

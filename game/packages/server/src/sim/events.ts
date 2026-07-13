@@ -15,6 +15,7 @@ export type EventKind =
   | 'deposit_dry'
   | 'ship_arrival'
   | 'ship_built'
+  | 'colony_established'
   | 'noop';
 
 export interface GameEvent {

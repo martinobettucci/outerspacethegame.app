@@ -15,8 +15,15 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Package,
+  Users,
+  Flag,
 } from 'lucide-react';
-import { ALL_RESOURCE_IDS, containersUsed } from '@atg/shared';
+import {
+  ALL_RESOURCE_IDS,
+  canFitColonyKit,
+  COLONY_MIN_SETTLERS,
+  containersUsed,
+} from '@atg/shared';
 import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
@@ -39,7 +46,7 @@ interface SceneRefs {
 }
 
 export function GalaxyMap() {
-  const { setView } = useAppState();
+  const { setView, refreshMe } = useAppState();
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
@@ -59,6 +66,19 @@ export function GalaxyMap() {
     Awaited<ReturnType<typeof api.markets>>['markets']
   >([]);
   const [tradeT, setTradeT] = useState('1');
+  const [settlersN, setSettlersN] = useState('200');
+  const [npcs, setNpcs] = useState<
+    Awaited<ReturnType<typeof api.npcs>>['npcs']
+  >([]);
+  const refreshNpcs = () =>
+    api
+      .npcs()
+      .then((r) => setNpcs(r.npcs))
+      .catch(() => setNpcs([]));
+  useEffect(() => {
+    void refreshNpcs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const targetingRef = useRef<typeof targeting>(null);
   targetingRef.current = targeting;
   const shipsRef = useRef<ShipView[]>([]);
@@ -124,7 +144,18 @@ export function GalaxyMap() {
         .catch(() => !cancelled && setError(true));
       api
         .fleet()
-        .then((r) => !cancelled && setShips(r.ships))
+        .then((r) => {
+          if (cancelled) return;
+          // Une coque « colonizing » qui disparaît vient d'être convertie
+          // en colonie : le rail (me.planets) doit l'apprendre.
+          const established = shipsRef.current.some(
+            (s) =>
+              s.status === 'colonizing' &&
+              !r.ships.some((n) => n.id === s.id),
+          );
+          setShips(r.ships);
+          if (established) void refreshMe();
+        })
         .catch(() => undefined);
     };
     load();
@@ -133,7 +164,7 @@ export function GalaxyMap() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [refreshMe]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -755,6 +786,221 @@ export function GalaxyMap() {
               )}
             </section>
           )}
+          {selectedShip.hullCategory === 'civil' && (
+            <section
+              aria-label={t.galaxy.settlersLabel}
+              style={{ display: 'grid', gap: 6, fontSize: 12 }}
+            >
+              <strong
+                style={{
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Users size={13} aria-hidden /> {t.galaxy.settlersLabel} —{' '}
+                {selectedShip.settlers}/{selectedShip.settlersPax}
+                {selectedShip.colonyKit && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      background: 'var(--violet-700)',
+                      color: 'var(--accent-200)',
+                      borderRadius: 'var(--radius-chip)',
+                      padding: '1px 8px',
+                      fontSize: 10,
+                    }}
+                  >
+                    {t.galaxy.colonyKit}
+                  </span>
+                )}
+              </strong>
+              {selectedShip.status === 'colonizing' && selectedShip.establishesAt && (
+                <span style={{ color: 'var(--warning-500)', fontFamily: 'var(--font-mono)' }}>
+                  {t.galaxy.colonizing} —{' '}
+                  {new Date(selectedShip.establishesAt).toLocaleTimeString('en-US')}
+                </span>
+              )}
+              {selectedShip.status === 'docked' &&
+                selectedShip.dockedBodyId &&
+                bodies.some((b) => b.id === selectedShip.dockedBodyId && b.owned) && (
+                  <>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <input
+                        aria-label={t.galaxy.settlersLabel}
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={settlersN}
+                        onChange={(e) => setSettlersN(e.target.value)}
+                        style={{
+                          width: 66,
+                          background: 'var(--bg-raised)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 6px',
+                          fontSize: 12,
+                        }}
+                      />
+                      {(['embark', 'disembark'] as const).map((direction) => (
+                        <button
+                          key={direction}
+                          type="button"
+                          onClick={() =>
+                            api
+                              .transferSettlers(selectedShip.id, {
+                                count: Number(settlersN),
+                                direction,
+                              })
+                              .then(() => {
+                                setNotice(t.galaxy.settlersMoved);
+                                void refreshShips();
+                              })
+                              .catch((err: ApiError) =>
+                                setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                              )
+                          }
+                          style={{
+                            background:
+                              direction === 'embark'
+                                ? 'var(--primary-400)'
+                                : 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '4px 8px',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {direction === 'embark' ? t.galaxy.embark : t.galaxy.disembark}
+                        </button>
+                      ))}
+                    </div>
+                    {canFitColonyKit({
+                      category: selectedShip.hullCategory,
+                      size: selectedShip.hullSize,
+                    }) &&
+                      !selectedShip.colonyKit && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            api
+                              .fitColonyKit(selectedShip.id)
+                              .then(() => {
+                                setNotice(t.galaxy.kitFitted);
+                                void refreshShips();
+                              })
+                              .catch((err: ApiError) =>
+                                setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                              )
+                          }
+                          style={{
+                            background: 'var(--violet-500)',
+                            color: 'var(--text-primary)',
+                            border: 'none',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '6px 10px',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {t.galaxy.fitColonyKit}
+                        </button>
+                      )}
+                    {(() => {
+                      const freePilot = npcs.find(
+                        (n) => n.role === 'pilot' && !n.boundHostId,
+                      );
+                      return freePilot ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            api
+                              .assignCrew(selectedShip.id, freePilot.id)
+                              .then(() => {
+                                setNotice(t.galaxy.pilotAssigned);
+                                void refreshNpcs();
+                              })
+                              .catch((err: ApiError) =>
+                                setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                              )
+                          }
+                          title={`settler risk −${(
+                            (freePilot.statRolls.settler_risk_reduction ?? 0) * 100
+                          ).toFixed(1)}%`}
+                          style={{
+                            background: 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '6px 10px',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {t.galaxy.assignPilot} ({freePilot.rarity} · −
+                          {((freePilot.statRolls.settler_risk_reduction ?? 0) * 100).toFixed(1)}
+                          %)
+                        </button>
+                      ) : null;
+                    })()}
+                  </>
+                )}
+              {selectedShip.status === 'hovering' &&
+                selectedShip.hoverBodyId &&
+                (() => {
+                  const under = bodies.find((b) => b.id === selectedShip.hoverBodyId);
+                  const wild =
+                    under &&
+                    under.bodyType === 'planet' &&
+                    !under.ownerId &&
+                    under.climate !== 'poison';
+                  if (!wild) return null;
+                  const ready =
+                    selectedShip.colonyKit &&
+                    selectedShip.settlers >= COLONY_MIN_SETTLERS;
+                  return (
+                    <button
+                      type="button"
+                      disabled={!ready}
+                      title={
+                        ready
+                          ? undefined
+                          : `${t.galaxy.colonyKit} + ≥ ${COLONY_MIN_SETTLERS} ${t.galaxy.settlersLabel}`
+                      }
+                      onClick={() =>
+                        api
+                          .colonize(selectedShip.id)
+                          .then(() => {
+                            setNotice(t.galaxy.colonizeStarted);
+                            void refreshShips();
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                          )
+                      }
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        justifyContent: 'center',
+                        background: ready ? 'var(--accent-400)' : 'var(--bg-overlay)',
+                        color: ready ? '#0D0D0D' : 'var(--text-disabled)',
+                        border: 'none',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '8px 12px',
+                        cursor: ready ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      <Flag size={14} aria-hidden /> {t.galaxy.colonize}
+                    </button>
+                  );
+                })()}
+            </section>
+          )}
           {innate.length > 0 && onSiteAt && (
             <section
               aria-label={t.galaxy.hospitalityTitle}
@@ -1072,8 +1318,19 @@ export function GalaxyMap() {
             </button>
           )}
           {!selected.owned && selected.bodyType === 'planet' && !selected.ownerId && (
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
-              {t.galaxy.foreignPlanet}
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color:
+                  selected.climate === 'poison'
+                    ? 'var(--danger-500)'
+                    : 'var(--accent-200)',
+              }}
+            >
+              {selected.climate === 'poison'
+                ? t.galaxy.wildPoison
+                : t.galaxy.wildColonizable}
             </p>
           )}
         </aside>

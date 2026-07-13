@@ -1633,3 +1633,97 @@ directs) ; E2E 12/12 (premier passage 19,9 s + rerun 13,7 s) ; captures
 nouveau marqueur dans l'éventail de flotte. Observation honnête : le stock
 sur-cap (grants répétés) s'affiche en ambre 1813/1000 T — comportement
 d'affichage correct, le cap clippe à l'évaluation suivante.
+
+---
+
+## 2026-07-13 — Session 30 (suite) : chunk N — colonisation v1, la deuxième planète
+
+### Instruction du responsable & méthode
+« keep going, do not ever stop and ultracode implement as much as you can » —
+opt-in ultracode explicite. Par §26 (rang 2 : instruction explicite du
+responsable), exception ponctuelle au §1 « pas de sous-agents » : un
+workflow de spécification (4 agents parallèles — colonisation, intel
+télescope, drains de survol, census — plus vérificateurs adverses) a
+produit les specs des prochains chunks. La limite de session des
+sous-agents est tombée en cours de route : 3 vérifications adverses ont
+manqué ; les affirmations porteuses des specs ont été re-vérifiées
+inline contre le code avant usage. Toute l'implémentation elle-même est
+restée séquentielle et directe.
+
+### Canon appliqué (GB §19/§14/§12, DG §3.2/§12/§8.6/§10.3)
+Civil M/L + fitting colonie + ≥ 200 settlers + stock d'amorçage ; 72 h
+d'établissement ; « the ship is spent » : coque convertie en depot L1 +
+spaceport L1 ; grâce de 14 jours pour la colonie fraîche.
+
+### Conflit de canon découvert — provisions du kit [TUNE interp]
+Le stock d'amorçage (30 T nourriture + 30 T eau) ne TIENT PAS dans les
+2 conteneurs d'un Civil M (1 conteneur = 1 T d'un fongible, DG §7). Deux
+lectures possibles : (a) exiger un cargo d'escorte, (b) le kit arrive
+provisionné. Décision v1 : **le kit embarque ses provisions** — payées au
+fitting, déchargées à l'établissement. C'est la lecture qui préserve
+« one ship, one colony » du gamebook ; à re-trancher en équilibrage.
+
+### Décisions v1
+- **Péage de trajet déterministe** (DG §3.2 « no free sub-20 cohorts ») :
+  espérance settlers × risque ajoutée au report fractionnaire DE LA ROUTE
+  (`settler_routes`, PK origine+destination) ; morts = partie entière,
+  reste = nouveau report. Aucun dé. **Quantification 1e-9** : 300 × 0,03
+  donne 8,999999… en IEEE 754 → sans quantification le péage perdrait un
+  mort à la poussière binaire (bug attrapé par le test d'intégration).
+- **Réduction pilote v1** : stat seedée `settler_risk_reduction` du
+  pilote lié (l'échelle « 2 % × civilPilotLevel » par rareté reste
+  [TUNE-GAP] pour le chunk lifecycle NPC). Liaison pilote↔coque
+  permanente (GB §12), max 1 équipage v1.
+- **Anti-course** : `colonizeShip` verrouille le corps et refuse si un
+  `colony_established` est déjà en attente sur la cible ; le handler
+  re-vérifie à l'arrivée (le perdant reste en survol, settlers intacts).
+- **Grâce 14 j : données + UI seulement** — l'enforcement (pas de
+  conquête, pas d'a2g) ne peut exister avant le combat (P5) ; annoncé au
+  backlog, badge et `graceUntil` API déjà en place. Observation assumée :
+  les mondes STARTERS portent le badge (colonized_at posé au spawn) —
+  cohérent avec le canon, un starter est une colonie fraîche.
+- **Réservoir natal typé** : une coque neuve naissait avec `fuel = {}` ;
+  l'auto-chargement au départ défaultait sur `cold` même sous une étoile
+  chaude (« Carburant insuffisant : 0/22 u (cold) » en E2E). Correction :
+  `shipBuilt` résout l'étoile la plus proche et type le réservoir
+  `{<type>: 0}` — vide mais typé.
+- **Le rail apprend la colonie** : `me.planets` n'était chargé qu'au
+  login ; la carte galaxie détecte la disparition d'une coque
+  « colonizing » (établissement) dans son poll de flotte (5 s) et
+  rafraîchit `me` — bug UX réel trouvé par l'E2E.
+
+### E2E — déterminisme durci
+- `pickColonyEmail` : itère des e-mails candidats jusqu'à un ADN de
+  compte garantissant spaceport + shipyard + workshop L2 (le seed pur
+  `universe:starter:email` rend l'ADN précomputable — aucun re-roll de
+  chance en test).
+- **Géométrie de plateau EXACTE** : les tuiles sont projetées par le même
+  calcul isométrique que le client (cols = ceil(sqrt(n))…) — fini les
+  pixels devinés qui rataient les starters à 10 tuiles.
+- **Pose vérifiée par l'état** : chaque placement re-lit l'API
+  (`hasBuilding`) au lieu de croire un toast — les notices identiques
+  entre déverrouillages masquaient des clics avalés par le re-tri de la
+  main.
+- **Péage vérifié à l'unité près** : le test lit le roll RÉEL du pilote
+  lié (`/npcs`) et recalcule le péage attendu avec les MÊMES fonctions
+  partagées que le serveur — un pilote fort peut annuler le risque, zéro
+  mort est alors le résultat correct (l'assertion « < 300 » naïve était
+  fausse ; leçon : ne jamais encoder une hypothèse sur un roll seedé).
+- Surface UI manquante découverte : `colony_program` est un nœud de tech
+  SANS carte — la section « Programs » (vue planète) a été ajoutée pour
+  lui donner un point de déverrouillage réel.
+
+### Vérifications
+60 unit shared (7 colonisation : risque, pertes, accumulateur « pas de
+cohorte gratuite », grâce, éligibilité) + 27 unit serveur ; 93/93
+intégration (9 colonisation : coût du fitting, refus workshop/programme/
+coque, embarquement + caps pax + garde workforce, liaison pilote
+permanente, péage déterministe 300→291 avec pilote fixé, refus poison/
+possédé/vide, établissement complet — population, bâtiments actifs,
+provisions + carburant déchargés, PNJ re-liés, coque supprimée, refus
+d'intrus en requêtes directes) ; E2E 13/13 dont colonisation ×2 (1,9 min
+et 1,8 min) ; captures col-01..05 observées à la vision (§16) : quille,
+Arche parée (300/800 + kit), survol du sauvage (296 — péage exact de 4),
+compte à rebours d'établissement, Dratath au rail avec badge de grâce,
+population 296, provisions 30+30 en stock. Vidéo .webm du parcours
+complet conservée (preuve n°12).

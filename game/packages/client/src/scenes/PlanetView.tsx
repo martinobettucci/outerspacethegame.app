@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
-import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite, Store } from 'lucide-react';
+import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite, Store, FlaskConical } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
@@ -366,6 +366,21 @@ export function PlanetView({ planetId }: { planetId: string }) {
             {planet.size.toUpperCase()} · {planet.climate} · {planet.quality} ·{' '}
             {planet.tiles - usedTiles} {t.planet.tilesFree}
           </span>
+          {planet.graceUntil && (
+            <span
+              title={t.planet.graceHint}
+              style={{
+                background: 'var(--violet-700)',
+                color: 'var(--accent-200)',
+                borderRadius: 'var(--radius-chip)',
+                padding: '2px 10px',
+                fontSize: 11,
+              }}
+            >
+              {t.planet.graceBadge}{' '}
+              {new Date(planet.graceUntil).toLocaleDateString('en-US')}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setStatsOpen(true)}
@@ -685,6 +700,51 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     </span>
                   </span>
                 ))
+            )}
+          </section>
+
+          {/* Programmes (GB §19) : des SAVOIRS par planète, pas des
+              bâtiments — colony_program déverrouille le fitting colonie. */}
+          <section
+            aria-label={t.planet.programs}
+            style={{ display: 'grid', gap: 4 }}
+          >
+            <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+              <FlaskConical size={14} color="var(--primary-300)" aria-hidden />
+              {t.planet.programs}
+            </span>
+            {planet.tech.unlocked.includes('colony_program') ? (
+              <span style={{ fontSize: 12, color: 'var(--success-500)' }}>
+                {t.planet.programColony} — {t.planet.programUnlocked}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await api.unlock(planetId, 'colony_program');
+                    setNotice(t.planet.unlockSuccess);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+                style={{
+                  justifySelf: 'start',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'var(--violet-500)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '5px 10px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                {t.planet.unlockFirst} {t.planet.programColony}
+              </button>
             )}
           </section>
 

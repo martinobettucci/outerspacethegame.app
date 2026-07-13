@@ -79,6 +79,9 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
 - `markets`, `amm_pools` (per market per pair, LP liens), `auctions` +
   system-held `escrow`, `trades`.
 - `pings`, `channels`, `shares`, `routes`/`stargates` (tolls).
+- `settler_routes` (implemented, 007): deterministic settler-toll
+  accumulator per (origin, destination) pair — fractional expectation
+  carried between trips so small cohorts still pay (DG §3.2).
 - `events` queue; `census` snapshots; `nft_locks` (packing/frozen state).
 - Spatial index (grid hash 64 pc) for interception queries.
 
@@ -94,6 +97,18 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    → DB lock; burn observed → asset rematerializes (minter-only 60 d).
 5. **Purchase:** Stripe webhook → spawn generator (§2.2 DESIGN_GUIDE) →
    planet minted near buyer.
+6. **Colonization (implemented, chunk N):** fit colony kit (Civil M/L,
+   `colony_program` unlocked + workshop L2 active; cost = fitting +
+   terraform core + provisions) → embark settlers (active spaceport, pax
+   caps, 60 % workforce guard) → fly to a hovered wild non-poison planet →
+   `colonize` (≥ 200 settlers, anti-race lock) → 72 h
+   `colony_established` event: ownership, population = delivered
+   settlers, hull converted to depot L1 + spaceport L1 (tiles 0/1),
+   provisions + fuel unloaded, NPCs re-bound to the planet, ship deleted.
+   Arrival toll is deterministic (base 5 % − bound-pilot reductions,
+   `settler_routes` accumulator quantized 1e-9). Fresh colonies carry a
+   14-day grace (`colonized_at`; badge + API today, enforcement lands
+   with combat).
 
 ## 5. Authentication & authorization
 

@@ -7,6 +7,8 @@
  */
 import {
   BASIC_RESOURCES,
+  colonyGraceUntilMs,
+  isInColonyGrace,
   BUILD_HOURS_BY_LEVEL,
   BUILDINGS,
   DEMOLISH_HOURS,
@@ -136,6 +138,8 @@ export interface PlanetDetail {
     landing: 'self' | 'everyone' | null;
     marketSlots: MarketSlot[] | null;
   }[];
+  colonizedAt: string | null;
+  graceUntil: string | null;
   tech: {
     available: TechNodeKey[];
     maxLevel: Record<string, number>;
@@ -155,7 +159,7 @@ export async function planetDetail(
   try {
     const { rows } = await client.query(
       `SELECT id, name, x, y, seed, size, climate, quality, tiles, owner_id,
-              is_starter, population, illness
+              is_starter, population, illness, colonized_at
        FROM bodies WHERE id = $1 AND body_type = 'planet'`,
       [bodyId],
     );
@@ -234,6 +238,16 @@ export async function planetDetail(
       workforceAssignable: Math.floor(
         snap.population * WORKFORCE_ASSIGNABLE_SHARE,
       ),
+      colonizedAt: body.colonized_at
+        ? new Date(body.colonized_at).toISOString()
+        : null,
+      graceUntil:
+        body.colonized_at &&
+        isInColonyGrace(new Date(body.colonized_at).getTime(), nowMs)
+          ? new Date(
+              colonyGraceUntilMs(new Date(body.colonized_at).getTime()),
+            ).toISOString()
+          : null,
       stock,
       deposits: Object.entries(snap.deposits)
         .map(([resource, remaining]) => {
@@ -302,7 +316,7 @@ export async function planetDetail(
  * Paie un coût depuis le stock de la planète (transaction appelante).
  * Tout-ou-rien : lève insufficient_resources si un poste manque.
  */
-async function payCost(
+export async function payCost(
   client: pg.PoolClient,
   bodyId: string,
   climate: Climate,

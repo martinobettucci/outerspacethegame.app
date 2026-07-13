@@ -94,6 +94,20 @@ evaluated stock.
   a NULL building and `slot_index = -1` — every trade flow feeds the same
   ledger (future census reads one table).
 
+## 007_colonization (settlers & the second planet, GB §19/§12, DG §3.2/§12)
+
+- `ships.settlers int` (CHECK ≥ 0), `ships.settlers_origin_body_id uuid
+  REFERENCES bodies` (one origin per load — the toll is a property of the
+  ROUTE), `ships.colony_kit boolean` — the fitting that turns a Civil M/L
+  into a one-shot colony ship.
+- `ships.status` gains `'colonizing'` (establishment window; the hull is
+  consumed by the `colony_established` event).
+- `settler_routes` — deterministic-toll accumulator per (origin, dest)
+  pair: `loss_carry` (CHECK 0 ≤ x < 1) carries the fractional expectation
+  so sub-20 cohorts still pay over time (DG §3.2, "no free sub-20
+  cohorts"). Expectation is quantized to 1e-9 in code before flooring —
+  the toll must not depend on IEEE dust.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

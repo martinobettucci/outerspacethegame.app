@@ -45,6 +45,10 @@ export interface ShipView {
   hoverBodyId: string | null;
   cargo: Record<string, number>;
   containers: number;
+  settlers: number;
+  settlersPax: number;
+  colonyKit: boolean;
+  establishesAt: string | null;
   fuel: Record<string, number>;
   mission: {
     originX: number;
@@ -109,6 +113,14 @@ export async function fleet(
        created_at, id`,
     [playerId],
   );
+  // Comptes à rebours d'établissement des coques en 'colonizing'.
+  const { rows: establishing } = await pool.query(
+    `SELECT payload->>'shipId' AS ship_id, due_at FROM events
+     WHERE kind = 'colony_established' AND processed_at IS NULL`,
+  );
+  const establishesBy = new Map(
+    establishing.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
   return rows.map((r) => {
     const pos = shipPosition(r, nowMs);
     return {
@@ -123,6 +135,12 @@ export async function fleet(
       hoverBodyId: r.hover_body_id,
       cargo: r.cargo ?? {},
       containers: hullContainers(r.hull_category, r.hull_size),
+      settlers: r.settlers ?? 0,
+      settlersPax:
+        HULLS[`${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`]
+          ?.pax ?? 0,
+      colonyKit: !!r.colony_kit,
+      establishesAt: establishesBy.get(r.id) ?? null,
       fuel: r.fuel ?? {},
       mission:
         r.status === 'transit' && r.departed_at
@@ -217,6 +235,14 @@ export async function moveShip(
     } else {
       if (ship.hull_category === 'personal') {
         throw new CommandError('forbidden', 'Le vaisseau personnel ne rejoint que vos mondes');
+      }
+      if ((ship.settlers ?? 0) > 0) {
+        // v1 [décision annoncée] : des settlers à bord imposent une
+        // destination planétaire — pas de cohorte abandonnée dans le vide.
+        throw new CommandError(
+          'not_available',
+          'Des settlers à bord : visez une planète, pas le vide',
+        );
       }
       destX = dest.x;
       destY = dest.y;
@@ -780,4 +806,110 @@ export async function pendingShipBuilds(
     name: String(r.payload.name),
     completesAt: new Date(r.due_at).toISOString(),
   }));
+}
+
+/** NPCs du joueur (main + liés), avec leurs rolls individuels (GB §12). */
+export async function listNpcs(
+  pool: pg.Pool,
+  playerId: string,
+): Promise<
+  {
+    id: string;
+    people: string;
+    role: string;
+    rarity: string;
+    statRolls: Record<string, number>;
+    boundHostType: string | null;
+    boundHostId: string | null;
+  }[]
+> {
+  const { rows } = await pool.query(
+    `SELECT id, people, role, rarity, stat_rolls, bound_host_type, bound_host_id
+     FROM npcs WHERE owner_id = $1 ORDER BY created_at, id`,
+    [playerId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    people: r.people,
+    role: r.role,
+    rarity: r.rarity,
+    statRolls: r.stat_rolls ?? {},
+    boundHostType: r.bound_host_type,
+    boundHostId: r.bound_host_id,
+  }));
+}
+
+/**
+ * Lie un NPC pilote à un vaisseau — liaison PERMANENTE (canon GB §12 :
+ * « binding is permanent and shares the host's fate » ; la seule sortie
+ * est l'entrepôt, chunk warehouse). v1 : rôle pilot, 1 membre max.
+ */
+export async function assignCrew(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  npcId: string,
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: ships } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    const ship = ships[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (ship.hull_category === 'probe') {
+      throw new CommandError('not_available', 'Une sonde est sans équipage (canon)');
+    }
+    if (ship.status !== 'docked' || !ship.docked_body_id) {
+      throw new CommandError('not_available', 'L\'équipage embarque à quai');
+    }
+    const { rows: owned } = await client.query(
+      `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+      [ship.docked_body_id, playerId],
+    );
+    if (!owned[0]) {
+      throw new CommandError('forbidden', 'L\'équipage embarque sur vos mondes');
+    }
+    const { rows: npcs } = await client.query(
+      `SELECT * FROM npcs WHERE id = $1 FOR UPDATE`,
+      [npcId],
+    );
+    const npc = npcs[0];
+    if (!npc) throw new CommandError('not_found', 'Personnage inconnu');
+    if (npc.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce personnage ne vous suit pas');
+    }
+    if (npc.bound_host_id) {
+      throw new CommandError(
+        'not_available',
+        'Liaison permanente : ce personnage est déjà lié (GB §12)',
+      );
+    }
+    if (npc.role !== 'pilot') {
+      throw new CommandError('not_available', 'v1 : seul un pilote embarque');
+    }
+    const { rows: crew } = await client.query(
+      `SELECT count(*)::int AS n FROM npcs
+       WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+      [shipId],
+    );
+    if (crew[0].n >= 1) {
+      throw new CommandError('not_available', 'v1 : un seul membre d\'équipage');
+    }
+    await client.query(
+      `UPDATE npcs SET bound_host_type = 'ship', bound_host_id = $2 WHERE id = $1`,
+      [npcId, shipId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }

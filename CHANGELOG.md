@@ -4,6 +4,33 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Colonisation v1 : la deuxième planète (chunk N)** : migration 007
+  (`ships.settlers/settlers_origin_body_id/colony_kit`, statut
+  `colonizing`, table `settler_routes` — accumulateur fractionnaire par
+  route). Fitting colonie (Civil M/L, programme `colony_program`
+  déverrouillé + workshop L2 actif ; coût = fitting + terraform core +
+  PROVISIONS 30 nourriture + 30 eau [TUNE interp — le stock d'amorçage ne
+  tient pas dans les 2 conteneurs d'un Civil M, JOURNAL]) ; embarquement
+  de settlers (spaceport actif requis, caps pax 200/800/3000, garde 60 %
+  de workforce restante, une seule origine par cargaison) ; péage de
+  trajet DÉTERMINISTE (base 5 % − réductions des pilotes liés,
+  accumulateur par route « no free sub-20 cohorts », quantifié 1e-9
+  contre la poussière IEEE) ; colonisation (survol d'un monde sauvage
+  non-poison, ≥ 200 settlers, anti-course, événement 72 h) ;
+  établissement : propriété, population = settlers livrés, coque
+  convertie en depot L1 + spaceport L1 (tuiles 0/1), provisions +
+  carburant déchargés, PNJ liés au monde, « the ship is spent » ; grâce
+  de colonie 14 j (badge UI + API — l'enforcement arrive avec la
+  conquête). Équipage : assignation d'un pilote PNJ (permanente, GB §12).
+  Au passage : le réservoir d'une coque neuve naît TYPÉ sur l'étoile
+  natale (l'auto-chargement partait sur `cold` à tort) ; le rail apprend
+  la nouvelle colonie quand la coque « colonizing » disparaît
+  (refreshMe). UI : section Settlers du panneau vaisseau (embark/
+  disembark, kit, pilote, Colonize, compte à rebours), section Programs
+  (vue planète), badge de grâce. 7 unit + 9 intégration (péage exact,
+  établissement complet, refus directs) + E2E parcours complet ×2
+  (péage vérifié à l'unité près via le roll réel du pilote), captures
+  col-01..05 observées.
 - **Chantier naval (chunk M)** : construction de coques (GB §14, DG §381)
   — L1 construit S+M, L2 = M en masse (−25 %), L3 construit L (gate
   serveur) ; coût payé au lancement, événement ship_built → le vaisseau

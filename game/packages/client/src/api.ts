@@ -111,6 +111,8 @@ export interface PlanetDetail {
   storageU: number;
   workforceAssigned: number;
   workforceAssignable: number;
+  colonizedAt: string | null;
+  graceUntil: string | null;
   stock: Record<string, { amount: number; ratePerDay: number }>;
   deposits: {
     resource: string;
@@ -141,6 +143,10 @@ export interface ShipView {
   hoverBodyId: string | null;
   cargo: Record<string, number>;
   containers: number;
+  settlers: number;
+  settlersPax: number;
+  colonyKit: boolean;
+  establishesAt: string | null;
   fuel: Record<string, number>;
   mission: {
     originX: number;
@@ -287,6 +293,32 @@ export const api = {
       'POST',
       `/planets/${planetId}/ships`,
       input,
+    ),
+  npcs: () =>
+    call<{
+      npcs: {
+        id: string;
+        people: string;
+        role: string;
+        rarity: string;
+        statRolls: Record<string, number>;
+        boundHostType: string | null;
+        boundHostId: string | null;
+      }[];
+    }>('GET', '/npcs'),
+  assignCrew: (shipId: string, npcId: string) =>
+    call<{ ok: true }>('POST', `/ships/${shipId}/crew`, { npcId }),
+  fitColonyKit: (shipId: string) =>
+    call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/colony-kit`),
+  transferSettlers: (
+    shipId: string,
+    input: { count: number; direction: 'embark' | 'disembark' },
+  ) =>
+    call<{ settlers: number }>('POST', `/ships/${shipId}/settlers`, input),
+  colonize: (shipId: string) =>
+    call<{ completesAt: string; bodyId: string }>(
+      'POST',
+      `/ships/${shipId}/colonize`,
     ),
   shipBuilds: (planetId: string) =>
     call<{

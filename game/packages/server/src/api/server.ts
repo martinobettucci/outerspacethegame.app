@@ -19,15 +19,22 @@ import {
 import { verifyPassword } from '../services/passwords.js';
 import { visibleBodies } from '../services/world.js';
 import {
+  assignCrew,
   buildShip,
   fleet,
   landShip,
   launchProbe,
+  listNpcs,
   moveShip,
   pendingShipBuilds,
   transferCargo,
   undockShip,
 } from '../services/ships.js';
+import {
+  colonizeShip,
+  fitColonyKit,
+  transferSettlers,
+} from '../services/colonization.js';
 import {
   executeInnateTrade,
   executeTrade,
@@ -131,6 +138,11 @@ const buildShipSchema = z.object({
   size: z.enum(['s', 'm', 'l']),
   name: z.string().min(2).max(40),
 });
+const settlersSchema = z.object({
+  count: z.number().int().positive(),
+  direction: z.enum(['embark', 'disembark']),
+});
+const crewSchema = z.object({ npcId: z.string().uuid() });
 
 const COMMAND_HTTP: Record<CommandError['code'], number> = {
   not_found: 404,
@@ -525,6 +537,49 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       return { ok: true };
     });
   }
+
+  app.get('/npcs', async (req) => {
+    const player = await requirePlayer(req);
+    return { npcs: await listNpcs(deps.pool, player.id) };
+  });
+
+  app.post('/ships/:id/crew', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = crewSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, async () => {
+      await assignCrew(deps.pool, player.id, id, parsed.data.npcId);
+      return { ok: true };
+    });
+  });
+
+  app.post('/ships/:id/colony-kit', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => fitColonyKit(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/settlers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = settlersSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      transferSettlers(deps.pool, player.id, id, parsed.data),
+    );
+  });
+
+  app.post('/ships/:id/colonize', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => {
+      const r = await colonizeShip(deps.pool, player.id, id, {
+        timeScale: deps.config.TIME_SCALE,
+      });
+      return { completesAt: r.completesAt.toISOString(), bodyId: r.bodyId };
+    });
+  });
 
   app.post('/planets/:id/ships', async (req, reply) => {
     const player = await requirePlayer(req);
