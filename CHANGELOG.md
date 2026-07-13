@@ -4,6 +4,33 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Census global de l'offre (chunk P)** : migration 009
+  (`census_snapshots` + amorçage idempotent du premier `census_run`) ;
+  événement RÉCURRENT auto-replanifié dans la file events (aucun cron —
+  patron pop_daily : dédoublonnage puis re-INSERT), cadence
+  CENSUS_PER_DAY (défaut 4×/jour [TUNE], GB §13 « admin-configurable »,
+  divisée par TIME_SCALE ; le worker ré-amorce la chaîne au boot,
+  idempotent) ; agrégation PURE et honnête des DEUX sources existantes —
+  stocks planétaires (évalués lazy à l'instant du snapshot, min 0) +
+  soutes (tous statuts) ; gisements EXCLUS (non extraits ≠ offre) ;
+  pools AMM et escrow d'enchères rejoindront la somme avec leurs chunks
+  (manque ENREGISTRÉ dans meta.sources de chaque snapshot) ; un census
+  mesure l'état COURANT (nowMs, pas dueAt — pas de rattrapage de
+  snapshots du passé après une panne). Publication (DG §11.5) : totaux
+  GLOBAUX par ressource UNIQUEMENT — GET /census/latest (session
+  requise, 401 anonyme) ne renvoie JAMAIS de ventilation
+  planète/entrepôt/source (assertion négative testée sur le JSON
+  sérialisé). UI : bouton Market du rail ACTIVÉ → écran Market, onglet
+  Census (bandeau horodatage + cadence, phrase canon « Global totals
+  only », table sémantique EXHAUSTIVE des 31 ressources groupées par
+  tier, zéros affichés, états chargement/erreur/vide) ; Trading/Auctions
+  désactivés AVEC la raison. Correctif d'infrastructure E2E : le
+  teardown du worker tue désormais son GROUPE de processus (detached) —
+  les workers zombies des runs passés réclamaient les événements avec de
+  VIEUX intervalles (6 h au lieu de 3 s). 5 unit + 3 intégration
+  (agrégat lazy exact, récurrence dédoublonnée, exactement-une-fois,
+  401/aucune ventilation) + E2E complet, suites 75/32/108/15 vertes,
+  capture cen-01 observée.
 - **Drains de loitering, échouage & ravitaillement (chunk O)** : migration
   008 — le réservoir devient une quantité PARESSEUSE
   (`fuel_rate_u_per_day` + `fuel_as_of`, montant dans `ships.fuel`) ;

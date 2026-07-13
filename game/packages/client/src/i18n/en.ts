@@ -30,6 +30,22 @@ export const t = {
     invalidInput: 'Check the form: e-mail, password (≥ 10 chars), name (≥ 2 chars).',
     genericError: 'The registration failed. Retry in a moment.',
   },
+  market: {
+    title: 'Market',
+    censusTab: 'Census',
+    tradingTab: 'Trading',
+    auctionsTab: 'Auctions',
+    censusTakenAt: 'Snapshot taken',
+    censusCadence: 'per game day',
+    censusGlobalOnly:
+      'Global totals only — per-planet breakdowns are never published.',
+    censusEmpty: 'No census yet — the first snapshot is pending.',
+    censusError: 'The census could not be loaded.',
+    retry: 'Retry',
+    resource: 'Resource',
+    tier: 'Tier',
+    totalT: 'Total (T)',
+  },
   archetypes: {
     militarist: 'Militarist',
     industrialist: 'Industrialist',
@@ -47,6 +63,8 @@ export const t = {
     factions: 'Factions',
     comingP3: 'Arrives with phase P3 (movement & telescopes)',
     comingP4: 'Arrives with phase P4 (multiplayer & economy)',
+    comingAuctions: 'Auctions arrive with the escrow chunk (P4)',
+    comingTrading: 'Cross-player trading arrives with phase P4',
     logout: 'Log out',
   },
   galaxy: {

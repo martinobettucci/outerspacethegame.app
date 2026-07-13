@@ -1802,3 +1802,59 @@ Captures hov-01..04 observées à la vision (§16) : « loitering paid by
 the planet below », chip rouge « Stranded — out of fuel » sans boutons
 de départ, transfert 20 u à taux −0.2 u/j affiché, jauge pleine 60/60
 après Refuel. Vidéo .webm conservée (preuve n°13).
+
+---
+
+## 2026-07-13 — Session 30 (suite) : chunk P — census global de l'offre
+
+### Canon appliqué (GB §13, DG §11.5)
+Le job d'agrégation périodique est canon (« recomputed several times per
+day (admin-configurable) ») ; la publication est GLOBALE uniquement —
+jamais de ventilation par planète/entrepôt, les contenus privés comptent
+dans les valorisations serveur mais ne sont jamais énumérés. Pas de
+monnaie : des tonnes PAR RESSOURCE, jamais une valorisation agrégée.
+
+### Décisions v1
+- **Récurrence dans la file events** (DG §1, aucun cron) : patron
+  pop_daily — dédoublonnage puis re-INSERT à now + intervalle ; la
+  migration 009 amorce le premier événement, le worker RÉ-AMORCE au boot
+  (idempotent — un DELETE FROM events des tests d'intégration sur la
+  base partagée tuerait la chaîne sinon).
+- **Un census mesure l'état COURANT** : nowMs = Date.now(), pas dueAt —
+  après une panne du worker on ne rattrape pas des snapshots du passé ;
+  un seul census immédiat puis reprise de cadence.
+- **Sources v1 = stocks (lazy, min 0) + soutes (tous statuts)** ; les
+  gisements sont EXCLUS délibérément (non extraits ≠ offre) ; pools AMM
+  et escrow d'enchères n'existent pas encore — le manque est ENREGISTRÉ
+  dans meta.sources de chaque snapshot (règle de complétude : le trou
+  est visible dans la donnée, pas silencieux).
+- **Ventilation interne** : census_snapshots.totals garde
+  planetStockT/shipCargoT (debug + futures valorisations plunder/bonds) ;
+  le service latestCensus ne projette QUE totalT — l'assertion négative
+  du test d'intégration vérifie qu'aucune clé de ventilation ne sort du
+  JSON sérialisé.
+- **CENSUS_PER_DAY** (config zod, défaut 4 [TUNE]) : « admin-configurable »
+  réduit v1 à une variable d'environnement + redémarrage — surface admin
+  runtime au backlog.
+
+### Bug d'infrastructure E2E attrapé — les workers zombies
+Le teardown de global-setup tuait le wrapper pnpm, pas son enfant tsx :
+34 tick workers zombies s'étaient accumulés au fil des runs. Sans
+conséquence jusqu'ici (handlers idempotents, SKIP LOCKED), ils sont
+devenus toxiques avec la FACTORY censusRun : un zombie à l'env figé
+(sans TIME_SCALE) réclamait l'événement et replanifiait à 6 h réelles au
+lieu de 3 s. Correctif : spawn detached + kill du GROUPE de processus au
+teardown ; purge des zombies. Leçon : un handler paramétré par la config
+rend l'identité du worker significative — les processus fantômes ne
+sont plus inoffensifs.
+
+### Vérifications
+5 unit (agrégat : sommes, lazy au nowMs, clamp 0, clés hors catalogue
+ignorées, exhaustivité du catalogue contre ALL_RESOURCE_IDS) ; 3
+intégration (agrégat exact delta lazy compris + meta honnête +
+replanification dédoublonnée + exactement-une-fois ; 401 anonyme +
+aucune ventilation ; récurrence présente) ; E2E complet (Market actif,
+onglets désactivés avec raison, table exhaustive 31 lignes, grant 500 T
+d'ore → le snapshot suivant le reflète et l'UI suit, 401 en contexte
+anonyme) ; suites 75/32/108/15 vertes ; capture cen-01 observée à la
+vision (§16). Vidéo .webm conservée (preuve n°14).

@@ -17,7 +17,8 @@ import { api, type Me } from './api.js';
 export type View =
   | { kind: 'galaxy' }
   | { kind: 'planet'; planetId: string }
-  | { kind: 'comms' };
+  | { kind: 'comms' }
+  | { kind: 'market' };
 
 interface AppState {
   me: Me | null;

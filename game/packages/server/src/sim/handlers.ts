@@ -13,6 +13,7 @@ import {
   settlerTripRisk,
 } from '@atg/shared';
 import type pg from 'pg';
+import { aggregateCensus } from './census.js';
 import type { EventHandler } from './events.js';
 import { recomputePlanetRates } from './rebase.js';
 import { evalShipFuel, rebaseShipDrain } from './shipDrain.js';
@@ -400,6 +401,62 @@ export const shipBuilt: EventHandler = async (client, event) => {
     ],
   );
 };
+
+/**
+ * census_run {} — census global de l'offre (GB §13, DG §11.5), FACTORY :
+ * l'intervalle vient de la config (4×/jour [TUNE], divisé par TIME_SCALE),
+ * injecté par le worker. Un census mesure l'état COURANT : nowMs =
+ * Date.now(), PAS event.dueAt — après une panne du worker on ne
+ * « rattrape » pas des snapshots du passé, on en prend UN immédiat puis
+ * la cadence reprend. Exactement-une-fois structurel : INSERT du snapshot
+ * et processed_at commitent dans la même transaction.
+ */
+export function censusRun(intervalMs: number): EventHandler {
+  return async (client, event) => {
+    const nowMs = Date.now();
+    const { rows: stockRows } = await client.query(
+      `SELECT resource, amount_t, rate_t_per_day, as_of FROM planet_stock`,
+    );
+    const { rows: shipRows } = await client.query(`SELECT cargo FROM ships`);
+    const { rows: bodyCount } = await client.query(
+      `SELECT count(DISTINCT body_id)::int AS n FROM planet_stock`,
+    );
+    const totals = aggregateCensus(
+      stockRows.map((r) => ({
+        resource: r.resource,
+        amountT: Number(r.amount_t),
+        ratePerDayT: Number(r.rate_t_per_day),
+        asOfMs: new Date(r.as_of).getTime(),
+      })),
+      shipRows.map((r) => r.cargo ?? {}),
+      nowMs,
+    );
+    await client.query(
+      `INSERT INTO census_snapshots (taken_at, totals, meta)
+       VALUES (to_timestamp($1 / 1000.0), $2, $3)`,
+      [
+        nowMs,
+        JSON.stringify(totals),
+        JSON.stringify({
+          sources: ['planet_stock', 'ship_cargo'],
+          bodyCount: bodyCount[0].n,
+          shipCount: shipRows.length,
+        }),
+      ],
+    );
+    // Dédoublonnage + replanification (patron pop_daily).
+    await client.query(
+      `DELETE FROM events WHERE processed_at IS NULL AND kind = 'census_run'
+         AND id <> $1`,
+      [event.id],
+    );
+    await client.query(
+      `INSERT INTO events (due_at, kind, payload)
+       VALUES (to_timestamp($1 / 1000.0), 'census_run', '{}')`,
+      [nowMs + intervalMs],
+    );
+  };
+}
 
 export function baseHandlers(): Record<string, EventHandler> {
   return {

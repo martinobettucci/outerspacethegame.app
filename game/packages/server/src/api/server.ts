@@ -38,6 +38,7 @@ import {
   fitColonyKit,
   transferSettlers,
 } from '../services/colonization.js';
+import { latestCensus } from '../services/census.js';
 import {
   executeInnateTrade,
   executeTrade,
@@ -586,6 +587,16 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   app.get('/npcs', async (req) => {
     const player = await requirePlayer(req);
     return { npcs: await listNpcs(deps.pool, player.id) };
+  });
+
+  // Census global (GB §13, DG §11.5) : totaux GLOBAUX par ressource
+  // uniquement — jamais de ventilation par planète/entrepôt/source.
+  app.get('/census/latest', async (req) => {
+    await requirePlayer(req);
+    return {
+      census: await latestCensus(deps.pool),
+      perDay: deps.config.CENSUS_PER_DAY,
+    };
   });
 
   app.post('/ships/:id/crew', async (req, reply) => {

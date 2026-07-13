@@ -1,0 +1,57 @@
+/**
+ * Census global de l'offre (GB §13, DG §11.5) — agrégation PURE des deux
+ * sources existantes : stocks planétaires (évalués lazy à l'instant du
+ * snapshot) + soutes (statiques, tous statuts — la soute existe
+ * physiquement partout). Les gisements sont EXCLUS délibérément : non
+ * extraits ≠ offre. Pools AMM et escrow d'enchères rejoindront la somme
+ * avec leurs chunks (gap enregistré dans meta.sources).
+ *
+ * Sortie EXHAUSTIVE sur ALL_RESOURCE_IDS (zéros inclus — règle de
+ * complétude : ni l'UI ni le pricing des pods ne devinent les absents).
+ * Pas de clamp au cap de stockage : les bords stock_edge rebasent déjà,
+ * le dépassement résiduel est borné par la latence d'un tick (annoncé).
+ */
+import { ALL_RESOURCE_IDS, type ResourceId } from '@atg/shared';
+import { evalLazy } from './lazy.js';
+
+export interface CensusTotals {
+  totalT: number;
+  planetStockT: number;
+  shipCargoT: number;
+}
+
+export function aggregateCensus(
+  stockRows: {
+    resource: string;
+    amountT: number;
+    ratePerDayT: number;
+    asOfMs: number;
+  }[],
+  shipCargos: Record<string, number>[],
+  nowMs: number,
+): Record<ResourceId, CensusTotals> {
+  const totals = Object.fromEntries(
+    ALL_RESOURCE_IDS.map((r) => [r, { totalT: 0, planetStockT: 0, shipCargoT: 0 }]),
+  ) as Record<ResourceId, CensusTotals>;
+
+  for (const row of stockRows) {
+    const bucket = totals[row.resource as ResourceId];
+    if (!bucket) continue; // clé hors catalogue : ignorée (défensif, testé)
+    bucket.planetStockT += evalLazy(
+      { amount: row.amountT, ratePerDay: row.ratePerDayT, asOfMs: row.asOfMs },
+      nowMs,
+      { min: 0 },
+    );
+  }
+  for (const cargo of shipCargos) {
+    for (const [res, tons] of Object.entries(cargo ?? {})) {
+      const bucket = totals[res as ResourceId];
+      if (!bucket) continue;
+      bucket.shipCargoT += Math.max(0, Number(tons) || 0);
+    }
+  }
+  for (const bucket of Object.values(totals)) {
+    bucket.totalT = bucket.planetStockT + bucket.shipCargoT;
+  }
+  return totals;
+}

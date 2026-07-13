@@ -37,6 +37,12 @@ const schema = z.object({
    */
   TIME_SCALE: z.coerce.number().positive().default(1),
   /**
+   * Cadence du census global de l'offre (GB §13 « admin-configurable »,
+   * DG §11.5) : snapshots par jour de jeu. Défaut 4 [TUNE] — pilotera
+   * aussi le repricing des pods (chunk pods).
+   */
+  CENSUS_PER_DAY: z.coerce.number().int().positive().default(4),
+  /**
    * Endpoints d'instrumentation de TEST (§15 : « un endpoint dédié à
    * l'environnement de test ») — grants de ressources pour rendre les
    * parcours E2E déterministes. JAMAIS activé en production ('1' requis).

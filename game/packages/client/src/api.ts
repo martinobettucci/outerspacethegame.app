@@ -325,6 +325,11 @@ export const api = {
       'POST',
       `/ships/${shipId}/colonize`,
     ),
+  latestCensus: () =>
+    call<{
+      perDay: number;
+      census: { takenAt: string; totals: Record<string, number> } | null;
+    }>('GET', '/census/latest'),
   refuel: (shipId: string, units?: number) =>
     call<{ loaded: number; fuelType: string; units: number }>(
       'POST',

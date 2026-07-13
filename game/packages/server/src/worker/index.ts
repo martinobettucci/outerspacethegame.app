@@ -3,13 +3,20 @@
  * (DG §1). Cadence de réveil = TICK_MS (60 s canon ; abaissable en dev/E2E).
  * Plusieurs workers peuvent tourner : FOR UPDATE SKIP LOCKED partitionne.
  */
+import { GAME_DAY_SECONDS } from '@atg/shared';
 import { config } from '../config.js';
 import { createPool } from '../db/pool.js';
 import { processDueEvents } from '../sim/events.js';
-import { baseHandlers } from '../sim/handlers.js';
+import { baseHandlers, censusRun } from '../sim/handlers.js';
 
 const pool = createPool();
-const handlers = baseHandlers();
+// Census : CENSUS_PER_DAY snapshots/jour [TUNE], divisé par TIME_SCALE.
+const censusIntervalMs =
+  (GAME_DAY_SECONDS * 1000) / config.CENSUS_PER_DAY / config.TIME_SCALE;
+const handlers = {
+  ...baseHandlers(),
+  census_run: censusRun(censusIntervalMs),
+};
 let running = true;
 
 const log = (level: 'info' | 'error', msg: string, extra: object = {}) =>
@@ -18,6 +25,17 @@ const log = (level: 'info' | 'error', msg: string, extra: object = {}) =>
   );
 
 log('info', 'démarrage', { tickMs: config.TICK_MS });
+
+// Auto-réparation de la récurrence : la migration 009 amorce le premier
+// census_run, mais un DELETE FROM events (tests d'intégration sur la base
+// de dev partagée) tuerait la chaîne — ré-amorçage idempotent au boot.
+await pool.query(
+  `INSERT INTO events (due_at, kind, payload)
+   SELECT now(), 'census_run', '{}'::jsonb
+   WHERE NOT EXISTS (
+     SELECT 1 FROM events WHERE kind = 'census_run' AND processed_at IS NULL
+   )`,
+);
 
 while (running) {
   const started = Date.now();

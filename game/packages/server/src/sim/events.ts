@@ -17,6 +17,7 @@ export type EventKind =
   | 'ship_built'
   | 'ship_fuel_out'
   | 'colony_established'
+  | 'census_run'
   | 'noop';
 
 export interface GameEvent {

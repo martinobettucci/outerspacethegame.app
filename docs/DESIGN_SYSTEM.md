@@ -166,6 +166,15 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   `Refuel` button (Fuel icon) when docked/hovering/stranded on an owned
   world; "Transfer fuel" mini-form (target select limited to own hulls
   within 1 pc + units + accent Transfer) on tank-bearing hulls.
+- **Market screen: Census tab (implemented, chunk P)** — Market rail
+  entry now opens a tabbed screen: Census active; Trading/Auctions
+  disabled WITH the reason (title + aria-label, same pattern as the
+  rail). Census = meta line (snapshot timestamp + "4× per game day"),
+  the canon-rule chip ("Global totals only — per-planet breakdowns are
+  never published", violet chip), and a semantic <table> (th scope,
+  row headers) of the FULL resource catalog grouped by tier — zeros
+  displayed, mono right-aligned totals. Explicit loading/error(+retry)/
+  empty states.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

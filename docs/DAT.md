@@ -55,8 +55,14 @@
   departs from the Python backend preference (CLAUDE.md §3, "when suited");
   Python remains the choice for offline AI/ML tooling (e.g. balance
   campaigns).
-- **Census jobs** — periodic (4×/day) global resource-supply aggregation;
-  drives recruitment-pod pricing; published in-game.
+- **Census jobs (implemented, chunk P)** — recurring `census_run` event
+  in the events queue (no cron; CENSUS_PER_DAY=4 [TUNE], worker re-seeds
+  the chain at boot). Aggregates planet stocks (lazy-evaluated) + ship
+  cargos (all statuses); deposits excluded (unextracted ≠ supply); AMM
+  pools and auction escrow join with their chunks (gap recorded in
+  `meta.sources`). Publishes GLOBAL per-resource totals only
+  (`GET /census/latest`, session required) — breakdowns never leave the
+  server (DG §11.5). Will drive recruitment-pod pricing.
 - **NFT relayer** — the only blockchain surface: watches Mint/Burn events,
   reconciles DB lock state (packing → frozen → burn-return). Chain: Polygon
   PoS; contracts reused from `outerspacethegame.app.blockchain` (minus

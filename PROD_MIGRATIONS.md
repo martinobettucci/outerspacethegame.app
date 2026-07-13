@@ -22,6 +22,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 6 | `game/packages/server/migrations/006_innate_trading.sql` | Hospitalité du monde marchand (GB §9) : `bodies.config` (offres innées), `trades.market_building_id` nullable | 001, 005 | DROP colonne + restauration NOT NULL |
 | 7 | `game/packages/server/migrations/007_colonization.sql` | Colonisation (GB §19/§12) : `ships.settlers`/`settlers_origin_body_id`/`colony_kit`, statut `colonizing`, table `settler_routes` (péage déterministe par route) | 001, 002 | DROP colonnes/table + restauration de la contrainte de statut |
 | 8 | `game/packages/server/migrations/008_hover_drain.sql` | Drains de loitering (GB §7/§13) : réservoir paresseux (`ships.fuel_rate_u_per_day`, `ships.fuel_as_of`), index `ships_hover` | 001, 004 | DROP des 2 colonnes + DROP INDEX |
+| 9 | `game/packages/server/migrations/009_census.sql` | Census global (GB §13, DG §11.5) : table `census_snapshots` + amorçage du premier `census_run` | 001 | DROP TABLE + DELETE FROM events WHERE kind='census_run' |
 
 ## Services à déployer (au premier déploiement)
 
@@ -39,6 +40,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | `UNIVERSE_SEED` | graine de l'univers de production (fixée UNE fois, ne change jamais) | oui |
 | `API_PORT`, `CLIENT_ORIGIN`, `TICK_MS` | voir `game/.env.example` | non (défauts) |
 | `ATG_TEST_ENDPOINTS` | **NE JAMAIS provisionner en production** — instrumentation E2E (§15) | interdit en prod |
+| `CENSUS_PER_DAY` | cadence du census global (entier > 0, défaut 4 [TUNE]) | non (défaut) |
 
 ## Tâches de vérification post-déploiement
 

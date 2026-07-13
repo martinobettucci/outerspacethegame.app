@@ -124,6 +124,17 @@ evaluated stock.
   001). Recovery paths: `refuel` from an owned world below, or
   ship-to-ship `transfer-fuel` within 1 pc [TUNE-GAP].
 
+## 009_census (global supply census, GB §13, DG §11.5)
+
+- `census_snapshots` — per-resource totals taken CENSUS_PER_DAY times a
+  game day [TUNE] by the recurring `census_run` event (no cron; the
+  worker re-seeds the chain at boot, idempotent). `totals` keeps the
+  per-source breakdown (planet stock vs ship cargo) INTERNAL — for
+  debugging and future server-side valuations (plunder, bonds); the API
+  publishes `totalT` only, never any breakdown. `meta.sources` records
+  which sources were counted (pools/escrow join with their chunks — the
+  gap is written into every snapshot).
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

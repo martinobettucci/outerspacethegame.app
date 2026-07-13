@@ -19,6 +19,7 @@ import { useAppState } from '../state.tsx';
 import { GalaxyMap } from '../scenes/GalaxyMap.tsx';
 import { PlanetView } from '../scenes/PlanetView.tsx';
 import { CommsScreen } from './CommsScreen.tsx';
+import { MarketScreen } from './MarketScreen.tsx';
 
 function RailButton({
   icon,
@@ -184,7 +185,8 @@ export function GameShell() {
         <RailButton
           icon={<Store size={15} aria-hidden />}
           label={t.nav.market}
-          disabledReason={t.nav.comingP4}
+          active={view.kind === 'market'}
+          onClick={() => setView({ kind: 'market' })}
         />
         <RailButton
           icon={<MessagesSquare size={15} aria-hidden />}
@@ -204,6 +206,8 @@ export function GameShell() {
           <GalaxyMap />
         ) : view.kind === 'comms' ? (
           <CommsScreen />
+        ) : view.kind === 'market' ? (
+          <MarketScreen />
         ) : (
           <PlanetView planetId={view.planetId} />
         )}
