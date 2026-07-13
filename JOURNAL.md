@@ -1919,3 +1919,37 @@ captures int-01..04 observées à la vision (§16) : badge Intel L1 +
 3 rangées cadenas, bloc Development (0/4 tuiles, pop ~0), bloc Strategic
 (présence de 7 gisements SANS tonnage), Deep sight (qualité F, tonnages
 2711/2711…, ADN tech complet). Vidéo .webm conservée (preuve n°15).
+
+---
+
+## 2026-07-13 — Session 30 (suite) : correctif « from scratch » (signalé Node 24)
+
+### Problème (signalement du responsable)
+« Broken on Node 24 » au lancement sur son PC. Reproduction sur clone
+FRAIS (scratchpad, Node 24.18 téléchargé pour l'occasion) : `pnpm
+--filter @atg/server seed` → `ERR_MODULE_NOT_FOUND
+@atg/shared/dist/index.js`.
+
+### Cause — pas Node 24 : le clone frais
+Contre-épreuve : le MÊME clone frais échoue à l'identique sous Node
+22.22. Les exports de `@atg/shared` pointent sur `dist/` (compilé), et
+AUCUN chemin de lancement ne construisait le paquet — nos machines de
+dev masquaient le défaut parce qu'un build avait déjà eu lieu. Tout
+premier lancement (seed, API, worker, client Vite) échouait donc, quel
+que soit Node ; le responsable l'a rencontré avec Node 24, d'où
+l'attribution initiale.
+
+### Correction
+`runDev.sh` et `resetDb.sh` commencent par `pnpm --filter @atg/shared
+build` (explicite et journalisé) ; README : prérequis (Node ≥ 22
+vérifié sur 22 ET 24, pnpm ≥ 10, Docker) + note pour les lancements
+manuels hors scripts.
+
+### Vérifications
+Clone frais + Node 24.18 : `pnpm install` (8 s), `pnpm runDev` complet —
+build shared, conteneur DB healthy, migrations, seed, worker qui tick,
+API `/health` ok, inscription réelle par HTTP (201), client Vite 200.
+Suites sous Node 24 : shared 86, unit 32, intégration 116 — toutes
+vertes. Limite honnête : pas de test AUTOMATISÉ « clone frais » (ce
+serait un smoke de CI — noté au backlog outillage) ; la garde est le
+script de bootstrap lui-même, documenté.

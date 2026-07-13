@@ -55,13 +55,22 @@ bundle exec jekyll build      # outputs to _site/
 
 ## Install & run — game (from `game/`)
 
+Prerequisites: **Node.js ≥ 22** (verified on 22 and 24), **pnpm ≥ 10**,
+**Docker** (dev database container). Everything runs locally.
+
 ```bash
 pnpm install
-pnpm runDev        # DB container + migrations + seed + API + worker + client
+pnpm runDev        # builds @atg/shared, then DB container + migrations +
+                   # seed + API + worker + client
                    # client: http://localhost:5173 — API: http://localhost:8080
 pnpm resetDb       # recreate + migrate + seed the dev database
 pnpm stopDev       # stop the dev database container
 ```
+
+Running individual services by hand (`pnpm --filter @atg/server dev:api`,
+`seed`, …) requires `pnpm --filter @atg/shared build` once after cloning:
+the workspace package exports its compiled `dist/` — `runDev`/`resetDb`
+do it for you.
 
 Environment variables are documented in `game/.env.example` (copy to
 `game/.env` to customize; no real secret ever enters the repository).

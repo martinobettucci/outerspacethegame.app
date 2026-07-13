@@ -4,6 +4,18 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Correctif « from scratch » (signalement du responsable, testé Node
+  22 ET 24)** : sur un clone frais, `runDev`/`resetDb`/tout lancement
+  manuel échouaient en `ERR_MODULE_NOT_FOUND` — les exports de
+  `@atg/shared` pointent sur `dist/`, jamais construit avant `tsx`. Le
+  défaut était masqué sur les machines où un build avait déjà eu lieu
+  (et donc attribué à Node 24 — reproduit à l'identique sous Node 22).
+  `runDev.sh` et `resetDb.sh` construisent désormais `@atg/shared`
+  d'abord ; README : prérequis (Node ≥ 22 vérifié sur 22 et 24, pnpm,
+  Docker) + note pour les lancements manuels. Vérifié de bout en bout
+  sur clone frais sous Node 24.18 : runDev complet (build, DB,
+  migrations, seed, API /health, inscription HTTP, client 200) et
+  suites 86/32/116 vertes.
 - **Intel télescope par paliers 0–4 (chunk Q)** : module partagé PUR
   (`intel.ts` — intelTierFromSources, projection par LISTE BLANCHE
   stricte par palier, estimation de population à 2 chiffres [TUNE-GAP]) ;

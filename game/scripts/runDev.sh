@@ -4,6 +4,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+echo "[runDev] Build du paquet partagé (@atg/shared → dist/)…"
+# Indispensable sur un clone FRAIS : les exports de @atg/shared pointent
+# sur dist/ — sans build préalable, seed/API/worker/client échouent en
+# ERR_MODULE_NOT_FOUND (quel que soit Node ; observé « from scratch »).
+pnpm --filter @atg/shared build
+
 echo "[runDev] Démarrage de la base (docker compose)…"
 docker compose -f docker-compose.dev.yml up -d db --wait
 

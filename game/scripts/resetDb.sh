@@ -5,6 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+pnpm --filter @atg/shared build
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up -d db --wait
 pnpm --filter @atg/server migrate
