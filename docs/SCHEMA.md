@@ -135,6 +135,15 @@ evaluated stock.
   which sources were counted (pools/escrow join with their chunks — the
   gap is written into every snapshot).
 
+## 010_pods (recruitment pods, GB §12/§13, DG §11.4)
+
+- `pod_openings` — append-only journal of pod purchases: enforces the
+  daily cap (10/account [TUNE]) and feeds the IMMEDIATE price impact
+  (tons paid since the last census snapshot are subtracted from S_r
+  before pricing). The rolled NPC lands in `npcs` with
+  `account_bound_until` = opening + 60 days [TUNE] (column existed since
+  001) — recruitment is a sink, not a mint.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

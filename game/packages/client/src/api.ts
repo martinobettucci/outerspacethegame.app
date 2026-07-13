@@ -310,6 +310,7 @@ export const api = {
         statRolls: Record<string, number>;
         boundHostType: string | null;
         boundHostId: string | null;
+        accountBoundUntil: string | null;
       }[];
     }>('GET', '/npcs'),
   assignCrew: (shipId: string, npcId: string) =>
@@ -328,6 +329,23 @@ export const api = {
     ),
   bodyIntel: (bodyId: string) =>
     call<{ intel: PlanetIntel }>('GET', `/bodies/${bodyId}/intel`),
+  podPrices: () =>
+    call<{ censusTakenAt: string; prices: Record<string, number> }>(
+      'GET',
+      '/pods/prices',
+    ),
+  openPod: (input: { planetId: string; resource: string }) =>
+    call<{
+      npc: {
+        id: string;
+        people: string;
+        role: string;
+        rarity: string;
+        statRolls: Record<string, number>;
+        accountBoundUntil: string;
+      };
+      paid: { resource: string; tons: number };
+    }>('POST', '/pods/open', input),
   latestCensus: () =>
     call<{
       perDay: number;

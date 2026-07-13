@@ -187,6 +187,16 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   infrastructure rows (telescope, probe pad) gain a violet chip-button
   "Level up → L{n+1}" (visible when active and below max) — they have no
   board tile, so the sidebar row is their only control surface.
+- **Market screen: Recruitment tab (implemented, chunk R)** — the pod
+  flow: pay-with select shows the LIVE per-resource price in each option
+  (mono), from-world select, accent "Open pod — N T" button (accent =
+  the gamble gesture). Reveal card: role + RARITY in its color ramp
+  (common gray / uncommon success / rare primary / epic violet /
+  legendary accent) + people + rolled stat in mono + paid line with the
+  60-day account-bind date. Roster below lists every owned character
+  (role, rarity color, stats, host binding or "unassigned", bind date).
+  Refusals surface the server reason verbatim in the status line (the
+  45-day rule is VISIBLE, not hidden).
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

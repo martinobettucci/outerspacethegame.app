@@ -39,6 +39,7 @@ import {
   transferSettlers,
 } from '../services/colonization.js';
 import { latestCensus } from '../services/census.js';
+import { openPod, podPricing } from '../services/pods.js';
 import {
   executeInnateTrade,
   executeTrade,
@@ -148,6 +149,10 @@ const settlersSchema = z.object({
 });
 const crewSchema = z.object({ npcId: z.string().uuid() });
 const refuelSchema = z.object({ units: z.number().positive().optional() });
+const podOpenSchema = z.object({
+  planetId: z.string().uuid(),
+  resource: z.string().min(1),
+});
 const transferFuelSchema = z.object({
   toShipId: z.string().uuid(),
   units: z.number().positive(),
@@ -546,6 +551,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       return { ok: true };
     });
 
+    // Vieillit le COMPTE COURANT (jamais celui d'autrui) — la règle
+    // canon « < 45 jours : pas de pods » se teste sans attendre 45 jours.
+    app.post('/test/age-account', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({ days: z.number().int().min(1).max(3650) })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      await deps.pool.query(
+        `UPDATE players SET created_at = created_at - make_interval(days => $2)
+         WHERE id = $1`,
+        [player.id, parsed.data.days],
+      );
+      return { ok: true };
+    });
+
     // Fixe le réservoir d'une coque au u près (propriétaire seulement) —
     // rend l'échouage E2E déterministe sans attendre des jours réels.
     app.post('/test/ship-fuel', async (req, reply) => {
@@ -598,6 +619,25 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     return wrap(reply, async () => ({
       intel: await bodyIntel(deps.pool, player.id, id, Date.now()),
     }));
+  });
+
+  // Pods de recrutement (GB §12/§13, DG §11.4) : barème dérivé du
+  // census (impact immédiat des achats), ouverture payée depuis un
+  // monde possédé — règles d'âge et de cap côté serveur.
+  app.get('/pods/prices', async (req, reply) => {
+    await requirePlayer(req);
+    return wrap(reply, () => podPricing(deps.pool));
+  });
+
+  app.post('/pods/open', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const parsed = podOpenSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      openPod(deps.pool, player.id, parsed.data, {
+        universeSeed: deps.config.UNIVERSE_SEED,
+      }),
+    );
   });
 
   // Census global (GB §13, DG §11.5) : totaux GLOBAUX par ressource

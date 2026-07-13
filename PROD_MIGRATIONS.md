@@ -23,6 +23,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 7 | `game/packages/server/migrations/007_colonization.sql` | Colonisation (GB §19/§12) : `ships.settlers`/`settlers_origin_body_id`/`colony_kit`, statut `colonizing`, table `settler_routes` (péage déterministe par route) | 001, 002 | DROP colonnes/table + restauration de la contrainte de statut |
 | 8 | `game/packages/server/migrations/008_hover_drain.sql` | Drains de loitering (GB §7/§13) : réservoir paresseux (`ships.fuel_rate_u_per_day`, `ships.fuel_as_of`), index `ships_hover` | 001, 004 | DROP des 2 colonnes + DROP INDEX |
 | 9 | `game/packages/server/migrations/009_census.sql` | Census global (GB §13, DG §11.5) : table `census_snapshots` + amorçage du premier `census_run` | 001 | DROP TABLE + DELETE FROM events WHERE kind='census_run' |
+| 10 | `game/packages/server/migrations/010_pods.sql` | Pods de recrutement (GB §12/§13, DG §11.4) : journal `pod_openings` (cap quotidien + impact de prix) | 001, 009 | DROP TABLE |
 
 ## Services à déployer (au premier déploiement)
 

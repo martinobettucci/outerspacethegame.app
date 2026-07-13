@@ -1159,10 +1159,12 @@ export async function listNpcs(
     statRolls: Record<string, number>;
     boundHostType: string | null;
     boundHostId: string | null;
+    accountBoundUntil: string | null;
   }[]
 > {
   const { rows } = await pool.query(
-    `SELECT id, people, role, rarity, stat_rolls, bound_host_type, bound_host_id
+    `SELECT id, people, role, rarity, stat_rolls, bound_host_type, bound_host_id,
+            account_bound_until
      FROM npcs WHERE owner_id = $1 ORDER BY created_at, id`,
     [playerId],
   );
@@ -1174,6 +1176,9 @@ export async function listNpcs(
     statRolls: r.stat_rolls ?? {},
     boundHostType: r.bound_host_type,
     boundHostId: r.bound_host_id,
+    accountBoundUntil: r.account_bound_until
+      ? new Date(r.account_bound_until).toISOString()
+      : null,
   }));
 }
 

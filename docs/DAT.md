@@ -134,6 +134,15 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    IMPORTANT time-model note: TIME_SCALE accelerates EVENTS only — lazy
    drift (stocks, tanks, population) runs in real days (JOURNAL
    2026-07-13).
+8. **Recruitment pods (implemented, chunk R):** priced against the
+   latest census (S_r minus pod tons paid since the snapshot — immediate
+   impact), paid PHYSICALLY from an owned world's stock (co-location;
+   the sink removes real tons and rebases rates). Account age ≥ 45 days
+   and 10/day cap enforced server-side; the NPC is rolled by seeded
+   generation-moment RNG (universe:pod:player:purchase-index, serialized
+   by the player row lock) and lands account-bound for 60 days.
+   Strictest-bind inheritance on host transfers ships with auctions/NFT
+   (P4).
 
 ### Intel tiers (implemented, chunk Q)
 

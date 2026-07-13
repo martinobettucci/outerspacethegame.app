@@ -4,6 +4,35 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Pods de recrutement (chunk R)** : migration 010 (journal
+  `pod_openings` — cap quotidien ET impact de prix). Module partagé pur :
+  `price_r = max(5, B × (S_r/S̄)^0.7)` (B = 40 [TUNE]), S̄ = moyenne
+  trimée pondérée par l'offre sur les offres NON NULLES [TUNE interp,
+  JOURNAL] ; tables canon rareté 62/24/10/3.4/0.6, rôles uniformes (6),
+  peuples 60/30/10 ; rolls individuels À L'OUVERTURE : baseline +4 %/tier
+  × U(0.5, 1.5) sur la stat archétype-pertinente (catalogue EXHAUSTIF par
+  rôle — seule `settler_risk_reduction` a déjà son consommateur, les 5
+  autres clefs attendent leurs chunks [TUNE-GAP]) ; RNG SEEDÉ au moment
+  de génération (seed = universe:pod:joueur:index d'achat, sérialisé par
+  le verrou de la ligne joueur — reproductible, testé à l'identique).
+  Serveur : barème dérivé du DERNIER census MOINS les tonnes payées
+  depuis le snapshot (« purchases count into supply immediately ») ;
+  ouverture payée PHYSIQUEMENT depuis le stock d'un monde possédé
+  (co-location, rebase des taux) ; refus : compte < 45 jours (canon,
+  403), cap 10/jour (409), monde d'autrui, stock insuffisant, aucun
+  census. PNJ créé lié au compte 60 jours (`account_bound_until` —
+  l'héritage strictest-bind au transfert d'hôte arrive avec les
+  enchères/NFT P4, annoncé). Instrumentation §15 : POST /test/age-account
+  (le compte COURANT seulement — la règle des 45 jours se démontre sans
+  attendre 45 jours). UI : onglet Recruitment de l'écran Market (barème
+  dans le sélecteur, monde payeur, bouton accent « Open pod », carte de
+  révélation rôle/rareté colorée/peuple/stat, roster complet avec
+  liaisons) ; GET /pods/prices + POST /pods/open (401 anonymes testés).
+  8 unit partagés + 6 intégration (prix exact après impact, cap,
+  déterminisme du roll, refus directs §10) + E2E ×2 (refus « trop
+  jeune » VISIBLE puis ouverture après vieillissement), suites
+  94/32/122/17 vertes, captures pod-01/02 observées (l'impact de prix
+  est visible à l'écran : 115,64 → 115,29 T après l'achat).
 - **Correctif : re-clamp de la récurrence census au boot du worker** : un
   worker à AUTRE échelle de temps (runDev à TIME_SCALE=1 sur la base de
   dev partagée) peut réclamer un `census_run` et replanifier le suivant à

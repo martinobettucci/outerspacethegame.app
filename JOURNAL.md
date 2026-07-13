@@ -1977,3 +1977,55 @@ chacun — jamais supposée conforme à sa propre config.
 ### Vérifications
 File réparée puis spec census verte (8,3 s) ; suite E2E complète 17/17 ;
 cadence re-observée en base (snapshots à 3 s d'écart).
+
+---
+
+## 2026-07-13 — Session 30 (suite) : chunk R — pods de recrutement
+
+### Canon appliqué (GB §12/§13, DG §11.4)
+Le pod est un PUITS de ressources : payé dans n'importe quelle
+ressource, prix `max(5, 40 × (S_r/S̄)^0.7)` [TUNE] dérivé du census, les
+achats comptent dans l'offre IMMÉDIATEMENT ; 1 PNJ par pod (rareté
+62/24/10/3.4/0.6, rôle uniforme, peuple 60/30/10) ; rolls individuels à
+l'ouverture (baseline +4 %/tier × U(0.5,1.5)) ; cap 10/jour ; comptes
+< 45 jours interdits ; PNJ lié au compte 60 jours.
+
+### Décisions v1 & interprétations
+- **S̄ « trimmed supply-weighted mean »** [TUNE interp] : moyenne
+  pondérée par l'offre (Σs²/Σs) sur les offres NON NULLES, après trim de
+  10 % à chaque extrême. Première version : trim sur TOUTES les valeurs
+  — dans un univers jeune (29 ressources à zéro sur 31) le trim avalait
+  les seules valeurs non nulles et tout tombait au plancher. Décision :
+  l'absence n'est pas un outlier ; les zéros sont ignorés (la
+  pondération par l'offre les ignore déjà) — attrapé par le test
+  d'exhaustivité du barème.
+- **Impact immédiat** : S_r effectif = S_r du dernier census − tonnes de
+  pods payées en r depuis le snapshot (journal pod_openings). La
+  DIRECTION du prix n'est pas garantie (S̄ bouge aussi) — le test
+  d'intégration assert l'ÉGALITÉ EXACTE avec la formule partagée, pas
+  une direction ; l'E2E l'a rendue visible (115,64 → 115,29 T).
+- **Déterminisme du roll** : seed = universe:pod:joueur:index d'achat,
+  l'index étant sérialisé par le verrou FOR UPDATE de la ligne joueur
+  (même mécanisme qui sérialise le cap quotidien) — le test rejoue
+  rollPodNpc avec le même seed et obtient le MÊME PNJ.
+- **Paiement physique** (co-location GB §13) : le prix se débite du
+  stock d'un monde POSSÉDÉ, taux rebasés — pas de trésorerie abstraite.
+- **Âge de compte** : la règle canon des 45 jours rend les pods
+  invisibles en dev/E2E sans instrumentation — POST /test/age-account
+  (§15, compte COURANT uniquement, jamais en prod) vieillit le compte ;
+  l'E2E démontre LES DEUX branches (refus visible puis succès).
+- **Strictest-bind au transfert d'hôte** : hors périmètre (les
+  transferts d'hôtes arrivent avec enchères/NFT P4) — annoncé.
+
+### Vérifications
+94 unit shared (8 pods : formule, plancher, trim, exhaustivité,
+déterminisme, bornes U(0.5,1.5), governor-grade) ; 122/122 intégration
+(6 pods : barème exhaustif, âge refusé en direct, ouverture complète
+— stock débité, PNJ lié 60 j, roll identique au seed rejoué, prix
+suivant = formule exacte —, cap 10 refuse le 11e, refus monde
+d'autrui/ressource inconnue/stock insuffisant, sans census refus
+explicite) ; E2E 17/17 dont pods ×2 (10,7 s et 7,2 s) ; captures
+pod-01/02 observées à la vision (§16) : refus « Compte trop jeune : 45
+jours requis » verbatim, révélation merchant UNCOMMON humain +10,06 %
+trade bonus, roster à 2 personnages avec date de liaison, impact de
+prix à l'écran. Vidéo .webm conservée (preuve n°16).
