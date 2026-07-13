@@ -63,6 +63,17 @@ export function LoginScreen() {
   return (
     <main className={`ls-auth ls-auth--${mode}`}>
       <div className="ls-auth__ambience" aria-hidden="true">
+        <img
+          className="ls-auth__vista"
+          src="/generated/command-vista.webp"
+          alt=""
+          width={1672}
+          height={941}
+          decoding="sync"
+          loading="eager"
+          fetchPriority="high"
+          draggable={false}
+        />
         <div className="ls-auth__stars ls-auth__stars--near" />
         <div className="ls-auth__stars ls-auth__stars--far" />
         <div className="ls-auth__nebula" />

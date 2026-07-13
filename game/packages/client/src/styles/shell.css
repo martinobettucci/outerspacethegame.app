@@ -148,6 +148,7 @@
 
 .ls-auth__ambience::before {
   position: absolute;
+  z-index: 4;
   inset: 0;
   background:
     linear-gradient(rgba(102, 148, 201, 0.035) 1px, transparent 1px),
@@ -157,8 +158,32 @@
   mask-image: linear-gradient(90deg, black, transparent 72%);
 }
 
+.ls-auth__ambience::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(1, 4, 10, 0.08) 0%, transparent 42%, rgba(1, 4, 10, 0.38) 100%),
+    radial-gradient(ellipse at 27% 76%, transparent 0 24%, rgba(2, 6, 14, 0.24) 72%),
+    linear-gradient(90deg, transparent 50%, rgba(2, 6, 14, 0.58) 78%, rgba(2, 6, 14, 0.9) 100%);
+  content: '';
+}
+
+.ls-auth__vista {
+  position: absolute;
+  z-index: 1;
+  inset: -1.5%;
+  width: 103%;
+  height: 103%;
+  object-fit: cover;
+  object-position: 44% center;
+  filter: saturate(0.96) contrast(1.08) brightness(0.92);
+  animation: ls-vista-breathe 22s ease-in-out infinite alternate;
+}
+
 .ls-auth__stars {
   position: absolute;
+  z-index: 2;
   inset: -20%;
   background-repeat: repeat;
 }
@@ -170,17 +195,18 @@
     radial-gradient(circle, rgba(231, 214, 106, 0.72) 0 0.8px, transparent 1.4px);
   background-position: 4px 7px, 43px 64px, 91px 24px;
   background-size: 132px 132px, 184px 184px, 218px 218px;
-  opacity: 0.55;
+  opacity: 0.16;
 }
 
 .ls-auth__stars--far {
   background-image: radial-gradient(circle, rgba(190, 212, 242, 0.62) 0 0.7px, transparent 1px);
   background-size: 56px 56px;
-  opacity: 0.3;
+  opacity: 0.09;
 }
 
 .ls-auth__nebula {
   position: absolute;
+  z-index: 2;
   top: -22%;
   left: -12%;
   width: 84vw;
@@ -194,14 +220,16 @@
       transparent 28%,
       rgba(49, 104, 166, 0.14),
       transparent 66%
-    );
+  );
   filter: blur(42px);
-  opacity: 0.8;
+  mix-blend-mode: screen;
+  opacity: 0.16;
   transform: rotate(-12deg);
 }
 
 .ls-auth__planet {
   position: absolute;
+  z-index: 0;
   bottom: clamp(-350px, -25vw, -190px);
   left: clamp(-190px, -7vw, -70px);
   width: clamp(500px, 48vw, 820px);
@@ -264,6 +292,7 @@
 
 .ls-auth__orbit {
   position: absolute;
+  z-index: 2;
   border: 1px solid rgba(126, 184, 224, 0.15);
   border-radius: 50%;
   transform: rotate(-18deg);
@@ -299,6 +328,7 @@
 
 .ls-auth__vessel {
   position: absolute;
+  z-index: 3;
   top: 25%;
   left: 47%;
   display: grid;
@@ -1431,10 +1461,18 @@
   }
 
   .ls-auth__ambience::after {
-    position: absolute;
+    z-index: 4;
+    background:
+      linear-gradient(180deg, rgba(2, 6, 14, 0.24), rgba(2, 6, 14, 0.6)),
+      radial-gradient(circle at 35% 45%, transparent 0 20%, rgba(2, 6, 14, 0.28) 75%);
+  }
+
+  .ls-auth__vista {
+    position: fixed;
     inset: 0;
-    background: rgba(2, 6, 14, 0.45);
-    content: '';
+    width: 100%;
+    height: 100%;
+    object-position: 35% center;
   }
 
   .ls-auth__planet {
@@ -1527,6 +1565,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ls-auth__vista,
   .ls-auth__vessel,
   .ls-bootstrap::before,
   .ls-bootstrap__signal::before,
@@ -1537,6 +1576,16 @@
 
   .ls-auth-form {
     animation: none;
+  }
+}
+
+@keyframes ls-vista-breathe {
+  from {
+    transform: scale(1.01);
+  }
+
+  to {
+    transform: scale(1.045) translate3d(-0.35%, -0.25%, 0);
   }
 }
 

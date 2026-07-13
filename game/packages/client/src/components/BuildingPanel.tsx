@@ -26,6 +26,7 @@ import {
 import type { PlanetBuilding } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
+import { OperationTimer } from './OperationTimer.tsx';
 import '../styles/planet-panels.css';
 
 function costText(cost: CostBundle): string {
@@ -157,6 +158,18 @@ export function BuildingPanel({
         </button>
       </header>
 
+      {building.completesAt && building.status !== 'active' && (
+        <OperationTimer
+          completesAt={building.completesAt}
+          label={
+            building.status === 'demolishing'
+              ? `${t.planet.demolish} · L${building.level}`
+              : `${t.planet.constructing} · L${building.level}`
+          }
+          tone={building.status === 'demolishing' ? 'danger' : 'warning'}
+        />
+      )}
+
       {building.recipe && (
         <p className="ls-production-route">
           <span>Production route</span>
@@ -216,10 +229,23 @@ export function BuildingPanel({
               <div className="ls-queue">
                 <span className="ls-panel-kicker">{t.planet.yardPending}</span>
                 {shipBuilds.map((build) => (
-                  <span key={build.name} className="ls-queue-item">
-                    {build.name} ({build.category} {build.size.toUpperCase()}) —{' '}
-                    {new Date(build.completesAt).toLocaleTimeString('en-US')}
-                  </span>
+                  <div
+                    key={`${build.name}-${build.completesAt}`}
+                    className="ls-queue-item"
+                  >
+                    <span className="ls-queue-item__identity">
+                      <strong>{build.name}</strong>
+                      <span>
+                        {build.category} {build.size.toUpperCase()}
+                      </span>
+                    </span>
+                    <OperationTimer
+                      completesAt={build.completesAt}
+                      label="Hull assembly"
+                      tone="violet"
+                      compact
+                    />
+                  </div>
                 ))}
               </div>
             )}

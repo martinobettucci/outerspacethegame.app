@@ -7,7 +7,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
-import { ArrowLeft, Users, Database, Mountain, BarChart3, Satellite, Store, FlaskConical } from 'lucide-react';
+import {
+  ArrowLeft,
+  Users,
+  Database,
+  Mountain,
+  BarChart3,
+  Satellite,
+  Store,
+  FlaskConical,
+  Network,
+  Clock3,
+} from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
@@ -18,6 +29,8 @@ import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import { RecipePicker } from '../components/RecipePicker.tsx';
 import { BuildingPanel } from '../components/BuildingPanel.tsx';
 import { PlanetStats } from '../components/PlanetStats.tsx';
+import { TechTree } from '../components/TechTree.tsx';
+import { OperationTimer } from '../components/OperationTimer.tsx';
 import {
   buildingClimateOverlay,
   buildingSprite,
@@ -77,6 +90,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [techOpen, setTechOpen] = useState(false);
   const [hospSell, setHospSell] = useState('water');
   const [hospWant, setHospWant] = useState('ore');
   const [hospPrice, setHospPrice] = useState('2');
@@ -98,9 +112,13 @@ export function PlanetView({ planetId }: { planetId: string }) {
     api
       .shipBuilds(planetId)
       .then((r) => setShipBuilds(r.builds))
-      .catch(() => setShipBuilds([]));
+      .catch(() => undefined);
   }, [planetId]);
-  useEffect(() => refreshShipBuilds(), [refreshShipBuilds]);
+  useEffect(() => {
+    refreshShipBuilds();
+    const interval = setInterval(refreshShipBuilds, 4_000);
+    return () => clearInterval(interval);
+  }, [refreshShipBuilds]);
   const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
   const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
@@ -149,7 +167,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
     const app = new Application();
     app
       .init({
-        background: '#03050a',
+        backgroundAlpha: 0,
         resizeTo: mount,
         antialias: true,
         preference: 'webgl',
@@ -465,6 +483,10 @@ export function PlanetView({ planetId }: { planetId: string }) {
       .filter((building) => building.tileIndex !== null)
       .map((building) => [building.tileIndex as number, building]),
   );
+  const activeBuildingWorks = planet.buildings.filter(
+    (building) => building.completesAt !== null,
+  );
+  const activeWorkCount = activeBuildingWorks.length + shipBuilds.length;
 
   return (
     <div className="planet-scene" data-climate={planet.climate}>
@@ -500,6 +522,29 @@ export function PlanetView({ planetId }: { planetId: string }) {
               >
                 <span aria-hidden="true">{index + 1}</span>
               </button>
+            );
+          })}
+          {activeBuildingWorks.map((building) => {
+            if (building.tileIndex === null || !building.completesAt) return null;
+            const position = keyboardPositions[building.tileIndex];
+            if (!position) return null;
+            return (
+              <div
+                key={`operation:${building.id}`}
+                className="planet-world-operation"
+                aria-hidden="true"
+                style={{
+                  left: `calc(50% + ${isoX(position.col, position.row) - keyboardCenterX}px)`,
+                  top: `calc(50% + ${isoY(position.col, position.row) - keyboardCenterY - 88}px)`,
+                }}
+              >
+                <OperationTimer
+                  completesAt={building.completesAt}
+                  label={`${building.key.replace(/_/g, ' ')} · ${building.status}`}
+                  tone={building.status === 'demolishing' ? 'danger' : 'warning'}
+                  compact
+                />
+              </div>
             );
           })}
         </div>
@@ -561,7 +606,55 @@ export function PlanetView({ planetId }: { planetId: string }) {
           >
             <BarChart3 size={13} aria-hidden /> {t.planet.statsPage}
           </button>
+          <button
+            type="button"
+            className="planet-tech-trigger"
+            onClick={() => setTechOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <Network size={14} aria-hidden /> Technology DNA
+            <span>
+              {planet.tech.unlocked.length}/{planet.tech.available.length}
+            </span>
+          </button>
         </header>
+
+        {activeWorkCount > 0 && (
+          <section className="planet-active-works" aria-label="Active works">
+            <header>
+              <span>
+                <Clock3 size={13} aria-hidden /> Active works
+              </span>
+              <strong>{activeWorkCount}</strong>
+            </header>
+            <div className="planet-active-works__list">
+              {activeBuildingWorks.map((building) => (
+                <button
+                  key={building.id}
+                  type="button"
+                  onClick={() => setSelectedBuildingId(building.id)}
+                  aria-label={`Inspect ${building.key.replace(/_/g, ' ')} ${building.status}`}
+                >
+                  <OperationTimer
+                    completesAt={building.completesAt!}
+                    label={`${building.key.replace(/_/g, ' ')} · L${building.level}`}
+                    tone={building.status === 'demolishing' ? 'danger' : 'warning'}
+                    compact
+                  />
+                </button>
+              ))}
+              {shipBuilds.map((build, index) => (
+                <OperationTimer
+                  key={`${build.name}:${build.completesAt}:${index}`}
+                  completesAt={build.completesAt}
+                  label={`${build.name} · ${build.category} ${build.size.toUpperCase()}`}
+                  tone="violet"
+                  compact
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {selectedCard && (
           <p className="planet-placement-hint">
@@ -1060,6 +1153,22 @@ export function PlanetView({ planetId }: { planetId: string }) {
       />
       {statsOpen && (
         <PlanetStats planet={planet} onClose={() => setStatsOpen(false)} />
+      )}
+      {techOpen && (
+        <TechTree
+          planet={planet}
+          onClose={() => setTechOpen(false)}
+          onUnlock={async (node) => {
+            try {
+              await api.unlock(planetId, node);
+              setNotice(t.planet.unlockSuccess);
+              await refresh();
+            } catch (err) {
+              setNotice((err as ApiError).message ?? t.errors.generic);
+              throw err;
+            }
+          }}
+        />
       )}
       {recipePickerFor && (
         <RecipePicker

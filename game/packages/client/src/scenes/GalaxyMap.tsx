@@ -32,6 +32,8 @@ import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
+import { FleetOperations } from '../components/FleetOperations.tsx';
+import { OperationTimer } from '../components/OperationTimer.tsx';
 import {
   BLACK_HOLE_SPRITE,
   loadSpriteCanvas,
@@ -292,6 +294,11 @@ export function GalaxyMap() {
               !r.ships.some((n) => n.id === s.id),
           );
           setShips(r.ships);
+          setSelectedShip((current) =>
+            current
+              ? (r.ships.find((ship) => ship.id === current.id) ?? null)
+              : null,
+          );
           if (established) void refreshMe();
         })
         .catch(() => undefined);
@@ -821,6 +828,14 @@ export function GalaxyMap() {
         const pulse = selectedNow && !reduceMotion ? 1 + Math.sin(elapsed * 3) * 0.12 : 1;
         mesh.scale.setScalar(pulse);
       }
+      if (!reduceMotion) {
+        let routeIndex = 0;
+        for (const line of transitLines.values()) {
+          (line.material as THREE.LineDashedMaterial).opacity =
+            0.66 + Math.sin(elapsed * 2.4 + routeIndex * 0.7) * 0.1;
+          routeIndex += 1;
+        }
+      }
       renderer.render(scene, camera);
       const next: { id: string; name: string; x: number; y: number; owned: boolean }[] = [];
       for (const body of bodies) {
@@ -978,6 +993,15 @@ export function GalaxyMap() {
           {notice}
         </p>
       )}
+      <FleetOperations
+        ships={ships}
+        bodies={bodies}
+        selectedShipId={selectedShip?.id}
+        onSelect={(ship) => {
+          setSelected(null);
+          setSelectedShip(ship);
+        }}
+      />
       {selectedShip && (
         <aside
           aria-label={selectedShip.name}
@@ -1024,9 +1048,21 @@ export function GalaxyMap() {
             ) : (
               selectedShip.status
             )}
-            {selectedShip.mission &&
-              ` — ${t.galaxy.eta} ${new Date(selectedShip.mission.arrivesAt).toLocaleString('en-US')}`}
           </p>
+          {selectedShip.mission && (
+            <OperationTimer
+              completesAt={selectedShip.mission.arrivesAt}
+              label={`${t.galaxy.eta} · ${selectedShip.name}`}
+              tone="violet"
+            />
+          )}
+          {!selectedShip.mission && selectedShip.establishesAt && (
+            <OperationTimer
+              completesAt={selectedShip.establishesAt}
+              label={`Colony establishment · ${selectedShip.name}`}
+              tone="warning"
+            />
+          )}
           {selectedShip.tankU > 0 && (
             <section
               aria-label={t.galaxy.fuelTitle}
