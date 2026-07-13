@@ -4,6 +4,33 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Intel télescope par paliers 0–4 (chunk Q)** : module partagé PUR
+  (`intel.ts` — intelTierFromSources, projection par LISTE BLANCHE
+  stricte par palier, estimation de population à 2 chiffres [TUNE-GAP]) ;
+  barème planétaire [TUNE-GAP proposé] : 0 = le corps n'existe pas pour
+  l'observateur (404, jamais d'oracle d'existence) ; 1 « silhouette »
+  (ciel de base/scan vaisseau/télescope L1) ; 2 « développement »
+  (tuiles, population estimée, spaceport ouvert/fermé, paires de marché,
+  offres innées — keepFloor jamais publié) ; 3 « stratégique »
+  (bâtiments clef/niveau/statut, défenses, PRÉSENCE des gisements sans
+  tonnage — DG §11.3) ; 4 « deep sight » (qualité, gisements détaillés,
+  ADN tech — le seed ne sort JAMAIS) via +1 scientifique (gouvernance du
+  monde source, plafonné +1 — DG §4.1) ou sonde à portée [TUNE-GAP].
+  Indice = MEILLEUR télescope couvrant (couverture = scope additif).
+  FUITE CANON CORRIGÉE : /galaxy ne publie plus la qualité des mondes
+  non possédés. GET /bodies/:id/intel (session requise) ;
+  GET /planets/:id INCHANGÉ : owner-only même à palier 4 (le détail
+  opérationnel n'est pas de l'intel). UI : panneau du corps étranger par
+  paliers (badge Intel L{n}/Deep sight, blocs Development/Strategic/
+  Deep sight, rangées cadenas Lucide « ce qui manque ») + bouton Level
+  up dans le panneau Infrastructure (les télescopes L2/L3 étaient
+  inatteignables à l'écran — gap réel corrigé). 11 unit partagés (listes
+  blanches EXACTES par palier) + 8 intégration (montée L1→L4, +1
+  gouverneur scientifique, sonde, refus directs §10, fuite fermée) + E2E
+  échelle complète sur un monde sauvage de SA poche (le vérificateur de
+  spec avait signalé la garantie voisin 150–240 pc comme non ancrée sur
+  l'observateur — parcours re-conçu déterministe), suites 86/32/116/16
+  vertes, captures int-01..04 observées.
 - **Census global de l'offre (chunk P)** : migration 009
   (`census_snapshots` + amorçage idempotent du premier `census_run`) ;
   événement RÉCURRENT auto-replanifié dans la file events (aucun cron —

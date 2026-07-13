@@ -18,6 +18,8 @@ import {
   Users,
   Flag,
   Fuel,
+  Lock,
+  Telescope,
 } from 'lucide-react';
 import {
   ALL_RESOURCE_IDS,
@@ -27,6 +29,7 @@ import {
   FUEL_TRANSFER_RADIUS_PC,
 } from '@atg/shared';
 import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
+import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import {
@@ -71,6 +74,24 @@ export function GalaxyMap() {
   const [settlersN, setSettlersN] = useState('200');
   const [transferTo, setTransferTo] = useState('');
   const [transferUnits, setTransferUnits] = useState('10');
+  const [intel, setIntel] = useState<
+    { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: PlanetIntel } | null
+  >(null);
+  useEffect(() => {
+    if (!selected || selected.owned || selected.bodyType !== 'planet') {
+      setIntel(null);
+      return;
+    }
+    let cancelled = false;
+    setIntel({ kind: 'loading' });
+    api
+      .bodyIntel(selected.id)
+      .then((r) => !cancelled && setIntel({ kind: 'ready', data: r.intel }))
+      .catch(() => !cancelled && setIntel({ kind: 'error' }));
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
   const [npcs, setNpcs] = useState<
     Awaited<ReturnType<typeof api.npcs>>['npcs']
   >([]);
@@ -1458,7 +1479,9 @@ export function GalaxyMap() {
             <dt>Type</dt>
             <dd style={{ margin: 0 }}>
               {selected.bodyType === 'planet'
-                ? `Planet ${selected.size?.toUpperCase() ?? ''} · ${selected.climate ?? ''} · ${selected.quality ?? ''}`
+                ? ['Planet', selected.size?.toUpperCase(), selected.climate, selected.quality]
+                    .filter(Boolean)
+                    .join(' · ')
                 : selected.bodyType === 'star'
                   ? `${t.galaxy.star} · ${selected.starClass?.toUpperCase()} · ${selected.starFuelType} ${t.galaxy.fuel}`
                   : t.galaxy.blackHole}
@@ -1480,6 +1503,143 @@ export function GalaxyMap() {
             <p style={{ margin: 0, fontSize: 12, color: 'var(--warning-500)' }}>
               {t.galaxy.starWarning}
             </p>
+          )}
+          {intel?.kind === 'loading' && (
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
+              {t.status.loading}
+            </p>
+          )}
+          {intel?.kind === 'error' && (
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--danger-500, #F24141)' }}>
+              {t.galaxy.intelError}
+            </p>
+          )}
+          {intel?.kind === 'ready' && (
+            <section
+              aria-label={`${t.galaxy.intelBadge}${intel.data.tier}`}
+              style={{ display: 'grid', gap: 8, fontSize: 12 }}
+            >
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  justifySelf: 'start',
+                  background: 'var(--primary-600)',
+                  color: 'var(--text-primary)',
+                  borderRadius: 'var(--radius-chip)',
+                  padding: '2px 10px',
+                  fontSize: 11,
+                }}
+              >
+                <Telescope size={12} aria-hidden />
+                {intel.data.tier >= 4
+                  ? t.galaxy.intelDeepSight
+                  : `${t.galaxy.intelBadge}${intel.data.tier}`}
+              </span>
+              {intel.data.tier >= 2 ? (
+                <div style={{ color: 'var(--text-secondary)', display: 'grid', gap: 2 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {t.galaxy.intelDevTitle}
+                  </strong>
+                  <span>
+                    {t.galaxy.intelTiles} : {intel.data.tilesUsed}/{intel.data.tiles} ·{' '}
+                    {t.galaxy.intelPop} ~
+                    {(intel.data.populationEstimate ?? 0).toLocaleString('en-US')}
+                  </span>
+                  <span>
+                    {intel.data.spaceportOpen === null
+                      ? t.galaxy.intelNoSpaceport
+                      : intel.data.spaceportOpen
+                        ? t.galaxy.intelSpaceportOpen
+                        : t.galaxy.intelSpaceportClosed}
+                  </span>
+                  {(intel.data.marketPairs?.length ?? 0) > 0 && (
+                    <span>
+                      {t.galaxy.intelMarkets} :{' '}
+                      {intel.data.marketPairs!
+                        .map((p) => `${p.give}→${p.get}`)
+                        .join(', ')}
+                    </span>
+                  )}
+                  {(intel.data.innateOffers?.length ?? 0) > 0 && (
+                    <span>
+                      {t.galaxy.intelOffers} :{' '}
+                      {intel.data.innateOffers!
+                        .map((o) => `${o.sell}@${o.price} ${o.want}/T`)
+                        .join(', ')}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span style={{ color: 'var(--text-disabled)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Lock size={11} aria-hidden /> {t.galaxy.intelLockedL2}
+                </span>
+              )}
+              {intel.data.tier >= 3 ? (
+                <div style={{ color: 'var(--text-secondary)', display: 'grid', gap: 2 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {t.galaxy.intelStratTitle}
+                  </strong>
+                  <span>
+                    {t.galaxy.intelBuildings} :{' '}
+                    {(intel.data.buildings?.length ?? 0) === 0
+                      ? '—'
+                      : intel.data.buildings!
+                          .map((b) => `${b.key} L${b.level} (${b.status})`)
+                          .join(', ')}
+                  </span>
+                  <span
+                    style={{
+                      color:
+                        (intel.data.defenseCount ?? 0) > 0
+                          ? 'var(--danger-500, #F24141)'
+                          : undefined,
+                    }}
+                  >
+                    {t.galaxy.intelDefenses} : {intel.data.defenseCount ?? 0}
+                  </span>
+                  <span>
+                    {t.galaxy.intelDeposits} :{' '}
+                    {(intel.data.depositsPresent?.length ?? 0) === 0
+                      ? '—'
+                      : intel.data.depositsPresent!.join(', ')}
+                  </span>
+                </div>
+              ) : (
+                <span style={{ color: 'var(--text-disabled)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Lock size={11} aria-hidden /> {t.galaxy.intelLockedL3}
+                </span>
+              )}
+              {intel.data.tier >= 4 ? (
+                <div style={{ color: 'var(--text-secondary)', display: 'grid', gap: 2 }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {t.galaxy.intelDeepTitle}
+                  </strong>
+                  <span>
+                    {t.galaxy.intelQuality} : {intel.data.quality ?? '—'}
+                  </span>
+                  {(intel.data.deposits?.length ?? 0) > 0 && (
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>
+                      {intel.data.deposits!
+                        .map(
+                          (d) =>
+                            `${d.resource} ${Math.round(d.remainingT)}/${Math.round(d.initialT)} T`,
+                        )
+                        .join(' · ')}
+                    </span>
+                  )}
+                  <span>
+                    {t.galaxy.intelDna} :{' '}
+                    {(intel.data.techDna?.available ?? []).join(', ') || '—'}
+                  </span>
+                </div>
+              ) : (
+                <span style={{ color: 'var(--text-disabled)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Lock size={11} aria-hidden /> {t.galaxy.intelLockedL4}
+                </span>
+              )}
+            </section>
           )}
           {selected.owned && (
             <button

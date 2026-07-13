@@ -6,7 +6,16 @@
  * permet de voir sa propre poche (étoile 40 pc, sauvages ≤ 60 pc) sans
  * télescope ; le voisin garanti (150–240 pc) exige un télescope].
  */
+import {
+  intelTierFromSources,
+  planetTechAvailability,
+  projectPlanetIntel,
+  type IntelTier,
+  type PlanetIntel,
+} from '@atg/shared';
 import type pg from 'pg';
+import { evalLazy, whenReaches } from '../sim/lazy.js';
+import { CommandError, governingArchetypes } from './planets.js';
 
 export const BASE_SKY_PC = 60;
 export const TELESCOPE_SCOPE_PC_PER_LEVEL = 200;
@@ -33,7 +42,7 @@ export interface VisibleBody {
 
 /**
  * Corps visibles par un joueur. Les champs cachés (stock d'étoile…) ne
- * sortent JAMAIS d'ici ; le niveau de détail intel (L1/L2/L3) viendra en P3.
+ * sortent JAMAIS d'ici ; le détail par paliers vit dans bodyIntel (chunk Q).
  */
 export async function visibleBodies(
   pool: pg.Pool,
@@ -82,7 +91,10 @@ export async function visibleBodies(
     y: r.y,
     size: r.size,
     climate: r.climate,
-    quality: r.quality,
+    // Fuite canon corrigée (chunk Q) : la QUALITÉ est de l'intel de
+    // palier 4 (deep sight) — jamais publiée par la simple visibilité.
+    // Champ conservé (null) pour la stabilité du schéma.
+    quality: r.owner_id === playerId ? r.quality : null,
     ownerId: r.owner_id,
     ownerName: r.owner_name,
     isStarter: r.is_starter,
@@ -90,4 +102,180 @@ export async function visibleBodies(
     starFuelType: r.star_fuel_type,
     owned: r.owner_id === playerId,
   }));
+}
+
+/**
+ * Intel planétaire par paliers (GB §20, DG §4.1/§11.3) — calcul SERVEUR
+ * uniquement (CLAUDE.md §10). Palier 0 ⇒ not_found (jamais forbidden :
+ * pas d'oracle d'existence). Lecture pure, pas de transaction.
+ * GET /planets/:id reste owner-only : le détail OPÉRATIONNEL (stocks,
+ * recettes, workforce, config) n'est jamais de l'intel, même à L4.
+ */
+export async function bodyIntel(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  nowMs: number,
+): Promise<PlanetIntel> {
+  const { rows: bodies } = await pool.query(
+    `SELECT b.*, p.display_name AS owner_name
+     FROM bodies b LEFT JOIN players p ON p.id = b.owner_id
+     WHERE b.id = $1`,
+    [bodyId],
+  );
+  const body = bodies[0];
+  // Corps inconnu ET corps hors scope répondent LA MÊME chose (404).
+  const notFound = new CommandError('not_found', 'Rien de connu à cette adresse');
+  if (!body) throw notFound;
+  if (body.body_type !== 'planet') {
+    throw new CommandError(
+      'not_available',
+      "L'intel détaillée ne vise que les planètes (v1)",
+    );
+  }
+
+  // Sources : chaque monde possédé dont le scope COMBINÉ couvre la cible
+  // apporte son MEILLEUR télescope actif ([TUNE-GAP] indice = meilleur
+  // instrument) et son caractère scientifique (gouvernance).
+  const { rows: sourceRows } = await pool.query(
+    `SELECT w.id,
+            (SELECT max(t.level) FROM buildings t
+             WHERE t.body_id = w.id AND t.key = 'telescope'
+               AND t.status = 'active') AS best_level,
+            $3::float + COALESCE((SELECT sum($4::float * t.level)
+             FROM buildings t
+             WHERE t.body_id = w.id AND t.key = 'telescope'
+               AND t.status = 'active'), 0) AS radius,
+            sqrt((w.x - $5::float)^2 + (w.y - $6::float)^2) AS distance
+     FROM bodies w WHERE w.owner_id = $1 AND w.id <> $2`,
+    [playerId, bodyId, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL, body.x, body.y],
+  );
+  const sources: { telescopeLevel: 1 | 2 | 3; scientificSource: boolean }[] = [];
+  let visible = false;
+  for (const w of sourceRows) {
+    if (Number(w.distance) > Number(w.radius)) continue;
+    visible = true;
+    const level = Number(w.best_level ?? 0);
+    if (level >= 1) {
+      const archetypes = await governingArchetypes(pool, w.id, playerId);
+      sources.push({
+        telescopeLevel: Math.min(3, level) as 1 | 2 | 3,
+        scientificSource: archetypes.includes('scientific'),
+      });
+    }
+  }
+  // Présence propre : vaisseau à portée de scan ⇒ visible ; sonde à
+  // portée ⇒ deep sight [TUNE-GAP].
+  const { rows: presenceRows } = await pool.query(
+    `SELECT hull_category FROM ships
+     WHERE owner_id = $1 AND status IN ('hovering', 'idle', 'docked')
+       AND (x - $2::float)^2 + (y - $3::float)^2 <=
+           (CASE WHEN hull_category = 'probe' THEN $4::float ELSE $5::float END)^2`,
+    [playerId, body.x, body.y, PROBE_SCAN_PC, SHIP_SCAN_PC],
+  );
+  const probeOnSite = presenceRows.some((r) => r.hull_category === 'probe');
+  if (presenceRows.length > 0) visible = true;
+  if (body.owner_id === playerId) visible = true;
+
+  const tier =
+    body.owner_id === playerId
+      ? 4
+      : intelTierFromSources(sources, { visible, probeOnSite });
+  if (tier === 0) throw notFound;
+
+  // Données brutes — chargées quel que soit le palier, la PROJECTION
+  // (liste blanche partagée) décide seule de ce qui sort.
+  const { rows: buildingRows } = await pool.query(
+    `SELECT key, level, status, tile_index, config FROM buildings
+     WHERE body_id = $1 ORDER BY created_at, id`,
+    [bodyId],
+  );
+  const spaceports = buildingRows.filter(
+    (b) => b.key === 'spaceport' && b.status === 'active',
+  );
+  const spaceportOpen =
+    spaceports.length === 0
+      ? null
+      : spaceports.some((b) => b.config?.landing === 'everyone');
+  const marketPairs = buildingRows
+    .filter((b) => b.key === 'market' && b.status === 'active')
+    .flatMap((b) =>
+      ((b.config?.slots ?? []) as { give?: string; get?: string }[])
+        .filter((s) => s?.give && s?.get)
+        .map((s) => ({ give: String(s.give), get: String(s.get) })),
+    );
+  const innateOffers = (
+    (body.config?.innateOffers ?? []) as {
+      sell?: string;
+      want?: string;
+      price?: number;
+    }[]
+  )
+    .filter((o) => o?.sell && o?.want)
+    .map((o) => ({
+      sell: String(o.sell),
+      want: String(o.want),
+      price: Number(o.price),
+    }));
+
+  const { rows: depositRows } = await pool.query(
+    `SELECT resource, initial_t, amount_t, rate_t_per_day, as_of
+     FROM deposits WHERE body_id = $1 ORDER BY resource`,
+    [bodyId],
+  );
+  const deposits = depositRows.map((d) => {
+    const remaining = evalLazy(
+      {
+        amount: Number(d.amount_t),
+        ratePerDay: Number(d.rate_t_per_day),
+        asOfMs: new Date(d.as_of).getTime(),
+      },
+      nowMs,
+      { min: 0 },
+    );
+    const dryMs =
+      Number(d.rate_t_per_day) < -1e-9
+        ? whenReaches(
+            { amount: remaining, ratePerDay: Number(d.rate_t_per_day), asOfMs: nowMs },
+            0,
+          )
+        : null;
+    return {
+      resource: d.resource,
+      remainingT: Math.floor(remaining * 100) / 100,
+      initialT: Number(d.initial_t),
+      dryAt: dryMs ? new Date(dryMs).toISOString() : null,
+    };
+  });
+  const availability = planetTechAvailability(body.seed);
+
+  return projectPlanetIntel(tier as IntelTier, {
+    id: body.id,
+    bodyType: body.body_type,
+    name: body.name,
+    x: Number(body.x),
+    y: Number(body.y),
+    size: body.size,
+    climate: body.climate,
+    ownerId: body.owner_id,
+    ownerName: body.owner_name,
+    isStarter: !!body.is_starter,
+    tiles: Number(body.tiles ?? 0),
+    tilesUsed: buildingRows.filter((b) => b.tile_index !== null).length,
+    population: Number(body.population ?? 0),
+    spaceportOpen,
+    marketPairs,
+    innateOffers,
+    buildings: buildingRows.map((b) => ({
+      key: b.key,
+      level: Number(b.level),
+      status: b.status,
+    })),
+    quality: body.quality,
+    deposits,
+    techDna: {
+      available: [...availability.available].sort(),
+      maxLevel: Object.fromEntries(availability.maxLevel),
+    },
+  });
 }

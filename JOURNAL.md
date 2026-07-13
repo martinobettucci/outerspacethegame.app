@@ -1858,3 +1858,64 @@ onglets désactivés avec raison, table exhaustive 31 lignes, grant 500 T
 d'ore → le snapshot suivant le reflète et l'UI suit, 401 en contexte
 anonyme) ; suites 75/32/108/15 vertes ; capture cen-01 observée à la
 vision (§16). Vidéo .webm conservée (preuve n°14).
+
+---
+
+## 2026-07-13 — Session 30 (suite) : chunk Q — intel télescope par paliers 0–4
+
+### Canon appliqué (GB §20, DG §4.1/§5/§11.3)
+« Depending on telescope level » : le canon chiffre l'échelle L1/L2/L3
+pour les VAISSEAUX (DG §9.2) mais pas le contenu planétaire — le barème
+par paliers livré est un [TUNE-GAP proposé] : 1 silhouette, 2
+développement, 3 stratégique (gisements en PRÉSENCE seule — DG §11.3 «
+surveyed level » minimal), 4 deep sight (+1 scientifique plafonné à +1,
+DG §4.1 ; ou sonde à portée). La qualité est de l'intel de palier 4 :
+la fuite de /galaxy (quality publié à la simple visibilité) est FERMÉE.
+
+### Décisions v1
+- **Projection par LISTE BLANCHE partagée** (`projectPlanetIntel`) :
+  l'unique endroit qui décide « quel champ à quel palier » ; les clefs
+  des paliers supérieurs sont ABSENTES (jamais null) ; le seed, les
+  stocks, recettes, workforce, config ne figurent même pas dans la
+  structure d'entrée. Tests unitaires : jeu EXACT de clefs par palier.
+- **Palier 0 = 404** — la même réponse qu'un id inexistant : pas
+  d'oracle d'existence. /planets/:id reste owner-only MÊME à palier 4
+  (le détail opérationnel n'est pas de l'intel).
+- **Indice = meilleur télescope couvrant** [TUNE-GAP] (couverture =
+  scope additif de visibleBodies) ; calcul LIVE sans persistance.
+- **UI : le manque est montré** — rangées cadenas « Télescope L2/L3
+  requis », « Deep sight needs a scientific eye — or a probe on site » ;
+  aide d'interface seulement, la règle vit au serveur.
+- **Gap UI réel corrigé au passage** : les infrastructures sans tuile
+  (télescope, probe pad) n'avaient AUCUNE surface de level-up à l'écran —
+  bouton « Level up → L{n+1} » ajouté au panneau Infrastructure.
+
+### Vérification de spec — la garantie voisin n'ancre pas l'observateur
+Le déroulé E2E proposé par la spec s'appuyait sur « cible inscrite après
+l'observateur ⇒ voisin 150–240 pc DE L'OBSERVATEUR » : FAUX en base de
+dev partagée — l'ancre est N'IMPORTE QUEL actif. Parcours re-conçu
+DÉTERMINISTE : un Souverain SCIENTIFIQUE observe un monde sauvage de SA
+poche (≤ 60 pc, couvert à tout niveau) ; l'échelle 1→2→3→4 se joue par
+level-ups du télescope (+1 scientifique dès L1). Le couple
+observateur/cible étranger reste couvert en INTÉGRATION (univers neuf à
+deux joueurs : là, la garantie du second inscrit est réelle).
+
+### Leçon Playwright — le clic « en attente » re-tire
+Un `btn.click()` gardé par isVisible() dans une boucle toPass a produit
+un DOUBLE level-up (télescope 1→3 sans passer par l'assertion L2) : le
+clic en attente de visibilité part quand le bouton du niveau SUIVANT
+apparaît. Règle adoptée : pour les actions à effet cumulatif, UN clic
+sur un état PRÉ-STABLE vérifié par l'API, jamais de clic dans une boucle
+de retry.
+
+### Vérifications
+86 unit shared (11 intel : paliers, +1 plafonné, sonde, listes blanches
+EXACTES, invariants négatifs, estimation de population) ; 116/116
+intégration (8 intel : 404 hors scope, montée L1→L3, +1 gouverneur
+scientifique → L4, sonde → L4, /planets d'autrui 403 même à L4, étoile
+refusée, fuite quality fermée dans /galaxy) ; E2E 16/16 dont intel ×2
+(échelle complète 1→4 sur monde sauvage, refus directs 404/403) ;
+captures int-01..04 observées à la vision (§16) : badge Intel L1 +
+3 rangées cadenas, bloc Development (0/4 tuiles, pop ~0), bloc Strategic
+(présence de 7 gisements SANS tonnage), Deep sight (qualité F, tonnages
+2711/2711…, ADN tech complet). Vidéo .webm conservée (preuve n°15).

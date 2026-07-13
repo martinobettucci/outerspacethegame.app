@@ -135,6 +135,17 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    drift (stocks, tanks, population) runs in real days (JOURNAL
    2026-07-13).
 
+### Intel tiers (implemented, chunk Q)
+
+Planetary intel is computed SERVER-SIDE per request (no persistence —
+live truth): tier = best active telescope level among owned worlds whose
+combined scope covers the target (+1 once if a source world is
+scientifically governed, DG §4.1 hard-cap), probe within scan range ⇒
+deep sight, mere visibility ⇒ tier 1, otherwise 404 (same answer as a
+nonexistent id — no existence oracle). Projection is a strict shared
+WHITELIST per tier; `/galaxy` no longer leaks quality for foreign
+bodies; `/planets/:id` stays owner-only even at tier 4.
+
 ## 5. Authentication & authorization
 
 - Account auth (implemented, chunk D): e-mail + password — scrypt (Node

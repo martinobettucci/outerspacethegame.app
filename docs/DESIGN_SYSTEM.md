@@ -175,6 +175,18 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   row headers) of the FULL resource catalog grouped by tier — zeros
   displayed, mono right-aligned totals. Explicit loading/error(+retry)/
   empty states.
+- **Foreign-body intel panel (implemented, chunk Q)** — the galaxy body
+  panel for non-owned planets composes by tier: primary chip badge
+  ("Intel L1..L3", "Deep sight" at 4, Telescope icon), then Development /
+  Strategic / Deep sight blocks as they unlock; locked tiers show a
+  Lucide Lock row naming WHAT is missing ("Level 2 telescope required",
+  "Deep sight needs a scientific eye — or a probe on site") — UI shows
+  the path, the rule lives server-side. Deposit presence chips carry no
+  tonnage before deep sight; quality never appears below tier 4.
+- **Infrastructure level-up (implemented, chunk Q)** — tile-less
+  infrastructure rows (telescope, probe pad) gain a violet chip-button
+  "Level up → L{n+1}" (visible when active and below max) — they have no
+  board tile, so the sidebar row is their only control surface.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

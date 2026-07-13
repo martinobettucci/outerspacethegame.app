@@ -6,6 +6,7 @@
 import type {
   Archetype,
   BuildingKey,
+  PlanetIntel,
   TechNodeKey,
 } from '@atg/shared';
 
@@ -325,6 +326,8 @@ export const api = {
       'POST',
       `/ships/${shipId}/colonize`,
     ),
+  bodyIntel: (bodyId: string) =>
+    call<{ intel: PlanetIntel }>('GET', `/bodies/${bodyId}/intel`),
   latestCensus: () =>
     call<{
       perDay: number;

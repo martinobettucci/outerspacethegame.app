@@ -10,3 +10,4 @@ export * from './recipes.js';
 export * from './techtree.js';
 export * from './market.js';
 export * from './colonization.js';
+export * from './intel.js';

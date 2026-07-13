@@ -17,7 +17,7 @@ import {
   type SessionPlayer,
 } from '../services/sessions.js';
 import { verifyPassword } from '../services/passwords.js';
-import { visibleBodies } from '../services/world.js';
+import { bodyIntel, visibleBodies } from '../services/world.js';
 import {
   assignCrew,
   buildShip,
@@ -587,6 +587,17 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   app.get('/npcs', async (req) => {
     const player = await requirePlayer(req);
     return { npcs: await listNpcs(deps.pool, player.id) };
+  });
+
+  // Intel planétaire par paliers (GB §20) : palier 0 = 404, jamais 403
+  // (pas d'oracle d'existence) ; la projection par liste blanche vit
+  // côté partagé, le calcul du palier côté serveur.
+  app.get('/bodies/:id/intel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      intel: await bodyIntel(deps.pool, player.id, id, Date.now()),
+    }));
   });
 
   // Census global (GB §13, DG §11.5) : totaux GLOBAUX par ressource

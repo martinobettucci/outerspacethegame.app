@@ -83,3 +83,6 @@ export interface Vec2 {
   x: number;
   y: number;
 }
+
+/** Palier d'intel planétaire (GB §20, DG §4.1) — 0 = inexistant pour l'observateur. */
+export type IntelTier = 0 | 1 | 2 | 3 | 4;

@@ -42,6 +42,7 @@ export async function registerSovereign(
   page: Page,
   email: string,
   displayName: string,
+  politics: string = 'Industrialist',
 ): Promise<string> {
   await page.goto('/');
   await page
@@ -50,7 +51,7 @@ export async function registerSovereign(
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Password').fill(E2E_PASSWORD);
   await page.getByLabel('Sovereign name').fill(displayName);
-  await page.getByLabel('Industrialist').check();
+  await page.getByLabel(politics).check();
   await page.getByRole('button', { name: 'Awaken' }).click();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible({
     timeout: 10_000,

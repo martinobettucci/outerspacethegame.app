@@ -685,7 +685,13 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 .map((b) => (
                   <span
                     key={b.id}
-                    style={{ fontSize: 12, fontFamily: 'var(--font-mono)' }}
+                    style={{
+                      fontSize: 12,
+                      fontFamily: 'var(--font-mono)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
                   >
                     {b.key.replace(/_/g, ' ')} L{b.level} —{' '}
                     <span
@@ -698,6 +704,32 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     >
                       {b.status}
                     </span>
+                    {b.status === 'active' && b.level < 3 && (
+                      <button
+                        type="button"
+                        aria-label={`${t.planet.levelUp} ${b.key}`}
+                        onClick={async () => {
+                          try {
+                            await api.levelUp(planetId, b.id);
+                            setNotice(t.planet.levelUpStarted);
+                            await refresh();
+                          } catch (err) {
+                            setNotice((err as ApiError).message ?? t.errors.generic);
+                          }
+                        }}
+                        style={{
+                          background: 'var(--violet-700)',
+                          color: 'var(--accent-200)',
+                          border: 'none',
+                          borderRadius: 'var(--radius-chip)',
+                          padding: '1px 8px',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t.planet.levelUp} → L{b.level + 1}
+                      </button>
+                    )}
                   </span>
                 ))
             )}
