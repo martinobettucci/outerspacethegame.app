@@ -1953,3 +1953,27 @@ Suites sous Node 24 : shared 86, unit 32, intégration 116 — toutes
 vertes. Limite honnête : pas de test AUTOMATISÉ « clone frais » (ce
 serait un smoke de CI — noté au backlog outillage) ; la garde est le
 script de bootstrap lui-même, documenté.
+
+---
+
+## 2026-07-13 — Session 30 (suite) : correctif — la chaîne census gelée par un worker lent
+
+### Problème
+La spec E2E census a échoué après le test from-scratch : dernier
+snapshot à 15:50, prochain `census_run` planifié à 21:50 (+6 h). Le
+worker du runDev de reproduction (TIME_SCALE=1 — configuration LÉGITIME)
+avait réclamé l'événement et replanifié avec SON intervalle ; le worker
+E2E (3 s) ne re-amorce pas la chaîne (un pending existe) et attend 6 h.
+
+### Décision
+Au boot, chaque worker RE-CLAMPE tout `census_run` non traité planifié
+au-delà de son propre intervalle (UPDATE due_at = now(), idempotent).
+Auto-guérison dans les deux sens : un runDev qui suit une session E2E
+resserre à 6 h max, un E2E qui suit un runDev resserre à 3 s. Leçon
+(suite de celle des workers zombies) : une récurrence UNIQUE partagée
+entre workers de configurations différentes doit être re-normalisée par
+chacun — jamais supposée conforme à sa propre config.
+
+### Vérifications
+File réparée puis spec census verte (8,3 s) ; suite E2E complète 17/17 ;
+cadence re-observée en base (snapshots à 3 s d'écart).

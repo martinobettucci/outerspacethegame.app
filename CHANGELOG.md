@@ -4,6 +4,13 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Correctif : re-clamp de la récurrence census au boot du worker** : un
+  worker à AUTRE échelle de temps (runDev à TIME_SCALE=1 sur la base de
+  dev partagée) peut réclamer un `census_run` et replanifier le suivant à
+  +6 h réelles — la chaîne unique est alors gelée pour les workers
+  rapides (E2E à 7200). Chaque worker ramène désormais au boot tout
+  census pendant au-delà de SON intervalle (UPDATE idempotent,
+  auto-guérison dans les deux sens). Observé après le test from-scratch.
 - **Correctif « from scratch » (signalement du responsable, testé Node
   22 ET 24)** : sur un clone frais, `runDev`/`resetDb`/tout lancement
   manuel échouaient en `ERR_MODULE_NOT_FOUND` — les exports de

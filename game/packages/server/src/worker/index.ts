@@ -36,6 +36,16 @@ await pool.query(
      SELECT 1 FROM events WHERE kind = 'census_run' AND processed_at IS NULL
    )`,
 );
+// Re-clamp : un worker à AUTRE échelle (runDev à TIME_SCALE=1 vs E2E à
+// 7200) peut avoir replanifié le prochain census à des heures — chaque
+// worker ramène la chaîne dans SON intervalle au boot (auto-guérison,
+// observé après un runDev from-scratch sur la base partagée).
+await pool.query(
+  `UPDATE events SET due_at = now()
+   WHERE kind = 'census_run' AND processed_at IS NULL
+     AND due_at > now() + make_interval(secs => $1 / 1000.0)`,
+  [censusIntervalMs],
+);
 
 while (running) {
   const started = Date.now();
