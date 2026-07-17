@@ -34,6 +34,16 @@
   réservations, éviction + péremption, sauvage/Combat-S, bornes §10)
   + E2E docks.spec.ts (usage → réglages → overfill chantier → refus
   saturé VISIBLE → L2 → débordement S en dock M), 5 captures observées.
+- **Réparation E2E post-synchronisation (session 36)** : la refonte UI
+  (étiquettes-boutons « Inspect X », index de contacts) avait cassé 6
+  specs sur 17 — nouvel helper `galaxyLabel`, sélection vaisseaux/
+  destinations par l'index de contacts (chemin clavier canonique — les
+  clics-sprite au pixel près restent couverts par mouvement/hover),
+  comptes FIXES (market, chantier) : la tuile du bâtiment historique se
+  lit désormais par l'API au lieu d'un pixel codé en dur, census :
+  grant sur GOLD (aucun consommateur continu — l'ore d'un +500 se noyait
+  dans les usines de l'univers dev à ×7200), 2 workers Playwright max
+  (contention CPU). Suite finale : **18/18**.
 - **Pods de recrutement (chunk R)** : migration 010 (journal
   `pod_openings` — cap quotidien ET impact de prix). Module partagé pur :
   `price_r = max(5, B × (S_r/S̄)^0.7)` (B = 40 [TUNE]), S̄ = moyenne

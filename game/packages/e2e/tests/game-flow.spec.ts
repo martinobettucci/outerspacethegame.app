@@ -7,6 +7,7 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+import { boardHelpers, galaxyLabel } from './lib.js';
 
 const CAPTURES = new URL('../captures/', import.meta.url).pathname;
 mkdirSync(CAPTURES, { recursive: true });
@@ -399,7 +400,7 @@ test('la Silence se brise : télescope → ping → ping-back → canal (GB §5)
   );
   expect(neighborWorld, 'le starter voisin doit être dans le scope').toBeTruthy();
   // Le label projeté marque la position écran du corps (centre à −26 px).
-  const label = page.getByText(neighborWorld!.name, { exact: true });
+  const label = galaxyLabel(page, neighborWorld!.name);
   await expect(label).toBeVisible({ timeout: 15_000 });
   const lb = (await label.boundingBox())!;
   await page.mouse.click(lb.x + lb.width / 2, lb.y - 26);
@@ -557,10 +558,6 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
     .first()
     .click();
   await expect(page.getByTestId('planet-canvas')).toBeVisible();
-  const canvas = page.getByTestId('planet-canvas');
-  const box = (await canvas.boundingBox())!;
-  const tileX = box.x + box.width / 2;
-  const tileY = box.y + box.height / 2 - 20;
 
   // Le marché est-il déjà bâti (rerun) ? Introspection API (lecture seule,
   // les ACTIONS restent pilotées par l'UI) — un clic-sonde sur le canvas
@@ -569,6 +566,11 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
   const me = (await page.request.get('/api/me').then((r) => r.json())) as {
     planets: { id: string }[];
   };
+  // Géométrie de tuile PARTAGÉE (lib.boardHelpers) : le « centre du canvas
+  // − 20 px » d'avant lib.ts est devenu un coup de dés depuis la refonte
+  // des styles de la scène planète.
+  const bh = await boardHelpers(page, me.planets[0]!.id);
+  const [tileX, tileY] = bh.tilePx(0);
   const detail = (await page.request
     .get(`/api/planets/${me.planets[0]!.id}`)
     .then((r) => r.json())) as { buildings: { key: string }[] };
@@ -610,11 +612,21 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
     }).toPass({ timeout: 30_000 });
   }
   // Ouvre le panneau du marché (chantier 6 h / TIME_SCALE ≈ 3 s au premier
-  // passage ; déjà actif en rerun).
+  // passage ; déjà actif en rerun). Compte FIXE : le marché historique a pu
+  // être posé sur une AUTRE tuile par d'anciennes géométries de clic — on
+  // vise la tuile RÉELLE publiée par l'API, jamais une constante.
+  const detailNow = (await page.request
+    .get(`/api/planets/${me.planets[0]!.id}`)
+    .then((r) => r.json())) as {
+    buildings: { key: string; tileIndex: number | null }[];
+  };
+  const marketTile = detailNow.buildings.find((b) => b.key === 'market')!
+    .tileIndex!;
+  const [mtX, mtY] = bh.tilePx(marketTile);
   await expect(async () => {
-    await page.mouse.click(tileX, tileY);
+    await page.mouse.click(mtX, mtY);
     await expect(panel.getByText(/market · L1/)).toBeVisible({ timeout: 2_000 });
-  }).toPass({ timeout: 30_000 });
+  }).toPass({ timeout: 45_000 });
 
   // Poster l'offre : achète ore, paie water @ 0,5 (slot 0 — L1 = 1 slot).
   const slotForm = panel.getByRole('region', { name: 'Trade slot' });
@@ -797,9 +809,10 @@ test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §1
     .first()
     .click();
   await expect(page.getByTestId('planet-canvas')).toBeVisible();
-  const box = (await page.getByTestId('planet-canvas').boundingBox())!;
-  const tileX = box.x + box.width / 2;
-  const tileY = box.y + box.height / 2 - 20;
+  // Géométrie partagée + tuile réelle (compte fixe : le chantier historique
+  // a pu être posé ailleurs par d'anciennes géométries de clic).
+  const bhYard = await boardHelpers(page, planetId);
+  const [tileX, tileY] = bhYard.tilePx(0);
   const panel = page.getByRole('region', { name: 'Building settings' });
 
   const detail = (await page.request
@@ -838,8 +851,16 @@ test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §1
       );
     }).toPass({ timeout: 30_000 });
   }
+  const detailYard = (await page.request
+    .get(`/api/planets/${planetId}`)
+    .then((r) => r.json())) as {
+    buildings: { key: string; tileIndex: number | null }[];
+  };
+  const yardTile = detailYard.buildings.find((b) => b.key === 'shipyard')!
+    .tileIndex!;
+  const [ytX, ytY] = bhYard.tilePx(yardTile);
   await expect(async () => {
-    await page.mouse.click(tileX, tileY);
+    await page.mouse.click(ytX, ytY);
     await expect(panel.getByText(/shipyard · L1/)).toBeVisible({ timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
 

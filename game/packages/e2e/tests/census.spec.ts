@@ -41,15 +41,20 @@ test('census : totaux globaux publiés, rafraîchis, jamais ventilés', async ({
   const rowCount = await page.locator('tbody tr').count();
   expect(rowCount).toBe(ALL_RESOURCE_IDS.length);
 
-  // 3. Effet backend déterministe : +500 T d'ore, puis le PROCHAIN
-  // snapshot (≤ ~4 s) doit le refléter — l'API publie la vérité.
+  // 3. Effet backend déterministe : +500 T de GOLD, puis un PROCHAIN
+  // snapshot doit le refléter — l'API publie la vérité. Gold et pas ore :
+  // aucune recette CONTINUE ne consomme l'or (seuls des crafts ponctuels
+  // d'ITEMS), et les flux census sont conservatifs (fret/marché déplacent
+  // sans détruire) — le total ne peut que monter. L'ore, lui, est dévoré
+  // par les usines de tout l'univers dev accumulé à ×7200 : un +500
+  // disparaissait dans le bruit (flake observé, session 36).
   const before = (await page.request
     .get('/api/census/latest')
     .then((r) => r.json())) as {
     census: { takenAt: string; totals: Record<string, number> };
   };
   const g = await page.request.post('/api/test/grant', {
-    data: { planetId, resource: 'ore', tons: 500 },
+    data: { planetId, resource: 'gold', tons: 500 },
   });
   expect(g.ok()).toBe(true);
   await expect
@@ -62,10 +67,10 @@ test('census : totaux globaux publiés, rafraîchis, jamais ventilés', async ({
         };
         return (
           now.census.takenAt > before.census.takenAt &&
-          now.census.totals.ore >= before.census.totals.ore + 500
+          (now.census.totals.gold ?? 0) >= (before.census.totals.gold ?? 0) + 500
         );
       },
-      { timeout: 20_000 },
+      { timeout: 45_000 },
     )
     .toBe(true);
 

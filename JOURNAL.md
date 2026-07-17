@@ -2092,4 +2092,35 @@ S 3/2, refus « Docks saturés : aucun dock libre pour une coque S »
 visible en notice, L2 avec S 3/2 · M 0/2 (débordement S en dock M).
 Migration 011 appliquée en dev uniquement (PROD_MIGRATIONS.md : 011 en
 attente d'instruction humaine).
+## 2026-07-17 — Réparation E2E après synchronisation (§13)
 
+**Problème.** Le pull a apporté une refonte UI d'une autre session
+(étiquettes de corps devenues BOUTONS « Inspect X », index de contacts
+listant les mêmes noms, restyle de la scène planète). 6 specs E2E sur 17
+cassaient : violations strict-mode (`getByText(nom)` ambigu), clics-sprite
+interceptés par les nouveaux boutons-étiquettes (l'Arche à +32 px SOUS le
+corps tombe pile sur l'étiquette), géométrie de tuile « centre du canvas
+− 20 px » périmée pour les comptes FIXES (market/chantier dont le
+bâtiment historique vit sur une autre tuile), census flaky.
+
+**Diagnostics et décisions.**
+- `galaxyLabel(page, nom)` (lib) = SEUL localisateur d'étiquette ; les
+  sélections de vaisseaux et de destinations passent par l'INDEX DE
+  CONTACTS (`ship:<id>` / `body:<id>`, aria « Choose destination » en
+  mode ciblage) — chemin clavier canonique de la refonte, déterministe ;
+  la sélection par clic-sprite reste couverte par game-flow
+  « mouvement » et hover-drain.
+- Comptes fixes : la tuile du bâtiment se lit par l'API
+  (`buildings[].tileIndex` + boardHelpers.tilePx), jamais un pixel codé.
+- Census : le +500 T d'ORE se noyait dans la consommation des usines de
+  TOUT l'univers dev accumulé (~300 comptes) à ×7200 — le grant porte
+  désormais sur GOLD (aucun consommateur CONTINU ; les flux census sont
+  conservatifs) : monotone, déterministe.
+- Playwright : `workers: 2` (au-delà, la contention CPU affame les
+  scènes three.js et le tick worker — hit-tests et cadence census
+  flaky) ; fenêtres de clic 20→40 s.
+
+**Vérification.** Suite complète : 18/18 (census 8 s, docks 1,4 min,
+colonisation 2,4 min, hover 1,8 min). L'univers dev partagé qui grossit
+à chaque run reste un risque de charge connu (backlog : reset
+périodique documenté ou univers E2E dédié à discuter).

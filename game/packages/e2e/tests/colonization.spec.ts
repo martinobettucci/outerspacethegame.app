@@ -149,16 +149,21 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
   await rail.getByRole('button', { name: 'Galaxy' }).click();
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1500);
-  const gbox = (await page.getByTestId('galaxy-canvas').boundingBox())!;
-  const gcx = gbox.x + gbox.width / 2;
-  const gcy = gbox.y + gbox.height / 2;
+  // L'Arche (éventail idx 2, angle 4,8 rad ≈ +32 px SOUS le corps) tombe
+  // pile sur le bouton-étiquette « Inspect » qui intercepte le clic depuis
+  // la refonte UI : on la sélectionne par l'index de contacts (chemin
+  // clavier canonique), pas par le sprite.
   const arkPanel = page.getByRole('complementary', { name: arkName });
-  // L'Arche est la 3e coque dockée (personal, cargo, civil) : éventail
-  // idx 2 → angle 4,8 rad ≈ (+3, +32) px du centre.
+  const fleetForAsk = (await page.request
+    .get('/api/fleet')
+    .then((r) => r.json())) as { ships: { id: string; name: string }[] };
+  const arkListedId = fleetForAsk.ships.find((s) => s.name === arkName)!.id;
   await expect(async () => {
-    await page.mouse.click(gcx + 3, gcy + 32);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${arkListedId}`);
     await expect(arkPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 40_000 });
 
   await arkPanel.getByRole('button', { name: /Assign pilot/ }).click();
   await expect(page.getByRole('status')).toContainText('Pilot bound to the hull');
@@ -195,10 +200,8 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
 
   // 6. Vol vers le monde sauvage (clic sur son label projeté).
   await arkPanel.getByRole('button', { name: 'Send ship' }).click();
-  const label = page.getByText(wild!.name, { exact: true });
-  await expect(label).toBeVisible({ timeout: 10_000 });
-  const lb = (await label.boundingBox())!;
-  await page.mouse.click(lb.x + lb.width / 2, lb.y - 26);
+  // Sélecteur de destination (mode ciblage) : robuste au cadrage caméra.
+  await page.getByLabel('Choose destination').selectOption(`body:${wild!.id}`);
   await expect(page.getByRole('status')).toContainText('Course plotted.', {
     timeout: 10_000,
   });
@@ -221,13 +224,14 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
     .toBe('hovering');
   expect(settlersAfter).toBe(300 - expectedDeaths);
 
-  // 7. Coloniser — l'Arche est seule sur le monde sauvage (éventail idx 0 :
-  // +32 px à droite du corps).
-  const wlb = (await page.getByText(wild!.name, { exact: true }).boundingBox())!;
+  // 7. Coloniser — re-sélection de l'Arche par l'index de contacts (même
+  // motif : les clics-sprite près des étiquettes sont interceptés).
   await expect(async () => {
-    await page.mouse.click(wlb.x + wlb.width / 2 + 32, wlb.y - 26);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${arkListedId}`);
     await expect(arkPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 40_000 });
   await shot(page, 'col-03-hovering-wild');
   await arkPanel.getByRole('button', { name: 'Colonize', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Colony ship landed');

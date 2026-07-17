@@ -8,7 +8,7 @@
  * possédé, quality absente de /galaxy pour tout monde étranger.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, galaxyLabel, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -49,13 +49,13 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
   await page.waitForTimeout(1500);
   const wildPanel = page.getByRole('complementary', { name: wild.name });
   const selectWild = async () => {
-    const label = page.getByRole('main').getByText(wild.name, { exact: true });
+    const label = galaxyLabel(page, wild.name);
     await expect(label).toBeVisible({ timeout: 10_000 });
     const lb = (await label.boundingBox())!;
     await expect(async () => {
       await page.mouse.click(lb.x + lb.width / 2, lb.y - 26);
       await expect(wildPanel).toBeVisible({ timeout: 1_500 });
-    }).toPass({ timeout: 20_000 });
+    }).toPass({ timeout: 40_000 });
   };
   await selectWild();
   await expect(wildPanel.getByText('Intel L1', { exact: true })).toBeVisible({

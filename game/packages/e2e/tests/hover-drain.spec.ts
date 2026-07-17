@@ -7,7 +7,7 @@
  * (≤ 1 pc), retour et plein au monde (bouton Refuel).
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, galaxyLabel, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -95,7 +95,7 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   };
   const starterName = me.planets[0]!.name;
   // Le nom du starter existe AUSSI dans le rail : on scope à la scène.
-  const label = page.getByRole('main').getByText(starterName, { exact: true });
+  const label = galaxyLabel(page, starterName);
   await expect(label).toBeVisible({ timeout: 10_000 });
   const lb = (await label.boundingBox())!;
   const bodyPx = { x: lb.x + lb.width / 2, y: lb.y - 26 };
@@ -106,7 +106,7 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   await expect(async () => {
     await page.mouse.click(bodyPx.x - 24, bodyPx.y - 22);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 40_000 });
   await haulerPanel.getByRole('button', { name: 'Undock' }).click();
   await expect(page.getByRole('status')).toContainText('Airborne');
   // La planète paie (GB §7) : le taux du stock fuel_x passe à −0.2 u/j.
@@ -148,7 +148,7 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   let scale = 3.56; // secours : 9 pc d'éventail ≈ 32 px au zoom par défaut
   for (const other of galaxyBodies) {
     if (other.id === planetId) continue;
-    const ol = page.getByRole('main').getByText(other.name, { exact: true });
+    const ol = galaxyLabel(page, other.name);
     if (!(await ol.isVisible().catch(() => false))) continue;
     const ob = await ol.boundingBox();
     if (!ob) continue;
@@ -262,7 +262,7 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   await expect(async () => {
     await page.mouse.click(voidPx!.x + 32, voidPx!.y);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 40_000 });
   await expect(haulerPanel.getByText('Stranded — out of fuel')).toBeVisible();
   await expect(
     haulerPanel.getByRole('button', { name: 'Send ship' }),
@@ -321,13 +321,12 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   await expect(async () => {
     await page.mouse.click(voidPx!.x + 32, voidPx!.y);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  }).toPass({ timeout: 40_000 });
   await haulerPanel.getByRole('button', { name: 'Send ship' }).click();
-  const homeLabel = page
-    .getByRole('main')
-    .getByText(starterName, { exact: true });
-  const hlb = (await homeLabel.boundingBox())!;
-  await page.mouse.click(hlb.x + hlb.width / 2, hlb.y - 26);
+  // Depuis le vide, le starter peut être HORS CHAMP (son étiquette n'existe
+  // que projetée) : l'index de contacts, devenu « Choose destination » en
+  // mode ciblage, trace la route au clavier — chemin robuste et accessible.
+  await page.getByLabel('Choose destination').selectOption(`body:${planetId}`);
   await expect(page.getByRole('status')).toContainText('Course plotted.', {
     timeout: 10_000,
   });
