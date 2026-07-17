@@ -23,7 +23,7 @@ import {
   type HullCategory,
   type HullSize,
 } from '@atg/shared';
-import type { PlanetBuilding } from '../api.js';
+import type { PlanetBuilding, PlanetDocks } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
 import { OperationTimer } from './OperationTimer.tsx';
@@ -42,6 +42,7 @@ function costText(cost: CostBundle): string {
 
 export function BuildingPanel({
   building,
+  docks,
   workforceAssignable,
   workforceAssigned,
   maxLevelBySeed,
@@ -54,6 +55,8 @@ export function BuildingPanel({
   onClose,
 }: {
   building: PlanetBuilding;
+  /** Résumé planète des docks (spaceports actifs) — null si aucun. */
+  docks?: PlanetDocks | null;
   workforceAssignable: number;
   workforceAssigned: number;
   maxLevelBySeed: number;
@@ -61,6 +64,8 @@ export function BuildingPanel({
     workforce?: number;
     runPct?: number;
     landing?: 'self' | 'everyone';
+    dwellHours?: number;
+    reservedForSelf?: number;
   }) => void;
   onSaveMarketSlot?: (input: {
     slotIndex: number;
@@ -93,6 +98,12 @@ export function BuildingPanel({
   const [slotRate, setSlotRate] = useState(String(slot0?.rate ?? '0.5'));
   const [slotDaily, setSlotDaily] = useState(
     String(slot0?.dailyLimitT ?? '0'),
+  );
+  const [dwellHours, setDwellHours] = useState(
+    String(building.dwellHours ?? 24),
+  );
+  const [reservedForSelf, setReservedForSelf] = useState(
+    building.reservedForSelf ?? 0,
   );
   const [yardCategory, setYardCategory] = useState<
     'combat' | 'cargo' | 'civil'
@@ -192,10 +203,28 @@ export function BuildingPanel({
       )}
 
       {building.key === 'spaceport' && building.landing && (
-        <section className="ls-section">
+        <section aria-label={t.planet.landingPolicy} className="ls-section">
           <div className="ls-section-heading">
             <Anchor size={14} aria-hidden /> {t.planet.landingPolicy}
           </div>
+          {docks && (
+            <p className="ls-mono-line" data-testid="docks-usage">
+              {t.planet.docksTitle}{' '}
+              {(['s', 'm', 'l'] as const)
+                .filter((size) => docks.total[size] > 0)
+                .map(
+                  (size) =>
+                    `${size.toUpperCase()} ${docks.occupied[size]}/${docks.total[size]}`,
+                )
+                .join(' · ')}{' '}
+              · {docks.visitors} {t.planet.docksVisitors}
+              {docks.reservedForSelf > 0
+                ? ` · ${docks.reservedForSelf} ${t.planet.docksReserved}`
+                : ''}{' '}
+              · {t.planet.docksDwell} {docks.dwellHours}{' '}
+              {t.planet.docksGameHours}
+            </p>
+          )}
           <label className="ls-field">
             <span>{t.planet.landingPolicy}</span>
             <select
@@ -211,6 +240,49 @@ export function BuildingPanel({
               <option value="everyone">{t.planet.landingEveryone}</option>
             </select>
           </label>
+          <div className="ls-inline-fields">
+            <label className="ls-field">
+              <span>{t.planet.dwellHoursLabel}</span>
+              <input
+                className="ls-input"
+                type="number"
+                min={1}
+                max={720}
+                step={1}
+                value={dwellHours}
+                onChange={(event) => setDwellHours(event.target.value)}
+              />
+            </label>
+            <label className="ls-field">
+              <span>{t.planet.reservedForSelfLabel}</span>
+              <select
+                aria-label={t.planet.reservedForSelfLabel}
+                className="ls-select"
+                value={String(reservedForSelf)}
+                onChange={(event) =>
+                  setReservedForSelf(Number(event.target.value))
+                }
+              >
+                {[0, 1, 2].map((n) => (
+                  <option key={n} value={String(n)}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <button
+            type="button"
+            className="ls-button ls-button--block"
+            onClick={() =>
+              onApply({
+                dwellHours: Math.round(Number(dwellHours)),
+                reservedForSelf,
+              })
+            }
+          >
+            {t.planet.apply}
+          </button>
         </section>
       )}
 

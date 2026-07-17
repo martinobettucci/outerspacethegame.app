@@ -24,6 +24,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 8 | `game/packages/server/migrations/008_hover_drain.sql` | Drains de loitering (GB §7/§13) : réservoir paresseux (`ships.fuel_rate_u_per_day`, `ships.fuel_as_of`), index `ships_hover` | 001, 004 | DROP des 2 colonnes + DROP INDEX |
 | 9 | `game/packages/server/migrations/009_census.sql` | Census global (GB §13, DG §11.5) : table `census_snapshots` + amorçage du premier `census_run` | 001 | DROP TABLE + DELETE FROM events WHERE kind='census_run' |
 | 10 | `game/packages/server/migrations/010_pods.sql` | Pods de recrutement (GB §12/§13, DG §11.4) : journal `pod_openings` (cap quotidien + impact de prix) | 001, 009 | DROP TABLE |
+| 11 | `game/packages/server/migrations/011_docks.sql` | Docks de spaceport (GB §9/§14, DG §5.1/§8.6) : `ships.docked_at` (garde d'éviction de séjour + affichage), backfill `now()` pour les coques déjà à quai | 001 | ALTER TABLE ships DROP COLUMN docked_at |
 
 ## Services à déployer (au premier déploiement)
 

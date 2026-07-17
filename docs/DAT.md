@@ -143,6 +143,30 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    by the player row lock) and lands account-bound for 60 days.
    Strictest-bind inheritance on host transfers ships with auctions/NFT
    (P4).
+9. **Spaceport docks (implemented, chunk S):** landing throughput is
+   bounded by CUMULATIVE dock counts of active spaceports (L1 = 2 S,
+   L2 = +2 M, L3 = +2 L [TUNE]); a hull fits any dock ≥ its size and
+   feasibility is checked greedily (S spills to M then L). Capacity
+   applies to EVERYONE (owner included) as soon as an active port
+   exists; the bootstrap exception [TUNE-v1] keeps "your own world
+   without an active spaceport always welcomes you" (starters spawn
+   building-less). Exemptions: personal, probe, Combat-S — and Combat-S
+   lands ANYWHERE, ignoring landing policy and wild status [announced
+   interp; sanctuary/siege arbitrates in P5]. Per-port
+   `reservedForSelf` (0–2 [TUNE], default 0) is subtracted from the
+   VISITOR pool smallest-docks-first; owners ignore reservations. Every
+   visitor landing on an OWNED world schedules a `dock_eviction` event
+   at +dwell/timeScale (per-port `dwellHours` 1–720, default 24 [TUNE],
+   most generous active port wins) — the handler is guarded by
+   `ships.docked_at` (migration 011): it only evicts the exact landing
+   it was scheduled for, so undock+re-land expires stale evictions;
+   eviction returns the hull to hovering with the tank drain armed.
+   Yard-built hulls are born docked even over capacity (docks bound
+   LANDINGS, not production — announced). `landShip` locks BODY before
+   ship (refuel idiom): concurrent landings on one world serialize;
+   ship ownership is checked before any state (no state oracle on
+   foreign hulls, §10). `planetDetail.docks` aggregates
+   total/occupied-by-size/visitors/reserved/dwell for the owner's UI.
 
 ### Intel tiers (implemented, chunk Q)
 
@@ -254,9 +278,10 @@ Site (current): `bundle exec jekyll serve`. Game (from `game/`):
   finalized in the auth chunk; documented here before implementation (§5).
 - Artificial-planet NFT deed semantics under war need v2 UX review
   (BALANCE_LOG round-2 patch 47).
-- Row-lock ordering (chunk O): new commands take BODY before SHIP
-  (refuel), while historic commands (moveShip, land, undock) lock the
-  ship first and may rebase a body afterwards. A rare deadlock window
+- Row-lock ordering (chunk O, extended chunk S): new commands take BODY
+  before SHIP (refuel, land — landShip moved to this order for dock
+  capacity serialization), while historic commands (moveShip, undock)
+  lock the ship first and may rebase a body afterwards. A rare deadlock window
   exists between a command and a worker rebase touching the same
   (body, hovering ship) pair: PostgreSQL aborts one side, the
   at-least-once event queue replays, the API surfaces a retryable

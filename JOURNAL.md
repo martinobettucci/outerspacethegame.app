@@ -2029,3 +2029,67 @@ pod-01/02 observées à la vision (§16) : refus « Compte trop jeune : 45
 jours requis » verbatim, révélation merchant UNCOMMON humain +10,06 %
 trade bonus, roster à 2 personnages avec date de liaison, impact de
 prix à l'écran. Vidéo .webm conservée (preuve n°16).
+
+## 2026-07-17 — Chunk S : docks de spaceport (GB §9/§14, DG §5.1/§8.6)
+
+**Contexte.** Reste principal du chunk J (« AUCUNE limite v1 — annoncé ») :
+les comptes de docks, réservations et l'éviction de séjour. Reprise après
+`git pull` demandé par le responsable (la branche avait reçu d'une autre
+session la suppression du site Jekyll et une refonte des styles UI).
+
+**Décisions.**
+- *Comptes cumulatifs* : L1 = 2 S ; L2 = +2 M ; L3 = +2 L [TUNE], une
+  coque ≤ son dock ; faisabilité par algorithme GLOUTON de débordement
+  (L d'abord, M déborde sur L, S sur M puis L) — correct pour 3 tailles
+  ordonnées, testé sur les remplissages exacts.
+- *Réservations « pour soi »* (canon « ready to depart », plancher
+  anti-DoS 1–2) : 0–2 par spaceport [TUNE], défaut 0 (conservateur — le
+  canon suggère 1–2, documenté). [TUNE-v1 interp] : les docks réservés
+  sont soustraits du pool VISITEURS en commençant par les plus petits
+  (S avant M avant L) — déterministe ; le propriétaire ignore les
+  réservations (c'est leur raison d'être).
+- *Exception bootstrap* [TUNE-v1] : SON monde SANS spaceport actif
+  accueille toujours (chunk J conservé) — le canon strict bloquerait le
+  début de partie, le starter naissant sans bâtiment. Dès qu'un
+  spaceport actif existe, la capacité s'applique à TOUS, propriétaire
+  compris. Effet de bord assumé : pendant une montée de niveau (port
+  `constructing`, donc inactif), le propriétaire retombe sur l'exception
+  bootstrap et les visiteurs sont refusés (aucun port actif) — cohérent,
+  documenté ici.
+- *Combat-S* : « se pose n'importe où, sans dock » (GB §14) étendu à
+  l'ignorance de la politique d'atterrissage et des mondes sauvages
+  [interp annoncée] ; le sanctuaire/siège (P5) arbitrera. Pour fermer le
+  parking gratuit (à quai = aucun drain), l'éviction de séjour vise TOUT
+  visiteur d'un monde possédé, coque exemptée ou non [TUNE-v1 interp] ;
+  sur monde sauvage, pas d'éviction (personne pour évincer) — les
+  horloges de survie (P3) borneront.
+- *Éviction* : événement `dock_eviction {shipId, bodyId, landedAtMs}` à
+  +dwell/timeScale ; dwell par port 1–720 h [TUNE], défaut 24 h, le plus
+  généreux des ports actifs prévaut (miroir de la politique la plus
+  permissive). Garde d'idempotence par `ships.docked_at` (migration
+  011) : n'évince que si docked_at = landedAtMs — un départ/retour a
+  replanifié SA propre éviction, l'ancienne se périme toute seule.
+  Renvoi au survol avec réservoir armé (rebase tank).
+- *Chantier* : les coques naissent à quai même docks pleins (annoncé —
+  les docks bornent le débit d'ATTERRISSAGE, pas la production) ; l'UI
+  montre honnêtement « S 3/2 ».
+- *Verrouillage* : landShip passe à l'ordre CORPS avant vaisseau (idiome
+  refuel, DAT §8) — les atterrissages concurrents d'un même monde se
+  sérialisent sur la ligne bodies ; la propriété du vaisseau se vérifie
+  AVANT tout état (§10 : pas d'oracle d'état sur la coque d'autrui —
+  régression attrapée par le test direct existant, corrigée).
+- *Visibilité visiteur* : v1, un visiteur découvre la saturation au
+  refus (messages distincts « aucun dock ≥ taille » vs « saturés ») ;
+  l'affichage distant de la disponibilité viendra avec l'intel/scan.
+
+**Vérifications.** Shared 104 (dont 10 docks) ; serveur 32 unit + 134
+intégration (dont 12 docks : capacité, structurel vs saturé, exemptions
+en saturation, réservations propriétaire/visiteur, éviction + péremption
+au re-atterrissage, jamais-le-propriétaire, sauvage/Combat-S, bornes et
+refus directs §10) ; E2E 18/18 ; captures dock-01…05 observées (§16) :
+usage S 1/2, réglages 48 h + 1 réservé appliqués, overfill chantier
+S 3/2, refus « Docks saturés : aucun dock libre pour une coque S »
+visible en notice, L2 avec S 3/2 · M 0/2 (débordement S en dock M).
+Migration 011 appliquée en dev uniquement (PROD_MIGRATIONS.md : 011 en
+attente d'instruction humaine).
+

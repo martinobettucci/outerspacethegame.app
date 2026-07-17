@@ -144,6 +144,18 @@ evaluated stock.
   `account_bound_until` = opening + 60 days [TUNE] (column existed since
   001) — recruitment is a sink, not a mint.
 
+## 011_docks (spaceport dock counts & dwell eviction, GB §9/§14, DG §5.1/§8.6)
+
+- `ships.docked_at timestamptz` — timestamp of the LAST landing. The
+  `dock_eviction` event carries `landedAtMs` and only evicts when
+  `docked_at` still matches: undock + re-land reschedules its own
+  eviction and silently expires the old one (idempotence guard). Also
+  feeds the UI ("docked since"). Backfilled to `now()` for hulls already
+  docked at migration time (display-only approximation — no retroactive
+  eviction exists for them). Dock capacity itself needs no schema:
+  counts derive from active spaceport levels, per-port `dwellHours` /
+  `reservedForSelf` live in `buildings.config` (jsonb, 004 pattern).
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

@@ -80,7 +80,17 @@ export interface PlanetBuilding {
   workforceU: number | null;
   limiting: string | null;
   landing: 'self' | 'everyone' | null;
+  dwellHours: number | null;
+  reservedForSelf: number | null;
   marketSlots: MarketSlotView[] | null;
+}
+
+export interface PlanetDocks {
+  total: { s: number; m: number; l: number };
+  occupied: { s: number; m: number; l: number };
+  visitors: number;
+  reservedForSelf: number;
+  dwellHours: number;
 }
 
 export interface MarketSlotView {
@@ -123,6 +133,7 @@ export interface PlanetDetail {
     dryAt: string | null;
   }[];
   buildings: PlanetBuilding[];
+  docks: PlanetDocks | null;
   tech: {
     available: TechNodeKey[];
     maxLevel: Record<string, number>;
@@ -387,7 +398,13 @@ export const api = {
   setBuildingSettings: (
     planetId: string,
     buildingId: string,
-    settings: { workforce?: number; runPct?: number; landing?: 'self' | 'everyone' },
+    settings: {
+      workforce?: number;
+      runPct?: number;
+      landing?: 'self' | 'everyone';
+      dwellHours?: number;
+      reservedForSelf?: number;
+    },
   ) =>
     call<{ ok: true }>(
       'PATCH',

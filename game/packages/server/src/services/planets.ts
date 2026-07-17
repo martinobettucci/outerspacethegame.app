@@ -14,6 +14,13 @@ import {
   DEMOLISH_HOURS,
   DEMOLISH_REFUND_RATIO,
   CLIMATE_CRYSTAL,
+  DOCK_DWELL_HOURS_DEFAULT,
+  DOCK_DWELL_HOURS_MAX,
+  DOCK_DWELL_HOURS_MIN,
+  DOCK_RESERVED_SELF_DEFAULT,
+  DOCK_RESERVED_SELF_MAX,
+  occupiesDock,
+  spaceportDocks,
   effectiveMask,
   efficiency,
   planetTechAvailability,
@@ -136,8 +143,18 @@ export interface PlanetDetail {
     workforceU: number | null;
     limiting: string | null;
     landing: 'self' | 'everyone' | null;
+    dwellHours: number | null;
+    reservedForSelf: number | null;
     marketSlots: MarketSlot[] | null;
   }[];
+  /** Docks agrégés des spaceports ACTIFS (null si aucun). */
+  docks: {
+    total: { s: number; m: number; l: number };
+    occupied: { s: number; m: number; l: number };
+    visitors: number;
+    reservedForSelf: number;
+    dwellHours: number;
+  } | null;
   colonizedAt: string | null;
   graceUntil: string | null;
   tech: {
@@ -191,6 +208,54 @@ export async function planetDetail(
     );
     const archetypes = await governingArchetypes(client, bodyId, playerId);
     const mask = effectiveMask(archetypes);
+
+    // Docks des spaceports actifs (DG §5.1) : capacité cumulée, coques à
+    // quai par taille (les exemptions n'occupent pas), visiteurs, dwell le
+    // plus généreux et docks réservés (mêmes règles que landShip).
+    const activePorts = buildingRows.filter(
+      (b) => b.key === 'spaceport' && b.status === 'active',
+    );
+    let docks: PlanetDetail['docks'] = null;
+    if (activePorts.length > 0) {
+      const total = { s: 0, m: 0, l: 0 };
+      let reservedForSelf = 0;
+      for (const p of activePorts) {
+        const d = spaceportDocks(Number(p.level));
+        total.s += d.s;
+        total.m += d.m;
+        total.l += d.l;
+        reservedForSelf += Math.max(
+          0,
+          Math.min(
+            DOCK_RESERVED_SELF_MAX,
+            Number(p.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT),
+          ),
+        );
+      }
+      const { rows: dockedRows } = await client.query(
+        `SELECT hull_category, hull_size, owner_id FROM ships
+         WHERE docked_body_id = $1 AND status = 'docked'`,
+        [bodyId],
+      );
+      const occ = dockedRows.filter((o) =>
+        occupiesDock(o.hull_category, o.hull_size),
+      );
+      const occupied = { s: 0, m: 0, l: 0 };
+      for (const o of occ) {
+        occupied[o.hull_size as 's' | 'm' | 'l'] += 1;
+      }
+      docks = {
+        total,
+        occupied,
+        visitors: occ.filter((o) => o.owner_id !== body.owner_id).length,
+        reservedForSelf,
+        dwellHours: Math.max(
+          ...activePorts.map((p) =>
+            Number(p.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT),
+          ),
+        ),
+      };
+    }
 
     const cap = popCap(snap.size, snap.quality);
     const storageUsed = Object.values(snap.stocks).reduce(
@@ -249,6 +314,7 @@ export async function planetDetail(
             ).toISOString()
           : null,
       stock,
+      docks,
       deposits: Object.entries(snap.deposits)
         .map(([resource, remaining]) => {
           const rate = snap.rates.depositRates[resource as ResourceId] ?? 0;
@@ -290,6 +356,14 @@ export async function planetDetail(
               ? b.config?.landing === 'everyone'
                 ? ('everyone' as const)
                 : ('self' as const)
+              : null,
+          dwellHours:
+            b.key === 'spaceport'
+              ? Number(b.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT)
+              : null,
+          reservedForSelf:
+            b.key === 'spaceport'
+              ? Number(b.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT)
               : null,
           marketSlots:
             b.key === 'market'
@@ -616,7 +690,13 @@ export async function setBuildingSettings(
   playerId: string,
   bodyId: string,
   buildingId: string,
-  settings: { workforce?: number; runPct?: number; landing?: string },
+  settings: {
+    workforce?: number;
+    runPct?: number;
+    landing?: string;
+    dwellHours?: number;
+    reservedForSelf?: number;
+  },
   nowMs = Date.now(),
 ): Promise<void> {
   const client = await pool.connect();
@@ -647,6 +727,58 @@ export async function setBuildingSettings(
            SET config = config || jsonb_build_object('landing', $2::text)
          WHERE id = $1`,
         [buildingId, settings.landing],
+      );
+    }
+
+    // Séjour au sol max avant éviction (docks, DG §8.6) — spaceport only.
+    if (settings.dwellHours !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'Le séjour au sol se règle sur un spaceport',
+        );
+      }
+      if (
+        !Number.isInteger(settings.dwellHours) ||
+        settings.dwellHours < DOCK_DWELL_HOURS_MIN ||
+        settings.dwellHours > DOCK_DWELL_HOURS_MAX
+      ) {
+        throw new CommandError(
+          'workforce_invalid',
+          `Séjour au sol invalide (${DOCK_DWELL_HOURS_MIN}–${DOCK_DWELL_HOURS_MAX} h)`,
+        );
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('dwellHours', $2::int)
+         WHERE id = $1`,
+        [buildingId, settings.dwellHours],
+      );
+    }
+
+    // Docks réservés pour soi (« ready to depart », GB §9) — spaceport only.
+    if (settings.reservedForSelf !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'Les docks réservés se règlent sur un spaceport',
+        );
+      }
+      if (
+        !Number.isInteger(settings.reservedForSelf) ||
+        settings.reservedForSelf < 0 ||
+        settings.reservedForSelf > DOCK_RESERVED_SELF_MAX
+      ) {
+        throw new CommandError(
+          'workforce_invalid',
+          `Docks réservés invalides (0–${DOCK_RESERVED_SELF_MAX})`,
+        );
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('reservedForSelf', $2::int)
+         WHERE id = $1`,
+        [buildingId, settings.reservedForSelf],
       );
     }
 

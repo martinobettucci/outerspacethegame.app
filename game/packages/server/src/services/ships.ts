@@ -14,11 +14,15 @@
 import {
   ALL_RESOURCE_IDS,
   buildableSizes,
+  canAcceptLanding,
   canLand,
   containersUsed,
+  DOCK_DWELL_HOURS_DEFAULT,
+  DOCK_RESERVED_SELF_DEFAULT,
   FUEL_TRANSFER_RADIUS_PC,
   GAME_DAY_SECONDS,
   HULLS,
+  occupiesDock,
   PROBE,
   SHIP_BUILD_HOURS,
   shipBuildCost,
@@ -353,7 +357,7 @@ export async function moveShip(
     const wasHoverOwnBodyId = ship.status === 'hovering' ? ship.hover_body_id : null;
     await client.query(
       `UPDATE ships SET status = 'transit', docked_body_id = NULL,
-         hover_body_id = NULL,
+         hover_body_id = NULL, docked_at = NULL,
          origin_x = $2, origin_y = $3, dest_x = $4, dest_y = $5,
          dest_body_id = $6, departed_at = to_timestamp($7 / 1000.0),
          arrives_at = $8
@@ -458,8 +462,8 @@ export async function launchProbe(
       );
     }
     const { rows: created } = await client.query<{ id: string }>(
-      `INSERT INTO ships (owner_id, hull_category, name, x, y, status, docked_body_id)
-       VALUES ($1, 'probe', 'Probe', $2, $3, 'docked', $4) RETURNING id`,
+      `INSERT INTO ships (owner_id, hull_category, name, x, y, status, docked_body_id, docked_at)
+       VALUES ($1, 'probe', 'Probe', $2, $3, 'docked', $4, now()) RETURNING id`,
       [playerId, planet[0].x, planet[0].y, planetId],
     );
     await client.query('COMMIT');
@@ -494,68 +498,165 @@ async function lockOwnedShip(
 
 /**
  * Atterrir (GB §9) : acte explicite depuis le survol d'un monde. v1 :
- * ses mondes accueillent toujours ; monde étranger = spaceport ACTIF avec
- * politique `everyone` ; monde sauvage = personne pour vous accueillir.
- * L'usure d'atterrissage (DG §8.6) attend le suivi d'armure — gap documenté.
+ * monde étranger = spaceport ACTIF avec politique `everyone` ; monde
+ * sauvage = personne pour vous accueillir. Docks (DG §5.1/§8.6) : dès
+ * qu'un spaceport actif existe, la capacité S/M/L s'applique à TOUS
+ * (propriétaire compris) — exemptions canon : personnel, Combat-S ;
+ * les docks réservés « pour soi » sont retirés du pool visiteurs.
+ * Exception bootstrap [TUNE-v1, JOURNAL] : SON monde SANS spaceport
+ * actif accueille toujours (le canon strict bloquerait le début de
+ * partie : le starter naît sans bâtiment).
+ * Un VISITEUR reçoit une éviction de séjour (dwell, défaut 24 h [TUNE]) ;
+ * l'usure d'atterrissage (DG §8.6) attend le suivi d'armure — gap documenté.
+ * Verrou corps AVANT vaisseau (convention anti-deadlock, DAT §8) : les
+ * atterrissages concurrents sur un même monde se sérialisent sur le corps.
  */
 export async function landShip(
   pool: pg.Pool,
   playerId: string,
   shipId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
 ): Promise<{ bodyId: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const ship = await lockOwnedShip(client, playerId, shipId);
-    if (ship.hull_category === 'probe') {
-      throw new CommandError('not_available', 'Une sonde ne se pose pas');
+    // Pré-lecture sans verrou pour connaître le monde survolé, puis verrou
+    // corps → vaisseau ; l'état du vaisseau est re-vérifié après verrou.
+    // La PROPRIÉTÉ se vérifie avant tout état (§10 : pas d'oracle d'état
+    // sur la coque d'autrui) ; lockOwnedShip la re-vérifie sous verrou.
+    const { rows: pre } = await client.query(
+      `SELECT owner_id, hover_body_id FROM ships WHERE id = $1`,
+      [shipId],
+    );
+    if (!pre[0]) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (pre[0].owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
     }
-    if (ship.status !== 'hovering' || !ship.hover_body_id) {
+    if (!pre[0].hover_body_id) {
       throw new CommandError('not_available', 'Aucun monde sous la coque');
     }
     const { rows: bodies } = await client.query(
-      `SELECT id, owner_id, body_type FROM bodies WHERE id = $1`,
-      [ship.hover_body_id],
+      `SELECT id, owner_id, body_type FROM bodies WHERE id = $1 FOR UPDATE`,
+      [pre[0].hover_body_id],
     );
     const body = bodies[0];
     if (!body || body.body_type !== 'planet') {
       throw new CommandError('not_available', 'On ne se pose que sur une planète');
     }
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (ship.hull_category === 'probe') {
+      throw new CommandError('not_available', 'Une sonde ne se pose pas');
+    }
+    if (ship.status !== 'hovering' || ship.hover_body_id !== body.id) {
+      throw new CommandError('not_available', 'Aucun monde sous la coque');
+    }
     const owned = body.owner_id === playerId;
-    let hasActiveSpaceport = false;
-    let policy: LandingPolicy = 'self';
-    if (!owned) {
+    const { rows: ports } = await client.query(
+      `SELECT level, config FROM buildings
+       WHERE body_id = $1 AND key = 'spaceport' AND status = 'active'`,
+      [body.id],
+    );
+    const hasActiveSpaceport = ports.length > 0;
+    // Plusieurs spaceports : la politique la plus permissive prévaut.
+    const policy: LandingPolicy = ports.some(
+      (p) => p.config?.landing === 'everyone',
+    )
+      ? 'everyone'
+      : 'self';
+    // Combat-S : « se pose n'importe où, sans dock » (GB §14) — ignore la
+    // politique d'atterrissage et l'absence d'infrastructure [interp
+    // annoncée, JOURNAL ; le sanctuaire/siège arbitrera en P5].
+    const landsAnywhere =
+      ship.hull_category === 'combat' && ship.hull_size === 's';
+    if (!owned && !landsAnywhere) {
       if (!body.owner_id) {
-        // Monde sauvage : pas d'infrastructure d'accueil (colonisation P4).
+        // Monde sauvage : pas d'infrastructure d'accueil (la coque colonie
+        // passe par la commande colonize, GB §19).
         throw new CommandError('not_available', 'Monde sauvage : rien pour vous accueillir');
       }
-      const { rows: ports } = await client.query(
-        `SELECT config FROM buildings
-         WHERE body_id = $1 AND key = 'spaceport' AND status = 'active'`,
+      if (!canLand({ owned, hasActiveSpaceport, policy })) {
+        throw new CommandError(
+          'forbidden',
+          hasActiveSpaceport
+            ? 'Le spaceport ne vous accepte pas (politique d\'atterrissage)'
+            : 'Aucun spaceport actif ne vous accueille ici',
+        );
+      }
+    }
+
+    // Capacité de dock (DG §5.1) — seulement si la coque occupe un dock et
+    // qu'un spaceport actif existe (sinon : exception bootstrap sur SON
+    // monde, déjà refusé ailleurs).
+    const occupies = occupiesDock(ship.hull_category, ship.hull_size);
+    if (occupies && hasActiveSpaceport) {
+      const spConfigs = ports.map((p) => ({
+        level: Number(p.level),
+        reservedForSelf: Number(
+          p.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT,
+        ),
+      }));
+      const { rows: occupants } = await client.query(
+        `SELECT hull_category, hull_size, owner_id FROM ships
+         WHERE docked_body_id = $1 AND status = 'docked'`,
         [body.id],
       );
-      hasActiveSpaceport = ports.length > 0;
-      // Plusieurs spaceports : la politique la plus permissive prévaut.
-      policy = ports.some((p) => p.config?.landing === 'everyone')
-        ? 'everyone'
-        : 'self';
+      const docked = occupants
+        .filter((o) => occupiesDock(o.hull_category, o.hull_size))
+        .map((o) => ({
+          size: o.hull_size as HullSize,
+          isOwner: o.owner_id === body.owner_id,
+        }));
+      const verdict = canAcceptLanding(spConfigs, docked, {
+        size: ship.hull_size as HullSize,
+        isOwner: ship.owner_id === body.owner_id,
+      });
+      if (!verdict.ok) {
+        const size = String(ship.hull_size).toUpperCase();
+        const cap =
+          ship.hull_size === 'l'
+            ? verdict.total.l
+            : ship.hull_size === 'm'
+              ? verdict.total.m + verdict.total.l
+              : verdict.total.s + verdict.total.m + verdict.total.l;
+        throw new CommandError(
+          'not_available',
+          cap === 0
+            ? `Aucun dock ${size} ici (niveau de spaceport insuffisant)`
+            : `Docks saturés : aucun dock libre pour une coque ${size}`,
+        );
+      }
     }
-    if (!canLand({ owned, hasActiveSpaceport, policy })) {
-      throw new CommandError(
-        'forbidden',
-        hasActiveSpaceport
-          ? 'Le spaceport ne vous accepte pas (politique d\'atterrissage)'
-          : 'Aucun spaceport actif ne vous accueille ici',
+
+    await client.query(
+      `UPDATE ships SET status = 'docked', docked_body_id = $2,
+         hover_body_id = NULL, docked_at = to_timestamp($3 / 1000.0)
+       WHERE id = $1`,
+      [shipId, body.id, nowMs],
+    );
+    // Visiteur sur un monde POSSÉDÉ par autrui : séjour au sol borné
+    // (anti-DoS) — pour TOUTE coque, dock ou pas [TUNE-v1 interp, JOURNAL :
+    // sinon un Combat-S exempt camperait à quai sans payer le survol]. Le
+    // dwell le plus généreux des spaceports actifs prévaut (cohérent avec
+    // la politique la plus permissive) ; sans spaceport, défaut canon.
+    if (!owned && body.owner_id) {
+      const dwellHours = ports.length
+        ? Math.max(
+            ...ports.map((p) =>
+              Number(p.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT),
+            ),
+          )
+        : DOCK_DWELL_HOURS_DEFAULT;
+      await enqueue(
+        client,
+        'dock_eviction',
+        new Date(nowMs + (dwellHours * 3600 * 1000) / timeScale),
+        { shipId, bodyId: body.id, landedAtMs: nowMs },
       );
     }
-    await client.query(
-      `UPDATE ships SET status = 'docked', docked_body_id = $2, hover_body_id = NULL
-       WHERE id = $1`,
-      [shipId, body.id],
-    );
     // À quai : drain désarmé (réservoir matérialisé, taux 0, bord purgé) ;
     // sur SON monde, rebase — la planète cesse de payer le survol.
-    const nowMs = Date.now();
     await rebaseShipDrain(client, ship, nowMs, 'none');
     if (owned) await recomputePlanetRates(client, body.id, nowMs);
     await client.query('COMMIT');
@@ -583,7 +684,7 @@ export async function undockShip(
     }
     await client.query(
       `UPDATE ships SET status = 'hovering', hover_body_id = docked_body_id,
-         docked_body_id = NULL
+         docked_body_id = NULL, docked_at = NULL
        WHERE id = $1`,
       [shipId],
     );

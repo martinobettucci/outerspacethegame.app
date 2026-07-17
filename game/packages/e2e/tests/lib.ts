@@ -13,6 +13,16 @@ mkdirSync(CAPTURES, { recursive: true });
 
 export const E2E_PASSWORD = 'motdepasse-e2e-solide';
 
+/**
+ * Étiquette d'un corps sur la carte galaxie. Depuis la refonte UI (bouton
+ * « Inspect X » + index de contacts contenant les mêmes noms), le texte nu
+ * est ambigu (strict mode) : ce bouton est LE localisateur stable, et sa
+ * bounding box reste l'ancrage écran du corps (centre ≈ top − 26 px).
+ */
+export function galaxyLabel(page: Page, bodyName: string) {
+  return page.getByRole('button', { name: `Inspect ${bodyName}` });
+}
+
 export const shot = (page: Page, name: string) =>
   page.screenshot({ path: `${CAPTURES}/${name}.jpeg`, type: 'jpeg', quality: 90 });
 

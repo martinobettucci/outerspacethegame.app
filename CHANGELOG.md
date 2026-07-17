@@ -4,6 +4,36 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Docks de spaceport (chunk S)** : migration 011 (`ships.docked_at` —
+  horodatage du dernier atterrissage, garde d'éviction + affichage).
+  Module partagé pur : comptes CUMULATIFS par niveau (L1 = 2 S ; L2 =
+  +2 M ; L3 = +2 L [TUNE]), une coque ≤ son dock, faisabilité GLOUTONNE
+  par débordement (S→M→L) ; exemptions canon : personnel, sonde,
+  Combat-S ; docks réservés « pour soi » (0–2 [TUNE], défaut 0)
+  soustraits du pool VISITEURS plus petits d'abord [TUNE-v1 interp,
+  JOURNAL]. Serveur : `landShip` verrouille CORPS avant vaisseau (les
+  atterrissages d'un même monde se sérialisent), applique politique puis
+  capacité à TOUS (propriétaire compris) dès qu'un spaceport actif
+  existe — exception bootstrap [TUNE-v1] : SON monde SANS spaceport
+  accueille toujours (le starter naît sans bâtiment) ; refus distincts
+  « aucun dock ≥ taille » vs « docks saturés » ; Combat-S se pose
+  PARTOUT (politique et sauvage ignorées [interp annoncée — le
+  sanctuaire/siège arbitrera en P5]) ; TOUT visiteur d'un monde possédé
+  reçoit une éviction de séjour `dock_eviction` (dwell 1–720 h, défaut
+  24 h [TUNE], le plus généreux des ports actifs prévaut) — handler
+  idempotent gardé par `docked_at` (un re-atterrissage périme l'ancienne
+  éviction), renvoi au survol réservoir armé ; les coques nées à quai
+  (chantier) peuvent SURCHARGER les docks (annoncé : les docks bornent
+  l'atterrissage, pas la production). Réglages spaceport `dwellHours` /
+  `reservedForSelf` (PATCH settings, bornes serveur, spaceport
+  uniquement, propriétaire uniquement — refus directs §10 testés) ;
+  `planetDetail.docks` agrégé (total/occupées par taille/visiteurs/
+  réservés/dwell). UI : panneau spaceport — ligne d'usage des docks,
+  champs séjour + réservation, notice de refus visible. Tests : 10 unit
+  shared + 12 intégration (capacité, structurel vs saturé, exemptions,
+  réservations, éviction + péremption, sauvage/Combat-S, bornes §10)
+  + E2E docks.spec.ts (usage → réglages → overfill chantier → refus
+  saturé VISIBLE → L2 → débordement S en dock M), 5 captures observées.
 - **Pods de recrutement (chunk R)** : migration 010 (journal
   `pod_openings` — cap quotidien ET impact de prix). Module partagé pur :
   `price_r = max(5, B × (S_r/S̄)^0.7)` (B = 40 [TUNE]), S̄ = moyenne

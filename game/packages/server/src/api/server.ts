@@ -101,6 +101,9 @@ const settingsSchema = z.object({
   workforce: z.number().int().min(0).optional(),
   runPct: z.number().int().min(0).max(100).optional(),
   landing: z.enum(['self', 'everyone']).optional(),
+  // Bornes métier re-vérifiées dans le service (source : @atg/shared).
+  dwellHours: z.number().int().optional(),
+  reservedForSelf: z.number().int().optional(),
 });
 const cargoSchema = z.object({
   resource: z.string().min(1),
@@ -482,7 +485,11 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   app.post('/ships/:id/land', async (req, reply) => {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
-    return wrap(reply, () => landShip(deps.pool, player.id, id));
+    return wrap(reply, () =>
+      landShip(deps.pool, player.id, id, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   app.post('/ships/:id/undock', async (req, reply) => {

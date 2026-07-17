@@ -286,15 +286,15 @@ export async function spawnStarterSystem(
 
   // 4. Vaisseaux : personnel (invulnérable, GB §21) + Cargo-S de départ.
   const { rows: psRows } = await client.query<{ id: string }>(
-    `INSERT INTO ships (owner_id, hull_category, name, x, y, status, docked_body_id)
-     VALUES ($1, 'personal', 'Sovereign anchor', $2, $3, 'docked', $4)
+    `INSERT INTO ships (owner_id, hull_category, name, x, y, status, docked_body_id, docked_at)
+     VALUES ($1, 'personal', 'Sovereign anchor', $2, $3, 'docked', $4, now())
      RETURNING id`,
     [opts.playerId, center.x, center.y, starterPlanetId],
   );
   const { rows: csRows } = await client.query<{ id: string }>(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-        status, docked_body_id, fuel, survival)
-     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, $5, $6)
+        status, docked_body_id, docked_at, fuel, survival)
+     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, now(), $5, $6)
      RETURNING id`,
     [
       opts.playerId,

@@ -384,8 +384,8 @@ export const shipBuilt: EventHandler = async (client, event) => {
   const fuelType = star[0]?.star_fuel_type ?? 'cold';
   await client.query(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-                        status, docked_body_id, fuel, cargo)
-     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, $8, '{}')`,
+                        status, docked_body_id, docked_at, fuel, cargo)
+     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, now(), $8, '{}')`,
     [
       // Le vaisseau appartient au PROPRIÉTAIRE ACTUEL du monde (une
       // conquête pendant le chantier capture la production — GB §9,
@@ -400,6 +400,43 @@ export const shipBuilt: EventHandler = async (client, event) => {
       JSON.stringify({ [fuelType]: 0 }),
     ],
   );
+};
+
+/**
+ * dock_eviction { shipId, bodyId, landedAtMs } — fin de séjour au sol d'un
+ * VISITEUR (docks, DG §8.6 anti-DoS) : renvoi au survol, le réservoir paie
+ * (GB §7). Garde d'idempotence : n'évince que si le vaisseau est resté à
+ * quai sur CE monde depuis CE même atterrissage (docked_at = landedAtMs) —
+ * un départ/retour a replanifié SA propre éviction et périme celle-ci.
+ * L'extranéité est re-vérifiée au tir : un monde devenu sien n'évince pas.
+ */
+export const dockEviction: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  const bodyId = String(event.payload.bodyId ?? '');
+  const landedAtMs = Number(event.payload.landedAtMs ?? 0);
+  if (!shipId || !bodyId || !landedAtMs) return;
+  const { rows: ships } = await client.query(
+    `SELECT * FROM ships
+     WHERE id = $1 AND status = 'docked' AND docked_body_id = $2
+       AND docked_at = to_timestamp($3 / 1000.0)
+     FOR UPDATE`,
+    [shipId, bodyId, landedAtMs],
+  );
+  const ship = ships[0];
+  if (!ship) return; // reparti, revenu (nouvel horodatage) ou détruit
+  const { rows: bodies } = await client.query(
+    `SELECT owner_id FROM bodies WHERE id = $1`,
+    [bodyId],
+  );
+  if (!bodies[0] || bodies[0].owner_id === ship.owner_id) return;
+  await client.query(
+    `UPDATE ships SET status = 'hovering', hover_body_id = $2,
+       docked_body_id = NULL, docked_at = NULL
+     WHERE id = $1`,
+    [shipId, bodyId],
+  );
+  const nowMs = event.dueAt.getTime();
+  await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
 };
 
 /**
@@ -469,6 +506,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     ship_built: shipBuilt,
     ship_fuel_out: shipFuelOut,
     colony_established: colonyEstablished,
+    dock_eviction: dockEviction,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

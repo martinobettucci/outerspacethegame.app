@@ -674,6 +674,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
             return (
               <BuildingPanel
                 building={b}
+                docks={planet.docks}
                 workforceAssignable={planet.workforceAssignable}
                 workforceAssigned={planet.workforceAssigned}
                 maxLevelBySeed={planet.tech.maxLevel[b.key] ?? 3}

@@ -12,3 +12,4 @@ export * from './market.js';
 export * from './colonization.js';
 export * from './intel.js';
 export * from './pods.js';
+export * from './docks.js';

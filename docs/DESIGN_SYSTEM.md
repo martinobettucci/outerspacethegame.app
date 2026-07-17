@@ -124,6 +124,17 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   load/unload mini-form (resource select + tons + Load primary / Unload
   neutral) appears only when docked at an owned world. Spaceport building
   panel gains the landing-policy select (Self only / Everyone).
+- **Spaceport docks (implemented, chunk S)** — the spaceport panel's
+  Landing policy section opens with a mono usage line
+  (`data-testid="docks-usage"`): `Docks S x/2 · M y/2 · L z/2 ·
+  N visitors aground · R reserved for own fleet · max stay H game h`
+  (sizes with zero docks are omitted; occupied counts are HULLS of that
+  size, so a shipyard overfill honestly reads `S 3/2`). Below it, an
+  inline field pair — numeric `Visitor ground stay (game hours, 1–720)`
+  and a 0/1/2 select `Docks reserved for own fleet` — applied by the
+  standard block `Apply` button. Landing refusals surface the server
+  message verbatim in the status notice (structural "no dock ≥ size"
+  vs congestion "docks saturés" are distinct messages).
 - **Hospitality (implemented, chunk L)** — merchant worlds only (governance
   gate): planet-sidebar section (accent Store icon, published offers in
   mono `sell @ price want/T · floor N T · X T on offer`, sells/for selects +

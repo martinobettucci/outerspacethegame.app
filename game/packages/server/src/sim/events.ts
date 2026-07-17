@@ -18,6 +18,7 @@ export type EventKind =
   | 'ship_fuel_out'
   | 'colony_established'
   | 'census_run'
+  | 'dock_eviction'
   | 'noop';
 
 export interface GameEvent {
