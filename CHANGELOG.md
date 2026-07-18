@@ -65,6 +65,27 @@
   neutre + compartiment) + E2E amm.spec.ts (Mercantile réel : L2 par
   level-up gouverné, seed 60/30 → spot 0.5, swap 3 T → spot 0.4537,
   retrait 100 % → stock restitué), 4 captures observées, 20/20 E2E.
+- **Sol de terrain par climat + slots discrets (chunk X — demande du
+  responsable)** : la vue planète pose désormais les tuiles sur une DALLE
+  DE TERRAIN organique par climat (référence : prototype 02-iso-colony)
+  — contour perturbé par bruit STABLE par planète (chaque monde a sa
+  silhouette), rim/épaisseur sombres, mouchetis procédural en trois
+  teintes de la rampe climatique (tempéré vert forêt, hot ocre-rouille,
+  cold bleu-acier, poison vert acide) ; l'aura et l'ombre s'adaptent à
+  l'étendue de la grille. Les slots de tuiles deviennent FANTÔMES
+  (alpha 0.2, coutures fines) : révélés au survol (alpha 1 + teinte),
+  PULSÉS quand une carte est armée (les tuiles libres restent lisibles
+  pendant la pose ; statique si prefers-reduced-motion), quasi effacés
+  sous un bâtiment (le sprite possède la scène) ; les falaises par tuile
+  disparaissent (la dalle porte le relief). Le losange interactif
+  148×74 est INCHANGÉ (contrats pointeur et E2E). LIMITE signalée :
+  aucun canal fal.ai dans cette session (hôtes bloqués par le proxy,
+  aucune clé FAL_KEY/OPEN_AI_KEY provisionnée) — rendu PROCÉDURAL v1,
+  les textures générées remplaceront ce rendu quand une clé sera
+  disponible (JOURNAL). Vérifié : game-flow 12/12 (pose et panneaux par
+  clic de tuile intacts) + docks/gouvernance/colonisation/manuel 4/4 ;
+  §16 : 4 climats observés (sonde jetable sur la vraie stack, comptes
+  réels re-teintés en base de dev).
 - **Gouvernance v1 (chunk W)** : AUCUNE migration (les liaisons `npcs`
   suffisent). Module partagé pur : exigences par taille S 0 / M 1 / L 3
   (canon GB §11, caps d'installation identiques), G = 1.0 pleinement

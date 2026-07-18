@@ -154,6 +154,17 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   AMM section opens with a warning-tone triad line
   (`data-testid="triad-nudge"`) whenever no food pair exists within
   telescope range — it disappears the moment one is seeded.
+- **Planet board terrain (implemented, chunk X — owner request)** — the
+  iso board sits on an ORGANIC climate terrain slab (reference:
+  prototype 02-iso-colony): noise-wobbled outline stable per planet,
+  darker 24 px rim, three-shade procedural speckle, aura/shadow sized
+  to the grid. Tile slots are GHOSTS (alpha .2, thin accent seams):
+  hover reveals (alpha 1 + steel/gold tint), arming a card makes free
+  tiles PULSE (static at .72 under prefers-reduced-motion), occupied
+  tiles fade to .08 so sprites own the scene. Per-tile cliffs are gone;
+  the 148×74 interactive diamond is unchanged (pointer/E2E contracts).
+  Procedural v1 — generated climate textures (fal.ai/OpenAI Images)
+  replace it once an image key is provisioned.
 - **Governance (implemented, chunk W)** — planet sidebar section
   (Landmark icon): right-aligned mono badge `n/required seats · G ×x`
   (success when fully governed, danger otherwise), accent note

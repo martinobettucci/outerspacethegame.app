@@ -272,12 +272,23 @@ export function PlanetView({ planetId }: { planetId: string }) {
 
     const edge =
       CLIMATE_TILE_EDGE[planet.climate] ?? CLIMATE_TILE_EDGE.temperate!;
+    // Étendue de la grille (la dalle de terrain et l'aura s'y adaptent).
+    const gridCols = Math.ceil(Math.sqrt(planet.tiles));
+    const gridRows = Math.ceil(planet.tiles / gridCols);
+    const gxMin = isoX(0, gridRows - 1) - TILE_W / 2;
+    const gxMax = isoX(gridCols - 1, 0) + TILE_W / 2;
+    const gyMin = isoY(0, 0) - TILE_H / 2;
+    const gyMax = isoY(gridCols - 1, gridRows - 1) + TILE_H / 2;
+    const tcx = (gxMin + gxMax) / 2;
+    const tcy = (gyMin + gyMax) / 2;
+    const terrainA = (gxMax - gxMin) / 2 + 64;
+    const terrainB = (gyMax - gyMin) / 2 + 46;
     const aura = new Graphics();
-    aura.ellipse(0, 74, 410, 188);
+    aura.ellipse(tcx, tcy + 30, terrainA * 1.18, terrainB * 1.5);
     aura.fill({ color: 0x2a1b52, alpha: 0.16 });
-    aura.ellipse(0, 68, 350, 150);
+    aura.ellipse(tcx, tcy + 24, terrainA * 1.02, terrainB * 1.2);
     aura.fill({ color: edge.accent, alpha: 0.055 });
-    aura.ellipse(0, 96, 320, 94);
+    aura.ellipse(tcx, tcy + 52, terrainA * 0.94, terrainB * 0.76);
     aura.fill({ color: 0x000000, alpha: 0.46 });
     board.addChild(aura);
 
@@ -307,7 +318,71 @@ export function PlanetView({ planetId }: { planetId: string }) {
     }
 
     const fill = CLIMATE_TILE_FILL[planet.climate] ?? CLIMATE_TILE_FILL.temperate!;
-    const extrusion = 12;
+
+    // ——— Sol de terrain par climat (demande du responsable, chunk X) :
+    // dalle ORGANIQUE sous les tuiles (référence : prototype
+    // 02-iso-colony), contour perturbé par bruit STABLE par planète.
+    // Procédural v1 — les textures générées (fal.ai/OpenAI Images)
+    // remplaceront ce rendu quand une clé d'images sera provisionnée
+    // dans l'environnement (JOURNAL chunk X : aucun canal ici).
+    const lighten = (c: number, f: number) =>
+      (Math.min(255, ((c >> 16) & 255) + f) << 16) |
+      (Math.min(255, ((c >> 8) & 255) + f) << 8) |
+      Math.min(255, (c & 255) + f);
+    const seedBase =
+      planet.tiles * 31 + (planet.name.charCodeAt(0) || 65) * 7.3;
+    const outline: number[] = [];
+    const TERRAIN_SEGS = 30;
+    for (let k = 0; k < TERRAIN_SEGS; k++) {
+      const theta = (k / TERRAIN_SEGS) * Math.PI * 2;
+      const wobble = 0.9 + stableNoise(seedBase + k * 3.1) * 0.18;
+      outline.push(
+        tcx + Math.cos(theta) * terrainA * wobble,
+        tcy + Math.sin(theta) * terrainB * wobble,
+      );
+    }
+    const slabDepth = 24;
+    const slabSide = new Graphics();
+    slabSide.poly(outline.map((v, i) => (i % 2 === 1 ? v + slabDepth : v)));
+    slabSide.fill({ color: edge.left });
+    slabSide.stroke({ color: 0x0a1220, width: 1.5, alpha: 0.9 });
+    board.addChild(slabSide);
+    const ground = new Graphics();
+    ground.poly(outline);
+    ground.fill({ color: fill });
+    ground.stroke({ color: lighten(fill, 18), width: 2, alpha: 0.5 });
+    board.addChild(ground);
+    const speckLayer = new Container();
+    const speckMask = new Graphics();
+    speckMask.poly(outline);
+    speckMask.fill({ color: 0xffffff });
+    speckLayer.addChild(speckMask);
+    speckLayer.mask = speckMask;
+    const specks = new Graphics();
+    for (let i = 0; i < 620; i++) {
+      const sx = tcx - terrainA * 1.1 + stableNoise(seedBase + i * 1.7) * terrainA * 2.2;
+      const sy = tcy - terrainB * 1.1 + stableNoise(seedBase * 1.3 + i * 2.9) * terrainB * 2.2;
+      const r = 0.5 + stableNoise(seedBase + i * 4.3) * 2.2;
+      const kind = i % 9;
+      specks.circle(sx, sy, r);
+      specks.fill(
+        kind === 0
+          ? { color: edge.accent, alpha: 0.05 + stableNoise(seedBase + i) * 0.05 }
+          : kind % 2 === 0
+            ? { color: 0x02050a, alpha: 0.1 + stableNoise(seedBase + i * 8.9) * 0.14 }
+            : {
+                color: lighten(fill, 26),
+                alpha: 0.14 + stableNoise(seedBase + i * 6.1) * 0.16,
+              },
+      );
+    }
+    speckLayer.addChild(specks);
+    board.addChild(speckLayer);
+    const tileStates: {
+      g: InstanceType<typeof Graphics>;
+      index: number;
+      state: { hovered: boolean };
+    }[] = [];
 
     // Couche de lumière ADDITIVE (propagation aux tuiles et sprites
     // voisins — ASSET_PIPELINE §3), au-dessus du plateau.
@@ -317,27 +392,10 @@ export function PlanetView({ planetId }: { planetId: string }) {
       const x = isoX(col, row);
       const y = isoY(col, row);
 
-      // Apparent depth only: the interactive top diamond and its 148×74
-      // geometry stay exactly unchanged for pointer and E2E contracts.
-      const cliff = new Graphics();
-      cliff.poly([
-        -TILE_W / 2, 0,
-        0, TILE_H / 2,
-        0, TILE_H / 2 + extrusion,
-        -TILE_W / 2, extrusion,
-      ]);
-      cliff.fill({ color: edge.left });
-      cliff.poly([
-        TILE_W / 2, 0,
-        0, TILE_H / 2,
-        0, TILE_H / 2 + extrusion,
-        TILE_W / 2, extrusion,
-      ]);
-      cliff.fill({ color: edge.right });
-      cliff.stroke({ color: 0x101a2b, width: 1, alpha: 0.82 });
-      cliff.position.set(x, y);
-      board.addChild(cliff);
-
+      // Le losange interactif 148×74 reste EXACTEMENT inchangé (contrats
+      // pointeur et E2E) — seule la PRÉSENTATION change : slots fantômes
+      // sur le sol, révélés au survol / en mode placement (demande du
+      // responsable, chunk X).
       const tile = new Graphics();
       tile.poly([
         0, -TILE_H / 2,
@@ -345,23 +403,28 @@ export function PlanetView({ planetId }: { planetId: string }) {
         0, TILE_H / 2,
         -TILE_W / 2, 0,
       ]);
-      tile.fill({ color: fill });
-      tile.stroke({ color: edge.accent, width: 1.1, alpha: 0.32 });
+      tile.fill({ color: lighten(fill, 14), alpha: 0.35 });
+      tile.stroke({ color: edge.accent, width: 1.1, alpha: 0.6 });
       tile.position.set(x, y);
       tile.eventMode = 'static';
       tile.cursor = 'pointer';
+      tile.alpha = 0.2;
+      const hoverState = { hovered: false };
       tile.on('pointertap', () => {
         const existing = byTile.get(index);
         if (selectedCardRef.current && !existing) void placeAt(index);
         else if (existing) selectBuildingRef.current(existing.id);
       });
       tile.on('pointerover', () => {
+        hoverState.hovered = true;
         tile.tint = selectedCardRef.current && !byTile.has(index) ? 0xd9cf4a : 0x9db4e8;
       });
       tile.on('pointerout', () => {
+        hoverState.hovered = false;
         tile.tint = 0xffffff;
       });
       board.addChild(tile);
+      tileStates.push({ g: tile, index, state: hoverState });
 
       // Low-frequency surface variation keeps empty tiles from looking like
       // flat UI diamonds. It is deliberately subtle so props own the scene.
@@ -467,6 +530,28 @@ export function PlanetView({ planetId }: { planetId: string }) {
       app.screen.height / 2 - centerY - 20,
     );
 
+    // Alphas des slots : fantôme (0.2) / survol (1) / placement (les
+    // tuiles LIBRES pulsent pour rester lisibles pendant la pose) /
+    // occupée (0.08 — le sprite possède la scène).
+    let tilePulse = 0;
+    const syncTiles = () => {
+      tilePulse += app.ticker.deltaTime / 60;
+      const placing = !!selectedCardRef.current;
+      for (const t of tileStates) {
+        const occupied = byTile.has(t.index);
+        t.g.alpha = t.state.hovered
+          ? 1
+          : placing && !occupied
+            ? reduceMotion
+              ? 0.72
+              : 0.62 + Math.sin(tilePulse * 3.2) * 0.18
+            : occupied
+              ? 0.08
+              : 0.2;
+      }
+    };
+    app.ticker.add(syncTiles);
+
     let ambientTime = 0;
     const animateMotes = () => {
       ambientTime += app.ticker.deltaTime / 60;
@@ -487,8 +572,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
       // so unmount may already have destroyed Pixi's ticker. Only detach the
       // callback while this is still the live application; renderer teardown
       // disposes every listener itself.
-      if (!reduceMotion && appRef.current === app) {
-        app.ticker.remove(animateMotes);
+      if (appRef.current === app) {
+        app.ticker.remove(syncTiles);
+        if (!reduceMotion) app.ticker.remove(animateMotes);
       }
     };
   }, [planet, pixiReady, placeAt]);

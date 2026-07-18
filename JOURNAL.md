@@ -2302,3 +2302,42 @@ exacte via effectiveMask partagé et sans mutation, caps S/M/L, grade,
 gov-04 montre l'hospitalité mercantile (chunk L) apparaître dès
 l'installation du merchant : les privilèges de gouvernance s'activent
 par le même chemin `governingArchetypes`. Aucune migration.
+
+## 2026-07-18 — Chunk X : sol de terrain par climat + slots discrets
+
+**Demande du responsable (mi-session).** « since you have access to
+fal.ai, you can make terrains slot less prominent (less visible unless
+hovering) and add a terrain sol selon the planet type (like in the
+prototypes screenshots). »
+
+**Limitation constatée (§1).** Cette session n'a AUCUN canal fal.ai :
+les hôtes fal.run/fal.ai répondent CONNECT 403 via le proxy d'agent, et
+ni FAL_KEY ni OPEN_AI_KEY ne sont provisionnées dans l'environnement
+(vérifié). Décision : livrer la demande en PROCÉDURAL — dalle organique
+teintée par la rampe climatique existante, bruit stableNoise seedé par
+planète — avec un point d'entrée clair pour substituer des textures
+générées (fal.ai/OpenAI Images) dès qu'une clé sera provisionnée dans le
+worker. La direction visuelle suit le prototype 02-iso-colony (masse de
+terrain organique, coutures de tuiles discrètes).
+
+**Décisions.**
+- Dalle = contour 30 segments, rayon perturbé ±18 % (seed = tuiles +
+  initiale du nom — stable par planète), épaisseur 24 px (edge.left),
+  liseré éclairci, mouchetis 620 points en trois teintes masqué par le
+  contour ; aura/ombre redimensionnées à l'étendue réelle de la grille.
+- Slots fantômes : alpha 0.2 au repos, 1 au survol (tint or si carte
+  armée et tuile libre), pulse 0.62±0.18 en mode placement (statique
+  0.72 si prefers-reduced-motion), 0.08 sous un bâtiment. Synchronisé
+  par un ticker dédié TOUJOURS actif (état, pas décor).
+- Falaises par tuile SUPPRIMÉES (relief porté par la dalle) ; le losange
+  interactif 148×74 et ses positions restent identiques — les contrats
+  pointeur et la géométrie tilePx des E2E ne bougent pas.
+
+**Vérifications.** game-flow 12/12 (pose par clic, ouverture de
+panneaux, persistance) ; docks/gouvernance/colonisation/manuel 4/4 ;
+§16 : tempéré (captures 05/06/10 observées — dalle, pulse de placement,
+bâtiments au sol) + sonde jetable pour hot/cold/poison (3 comptes réels
+re-teintés en base de dev, stack réelle, captures observées : ocre /
+bleu-acier / vert acide, silhouettes distinctes par seed). L'état
+survol partage le mécanisme du pulse (alpha 1 + tint) — observé en
+placement, non capturé isolément (annoncé).
