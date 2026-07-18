@@ -110,6 +110,30 @@ export interface AmmQuote {
  * La jambe LP rejoint la réserve d'entrée (hors produit : k croît — les
  * frais rémunèrent la liquidité) ; la maison sort du circuit du pool.
  */
+export interface AmmRouteQuote {
+  /** T reçues au bout de la route. */
+  outT: number;
+  /** Cotations de chaque jambe, dans l'ordre d'exécution. */
+  legs: AmmQuote[];
+  /** T de la ressource intermédiaire (0 pour une route directe). */
+  midT: number;
+}
+
+/**
+ * Route à DEUX jambes (GB §13 « double fee ») : la sortie de la jambe 1
+ * nourrit la jambe 2 — l'intermédiaire ne touche jamais la soute — et
+ * CHAQUE jambe prélève ses propres frais (LP + maison de SON pool).
+ */
+export function ammRouteQuote(
+  leg1: { rIn: number; rOut: number; lpBp: number; houseBp: number },
+  leg2: { rIn: number; rOut: number; lpBp: number; houseBp: number },
+  giveT: number,
+): AmmRouteQuote {
+  const q1 = ammQuote(leg1.rIn, leg1.rOut, giveT, leg1.lpBp, leg1.houseBp);
+  const q2 = ammQuote(leg2.rIn, leg2.rOut, q1.outT, leg2.lpBp, leg2.houseBp);
+  return { outT: q2.outT, legs: [q1, q2], midT: q1.outT };
+}
+
 export function ammQuote(
   rIn: number,
   rOut: number,

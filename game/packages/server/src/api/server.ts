@@ -43,6 +43,7 @@ import { latestCensus } from '../services/census.js';
 import { openPod, podPricing } from '../services/pods.js';
 import {
   ammLiquidity,
+  executeAmmRoute,
   executeAmmTrade,
   executeInnateTrade,
   executeTrade,
@@ -172,6 +173,12 @@ const ammTradeSchema = z.object({
   slotIndex: z.number().int().min(0).max(2),
   shipId: z.string().uuid(),
   give: z.string().min(1),
+  giveT: z.number().positive(),
+});
+const ammRouteSchema = z.object({
+  shipId: z.string().uuid(),
+  give: z.string().min(1),
+  get: z.string().min(1),
   giveT: z.number().positive(),
 });
 const innateOffersSchema = z.object({
@@ -607,6 +614,24 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         parsed.data.slotIndex,
         parsed.data.shipId,
         parsed.data.give,
+        parsed.data.giveT,
+      ),
+    );
+  });
+
+  app.post('/planets/:id/amm-route', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = ammRouteSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      executeAmmRoute(
+        deps.pool,
+        player.id,
+        id,
+        parsed.data.shipId,
+        parsed.data.give,
+        parsed.data.get,
         parsed.data.giveT,
       ),
     );

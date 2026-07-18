@@ -205,6 +205,23 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    withdrawal and conquest liens with shares P4); cells-star routing +
    double-fee cross trades are a dedicated backlog item.
 
+12. **Cells-star routing & triad nudge (implemented, chunk V):**
+   POST /planets/:id/amm-route performs BEST EXECUTION give→get across
+   the planet's AMM pools: direct pools (single fee) compete with
+   two-leg routes through a shared intermediate (each leg pays ITS
+   pool's fees — canon double fee); only EXECUTABLE routes compete
+   (per-leg whitelist, owner exempt; per-slot daily/absolute limits);
+   deterministic tie-break; atomic settlement (the intermediate never
+   enters the hold, one `trades` row per leg, per-leg house fees to
+   planet stock, net-delta storage). A route may span two market
+   buildings on the same world [announced interp: the marketplace is
+   planetary]; locks: markets (ascending id) → body → ship. Triad
+   nudge (DG §11.2): `planetDetail.triadNudge` is true when the world
+   runs an ACTIVE market but NO food pair (fixed or AMM) exists within
+   the owner's TELESCOPE scope (ship vision excluded — canon wording;
+   innate hospitality is not a pair [interp]); null without an active
+   market.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

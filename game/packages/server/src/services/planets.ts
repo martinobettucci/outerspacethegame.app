@@ -6,6 +6,8 @@
  * des transactions ; chaque commande rebase les débits de la planète.
  */
 import {
+  FOOD_RESOURCES,
+  isAmmSlot,
   BASIC_RESOURCES,
   colonyGraceUntilMs,
   isInColonyGrace,
@@ -46,6 +48,7 @@ import {
   type TechNodeKey,
 } from '@atg/shared';
 import type pg from 'pg';
+import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { enqueue } from '../sim/events.js';
 import {
@@ -149,6 +152,10 @@ export interface PlanetDetail {
     visibility: 'public' | 'private' | null;
     marketSlots: (MarketSlot | AmmSlot | null)[] | null;
   }[];
+  /** Nudge triade (DG §11.2) : true si ce monde a un marché ACTIF mais
+   * qu'AUCUNE paire FOOD (fixe ou AMM) n'existe dans la portée télescope
+   * du propriétaire ; null si le monde n'a pas de marché actif. */
+  triadNudge: boolean | null;
   /** Docks agrégés des spaceports ACTIFS (null si aucun). */
   docks: {
     total: { s: number; m: number; l: number };
@@ -259,6 +266,52 @@ export async function planetDetail(
       };
     }
 
+    // Nudge triade (DG §11.2) : les hubs veulent food/cells + water/cells
+    // + fuel/cells — on alerte quand AUCUNE paire FOOD n'existe dans la
+    // portée TÉLESCOPE du propriétaire (canon : « within telescope range »
+    // — la vision des coques n'entre pas ; l'hospitalité innée n'est pas
+    // une paire de marché [interp, JOURNAL]).
+    let triadNudge: boolean | null = null;
+    if (
+      buildingRows.some((b) => b.key === 'market' && b.status === 'active')
+    ) {
+      const { rows: marketCfgs } = await client.query(
+        `WITH scopes AS (
+           SELECT b.x, b.y,
+                  $2::float + COALESCE((
+                    SELECT sum($3::float * t.level) FROM buildings t
+                    WHERE t.body_id = b.id AND t.key = 'telescope'
+                      AND t.status = 'active'
+                  ), 0) AS radius
+           FROM bodies b WHERE b.owner_id = $1
+         )
+         SELECT m.config FROM buildings m
+         JOIN bodies b ON b.id = m.body_id
+         WHERE m.key = 'market' AND m.status = 'active'
+           AND EXISTS (
+             SELECT 1 FROM scopes s
+             WHERE (b.x - s.x)^2 + (b.y - s.y)^2 <= s.radius^2
+           )`,
+        [playerId, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL],
+      );
+      const foods = new Set<string>(FOOD_RESOURCES as readonly string[]);
+      const hasFoodPair = marketCfgs.some((m) => {
+        const slots = Array.isArray(m.config?.slots) ? m.config.slots : [];
+        return slots.some((slot: unknown) => {
+          if (!slot) return false;
+          if (isAmmSlot(slot)) {
+            return foods.has(slot.pool.x) || foods.has(slot.pool.y);
+          }
+          const fixed = slot as { give?: string; get?: string };
+          return (
+            (!!fixed.give && foods.has(fixed.give)) ||
+            (!!fixed.get && foods.has(fixed.get))
+          );
+        });
+      });
+      triadNudge = !hasFoodPair;
+    }
+
     const cap = popCap(snap.size, snap.quality);
     // Les réserves AMM occupent le stockage physique (DG §3.3b).
     const storageUsed =
@@ -316,6 +369,7 @@ export async function planetDetail(
             ).toISOString()
           : null,
       stock,
+      triadNudge,
       docks,
       deposits: Object.entries(snap.deposits)
         .map(([resource, remaining]) => {

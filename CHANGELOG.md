@@ -4,6 +4,35 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Routage cells-étoile, double-fee & nudge triade (chunk V)** :
+  composition pure partagée `ammRouteQuote` (la sortie de la jambe 1
+  nourrit la jambe 2, chaque jambe prélève les frais de SON pool — le
+  « double fee » canon est démontré en test contre un pool direct
+  équivalent). Serveur : POST /planets/:id/amm-route = MEILLEURE
+  EXÉCUTION give→get sur les pools de LA planète — candidats directs
+  (frais simples) ET routes à deux jambes via un intermédiaire commun,
+  seules les routes EXÉCUTABLES concourent (whitelist par jambe,
+  propriétaire exempt ; limites quotidienne/absolue de chaque slot),
+  départage déterministe, règlement ATOMIQUE (l'intermédiaire ne touche
+  jamais la soute, journal `trades` par jambe, commissions maison par
+  jambe au stock, delta net §3.3b) ; une route peut traverser deux
+  bâtiments de marché du même monde [interp annoncée : la place de
+  marché est planétaire] ; verrous marchés (id croissant) → corps →
+  vaisseau. Nudge triade (DG §11.2) : `planetDetail.triadNudge` — monde
+  à marché ACTIF sans AUCUNE paire FOOD (fixe ou AMM) dans la portée
+  TÉLESCOPE du propriétaire (CTE de scope réutilisée ; la vision des
+  coques n'entre pas — canon « telescope range » ; l'hospitalité innée
+  n'est pas une paire [interp]). UI : formulaire « Route swap (best
+  execution) » du vaisseau à quai (notice avec intermédiaire et « 2×
+  frais »), hint triade dans le panneau marché. docs/SUGGESTIONS.md créé
+  (demande du responsable : journal des propositions de l'agent).
+  Tests : 2 blocs unit shared + 7 intégration (quote composée exacte,
+  journal ×2, intermédiaire jamais en soute, direct-meilleur gagne,
+  éligibilité par jambe, §10, nudge propre/étranger-visible/hors-portée/
+  null) + E2E route.spec.ts (nudge visible → route via cells → paire
+  food/cells éteint le nudge), 3 captures observées, 21/21 E2E ; les
+  specs AMM/route posent désormais un depot (le roll de TAILLE du
+  starter fait varier la franchise de stockage — flake diagnostiqué).
 - **Pools AMM du marché L2 (chunk U)** : AUCUNE migration (les pools
   vivent dans `buildings.config.slots`, motif 004). Maths pures
   partagées : produit constant x·y = k, spot = ry/rx, frais sur la jambe

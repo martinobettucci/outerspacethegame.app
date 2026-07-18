@@ -859,6 +859,306 @@ export async function executeAmmTrade(
   }
 }
 
+interface RouteLegPlan {
+  buildingId: string;
+  level: number;
+  slotIndex: number;
+  slot: AmmSlot;
+  /** Jambe d'entrée de CE pool pour cette route. */
+  giveRes: ResourceId;
+  gotRes: ResourceId;
+  inT: number;
+  quote: ReturnType<typeof ammQuote>;
+}
+
+export interface AmmRouteResult {
+  gotT: number;
+  gotResource: ResourceId;
+  /** null pour une route directe (une seule jambe, frais simples). */
+  midResource: ResourceId | null;
+  legs: {
+    buildingId: string;
+    slotIndex: number;
+    give: ResourceId;
+    gaveT: number;
+    got: ResourceId;
+    gotT: number;
+    lpFeeT: number;
+    houseFeeT: number;
+  }[];
+}
+
+/**
+ * Meilleure exécution give→get sur les pools AMM de LA PLANÈTE (GB §13) :
+ * essaie les pools DIRECTS (frais simples) ET les routes à DEUX jambes via
+ * un intermédiaire commun — chaque jambe prélève les frais de SON pool
+ * (« double fee », canon) ; l'intermédiaire ne touche jamais la soute.
+ * Une route peut traverser deux bâtiments de marché du même monde [interp
+ * annoncée : la place de marché est PLANÉTAIRE — les pools sont physiques].
+ * Seules les routes EXÉCUTABLES concourent (whitelist par jambe,
+ * propriétaire exempt ; limites quotidienne/absolue de chaque slot).
+ * Verrous : marchés (par id croissant) → corps → vaisseau.
+ */
+export async function executeAmmRoute(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  shipId: string,
+  give: string,
+  get: string,
+  giveT: number,
+  opts: { nowMs?: number } = {},
+): Promise<AmmRouteResult> {
+  const nowMs = opts.nowMs ?? Date.now();
+  if (!isResource(give) || !isResource(get) || give === get) {
+    throw new CommandError('not_available', 'Paire invalide');
+  }
+  if (!Number.isFinite(giveT) || giveT <= 0) {
+    throw new CommandError('not_available', 'Quantité invalide');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: marketRows } = await client.query(
+      `SELECT id, level, config FROM buildings
+       WHERE body_id = $1 AND key = 'market' AND status = 'active'
+       ORDER BY id FOR UPDATE`,
+      [bodyId],
+    );
+    // Slots array PAR bâtiment (deux jambes peuvent partager le bâtiment).
+    const slotsByBuilding = new Map<string, (AnySlot | null)[]>();
+    const refs: { buildingId: string; level: number; slotIndex: number; slot: AmmSlot }[] = [];
+    for (const m of marketRows) {
+      const slots = slotsOf(m.config);
+      slotsByBuilding.set(m.id, slots);
+      slots.forEach((s, i) => {
+        if (isAmmSlot(s)) {
+          refs.push({ buildingId: m.id, level: Number(m.level), slotIndex: i, slot: s });
+        }
+      });
+    }
+    if (refs.length === 0) {
+      throw new CommandError('not_available', 'Aucun pool AMM sur ce monde');
+    }
+
+    const { rows: bodyRows } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1 FOR UPDATE`,
+      [bodyId],
+    );
+    if (!bodyRows[0]) throw new CommandError('not_found', 'Planète inconnue');
+    const ownerId = bodyRows[0].owner_id as string | null;
+
+    const { rows: ships } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    const ship = ships[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (ship.status !== 'docked' || ship.docked_body_id !== bodyId) {
+      throw new CommandError('not_available', 'On commerce à quai, sur place');
+    }
+
+    // Fenêtres de limites de TOUS les slots candidats, en une requête.
+    const { rows: sumRows } = await client.query(
+      `SELECT market_building_id, slot_index,
+              COALESCE(sum(gave_t) FILTER (WHERE created_at > now() - interval '1 day'), 0) AS day_t,
+              COALESCE(sum(gave_t), 0) AS total_t
+       FROM trades
+       WHERE market_building_id = ANY($1::uuid[])
+       GROUP BY market_building_id, slot_index`,
+      [[...new Set(refs.map((r) => r.buildingId))]],
+    );
+    const sums = new Map(
+      sumRows.map((r) => [
+        `${r.market_building_id}:${r.slot_index}`,
+        { dayT: Number(r.day_t), totalT: Number(r.total_t) },
+      ]),
+    );
+    const eligible = (ref: (typeof refs)[number], inT: number): boolean => {
+      if (
+        ref.slot.whitelist.length > 0 &&
+        playerId !== ownerId &&
+        !ref.slot.whitelist.includes(playerId)
+      ) {
+        return false;
+      }
+      const s = sums.get(`${ref.buildingId}:${ref.slotIndex}`) ?? { dayT: 0, totalT: 0 };
+      if (ref.slot.dailyLimitT > 0 && s.dayT + inT > ref.slot.dailyLimitT + 1e-9) {
+        return false;
+      }
+      if (
+        ref.slot.absoluteLimitT > 0 &&
+        s.totalT + inT > ref.slot.absoluteLimitT + 1e-9
+      ) {
+        return false;
+      }
+      return true;
+    };
+    const legOf = (
+      ref: (typeof refs)[number],
+      giveRes: ResourceId,
+      inT: number,
+    ): RouteLegPlan | null => {
+      const p = ref.slot.pool;
+      if (giveRes !== p.x && giveRes !== p.y) return null;
+      const gotRes = (giveRes === p.x ? p.y : p.x) as ResourceId;
+      const rIn = giveRes === p.x ? p.rx : p.ry;
+      const rOut = giveRes === p.x ? p.ry : p.rx;
+      try {
+        const quote = ammQuote(rIn, rOut, inT, ammLpFeeBp(ref.level), AMM_FEE_HOUSE_BP);
+        return { ...ref, giveRes, gotRes, inT, quote };
+      } catch {
+        return null;
+      }
+    };
+
+    // Candidats : directs (1 jambe) puis routés (2 jambes, intermédiaire).
+    const candidates: RouteLegPlan[][] = [];
+    for (const ref of refs) {
+      const leg = legOf(ref, give as ResourceId, giveT);
+      if (leg && leg.gotRes === get && eligible(ref, giveT)) candidates.push([leg]);
+    }
+    for (const ref1 of refs) {
+      const leg1 = legOf(ref1, give as ResourceId, giveT);
+      if (!leg1 || leg1.gotRes === get || !eligible(ref1, giveT)) continue;
+      for (const ref2 of refs) {
+        if (ref2 === ref1) continue;
+        const leg2 = legOf(ref2, leg1.gotRes, leg1.quote.outT);
+        if (!leg2 || leg2.gotRes !== get) continue;
+        if (!eligible(ref2, leg1.quote.outT)) continue;
+        candidates.push([leg1, leg2]);
+      }
+    }
+    if (candidates.length === 0) {
+      throw new CommandError(
+        'not_available',
+        `Aucune route exécutable ${give} → ${get} sur ce monde`,
+      );
+    }
+    const routeKey = (legs: RouteLegPlan[]) =>
+      legs.map((l) => `${l.buildingId}:${l.slotIndex}`).join('|');
+    candidates.sort((a, b) => {
+      const outA = a[a.length - 1]!.quote.outT;
+      const outB = b[b.length - 1]!.quote.outT;
+      if (outA !== outB) return outB - outA;
+      return routeKey(a).localeCompare(routeKey(b)); // déterministe à égalité
+    });
+    const best = candidates[0]!;
+    const outT = best[best.length - 1]!.quote.outT;
+    if (outT <= 1e-9) {
+      throw new CommandError('not_available', 'Sortie négligeable (pools trop déséquilibrés)');
+    }
+
+    // Soute : −give, +get (l'intermédiaire ne s'y pose jamais).
+    const cargo: Record<string, number> = { ...(ship.cargo ?? {}) };
+    if ((cargo[give] ?? 0) + 1e-9 < giveT) {
+      throw new CommandError('insufficient_resources', `Soute insuffisante : ${give}`);
+    }
+    const left = (cargo[give] ?? 0) - giveT;
+    if (left <= 1e-9) delete cargo[give];
+    else cargo[give] = left;
+    cargo[get] = (cargo[get] ?? 0) + outT;
+    const hull =
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
+    if (containersUsed(cargo) > (hull?.containers ?? 0)) {
+      throw new CommandError(
+        'not_available',
+        `Conteneurs insuffisants pour encaisser (${containersUsed(cargo)}/${hull?.containers ?? 0})`,
+      );
+    }
+
+    // Cap de stockage : delta net planète+pools = give − out (§3.3b).
+    const snap = await loadProductionSnapshot(client, bodyId, nowMs, {
+      forUpdate: true,
+    });
+    if (!snap) throw new CommandError('not_found', 'Planète inconnue');
+    const usedT =
+      Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) + snap.pooledT;
+    const netT = giveT - outT;
+    if (netT > 0 && usedT + netT > snap.storageCapT + 1e-9) {
+      throw new CommandError('not_available', 'Stockage du marché plein');
+    }
+
+    // Écritures : réserves de chaque jambe, commissions maison, journal.
+    const houseByRes = new Map<string, number>();
+    for (const leg of best) {
+      const p = leg.slot.pool;
+      if (leg.giveRes === p.x) {
+        p.rx = leg.quote.newRIn;
+        p.ry = leg.quote.newROut;
+      } else {
+        p.ry = leg.quote.newRIn;
+        p.rx = leg.quote.newROut;
+      }
+      houseByRes.set(
+        leg.giveRes,
+        (houseByRes.get(leg.giveRes) ?? 0) + leg.quote.houseFeeT,
+      );
+      await client.query(
+        `INSERT INTO trades (market_building_id, body_id, trader, slot_index,
+                             gave_resource, gave_t, got_resource, got_t)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          leg.buildingId,
+          bodyId,
+          playerId,
+          leg.slotIndex,
+          leg.giveRes,
+          leg.inT,
+          leg.gotRes,
+          leg.quote.outT,
+        ],
+      );
+    }
+    for (const [buildingId, slots] of slotsByBuilding) {
+      if (!best.some((l) => l.buildingId === buildingId)) continue;
+      await client.query(
+        `UPDATE buildings SET config = config || jsonb_build_object('slots', $2::jsonb)
+         WHERE id = $1`,
+        [buildingId, JSON.stringify(slots)],
+      );
+    }
+    for (const [res, fee] of houseByRes) {
+      await client.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))
+         ON CONFLICT (body_id, resource)
+         DO UPDATE SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)`,
+        [bodyId, res, (snap.stocks[res as ResourceId] ?? 0) + fee, nowMs],
+      );
+    }
+    await client.query(`UPDATE ships SET cargo = $2 WHERE id = $1`, [
+      shipId,
+      JSON.stringify(cargo),
+    ]);
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return {
+      gotT: outT,
+      gotResource: get as ResourceId,
+      midResource: best.length === 2 ? best[0]!.gotRes : null,
+      legs: best.map((l) => ({
+        buildingId: l.buildingId,
+        slotIndex: l.slotIndex,
+        give: l.giveRes,
+        gaveT: l.inT,
+        got: l.gotRes,
+        gotT: l.quote.outT,
+        lpFeeT: l.quote.lpFeeT,
+        houseFeeT: l.quote.houseFeeT,
+      })),
+    };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * Publie les offres innées d'un monde marchand (liste COMPLÈTE remplacée —
  * l'ordre vit dans la donnée). Propriétaire + gouvernance mercantile.

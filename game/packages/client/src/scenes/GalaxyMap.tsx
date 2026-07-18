@@ -220,6 +220,9 @@ export function GalaxyMap() {
     };
   }, [onSiteAt]);
 
+  // Formulaire de route (meilleure exécution, GB §13).
+  const [routeGive, setRouteGive] = useState('ore');
+  const [routeGet, setRouteGet] = useState('water');
   // Jambe d'entrée choisie par carte AMM (clé buildingId:slotIndex).
   const [ammGiveByKey, setAmmGiveByKey] = useState<Record<string, string>>({});
   // Canal manuel (GB §9) : warehouse public browsable À QUAI seulement.
@@ -1427,7 +1430,8 @@ export function GalaxyMap() {
                     }}
                   >
                     <span style={{ fontFamily: 'var(--font-mono)' }}>
-                      {s.give.replace('_', ' ')} → {s.get.replace('_', ' ')} @ {s.rate}
+                      {s.give.replace('_', ' ')} → {s.get.replace('_', ' ')} @{' '}
+                      {s.rate}
                       {' · '}
                       {s.payableStockT} {t.galaxy.tons} {t.galaxy.marketStock}
                     </span>
@@ -1493,6 +1497,120 @@ export function GalaxyMap() {
                   </div>
                   );
                 }),
+              )}
+              {markets.some((m) => m.slots.some((s) => 'mode' in s)) && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 6,
+                    background: 'var(--bg-overlay)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                  }}
+                >
+                  <span style={{ color: 'var(--accent-200)', fontSize: 12 }}>
+                    {t.galaxy.routeTitle}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select
+                      aria-label={t.galaxy.ammGiveLeg}
+                      value={routeGive}
+                      onChange={(e) => setRouteGive(e.target.value)}
+                      style={{
+                        background: 'var(--bg-raised)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    >
+                      {ALL_RESOURCE_IDS.map((r) => (
+                        <option key={r} value={r}>
+                          {r.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label={t.galaxy.routeGet}
+                      value={routeGet}
+                      onChange={(e) => setRouteGet(e.target.value)}
+                      style={{
+                        background: 'var(--bg-raised)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    >
+                      {ALL_RESOURCE_IDS.map((r) => (
+                        <option key={r} value={r}>
+                          {r.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      aria-label={`${t.galaxy.routeGo} ${t.galaxy.tons}`}
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      value={tradeT}
+                      onChange={(e) => setTradeT(e.target.value)}
+                      style={{
+                        width: 58,
+                        background: 'var(--bg-raised)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        api
+                          .ammRoute(selectedShip.dockedBodyId!, {
+                            shipId: selectedShip.id,
+                            give: routeGive,
+                            get: routeGet,
+                            giveT: Number(tradeT),
+                          })
+                          .then((r) => {
+                            setNotice(
+                              `${t.galaxy.routeDone} — +${r.gotT.toFixed(2)} ${t.galaxy.tons} ${r.gotResource.replace('_', ' ')} (${
+                                r.midResource
+                                  ? `${t.galaxy.routeVia} ${r.midResource.replace('_', ' ')}, ${r.legs.length}× frais`
+                                  : t.galaxy.routeDirect
+                              })`,
+                            );
+                            void refreshShips();
+                            void api
+                              .markets(selectedShip.dockedBodyId!)
+                              .then((rr) => setMarkets(rr.markets))
+                              .catch(() => undefined);
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.marketRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--accent-400)',
+                        color: '#0D0D0D',
+                        border: 'none',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.galaxy.routeGo}
+                    </button>
+                  </div>
+                </div>
               )}
             </section>
           )}

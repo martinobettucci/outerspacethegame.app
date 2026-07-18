@@ -11,6 +11,7 @@ import {
   AMM_FEE_LP_BP_L3,
   ammLpFeeBp,
   ammQuote,
+  ammRouteQuote,
   ammSpot,
   validateAmmSeed,
 } from './amm.js';
@@ -77,5 +78,32 @@ describe('ammQuote — produit constant avec frais sur la jambe d\'entrée', () 
     expect(() => ammQuote(0, 50, 1, 25, 25)).toThrow(/seedé/);
     expect(() => ammQuote(100, 50, 0, 25, 25)).toThrow(/invalide/);
     expect(() => ammQuote(100, 50, -3, 25, 25)).toThrow(/invalide/);
+  });
+});
+
+describe('ammRouteQuote — deux jambes, double frais (GB §13)', () => {
+  it('composition exacte : la sortie de la jambe 1 nourrit la jambe 2', () => {
+    const r = ammRouteQuote(
+      { rIn: 100, rOut: 50, lpBp: 25, houseBp: 25 },
+      { rIn: 80, rOut: 40, lpBp: 25, houseBp: 25 },
+      10,
+    );
+    const q1 = ammQuote(100, 50, 10, 25, 25);
+    const q2 = ammQuote(80, 40, q1.outT, 25, 25);
+    expect(r.midT).toBeCloseTo(q1.outT, 12);
+    expect(r.outT).toBeCloseTo(q2.outT, 12);
+    expect(r.legs).toHaveLength(2);
+  });
+
+  it('le double frais mord : router A→X→B rend MOINS qu\'un pool direct équivalent', () => {
+    // Pools calibrés pour un même prix bout-en-bout (A→B à 0,25) :
+    // direct 100/25 vs route 100/50 puis 50/25.
+    const direct = ammQuote(100, 25, 10, 25, 25);
+    const routed = ammRouteQuote(
+      { rIn: 100, rOut: 50, lpBp: 25, houseBp: 25 },
+      { rIn: 50, rOut: 25, lpBp: 25, houseBp: 25 },
+      10,
+    );
+    expect(routed.outT).toBeLessThan(direct.outT);
   });
 });

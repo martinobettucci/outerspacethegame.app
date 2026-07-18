@@ -146,6 +146,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   "Market offers" (`AMM x ⇄ y · rx/ry T · spot · fees`), give-leg
   select + tons + accent `Swap`; the settlement notice carries the
   post-trade spot (price drift is felt, never hidden).
+- **Route swap & triad nudge (implemented, chunk V)** — docked ship
+  panel: a "Route swap (best execution)" block closes the Market offers
+  section (give/get selects + tons + accent `Route`); the settlement
+  notice names the intermediate and the fee count (`via fuel cells,
+  2× frais`) — double fees are felt, never hidden. Market panel: the
+  AMM section opens with a warning-tone triad line
+  (`data-testid="triad-nudge"`) whenever no food pair exists within
+  telescope range — it disappears the moment one is seeded.
 - **Manual channel (implemented, chunk T)** — three surfaces. Warehouse
   building panel: "Warehouse visibility" select (Private — hidden
   reserve / Public — browsable dockside) with an explanatory subtitle

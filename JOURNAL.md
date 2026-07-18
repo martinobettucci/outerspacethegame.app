@@ -2225,3 +2225,40 @@ Trébuchements instructifs : sur-cap du monde de test (le contrôle
 net-delta a refusé à raison — dotations réduites), 5 T = 5 conteneurs
 sur une soute S de 3 (DG §7, deux fois — décidément), trous null dans
 les tableaux de slots (garde flatMap).
+
+## 2026-07-18 — Chunk V : routage cells-étoile, double-fee, nudge triade (GB §13, DG §11.2)
+
+**Contexte.** Clôture de l'arc commerce P1. En cours de chunk, le
+responsable a activé la boucle autonome (/loop, puis /loop 1h avec
+consigne de tenir docs/SUGGESTIONS.md — créé).
+
+**Décisions.**
+- *Meilleure exécution* : l'endpoint de route N'EST PAS un « swap à deux
+  jambes » aveugle — il énumère pools directs ET routes à deux jambes,
+  écarte les jambes inéligibles (whitelist/limites PAR slot), maximise
+  la sortie, départage par clé déterministe. Le double frais reste
+  canon : chaque jambe paie SON pool (prouvé en test : route < direct
+  équivalent).
+- *Atomicité physique* : l'intermédiaire ne touche JAMAIS la soute ;
+  journal par jambe (le slot_index de chaque pool) ; commissions maison
+  par jambe (ressources d'entrée distinctes par construction — x ≠ y).
+- *Multi-bâtiments* [interp annoncée] : la route peut traverser deux
+  marchés du même monde — les pools sont physiques et planétaires ;
+  verrous marchés par id croissant puis corps puis vaisseau
+  (anti-deadlock avec executeAmmTrade qui verrouille marché → corps).
+- *Nudge triade* : portée TÉLESCOPE seule (canon « within telescope
+  range ») — pas la vision des coques ; une paire FOOD fixe OU AMM
+  éteint le nudge, la sienne comme celle d'un voisin VISIBLE ;
+  l'hospitalité innée n'est pas une paire de marché [interp]. Calculé
+  dans planetDetail (null sans marché actif — le nudge vise les hubs).
+- *Import world↔planets* : cycle ESM bénin (usages en corps de fonction
+  seulement) — surveillé, les 165 tests d'intégration l'exercent.
+
+**Vérifications.** Shared 117 ; serveur 32 unit + 165 intégration (7
+route/nudge) ; E2E 21/21 ; captures route-01…03 observées (§16) — la
+02 montre les réserves des DEUX pools déplacées et la notice « +1.80 T
+water (via fuel cells, 2× frais) ». Flake diagnostiqué en suite
+complète : le roll de TAILLE du starter (S = 800 T de franchise)
+sur-dotait les mondes E2E — les specs AMM/route posent désormais un
+depot (+200 T), suggestion d'un filtre de taille consignée dans
+SUGGESTIONS.md.

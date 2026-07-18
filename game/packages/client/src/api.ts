@@ -175,6 +175,7 @@ export interface PlanetDetail {
   }[];
   buildings: PlanetBuilding[];
   docks: PlanetDocks | null;
+  triadNudge: boolean | null;
   tech: {
     available: TechNodeKey[];
     maxLevel: Record<string, number>;
@@ -344,6 +345,16 @@ export const api = {
       `/planets/${planetId}/buildings/${buildingId}/amm-liquidity`,
       input,
     ),
+  ammRoute: (
+    planetId: string,
+    input: { shipId: string; give: string; get: string; giveT: number },
+  ) =>
+    call<{
+      gotT: number;
+      gotResource: string;
+      midResource: string | null;
+      legs: { give: string; gaveT: number; got: string; gotT: number }[];
+    }>('POST', `/planets/${planetId}/amm-route`, input),
   ammTrade: (
     marketBuildingId: string,
     input: { slotIndex: number; shipId: string; give: string; giveT: number },

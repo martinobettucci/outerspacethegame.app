@@ -44,6 +44,7 @@ function costText(cost: CostBundle): string {
 export function BuildingPanel({
   building,
   docks,
+  triadNudge,
   workforceAssignable,
   workforceAssigned,
   maxLevelBySeed,
@@ -60,6 +61,8 @@ export function BuildingPanel({
   building: PlanetBuilding;
   /** Résumé planète des docks (spaceports actifs) — null si aucun. */
   docks?: PlanetDocks | null;
+  /** Nudge triade (DG §11.2) — aucun pair FOOD dans la portée télescope. */
+  triadNudge?: boolean | null;
   workforceAssignable: number;
   workforceAssigned: number;
   maxLevelBySeed: number;
@@ -467,6 +470,12 @@ export function BuildingPanel({
               <Store size={14} aria-hidden /> {t.planet.ammTitle}
             </div>
             <p className="ls-section-subtitle">{t.planet.ammHint}</p>
+            {triadNudge && (
+              <p className="ls-limiting-line" data-tone="warning" data-testid="triad-nudge">
+                <AlertTriangle size={13} aria-hidden />
+                <span>{t.planet.triadNudge}</span>
+              </p>
+            )}
             {building.marketSlots
               .map((s, i) => ({ s, i }))
               .filter(

@@ -31,10 +31,10 @@ test('AMM L2 : seed = prix initial, swap à quai, retrait libère', async ({
   );
   const planetId = await registerSovereign(page, email, 'Ammelia', 'Mercantile');
   for (const [resource, tons] of [
-    ['ore', 400],
-    ['carbon', 80],
-    ['fuel_cells', 40],
-    ['water', 100],
+    ['ore', 300],
+    ['carbon', 60],
+    ['fuel_cells', 35],
+    ['water', 60],
   ] as const) {
     const g = await page.request.post('/api/test/grant', {
       data: { planetId, resource, tons },
@@ -54,6 +54,9 @@ test('AMM L2 : seed = prix initial, swap à quai, retrait libère', async ({
     await board.unlockCard(key);
   }
   await board.placeCard('market', board.tilePx(0));
+  // Depot posé : +200 T de cap — le roll de TAILLE du starter varie et un
+  // S (800 T de franchise) sur-doté refuserait les swaps à entrée nette.
+  await board.placeCard('depot', board.tilePx(1));
   await expect
     .poll(
       async () => {
