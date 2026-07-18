@@ -105,6 +105,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
       .catch(() => setHospOffers([]));
   }, [planetId]);
   useEffect(() => refreshHospitality(), [refreshHospitality]);
+  // Canal manuel (GB §9) : boîte de réception du vendeur.
+  const [manualInbox, setManualInbox] = useState<
+    Awaited<ReturnType<typeof api.planetManualOffers>>['offers']
+  >([]);
+  const refreshManualInbox = useCallback(() => {
+    api
+      .planetManualOffers(planetId)
+      .then((r) => setManualInbox(r.offers))
+      .catch(() => setManualInbox([]));
+  }, [planetId]);
+  useEffect(() => refreshManualInbox(), [refreshManualInbox]);
   const [shipBuilds, setShipBuilds] = useState<
     Awaited<ReturnType<typeof api.shipBuilds>>['builds']
   >([]);
@@ -982,6 +993,99 @@ export function PlanetView({ planetId }: { planetId: string }) {
               </button>
             )}
           </section>
+
+          {/* Canal manuel (GB §9) : offres d'achat reçues sur ce monde —
+              le serveur ne liste que les ouvertes, propriétaire seulement. */}
+          {manualInbox.length > 0 && (
+            <section
+              aria-label={t.planet.manualOffersTitle}
+              style={{ display: 'grid', gap: 6, fontSize: 12 }}
+            >
+              <span
+                style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}
+              >
+                <Store size={14} color="var(--accent-400)" aria-hidden />
+                {t.planet.manualOffersTitle}
+              </span>
+              {manualInbox.map((o) => (
+                <div
+                  key={o.id}
+                  style={{
+                    display: 'grid',
+                    gap: 4,
+                    background: 'var(--bg-overlay)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                  }}
+                >
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>
+                    {o.buyerName ?? '?'} · {o.getTons} T{' '}
+                    {o.getResource.replace('_', ' ')} ← {o.giveTons} T{' '}
+                    {o.giveResource.replace('_', ' ')}
+                  </span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      aria-label={`${t.planet.manualOfferAccept} ${o.getResource}`}
+                      onClick={() =>
+                        api
+                          .respondManualOffer(o.id, 'accept')
+                          .then(() => {
+                            setNotice(t.planet.manualOfferAccepted);
+                            refreshManualInbox();
+                            void refresh();
+                          })
+                          .catch((err) =>
+                            setNotice(
+                              (err as ApiError).message ?? t.errors.generic,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--success-500)',
+                        color: '#0D0D0D',
+                        border: 'none',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.planet.manualOfferAccept}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`${t.planet.manualOfferDecline} ${o.getResource}`}
+                      onClick={() =>
+                        api
+                          .respondManualOffer(o.id, 'decline')
+                          .then(() => {
+                            setNotice(t.planet.manualOfferDeclined);
+                            refreshManualInbox();
+                          })
+                          .catch((err) =>
+                            setNotice(
+                              (err as ApiError).message ?? t.errors.generic,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'transparent',
+                        color: 'var(--danger-300, #F24141)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.planet.manualOfferDecline}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
 
           {/* Hospitalité (GB §9) : visible seulement sous gouvernance TOUTE
               mercantile — l'UI est une aide, le serveur re-vérifie. */}

@@ -4,6 +4,36 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Canal manuel (chunk T)** : migration 012 (`manual_offers` — l'offre
+  épingle le vaisseau à quai de l'acheteur). Visibilité du warehouse
+  public/privé (`buildings.config`, défaut PRIVÉ [TUNE-v1] — jamais de
+  fuite accidentelle ; réglée par la vraie commande, §10 direct testé) ;
+  browse du stock browsable À QUAI uniquement (canon « commerce dock » —
+  le survol ne suffit pas, contrairement à l'hospitalité innée) sur un
+  monde à ≥ 1 warehouse ACTIF public : montants seuls, jamais les taux
+  (intel opérationnel) ; v1 annoncé : l'« item » = ressource fongible du
+  pool planétaire (inventaires PAR entrepôt, véhicules et objets avec
+  les enchères P4), alliés en orbite = factions P4, contre-offre =
+  décliner + nouvelle offre. Offres « à n'importe quel prix » en bundle
+  explicite (je prends X de A, je paie Y de B, give > 0 [TUNE-v1
+  interp]) avec limites round 7 : 1 OUVERTE par (acheteur, monde,
+  ressource), 20 créations/24 h/compte, expiration 48 h RÉELLES [TUNE]
+  (balayage paresseux, aucun événement) ; retrait par l'acheteur.
+  Résolution par le PROPRIÉTAIRE : décliner, ou accepter avec règlement
+  PHYSIQUE — vaisseau épinglé encore à quai, paiement en soute, place
+  conteneurs, stock suffisant, stockage en delta NET (§3.3b : l'overfill
+  toléré tant que l'échange n'aggrave pas) ; journal trades slot −2 ;
+  verrous offre → corps → vaisseau. Instrumentation §15 :
+  POST /test/relocate-ship (poches de spawn disjointes — le vol
+  inter-poches n'est pas déterministe v1 ; l'atterrissage reste le VRAI
+  chemin docks). UI : select de visibilité (panneau warehouse), section
+  « Public warehouse » du panneau vaisseau à quai (stock défilable,
+  formulaire d'offre, retrait), boîte « Manual offers » du monde vendeur
+  (Accept/Decline). Tests : 4 blocs unit shared + 15 intégration + E2E
+  manual.spec.ts à DEUX comptes (public → browse → offre → refus doublon
+  VISIBLE → acceptation → fret à bord — l'éviction de dock du chunk S a
+  été neutralisée par le réglage dwell 720 h : les systèmes
+  interagissent comme conçu), 5 captures observées, 19/19 E2E.
 - **Docks de spaceport (chunk S)** : migration 011 (`ships.docked_at` —
   horodatage du dernier atterrissage, garde d'éviction + affichage).
   Module partagé pur : comptes CUMULATIFS par niveau (L1 = 2 S ; L2 =

@@ -987,6 +987,49 @@ export async function setShipFuelForTest(
 }
 
 /**
+ * Instrumentation E2E (§15, jamais en prod — route gated
+ * ATG_TEST_ENDPOINTS) : téléporte SON vaisseau en survol d'un corps.
+ * Les poches de spawn sont disjointes et l'autonomie v1 d'un Cargo S rend
+ * le vol inter-poches non déterministe (distance roulée par le seed) —
+ * l'atterrissage, lui, reste le VRAI chemin (politique + docks). L'état
+ * simulé reste cohérent : drain de survol armé sur le réservoir.
+ */
+export async function relocateShipForTest(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  bodyId: string,
+  nowMs = Date.now(),
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
+      throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    const { rows: bodies } = await client.query(
+      `SELECT id, x, y FROM bodies WHERE id = $1 AND body_type = 'planet'`,
+      [bodyId],
+    );
+    if (!bodies[0]) throw new CommandError('not_found', 'Planète inconnue');
+    await client.query(
+      `UPDATE ships SET status = 'hovering', hover_body_id = $2,
+         docked_body_id = NULL, docked_at = NULL, x = $3, y = $4
+       WHERE id = $1`,
+      [shipId, bodyId, bodies[0].x, bodies[0].y],
+    );
+    await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Fret (GB §13 « goods are hauled » ; DG §7) : chargement/déchargement à
  * quai sur un monde POSSÉDÉ (l'échange sur monde étranger, c'est le
  * commerce — chunk marché). 1 conteneur = 1 T d'un fongible ; les tonnes

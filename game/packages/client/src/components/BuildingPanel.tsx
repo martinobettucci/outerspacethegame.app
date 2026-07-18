@@ -66,6 +66,7 @@ export function BuildingPanel({
     landing?: 'self' | 'everyone';
     dwellHours?: number;
     reservedForSelf?: number;
+    visibility?: 'public' | 'private';
   }) => void;
   onSaveMarketSlot?: (input: {
     slotIndex: number;
@@ -283,6 +284,30 @@ export function BuildingPanel({
           >
             {t.planet.apply}
           </button>
+        </section>
+      )}
+
+      {building.key === 'warehouse' && building.visibility && (
+        <section aria-label={t.planet.warehouseVisibility} className="ls-section">
+          <div className="ls-section-heading">
+            <Store size={14} aria-hidden /> {t.planet.warehouseVisibility}
+          </div>
+          <p className="ls-section-subtitle">{t.planet.warehouseVisibilityHint}</p>
+          <label className="ls-field">
+            <span>{t.planet.warehouseVisibility}</span>
+            <select
+              className="ls-select"
+              value={building.visibility}
+              onChange={(event) =>
+                onApply({
+                  visibility: event.target.value as 'public' | 'private',
+                })
+              }
+            >
+              <option value="private">{t.planet.warehousePrivate}</option>
+              <option value="public">{t.planet.warehousePublic}</option>
+            </select>
+          </label>
         </section>
       )}
 

@@ -168,6 +168,26 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    foreign hulls, §10). `planetDetail.docks` aggregates
    total/occupied-by-size/visitors/reserved/dwell for the owner's UI.
 
+10. **Manual trade channel (implemented, chunk T):** each warehouse
+   carries a public/private visibility (config, default PRIVATE
+   [TUNE-v1]); a world with ≥ 1 ACTIVE public warehouse exposes its
+   fungible stock (amounts only — never rates) to buyers DOCKED there
+   (canon "commerce dock": hovering is NOT enough, unlike innate
+   hospitality). Buyers send explicit-bundle offers ("I take X of A, I
+   pay Y of B", give > 0) under round-7 limits: 1 OPEN offer per
+   (buyer, world, resource), 20 creations/24 h/account, 48 REAL hours
+   TTL [TUNE] with lazy sweep. The offer pins the docked ship; the
+   OWNER accepts (physical settlement: stock ↔ pinned ship's cargo,
+   container accounting, net-delta storage check per §3.3b, trades
+   journal slot −2, rate rebase) or declines; the buyer may withdraw.
+   Lock order: offer → body → ship. v1 announced: item = pooled
+   fungible (per-warehouse inventories, vehicles/items with auctions
+   P4), orbital ally browse with share grant (factions P4),
+   counter-offer = decline + new offer. Test instrumentation (§15):
+   POST /test/relocate-ship (own ship, gated) — spawn pockets are
+   disjoint and v1 cargo range makes cross-pocket flight
+   non-deterministic; landing still goes through the real dock path.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

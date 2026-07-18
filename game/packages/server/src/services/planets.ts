@@ -145,6 +145,7 @@ export interface PlanetDetail {
     landing: 'self' | 'everyone' | null;
     dwellHours: number | null;
     reservedForSelf: number | null;
+    visibility: 'public' | 'private' | null;
     marketSlots: MarketSlot[] | null;
   }[];
   /** Docks agrégés des spaceports ACTIFS (null si aucun). */
@@ -364,6 +365,13 @@ export async function planetDetail(
           reservedForSelf:
             b.key === 'spaceport'
               ? Number(b.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT)
+              : null,
+          // Défaut PRIVÉ [TUNE-v1, JOURNAL] : jamais de fuite accidentelle.
+          visibility:
+            b.key === 'warehouse'
+              ? b.config?.visibility === 'public'
+                ? ('public' as const)
+                : ('private' as const)
               : null,
           marketSlots:
             b.key === 'market'
@@ -696,6 +704,7 @@ export async function setBuildingSettings(
     landing?: string;
     dwellHours?: number;
     reservedForSelf?: number;
+    visibility?: string;
   },
   nowMs = Date.now(),
 ): Promise<void> {
@@ -727,6 +736,26 @@ export async function setBuildingSettings(
            SET config = config || jsonb_build_object('landing', $2::text)
          WHERE id = $1`,
         [buildingId, settings.landing],
+      );
+    }
+
+    // Visibilité du warehouse (GB §9 : public = browsable à quai ET fuite ;
+    // privé = réserve stratégique cachée). Warehouse uniquement.
+    if (settings.visibility !== undefined) {
+      if (rows[0].key !== 'warehouse') {
+        throw new CommandError(
+          'not_available',
+          'La visibilité se règle sur un warehouse',
+        );
+      }
+      if (!['public', 'private'].includes(settings.visibility)) {
+        throw new CommandError('workforce_invalid', 'Visibilité inconnue');
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('visibility', $2::text)
+         WHERE id = $1`,
+        [buildingId, settings.visibility],
       );
     }
 

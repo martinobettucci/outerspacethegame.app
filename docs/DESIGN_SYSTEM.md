@@ -135,6 +135,18 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   standard block `Apply` button. Landing refusals surface the server
   message verbatim in the status notice (structural "no dock ≥ size"
   vs congestion "docks saturés" are distinct messages).
+- **Manual channel (implemented, chunk T)** — three surfaces. Warehouse
+  building panel: "Warehouse visibility" select (Private — hidden
+  reserve / Public — browsable dockside) with an explanatory subtitle
+  (public = advertisement AND leak). Docked ship panel on a foreign
+  world with a public warehouse: "Public warehouse" section — scrollable
+  mono stock list (`res · X T`, max-height 120), offer form (Ask
+  for/Pay with selects + tons inputs, accent `Send manual offer`
+  enabled once a resource is picked), the buyer's own open offers as
+  rows `X T res ← Y T res` with a danger-outline `Withdraw`. Owner
+  planet sidebar: "Manual offers" inbox (hidden when empty) — rows
+  `buyer · X T res ← Y T res` with success `Accept` / danger-outline
+  `Decline`; refusals and results surface via the status notice.
 - **Hospitality (implemented, chunk L)** — merchant worlds only (governance
   gate): planet-sidebar section (accent Store icon, published offers in
   mono `sell @ price want/T · floor N T · X T on offer`, sells/for selects +

@@ -82,7 +82,24 @@ export interface PlanetBuilding {
   landing: 'self' | 'everyone' | null;
   dwellHours: number | null;
   reservedForSelf: number | null;
+  visibility: 'public' | 'private' | null;
   marketSlots: MarketSlotView[] | null;
+}
+
+export interface ManualOfferView {
+  id: string;
+  bodyId: string;
+  bodyName?: string;
+  buyerId: string;
+  buyerName?: string;
+  shipId: string;
+  getResource: string;
+  getTons: number;
+  giveResource: string;
+  giveTons: number;
+  status: string;
+  createdAt: string;
+  expiresAt: string;
 }
 
 export interface PlanetDocks {
@@ -404,6 +421,7 @@ export const api = {
       landing?: 'self' | 'everyone';
       dwellHours?: number;
       reservedForSelf?: number;
+      visibility?: 'public' | 'private';
     },
   ) =>
     call<{ ok: true }>(
@@ -411,4 +429,25 @@ export const api = {
       `/planets/${planetId}/buildings/${buildingId}`,
       settings,
     ),
+  browseWarehouse: (planetId: string) =>
+    call<{ public: boolean; stock: { resource: string; amountT: number }[] }>(
+      'GET',
+      `/planets/${planetId}/warehouse`,
+    ),
+  createManualOffer: (
+    planetId: string,
+    bundle: {
+      getResource: string;
+      getTons: number;
+      giveResource: string;
+      giveTons: number;
+    },
+  ) => call<ManualOfferView>('POST', `/planets/${planetId}/manual-offers`, bundle),
+  planetManualOffers: (planetId: string) =>
+    call<{ offers: ManualOfferView[] }>('GET', `/planets/${planetId}/manual-offers`),
+  myManualOffers: () => call<{ offers: ManualOfferView[] }>('GET', '/manual-offers'),
+  respondManualOffer: (offerId: string, action: 'accept' | 'decline') =>
+    call<{ status: string }>('POST', `/manual-offers/${offerId}/respond`, { action }),
+  cancelManualOffer: (offerId: string) =>
+    call<{ ok: true }>('POST', `/manual-offers/${offerId}/cancel`),
 };

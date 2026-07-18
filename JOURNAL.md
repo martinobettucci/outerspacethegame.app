@@ -2124,3 +2124,54 @@ bâtiment historique vit sur une autre tuile), census flaky.
 colonisation 2,4 min, hover 1,8 min). L'univers dev partagé qui grossit
 à chaque run reste un risque de charge connu (backlog : reset
 périodique documenté ou univers E2E dédié à discuter).
+
+## 2026-07-18 — Chunk T : canal manuel (GB §9, DG §6 round 7)
+
+**Contexte.** Backlog « Manual channel » : browse des warehouses publics à
+quai, offres manuelles limitées, résolution manuelle.
+
+**Décisions.**
+- *Item v1* [TUNE-v1 interp] : (monde, ressource fongible) sur le POOL
+  planétaire — le stock fongible v1 est un pool (planet_stock), les
+  inventaires PAR entrepôt, véhicules et objets arrivent avec leurs
+  systèmes (enchères P4). Browsable ⇔ ≥ 1 warehouse ACTIF PUBLIC ;
+  chaque warehouse porte sa visibilité (config), défaut PRIVÉ (le canon
+  ne fixe pas de défaut ; jamais de fuite accidentelle).
+- *Browse à quai STRICT* : canon « docked at a commerce dock » — pas de
+  survol (l'hospitalité innée, elle, sert en survol : différence
+  volontaire). Montants seuls, arrondis 0,1 T, jamais les taux.
+- *« Any price »* : bundle explicite get/give ; une PURCHASE offer paie
+  quelque chose → give > 0 [TUNE-v1 interp]. Expiration en heures
+  RÉELLES (règle sociale, pas de simulation — TIME_SCALE n'accélère que
+  les événements) ; balayage paresseux à la lecture, aucun événement.
+- *Vaisseau épinglé* : l'offre mémorise le vaisseau à quai de sa
+  création ; l'acceptation exige qu'il y soit ENCORE (règlement
+  physique stock ↔ soute, conteneurs DG §7). Parti = « plus à quai »,
+  l'offre reste ouverte (retrait possible).
+- *Stockage en delta NET* (§3.3b) : l'overfill EXISTE (grants, seules
+  les productions s'arrêtent au cap) — on ne refuse l'acceptation que si
+  l'échange AGGRAVE un dépassement (découvert par l'E2E : monde vendeur
+  sur-cap, troc net-neutre refusé à tort par le contrôle strict).
+- *Interaction chunk S constatée en E2E* : l'éviction de dock (dwell
+  24 h-jeu ÷ 7200 = 12 s réelles) renvoyait l'acheteur au survol avant
+  l'acceptation — « le vaisseau n'est plus à quai ». Comportement VOULU
+  des deux systèmes ; le test règle dwell = 720 h-jeu (6 min réelles),
+  exerçant au passage l'UI du chunk S.
+- *Instrumentation* : POST /test/relocate-ship (gated ATG_TEST_ENDPOINTS,
+  vaisseau PROPRE, drain réservoir armé) — les poches de spawn sont
+  disjointes et l'autonomie Cargo S rend le vol inter-poches non
+  déterministe ; l'atterrissage reste le VRAI chemin (politique + docks).
+  Piège corrigé : le hauler naît à sec → échoué dès l'arrivée ; le test
+  fait le plein d'abord (/test/ship-fuel).
+
+**Vérifications.** Shared 108 ; serveur 32 unit + 149 intégration (15
+canal manuel : visibilité §10, browse à quai/survol/privé, limites
+1-par-item et 20/24 h (bourrage SQL puis fenêtre glissante), refus
+propriétaire/pas-à-quai, retrait d'autrui refusé, décliner/accepter avec
+deltas EXACTS et journal slot −2, échecs propres (parti/soute/stock),
+sur-cap net-neutre vs entrée nette, expiration) ; E2E 19/19 dont
+manual.spec.ts à deux comptes réels ; captures man-01…05 observées
+(§16) : visibilité publique appliquée, browse à quai avec stock, refus
+du doublon visible en notice, boîte de réception Accept/Decline, fret
+« ore · 2.0 T » à bord de l'acheteur. Migration 012 appliquée en dev
+uniquement (PROD_MIGRATIONS.md : 012 en attente).

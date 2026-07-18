@@ -220,6 +220,47 @@ export function GalaxyMap() {
     };
   }, [onSiteAt]);
 
+  // Canal manuel (GB §9) : warehouse public browsable À QUAI seulement.
+  const [warehouse, setWarehouse] = useState<
+    Awaited<ReturnType<typeof api.browseWarehouse>> | null
+  >(null);
+  const [myOffers, setMyOffers] = useState<
+    Awaited<ReturnType<typeof api.myManualOffers>>['offers']
+  >([]);
+  const [offerGet, setOfferGet] = useState('');
+  const [offerGetT, setOfferGetT] = useState('1');
+  const [offerGive, setOfferGive] = useState('water');
+  const [offerGiveT, setOfferGiveT] = useState('1');
+  const refreshManual = (bodyId: string) => {
+    api
+      .browseWarehouse(bodyId)
+      .then((r) => setWarehouse(r))
+      .catch(() => setWarehouse(null));
+    api
+      .myManualOffers()
+      .then((r) => setMyOffers(r.offers))
+      .catch(() => setMyOffers([]));
+  };
+  useEffect(() => {
+    if (!dockedAt) {
+      setWarehouse(null);
+      setMyOffers([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .browseWarehouse(dockedAt)
+      .then((r) => !cancelled && setWarehouse(r))
+      .catch(() => !cancelled && setWarehouse(null));
+    api
+      .myManualOffers()
+      .then((r) => !cancelled && setMyOffers(r.offers))
+      .catch(() => !cancelled && setMyOffers([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [dockedAt]);
+
   /** Rafraîchit la flotte ET le panneau du vaisseau sélectionné. */
   const refreshShips = () =>
     api
@@ -1646,6 +1687,175 @@ export function GalaxyMap() {
               ))}
             </section>
           )}
+          {dockedAt &&
+            warehouse &&
+            warehouse.public &&
+            !bodies.find((b) => b.id === dockedAt)?.owned && (
+              <section
+                aria-label={t.galaxy.warehouseTitle}
+                style={{ display: 'grid', gap: 6, fontSize: 12 }}
+              >
+                <strong style={{ color: 'var(--accent-200)' }}>
+                  {t.galaxy.warehouseTitle}
+                </strong>
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 2,
+                    maxHeight: 120,
+                    overflowY: 'auto',
+                    background: 'var(--bg-overlay)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                    fontFamily: 'var(--font-mono, monospace)',
+                  }}
+                >
+                  {warehouse.stock.length === 0 && (
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                      {t.galaxy.warehouseEmpty}
+                    </span>
+                  )}
+                  {warehouse.stock.map((s) => (
+                    <span key={s.resource}>
+                      {s.resource.replace('_', ' ')} · {s.amountT} {t.galaxy.tons}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <label style={{ display: 'grid', gap: 2, flex: 1 }}>
+                      <span>{t.galaxy.offerGet}</span>
+                      <select
+                        aria-label={t.galaxy.offerGet}
+                        value={offerGet}
+                        onChange={(e) => setOfferGet(e.target.value)}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="">—</option>
+                        {warehouse.stock.map((s) => (
+                          <option key={s.resource} value={s.resource}>
+                            {s.resource.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: 2, width: 72 }}>
+                      <span>{t.galaxy.tons}</span>
+                      <input
+                        aria-label={`${t.galaxy.offerGet} ${t.galaxy.tons}`}
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={offerGetT}
+                        onChange={(e) => setOfferGetT(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <label style={{ display: 'grid', gap: 2, flex: 1 }}>
+                      <span>{t.galaxy.offerGive}</span>
+                      <select
+                        aria-label={t.galaxy.offerGive}
+                        value={offerGive}
+                        onChange={(e) => setOfferGive(e.target.value)}
+                        style={{ width: '100%' }}
+                      >
+                        {ALL_RESOURCE_IDS.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: 2, width: 72 }}>
+                      <span>{t.galaxy.tons}</span>
+                      <input
+                        aria-label={`${t.galaxy.offerGive} ${t.galaxy.tons}`}
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={offerGiveT}
+                        onChange={(e) => setOfferGiveT(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!offerGet}
+                    onClick={() =>
+                      api
+                        .createManualOffer(dockedAt, {
+                          getResource: offerGet,
+                          getTons: Number(offerGetT),
+                          giveResource: offerGive,
+                          giveTons: Number(offerGiveT),
+                        })
+                        .then(() => {
+                          setNotice(t.galaxy.offerSent);
+                          refreshManual(dockedAt);
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(
+                            `${t.galaxy.offerRefused} — ${err.message ?? err.error}`,
+                          ),
+                        )
+                    }
+                    style={{
+                      background: offerGet ? 'var(--accent-400)' : 'var(--bg-overlay)',
+                      color: offerGet ? '#0D0D0D' : 'var(--text-disabled)',
+                      border: 'none',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '6px 10px',
+                      cursor: offerGet ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {t.galaxy.offerSend}
+                  </button>
+                </div>
+                {myOffers
+                  .filter((o) => o.bodyId === dockedAt && o.status === 'open')
+                  .map((o) => (
+                    <div
+                      key={o.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 6,
+                        background: 'var(--bg-overlay)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 8px',
+                      }}
+                    >
+                      <span>
+                        {o.getTons} {t.galaxy.tons} {o.getResource.replace('_', ' ')} ←{' '}
+                        {o.giveTons} {t.galaxy.tons} {o.giveResource.replace('_', ' ')}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={`${t.galaxy.offerCancel} ${o.getResource}`}
+                        onClick={() =>
+                          api
+                            .cancelManualOffer(o.id)
+                            .then(() => refreshManual(dockedAt))
+                            .catch(() => undefined)
+                        }
+                        style={{
+                          background: 'transparent',
+                          color: 'var(--danger-300, #F24141)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '2px 8px',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t.galaxy.offerCancel}
+                      </button>
+                    </div>
+                  ))}
+              </section>
+            )}
           {selectedShip.status === 'hovering' && selectedShip.hoverBodyId && (
             <button
               type="button"

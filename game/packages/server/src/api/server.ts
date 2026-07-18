@@ -28,6 +28,7 @@ import {
   moveShip,
   pendingShipBuilds,
   refuelShip,
+  relocateShipForTest,
   setShipFuelForTest,
   transferCargo,
   transferFuel,
@@ -48,6 +49,14 @@ import {
   setInnateOffers,
   setMarketSlot,
 } from '../services/market.js';
+import {
+  browseWarehouse,
+  cancelManualOffer,
+  createManualOffer,
+  listMyOffers,
+  listPlanetOffers,
+  respondManualOffer,
+} from '../services/manual.js';
 import {
   listComms,
   listMessages,
@@ -104,6 +113,16 @@ const settingsSchema = z.object({
   // Bornes métier re-vérifiées dans le service (source : @atg/shared).
   dwellHours: z.number().int().optional(),
   reservedForSelf: z.number().int().optional(),
+  visibility: z.enum(['public', 'private']).optional(),
+});
+const manualOfferSchema = z.object({
+  getResource: z.string().min(1),
+  getTons: z.number().positive(),
+  giveResource: z.string().min(1),
+  giveTons: z.number().positive(),
+});
+const manualRespondSchema = z.object({
+  action: z.enum(['accept', 'decline']),
 });
 const cargoSchema = z.object({
   resource: z.string().min(1),
@@ -592,6 +611,23 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         return { ok: true };
       });
     });
+
+    app.post('/test/relocate-ship', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({ shipId: z.string().uuid(), bodyId: z.string().uuid() })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        await relocateShipForTest(
+          deps.pool,
+          player.id,
+          parsed.data.shipId,
+          parsed.data.bodyId,
+        );
+        return { ok: true };
+      });
+    });
   }
 
   app.post('/ships/:id/refuel', async (req, reply) => {
@@ -754,6 +790,57 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         parsed.data.buyT,
       ),
     );
+  });
+
+  // ——— Canal manuel (GB §9, DG §6) : browse à quai, offres, résolution.
+  app.get('/planets/:id/warehouse', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => browseWarehouse(deps.pool, player.id, id));
+  });
+
+  app.post('/planets/:id/manual-offers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = manualOfferSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      createManualOffer(deps.pool, player.id, id, parsed.data),
+    );
+  });
+
+  app.get('/planets/:id/manual-offers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => ({
+      offers: await listPlanetOffers(deps.pool, player.id, id),
+    }));
+  });
+
+  app.get('/manual-offers', async (req, reply) => {
+    const player = await requirePlayer(req);
+    return wrap(reply, async () => ({
+      offers: await listMyOffers(deps.pool, player.id),
+    }));
+  });
+
+  app.post('/manual-offers/:id/respond', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = manualRespondSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      respondManualOffer(deps.pool, player.id, id, parsed.data.action),
+    );
+  });
+
+  app.post('/manual-offers/:id/cancel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, async () => {
+      await cancelManualOffer(deps.pool, player.id, id);
+      return { ok: true };
+    });
   });
 
   app.post('/markets/:bid/trade', async (req, reply) => {

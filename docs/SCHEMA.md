@@ -156,6 +156,18 @@ evaluated stock.
   counts derive from active spaceport levels, per-port `dwellHours` /
   `reservedForSelf` live in `buildings.config` (jsonb, 004 pattern).
 
+## 012_manual_offers (manual trade channel, GB §9 / DG §6 round 7)
+
+- `manual_offers` — buyer's manual purchase offers on a world's browsable
+  stock: pins the buyer's DOCKED ship (`ship_id`) so acceptance settles
+  physically (planet stock ↔ that ship's cargo, still docked); status
+  lifecycle open → accepted/declined/expired/cancelled, `expires_at` =
+  created + 48 REAL hours [TUNE] (lazy sweep on read — no event needed,
+  expiry has no side effects). Partial index on open offers per body
+  (seller inbox), (buyer, created_at) index for the 20/24 h creation
+  window. Warehouse public/private visibility lives in `buildings.config`
+  (004 pattern) — no dedicated schema.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,
