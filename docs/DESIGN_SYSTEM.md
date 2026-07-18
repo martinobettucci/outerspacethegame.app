@@ -135,6 +135,17 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   standard block `Apply` button. Landing refusals surface the server
   message verbatim in the status notice (structural "no dock ≥ size"
   vs congestion "docks saturés" are distinct messages).
+- **AMM pools (implemented, chunk U)** — market panel L2+: "AMM pool
+  (L2+)" section with the canon hint; live pools as mono lines
+  (`#i · x ⇄ y · rx/ry T · spot s · lp+house bp`,
+  `data-testid="amm-pool-line"`) each with an Add-liquidity field pair
+  and a danger `Withdraw` (%) control; the seed form (Leg X/Y selects,
+  deposit inputs) shows the IMPLIED initial price
+  (`data-testid="amm-implied-price"`) before commitment — seeding is a
+  pricing decision made visible. Docked ship panel: AMM cards in
+  "Market offers" (`AMM x ⇄ y · rx/ry T · spot · fees`), give-leg
+  select + tons + accent `Swap`; the settlement notice carries the
+  post-trade spot (price drift is felt, never hidden).
 - **Manual channel (implemented, chunk T)** — three surfaces. Warehouse
   building panel: "Warehouse visibility" select (Private — hidden
   reserve / Public — browsable dockside) with an explanatory subtitle

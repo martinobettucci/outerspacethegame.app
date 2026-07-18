@@ -188,6 +188,23 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    disjoint and v1 cargo range makes cross-pocket flight
    non-deterministic; landing still goes through the real dock path.
 
+11. **AMM pools, market L2+ (implemented, chunk U):** a pool is ONE
+   market trade slot holding a constant-product pair (`buildings.config`
+   variant — no schema change; a withdrawn slot leaves a reusable null
+   hole). The owner's initial deposit ratio IS the initial price; both
+   legs are deducted physically from planet stock. Fees on the INPUT
+   leg: 25 bp LP accrued INTO the input reserve (k grows — liquidity's
+   pay) + 25 bp house cut to planet stock [TUNE]; market L3 lowers the
+   LP leg to 20 bp. Trades are dockside, bidirectional, whitelist
+   (owner-exempt) and daily/absolute limits against the `trades`
+   journal, container accounting, net-delta storage check. Reserves are
+   PHYSICAL planet stock: counted against the storage cap (pooledT in
+   computeRates/storageUsedT/cap checks) and in the census (`ammPoolT`
+   bucket, sources +'amm_pools'). Spot is NEVER an oracle (pods stay on
+   the census). v1 announced: owner-only LP (visitor LP, guaranteed
+   withdrawal and conquest liens with shares P4); cells-star routing +
+   double-fee cross trades are a dedicated backlog item.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

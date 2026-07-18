@@ -5,6 +5,7 @@
  * verrou FOR UPDATE du corps sérialise les rebases d'une même planète.
  */
 import {
+  isAmmSlot,
   BASE_STORAGE_ALLOWANCE_T,
   BUILDINGS,
   efficiency,
@@ -50,6 +51,9 @@ export interface ProductionSnapshot {
   popAsOfMs: number | null;
   storageCapT: number;
   stocks: Partial<Record<ResourceId, number>>;
+  /** Réserves AMM par ressource (stock physique, hors `stocks`). */
+  pooled: Partial<Record<ResourceId, number>>;
+  pooledT: number;
   deposits: Partial<Record<ResourceId, number>>;
   depositInitial: Partial<Record<ResourceId, number>>;
   industries: IndustryState[];
@@ -118,10 +122,27 @@ export async function loadProductionSnapshot(
   }
 
   const { rows: buildingRows } = await client.query(
-    `SELECT id, key, level, status, workforce, run_pct, recipe
+    `SELECT id, key, level, status, workforce, run_pct, recipe, config
      FROM buildings WHERE body_id = $1 ORDER BY created_at, id`,
     [bodyId],
   );
+
+  // Réserves des pools AMM (marchés ACTIFS) : stock PHYSIQUE de la planète
+  // — elles comptent dans le cap de stockage (DG §3.3b) et le census.
+  const pooled: Partial<Record<ResourceId, number>> = {};
+  let pooledT = 0;
+  for (const b of buildingRows) {
+    if (b.key !== 'market' || b.status !== 'active') continue;
+    const slots = Array.isArray(b.config?.slots) ? b.config.slots : [];
+    for (const slot of slots) {
+      if (!isAmmSlot(slot)) continue;
+      pooled[slot.pool.x as ResourceId] =
+        (pooled[slot.pool.x as ResourceId] ?? 0) + slot.pool.rx;
+      pooled[slot.pool.y as ResourceId] =
+        (pooled[slot.pool.y as ResourceId] ?? 0) + slot.pool.ry;
+      pooledT += slot.pool.rx + slot.pool.ry;
+    }
+  }
 
   // Coques du PROPRIÉTAIRE en survol : leur drain de loitering frappe le
   // stock planétaire (GB §7 — resupply round-trips). Les coques d'autrui
@@ -182,6 +203,7 @@ export async function loadProductionSnapshot(
     population,
     storageCapT,
     stocks,
+    pooledT,
     deposits,
     industries,
     hoverFuelNeeds,
@@ -197,6 +219,8 @@ export async function loadProductionSnapshot(
     popAsOfMs: body.pop_as_of ? toMs(body.pop_as_of) : null,
     storageCapT,
     stocks,
+    pooled,
+    pooledT,
     deposits,
     depositInitial,
     industries,

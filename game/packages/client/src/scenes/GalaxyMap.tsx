@@ -220,6 +220,8 @@ export function GalaxyMap() {
     };
   }, [onSiteAt]);
 
+  // Jambe d'entrée choisie par carte AMM (clé buildingId:slotIndex).
+  const [ammGiveByKey, setAmmGiveByKey] = useState<Record<string, string>>({});
   // Canal manuel (GB §9) : warehouse public browsable À QUAI seulement.
   const [warehouse, setWarehouse] = useState<
     Awaited<ReturnType<typeof api.browseWarehouse>> | null
@@ -1305,7 +1307,115 @@ export function GalaxyMap() {
                 {t.galaxy.marketTitle}
               </strong>
               {markets.flatMap((m) =>
-                m.slots.map((s) => (
+                m.slots.map((s) => {
+                  if ('mode' in s) {
+                    // Pool AMM (GB §13) : jambe au choix, produit constant.
+                    const key = `${m.buildingId}:${s.slotIndex}`;
+                    const give = ammGiveByKey[key] ?? s.x;
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          background: 'var(--bg-overlay)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: 8,
+                        }}
+                      >
+                        <span style={{ fontFamily: 'var(--font-mono)' }}>
+                          AMM {s.x.replace('_', ' ')} ⇄ {s.y.replace('_', ' ')} ·{' '}
+                          {s.rx}/{s.ry} {t.galaxy.tons} · spot {s.spot} ·{' '}
+                          {s.lpFeeBp}+{s.houseFeeBp} bp
+                        </span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <select
+                            aria-label={`${t.galaxy.ammGiveLeg} ${s.x} ${s.y}`}
+                            value={give}
+                            onChange={(e) =>
+                              setAmmGiveByKey((cur) => ({
+                                ...cur,
+                                [key]: e.target.value,
+                              }))
+                            }
+                            style={{
+                              background: 'var(--bg-raised)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--stroke-subtle)',
+                              borderRadius: 'var(--radius-button)',
+                              padding: '4px 6px',
+                              fontSize: 12,
+                            }}
+                          >
+                            {[s.x, s.y].map((r) => (
+                              <option key={r} value={r}>
+                                {r.replace('_', ' ')}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            aria-label={`${t.galaxy.ammTrade} ${s.x} ${s.y}`}
+                            type="number"
+                            min={0.1}
+                            step={0.1}
+                            value={tradeT}
+                            onChange={(e) => setTradeT(e.target.value)}
+                            style={{
+                              width: 58,
+                              background: 'var(--bg-raised)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--stroke-subtle)',
+                              borderRadius: 'var(--radius-button)',
+                              padding: '4px 6px',
+                              fontSize: 12,
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              api
+                                .ammTrade(m.buildingId, {
+                                  slotIndex: s.slotIndex,
+                                  shipId: selectedShip.id,
+                                  give,
+                                  giveT: Number(tradeT),
+                                })
+                                .then((r) => {
+                                  setNotice(
+                                    `${t.galaxy.marketTraded} +${r.gotT.toFixed(2)} ${t.galaxy.tons} ${r.gotResource.replace('_', ' ')} · spot ${r.spotAfter.toFixed(3)}`,
+                                  );
+                                  void refreshShips();
+                                  void api
+                                    .markets(selectedShip.dockedBodyId!)
+                                    .then((rr) => setMarkets(rr.markets))
+                                    .catch(() => undefined);
+                                })
+                                .catch((err: ApiError) =>
+                                  setNotice(
+                                    `${t.galaxy.marketRefused} — ${err.message ?? err.error}`,
+                                  ),
+                                )
+                            }
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              background: 'var(--accent-400)',
+                              color: '#0D0D0D',
+                              border: 'none',
+                              borderRadius: 'var(--radius-button)',
+                              padding: '4px 10px',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {t.galaxy.ammTrade}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
                   <div
                     key={`${m.buildingId}:${s.slotIndex}`}
                     style={{
@@ -1381,7 +1491,8 @@ export function GalaxyMap() {
                       </button>
                     </div>
                   </div>
-                )),
+                  );
+                }),
               )}
             </section>
           )}

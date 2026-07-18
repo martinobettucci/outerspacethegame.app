@@ -83,7 +83,7 @@ export interface PlanetBuilding {
   dwellHours: number | null;
   reservedForSelf: number | null;
   visibility: 'public' | 'private' | null;
-  marketSlots: MarketSlotView[] | null;
+  marketSlots: (MarketSlotView | AmmSlotRaw | null)[] | null;
 }
 
 export interface ManualOfferView {
@@ -118,6 +118,30 @@ export interface MarketSlotView {
   absoluteLimitT: number;
   whitelist: string[];
   rateUpdatedAtMs: number;
+}
+
+export interface AmmSlotView {
+  mode: 'amm';
+  slotIndex: number;
+  x: string;
+  y: string;
+  rx: number;
+  ry: number;
+  spot: number;
+  lpFeeBp: number;
+  houseFeeBp: number;
+  dailyLimitT: number;
+  absoluteLimitT: number;
+  whitelist: string[];
+}
+
+/** Slot AMM tel que stocké dans PlanetBuilding.marketSlots (config brute). */
+export interface AmmSlotRaw {
+  mode: 'amm';
+  pool: { x: string; y: string; rx: number; ry: number; seededAtMs: number };
+  dailyLimitT: number;
+  absoluteLimitT: number;
+  whitelist: string[];
 }
 
 export interface PlanetDetail {
@@ -283,9 +307,55 @@ export const api = {
       markets: {
         buildingId: string;
         level: number;
-        slots: (MarketSlotView & { slotIndex: number; payableStockT: number })[];
+        slots: (
+          | (MarketSlotView & { slotIndex: number; payableStockT: number })
+          | AmmSlotView
+        )[];
       }[];
     }>('GET', `/bodies/${bodyId}/markets`),
+  seedAmmPool: (
+    planetId: string,
+    buildingId: string,
+    input: {
+      slotIndex: number;
+      x: string;
+      y: string;
+      depositX: number;
+      depositY: number;
+      dailyLimitT?: number;
+      absoluteLimitT?: number;
+      whitelist?: string[];
+    },
+  ) =>
+    call<{ slots: unknown[] }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/amm`,
+      input,
+    ),
+  ammLiquidity: (
+    planetId: string,
+    buildingId: string,
+    input:
+      | { action: 'add'; slotIndex: number; tonsX: number }
+      | { action: 'remove'; slotIndex: number; pct: number },
+  ) =>
+    call<{ slots: unknown[] }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/amm-liquidity`,
+      input,
+    ),
+  ammTrade: (
+    marketBuildingId: string,
+    input: { slotIndex: number; shipId: string; give: string; giveT: number },
+  ) =>
+    call<{
+      gaveT: number;
+      gotT: number;
+      gotResource: string;
+      lpFeeT: number;
+      houseFeeT: number;
+      spotAfter: number;
+    }>('POST', `/markets/${marketBuildingId}/amm-trade`, input),
   trade: (marketBuildingId: string, input: { slotIndex: number; shipId: string; giveT: number }) =>
     call<{ gaveT: number; gotT: number; gotResource: string }>(
       'POST',

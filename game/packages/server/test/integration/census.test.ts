@@ -93,7 +93,7 @@ describe('census_run (DG §11.5)', () => {
     expect(gold.planetStockT).toBeCloseTo(12, 1);
     expect(gold.shipCargoT).toBeCloseTo(7, 6);
     expect(gold.totalT).toBeCloseTo(19, 1);
-    expect(snaps[0].meta.sources).toEqual(['planet_stock', 'ship_cargo']);
+    expect(snaps[0].meta.sources).toEqual(['planet_stock', 'ship_cargo', 'amm_pools']);
     expect(snaps[0].meta.shipCount).toBeGreaterThanOrEqual(1);
 
     const { rows: pending } = await pool.query(

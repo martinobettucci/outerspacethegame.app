@@ -12,5 +12,6 @@ export * from './market.js';
 export * from './colonization.js';
 export * from './intel.js';
 export * from './pods.js';
+export * from './amm.js';
 export * from './docks.js';
 export * from './manualTrade.js';

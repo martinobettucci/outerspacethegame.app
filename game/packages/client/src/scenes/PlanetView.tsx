@@ -708,6 +708,24 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     setNotice((err as ApiError).message ?? t.errors.generic);
                   }
                 }}
+                onSeedAmm={async (input) => {
+                  try {
+                    await api.seedAmmPool(planetId, b.id, input);
+                    setNotice(t.planet.ammSeeded);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
+                onAmmLiquidity={async (input) => {
+                  try {
+                    await api.ammLiquidity(planetId, b.id, input);
+                    setNotice(t.planet.ammLiquidityApplied);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
                 shipBuilds={shipBuilds}
                 onBuildShip={async (input) => {
                   try {

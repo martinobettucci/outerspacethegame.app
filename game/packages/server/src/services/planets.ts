@@ -31,6 +31,7 @@ import {
   TECH_NODES,
   WORKFORCE_ASSIGNABLE_SHARE,
   WORKFORCE_OPTIMAL_BY_LEVEL,
+  type AmmSlot,
   type Archetype,
   type BuildingKey,
   type Climate,
@@ -146,7 +147,7 @@ export interface PlanetDetail {
     dwellHours: number | null;
     reservedForSelf: number | null;
     visibility: 'public' | 'private' | null;
-    marketSlots: MarketSlot[] | null;
+    marketSlots: (MarketSlot | AmmSlot | null)[] | null;
   }[];
   /** Docks agrégés des spaceports ACTIFS (null si aucun). */
   docks: {
@@ -259,10 +260,10 @@ export async function planetDetail(
     }
 
     const cap = popCap(snap.size, snap.quality);
-    const storageUsed = Object.values(snap.stocks).reduce(
-      (s, v) => s + (v ?? 0),
-      0,
-    );
+    // Les réserves AMM occupent le stockage physique (DG §3.3b).
+    const storageUsed =
+      Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) +
+      snap.pooledT;
     const workforceAssigned = buildingRows.reduce(
       (s, b) => s + (b.workforce ?? 0),
       0,
@@ -376,7 +377,7 @@ export async function planetDetail(
           marketSlots:
             b.key === 'market'
               ? Array.isArray(b.config?.slots)
-                ? (b.config.slots as MarketSlot[])
+                ? (b.config.slots as (MarketSlot | AmmSlot | null)[])
                 : []
               : null,
         };

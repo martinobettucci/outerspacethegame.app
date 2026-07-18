@@ -21,9 +21,9 @@ describe('aggregateCensus (DG §11.5)', () => {
       [{ ore: 10 }, { ore: 5, steel_l: 2.5 }],
       now,
     );
-    expect(totals.ore).toEqual({ totalT: 165, planetStockT: 150, shipCargoT: 15 });
+    expect(totals.ore).toEqual({ totalT: 165, planetStockT: 150, shipCargoT: 15, ammPoolT: 0 });
     expect(totals.water.totalT).toBe(30);
-    expect(totals.steel_l).toEqual({ totalT: 2.5, planetStockT: 0, shipCargoT: 2.5 });
+    expect(totals.steel_l).toEqual({ totalT: 2.5, planetStockT: 0, shipCargoT: 2.5, ammPoolT: 0 });
   });
 
   it('évalue les stocks LAZY au nowMs (amount + rate × Δjours)', () => {
@@ -65,7 +65,7 @@ describe('aggregateCensus (DG §11.5)', () => {
     const totals = aggregateCensus([], [], 0);
     expect(Object.keys(totals).sort()).toEqual([...ALL_RESOURCE_IDS].sort());
     for (const id of ALL_RESOURCE_IDS) {
-      expect(totals[id]).toEqual({ totalT: 0, planetStockT: 0, shipCargoT: 0 });
+      expect(totals[id]).toEqual({ totalT: 0, planetStockT: 0, shipCargoT: 0, ammPoolT: 0 });
     }
   });
 });

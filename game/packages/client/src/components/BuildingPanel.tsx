@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import {
   ALL_RESOURCE_IDS,
+  ammLpFeeBp,
   buildableSizes,
   BUILDINGS,
   HULLS,
@@ -48,6 +49,8 @@ export function BuildingPanel({
   maxLevelBySeed,
   onApply,
   onSaveMarketSlot,
+  onSeedAmm,
+  onAmmLiquidity,
   onBuildShip,
   shipBuilds,
   onLevelUp,
@@ -75,6 +78,18 @@ export function BuildingPanel({
     rate: number;
     dailyLimitT: number;
   }) => void;
+  onSeedAmm?: (input: {
+    slotIndex: number;
+    x: string;
+    y: string;
+    depositX: number;
+    depositY: number;
+  }) => void;
+  onAmmLiquidity?: (
+    input:
+      | { action: 'add'; slotIndex: number; tonsX: number }
+      | { action: 'remove'; slotIndex: number; pct: number },
+  ) => void;
   onBuildShip?: (input: {
     category: 'combat' | 'cargo' | 'civil';
     size: 's' | 'm' | 'l';
@@ -93,7 +108,9 @@ export function BuildingPanel({
   const [workforce, setWorkforce] = useState(building.workforce);
   const [runPct, setRunPct] = useState(building.runPct);
   const [confirmDemolish, setConfirmDemolish] = useState(false);
-  const slot0 = building.marketSlots?.[0];
+  const slot0raw = building.marketSlots?.[0];
+  const slot0 =
+    slot0raw && !('mode' in slot0raw) ? slot0raw : undefined;
   const [slotGive, setSlotGive] = useState(slot0?.give ?? 'ore');
   const [slotGet, setSlotGet] = useState(slot0?.get ?? 'water');
   const [slotRate, setSlotRate] = useState(String(slot0?.rate ?? '0.5'));
@@ -106,6 +123,12 @@ export function BuildingPanel({
   const [reservedForSelf, setReservedForSelf] = useState(
     building.reservedForSelf ?? 0,
   );
+  const [ammX, setAmmX] = useState('ore');
+  const [ammY, setAmmY] = useState('water');
+  const [ammDepX, setAmmDepX] = useState('50');
+  const [ammDepY, setAmmDepY] = useState('25');
+  const [ammAddT, setAmmAddT] = useState('10');
+  const [ammPct, setAmmPct] = useState('100');
   const [yardCategory, setYardCategory] = useState<
     'combat' | 'cargo' | 'civil'
   >('cargo');
@@ -431,6 +454,189 @@ export function BuildingPanel({
             >
               <Anchor size={13} aria-hidden /> {t.planet.yardBuild}
             </button>
+          </section>
+        )}
+
+      {building.key === 'market' &&
+        building.level >= 2 &&
+        building.marketSlots &&
+        onSeedAmm &&
+        onAmmLiquidity && (
+          <section aria-label={t.planet.ammTitle} className="ls-section">
+            <div className="ls-section-heading">
+              <Store size={14} aria-hidden /> {t.planet.ammTitle}
+            </div>
+            <p className="ls-section-subtitle">{t.planet.ammHint}</p>
+            {building.marketSlots
+              .map((s, i) => ({ s, i }))
+              .filter(
+                (
+                  e,
+                ): e is { s: import('../api.js').AmmSlotRaw; i: number } =>
+                  !!e.s && typeof e.s === 'object' && 'mode' in e.s,
+              )
+              .map(({ s, i }) => (
+                <div key={i} className="ls-queue-item" style={{ display: 'grid', gap: 6 }}>
+                  <span className="ls-mono-line" data-testid="amm-pool-line">
+                    #{i} · {s.pool.x.replace('_', ' ')} ⇄{' '}
+                    {s.pool.y.replace('_', ' ')} ·{' '}
+                    {Math.floor(s.pool.rx * 10) / 10}/
+                    {Math.floor(s.pool.ry * 10) / 10} T · spot{' '}
+                    {Math.round((s.pool.ry / s.pool.rx) * 10_000) / 10_000} ·{' '}
+                    {ammLpFeeBp(building.level)}+25 bp
+                  </span>
+                  <div className="ls-inline-fields">
+                    <label className="ls-field">
+                      <span>
+                        {t.planet.ammAddLabel} ({s.pool.x.replace('_', ' ')})
+                      </span>
+                      <input
+                        className="ls-input"
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        value={ammAddT}
+                        onChange={(e) => setAmmAddT(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="ls-button"
+                      onClick={() =>
+                        onAmmLiquidity({
+                          action: 'add',
+                          slotIndex: i,
+                          tonsX: Number(ammAddT),
+                        })
+                      }
+                    >
+                      {t.planet.ammAdd}
+                    </button>
+                  </div>
+                  <div className="ls-inline-fields">
+                    <label className="ls-field">
+                      <span>{t.planet.ammPctLabel}</span>
+                      <input
+                        className="ls-input"
+                        type="number"
+                        min={1}
+                        max={100}
+                        step={1}
+                        value={ammPct}
+                        onChange={(e) => setAmmPct(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="ls-button ls-button--danger"
+                      onClick={() =>
+                        onAmmLiquidity({
+                          action: 'remove',
+                          slotIndex: i,
+                          pct: Number(ammPct),
+                        })
+                      }
+                    >
+                      {t.planet.ammWithdraw}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            {(() => {
+              const slots = building.marketSlots ?? [];
+              let free: number | null = null;
+              for (let i = 0; i < Math.min(3, building.level); i++) {
+                if (!slots[i]) {
+                  free = i;
+                  break;
+                }
+              }
+              if (free === null) return null;
+              const impliedSpot =
+                Number(ammDepX) > 0
+                  ? Math.round((Number(ammDepY) / Number(ammDepX)) * 10_000) /
+                    10_000
+                  : 0;
+              return (
+                <>
+                  <div className="ls-inline-fields">
+                    <label className="ls-field">
+                      <span>{t.planet.ammLegX}</span>
+                      <select
+                        aria-label={t.planet.ammLegX}
+                        className="ls-select"
+                        value={ammX}
+                        onChange={(e) => setAmmX(e.target.value)}
+                      >
+                        {ALL_RESOURCE_IDS.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="ls-field">
+                      <span>{t.planet.ammLegY}</span>
+                      <select
+                        aria-label={t.planet.ammLegY}
+                        className="ls-select"
+                        value={ammY}
+                        onChange={(e) => setAmmY(e.target.value)}
+                      >
+                        {ALL_RESOURCE_IDS.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <div className="ls-inline-fields">
+                    <label className="ls-field">
+                      <span>{t.planet.ammDepositX}</span>
+                      <input
+                        className="ls-input"
+                        type="number"
+                        min={1}
+                        step={0.1}
+                        value={ammDepX}
+                        onChange={(e) => setAmmDepX(e.target.value)}
+                      />
+                    </label>
+                    <label className="ls-field">
+                      <span>{t.planet.ammDepositY}</span>
+                      <input
+                        className="ls-input"
+                        type="number"
+                        min={1}
+                        step={0.1}
+                        value={ammDepY}
+                        onChange={(e) => setAmmDepY(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <span className="ls-mono-line" data-testid="amm-implied-price">
+                    {t.planet.ammImpliedPrice} {impliedSpot}{' '}
+                    {ammY.replace('_', ' ')}/{ammX.replace('_', ' ')}
+                  </span>
+                  <button
+                    type="button"
+                    className="ls-button ls-button--accent ls-button--block"
+                    onClick={() =>
+                      onSeedAmm({
+                        slotIndex: free!,
+                        x: ammX,
+                        y: ammY,
+                        depositX: Number(ammDepX),
+                        depositY: Number(ammDepY),
+                      })
+                    }
+                  >
+                    <Store size={13} aria-hidden /> {t.planet.ammSeed}
+                  </button>
+                </>
+              );
+            })()}
           </section>
         )}
 

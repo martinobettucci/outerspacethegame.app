@@ -42,8 +42,11 @@ import {
 import { latestCensus } from '../services/census.js';
 import { openPod, podPricing } from '../services/pods.js';
 import {
+  ammLiquidity,
+  executeAmmTrade,
   executeInnateTrade,
   executeTrade,
+  seedAmmPool,
   listInnateOffers,
   listMarkets,
   setInnateOffers,
@@ -141,6 +144,34 @@ const marketSlotSchema = z.object({
 const tradeSchema = z.object({
   slotIndex: z.number().int().min(0).max(2),
   shipId: z.string().uuid(),
+  giveT: z.number().positive(),
+});
+const ammSeedSchema = z.object({
+  slotIndex: z.number().int().min(0).max(2),
+  x: z.string().min(1),
+  y: z.string().min(1),
+  depositX: z.number().positive(),
+  depositY: z.number().positive(),
+  dailyLimitT: z.number().min(0).default(0),
+  absoluteLimitT: z.number().min(0).default(0),
+  whitelist: z.array(z.string().uuid()).max(64).default([]),
+});
+const ammLiquiditySchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('add'),
+    slotIndex: z.number().int().min(0).max(2),
+    tonsX: z.number().positive(),
+  }),
+  z.object({
+    action: z.literal('remove'),
+    slotIndex: z.number().int().min(0).max(2),
+    pct: z.number().positive().max(100),
+  }),
+]);
+const ammTradeSchema = z.object({
+  slotIndex: z.number().int().min(0).max(2),
+  shipId: z.string().uuid(),
+  give: z.string().min(1),
   giveT: z.number().positive(),
 });
 const innateOffersSchema = z.object({
@@ -537,6 +568,47 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         give: slot.give as never,
         get: slot.get as never,
       }),
+    );
+  });
+
+  // ——— AMM L2+ (GB §13, DG §11.2) : seed, liquidité, échange.
+  app.post('/planets/:id/buildings/:bid/amm', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, bid } = req.params as { id: string; bid: string };
+    const parsed = ammSeedSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    const { slotIndex, ...seed } = parsed.data;
+    return wrap(reply, () =>
+      seedAmmPool(deps.pool, player.id, id, bid, slotIndex, seed),
+    );
+  });
+
+  app.post('/planets/:id/buildings/:bid/amm-liquidity', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, bid } = req.params as { id: string; bid: string };
+    const parsed = ammLiquiditySchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    const { slotIndex, ...rest } = parsed.data;
+    return wrap(reply, () =>
+      ammLiquidity(deps.pool, player.id, id, bid, slotIndex, rest),
+    );
+  });
+
+  app.post('/markets/:bid/amm-trade', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { bid } = req.params as { bid: string };
+    const parsed = ammTradeSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      executeAmmTrade(
+        deps.pool,
+        player.id,
+        bid,
+        parsed.data.slotIndex,
+        parsed.data.shipId,
+        parsed.data.give,
+        parsed.data.giveT,
+      ),
     );
   });
 

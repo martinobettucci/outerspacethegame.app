@@ -1,10 +1,11 @@
 /**
  * Census global de l'offre (GB §13, DG §11.5) — agrégation PURE des deux
- * sources existantes : stocks planétaires (évalués lazy à l'instant du
- * snapshot) + soutes (statiques, tous statuts — la soute existe
- * physiquement partout). Les gisements sont EXCLUS délibérément : non
- * extraits ≠ offre. Pools AMM et escrow d'enchères rejoindront la somme
- * avec leurs chunks (gap enregistré dans meta.sources).
+ * sources : stocks planétaires (évalués lazy à l'instant du snapshot) +
+ * soutes (statiques, tous statuts — la soute existe physiquement partout)
+ * + réserves des pools AMM (chunk U — « stocks + cargo + pools + escrow »,
+ * DG §11.5 ; l'escrow d'enchères rejoindra la somme avec son chunk, gap
+ * enregistré dans meta.sources). Les gisements sont EXCLUS délibérément :
+ * non extraits ≠ offre.
  *
  * Sortie EXHAUSTIVE sur ALL_RESOURCE_IDS (zéros inclus — règle de
  * complétude : ni l'UI ni le pricing des pods ne devinent les absents).
@@ -18,6 +19,7 @@ export interface CensusTotals {
   totalT: number;
   planetStockT: number;
   shipCargoT: number;
+  ammPoolT: number;
 }
 
 export function aggregateCensus(
@@ -29,9 +31,13 @@ export function aggregateCensus(
   }[],
   shipCargos: Record<string, number>[],
   nowMs: number,
+  poolBundles: Record<string, number>[] = [],
 ): Record<ResourceId, CensusTotals> {
   const totals = Object.fromEntries(
-    ALL_RESOURCE_IDS.map((r) => [r, { totalT: 0, planetStockT: 0, shipCargoT: 0 }]),
+    ALL_RESOURCE_IDS.map((r) => [
+      r,
+      { totalT: 0, planetStockT: 0, shipCargoT: 0, ammPoolT: 0 },
+    ]),
   ) as Record<ResourceId, CensusTotals>;
 
   for (const row of stockRows) {
@@ -50,8 +56,15 @@ export function aggregateCensus(
       bucket.shipCargoT += Math.max(0, Number(tons) || 0);
     }
   }
+  for (const bundle of poolBundles) {
+    for (const [res, tons] of Object.entries(bundle ?? {})) {
+      const bucket = totals[res as ResourceId];
+      if (!bucket) continue;
+      bucket.ammPoolT += Math.max(0, Number(tons) || 0);
+    }
+  }
   for (const bucket of Object.values(totals)) {
-    bucket.totalT = bucket.planetStockT + bucket.shipCargoT;
+    bucket.totalT = bucket.planetStockT + bucket.shipCargoT + bucket.ammPoolT;
   }
   return totals;
 }

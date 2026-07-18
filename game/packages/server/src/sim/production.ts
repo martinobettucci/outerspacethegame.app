@@ -64,6 +64,8 @@ export interface RatesInput {
   population: number;
   /** Cap de stockage total (franchise + dépôts). */
   storageCapT: number;
+  /** Réserves AMM (T) — physiques, comptées au cap, non dépensables. */
+  pooledT?: number;
   /** Stocks matérialisés (T). */
   stocks: Partial<Record<ResourceId, number>>;
   /** Gisements matérialisés (T restants). */
@@ -106,10 +108,11 @@ interface Flow {
 
 /** Calcule tous les débits — fonction PURE. */
 export function computeRates(input: RatesInput): RatesResult {
-  const totalStock = Object.values(input.stocks).reduce(
-    (s, v) => s + (v ?? 0),
-    0,
-  );
+  // Les réserves AMM comptent dans le cap (DG §3.3b) : elles occupent le
+  // stockage physique sans être dépensables par la production.
+  const totalStock =
+    Object.values(input.stocks).reduce((s, v) => s + (v ?? 0), 0) +
+    (input.pooledT ?? 0);
   const storageU = input.storageCapT > 0 ? totalStock / input.storageCapT : 1;
   const brake = storageBrake(storageU);
 

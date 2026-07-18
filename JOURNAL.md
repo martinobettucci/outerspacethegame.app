@@ -2175,3 +2175,53 @@ manual.spec.ts à deux comptes réels ; captures man-01…05 observées
 du doublon visible en notice, boîte de réception Accept/Decline, fret
 « ore · 2.0 T » à bord de l'acheteur. Migration 012 appliquée en dev
 uniquement (PROD_MIGRATIONS.md : 012 en attente).
+
+## 2026-07-18 — Chunk U : pools AMM du marché L2 (GB §9/§13, DG §11.2)
+
+**Contexte.** Suite de l'arc commerce (K taux fixe → L inné → T canal
+manuel). Session sur la machine locale du responsable (WSL2) : bootstrap
+de l'environnement (dockerd du poste PARTAGÉ avec d'autres projets — seul
+le conteneur atg-dev-db est touché), migrations 011/012 appliquées au
+volume local qui s'était arrêté à 010.
+
+**Décisions.**
+- *Pas de migration* : le pool vit dans le slot (`buildings.config`),
+  variante `{mode:'amm', pool:{x,y,rx,ry,seededAtMs}, limites,
+  whitelist}` aux côtés des slots taux fixe ; un slot AMM retiré laisse
+  un TROU (null) réutilisable — tous les consommateurs le tolèrent.
+- *Frais sur la jambe d'entrée* : dxEff = give×(1−50 bp) ; la jambe LP
+  (25 bp, 20 bp au L3) rejoint la réserve d'entrée HORS produit (k
+  croît — c'est la rémunération de la liquidité) ; la maison (25 bp
+  [TUNE round 4a]) sort du pool vers le stock planétaire.
+- *LP v1 = propriétaire seul* [annoncé] : add PROPORTIONNEL au ratio
+  courant (préserve le prix — ajouter à un autre ratio le déplacerait),
+  remove en pourcentage des deux jambes (delta net de stockage nul :
+  réserves et stock comptent au même cap). Les LP visiteurs (« if the
+  owner allows »), le retrait système-garanti et les liens survivant à
+  la conquête arrivent avec les shares P4.
+- *Réserves = stock physique* (canon DG §3.3b « pool reserves COUNT
+  against the cap ») : pooledT injecté dans computeRates (frein/halt),
+  storageUsedT, contrôles de cap des échanges — et le census gagne un
+  compartiment `ammPoolT` (DG §11.5 « stocks + cargo + pools +
+  escrow ») ; l'évolution de forme a été rattrapée par les tests
+  existants (attendus mis à jour, sources +'amm_pools').
+- *Gate L2 mercantile* : porté par le level-up du bâtiment
+  (politicsFromLevel) — le seed vérifie le NIVEAU ; un changement de
+  gouvernance après coup n'éteint pas les pools existants (même
+  sémantique que les slots, documenté).
+- *Jamais d'oracle* : le spot est affiché comme information ; les pods
+  restent sur le census (canon).
+
+**Vérifications.** Shared 115 (7 blocs AMM) ; serveur 32 unit + 158
+intégration (9 AMM : seed physique et §10, stockage inchangé au seed
+— la neutralité stock→pool PROUVE le comptage des réserves —, quote
+partagée = règlement serveur à 1e-9, jambe inverse, whitelist/limite
+quotidienne, liquidité proportionnelle, retrait libérant le slot,
+census neutre avec compartiment ammPoolT ≥ réserves) ; E2E 20/20 dont
+amm.spec.ts (gate mercantile réel via level-up, prix induit affiché
+AVANT l'engagement, swap avec dérive du spot en notice, retrait
+restituant les réserves au stock) ; captures amm-01…04 observées (§16).
+Trébuchements instructifs : sur-cap du monde de test (le contrôle
+net-delta a refusé à raison — dotations réduites), 5 T = 5 conteneurs
+sur une soute S de 3 (DG §7, deux fois — décidément), trous null dans
+les tableaux de slots (garde flatMap).

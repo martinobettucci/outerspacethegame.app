@@ -4,6 +4,38 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Pools AMM du marché L2 (chunk U)** : AUCUNE migration (les pools
+  vivent dans `buildings.config.slots`, motif 004). Maths pures
+  partagées : produit constant x·y = k, spot = ry/rx, frais sur la jambe
+  d'ENTRÉE — 25 bp LP accumulés DANS la réserve (k croît, la valeur
+  revient au retrait) + 25 bp maison au stock planétaire [TUNE round
+  4a] ; marché L3 → jambe LP 20 bp (canon) ; le RATIO du dépôt initial
+  EST le prix (« seeding is a pricing decision »). Serveur : seed
+  (marché L2+ ACTIF, propriétaire, slot libre, jambes déduites
+  PHYSIQUEMENT du stock, gate mercantile porté par le level-up),
+  liquidité v1 PROPRIÉTAIRE (add proportionnel préservant le prix ;
+  remove pct — 100 % vide et LIBÈRE le slot, les slots portent des
+  TROUS null) — les LP visiteurs, liens de conquête et retrait garanti
+  arrivent avec les shares P4 (annoncé) ; échange bidirectionnel à quai
+  (jambe au choix, whitelist propriétaire-exempt, limites
+  quotidienne/absolue contre le journal `trades`, conteneurs DG §7,
+  stockage en delta net §3.3b) ; le slot AMM se protège (re-seed et
+  taux-fixe refusés) et executeTrade refuse les slots AMM. Les réserves
+  COMPTENT au cap de stockage (DG §3.3b ligne 172 : pooledT injecté dans
+  computeRates, storageUsedT, contrôles de cap) et au census (« stocks +
+  cargo + pools + escrow » : compartiment `ammPoolT` dédié dans
+  aggregateCensus, meta.sources +'amm_pools'). Le spot n'est JAMAIS un
+  oracle (pods = census, inchangé). UI : section « AMM pool (L2+) » du
+  panneau marché (seed avec PRIX INDUIT affiché avant l'engagement,
+  ligne de pool réserves/spot/frais, add/remove), carte « AMM x ⇄ y »
+  du vaisseau à quai (jambe au choix, Swap, notice avec spot après).
+  Tests : 5 blocs unit shared (k exact sans frais, croissance de k par
+  la jambe LP, dérive du spot, L3, gardes) + 9 intégration (physicalité
+  du seed, stockage inchangé au seed, quote partagée = règlement à
+  1e-9 près, jambe inverse, whitelist/limites, liquidité, census
+  neutre + compartiment) + E2E amm.spec.ts (Mercantile réel : L2 par
+  level-up gouverné, seed 60/30 → spot 0.5, swap 3 T → spot 0.4537,
+  retrait 100 % → stock restitué), 4 captures observées, 20/20 E2E.
 - **Canal manuel (chunk T)** : migration 012 (`manual_offers` — l'offre
   épingle le vaisseau à quai de l'acheteur). Visibilité du warehouse
   public/privé (`buildings.config`, défaut PRIVÉ [TUNE-v1] — jamais de

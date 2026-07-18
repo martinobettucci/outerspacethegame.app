@@ -3,6 +3,7 @@
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
  */
 import {
+  isAmmSlot,
   BUILDINGS,
   COLONY_SEED_STOCK,
   habitability,
@@ -458,6 +459,22 @@ export function censusRun(intervalMs: number): EventHandler {
     const { rows: bodyCount } = await client.query(
       `SELECT count(DISTINCT body_id)::int AS n FROM planet_stock`,
     );
+    // Réserves AMM des marchés ACTIFS : « aggregation over planet stocks +
+    // cargo + pools + escrow » (DG §11.5) — agrégées comme des paniers plats.
+    const { rows: poolRows } = await client.query(
+      `SELECT config FROM buildings WHERE key = 'market' AND status = 'active'`,
+    );
+    const poolBundles: Record<string, number>[] = [];
+    for (const r of poolRows) {
+      const slots = Array.isArray(r.config?.slots) ? r.config.slots : [];
+      for (const slot of slots) {
+        if (!isAmmSlot(slot)) continue;
+        poolBundles.push({
+          [slot.pool.x]: slot.pool.rx,
+          [slot.pool.y]: slot.pool.ry,
+        });
+      }
+    }
     const totals = aggregateCensus(
       stockRows.map((r) => ({
         resource: r.resource,
@@ -467,6 +484,7 @@ export function censusRun(intervalMs: number): EventHandler {
       })),
       shipRows.map((r) => r.cargo ?? {}),
       nowMs,
+      poolBundles,
     );
     await client.query(
       `INSERT INTO census_snapshots (taken_at, totals, meta)
@@ -475,7 +493,7 @@ export function censusRun(intervalMs: number): EventHandler {
         nowMs,
         JSON.stringify(totals),
         JSON.stringify({
-          sources: ['planet_stock', 'ship_cargo'],
+          sources: ['planet_stock', 'ship_cargo', 'amm_pools'],
           bodyCount: bodyCount[0].n,
           shipCount: shipRows.length,
         }),
