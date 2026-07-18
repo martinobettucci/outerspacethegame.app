@@ -62,6 +62,10 @@ import {
   respondManualOffer,
 } from '../services/manual.js';
 import {
+  installGovernor,
+  previewGovernance,
+} from '../services/governance.js';
+import {
   listComms,
   listMessages,
   pingBack,
@@ -127,6 +131,10 @@ const manualOfferSchema = z.object({
 });
 const manualRespondSchema = z.object({
   action: z.enum(['accept', 'decline']),
+});
+const governorSchema = z.object({ npcId: z.string().uuid() });
+const governorPreviewSchema = z.object({
+  npcIds: z.array(z.string().uuid()).min(1).max(3),
 });
 const cargoSchema = z.object({
   resource: z.string().min(1),
@@ -709,6 +717,35 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
 
+    app.post('/test/grant-npc', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          role: z.enum([
+            'pilot',
+            'engineer',
+            'merchant',
+            'diplomat',
+            'soldier',
+            'scientist',
+          ]),
+          rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        // Instrumentation §15 : un PNJ non hébergé pour le compte COURANT
+        // (les rolls de pods sont seedés par playerId — non précomputables
+        // dans un spec E2E). Champs identiques au vrai flux d'ouverture.
+        const { rows } = await deps.pool.query<{ id: string }>(
+          `INSERT INTO npcs (owner_id, people, role, rarity, stat_rolls)
+           VALUES ($1, 'human', $2, $3, '{}') RETURNING id`,
+          [player.id, parsed.data.role, parsed.data.rarity],
+        );
+        return { npcId: rows[0]!.id };
+      });
+    });
+
     app.post('/test/relocate-ship', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z
@@ -886,6 +923,27 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         parsed.data.shipId,
         parsed.data.buyT,
       ),
+    );
+  });
+
+  // ——— Gouvernance (GB §11, DG §4.1) : installation permanente + préview.
+  app.post('/planets/:id/governors', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = governorSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      installGovernor(deps.pool, player.id, id, parsed.data.npcId),
+    );
+  });
+
+  app.post('/planets/:id/governors/preview', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = governorPreviewSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      previewGovernance(deps.pool, player.id, id, parsed.data.npcIds),
     );
   });
 

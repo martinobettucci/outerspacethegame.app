@@ -2262,3 +2262,43 @@ complète : le roll de TAILLE du starter (S = 800 T de franchise)
 sur-dotait les mondes E2E — les specs AMM/route posent désormais un
 depot (+200 T), suggestion d'un filtre de taille consignée dans
 SUGGESTIONS.md.
+## 2026-07-18 — Chunk W : gouvernance v1 (GB §11/§21, DG §4.1)
+
+**Contexte.** L'intersection des masques et le vaisseau-parqué-au-masque
+existaient (chunks E/L/Q) ; manquaient exigences par taille, G ×0.5,
+installation permanente et préview canon-obligatoire. Les pods (chunk R)
+produisent des PNJ de grade gouverneur sans emploi — la boucle se ferme.
+
+**Décisions.**
+- *Échelle du bonus* : RARITY_TIER_INDEX est 1-based (common=1, chunk R)
+  — un ensemble min-rare donne +6 %, min-legendary +10 % [TUNE].
+- *G ×0.5 généralisé aux moyens* [TUNE-v1 interp] : le canon ne chiffre
+  que les grands ; la symétrie est jouable PARCE QUE le vaisseau
+  personnel parqué compte pour un siège (GB §21) — un starter moyen naît
+  gouverné, et perd la moitié de ses débits si l'ancre décolle (tension
+  voulue : « adds governance capability when parked »).
+- *Vaisseau parqué et bonus* : il satisfait l'exigence mais ne porte NI
+  ne dilue le bonus de rareté (calculé sur les INSTALLÉS seuls) — sinon
+  parquer son vaisseau PÉNALISERAIT un monde à gouverneurs rares.
+- *Interp chunk N amendée* : le pilote fondateur (souvent common) ne
+  prend un siège de colonie QUE s'il est de grade gouverneur — sinon il
+  redevient non hébergé. Sans cet amendement, l'installation étant
+  permanente et sans retrait, chaque colonie moyenne naissait avec son
+  siège unique squatté à jamais par un common (+2 % impossible, choix
+  d'archétype impossible). Test colonisation mis à jour.
+- *Préview* : serveur (candidats re-validés — pas de préview-oracle sur
+  les PNJ d'autrui), retourne aussi les nœuds PERDUS vs le masque
+  courant ; l'UI exige la confirmation TYPÉE du nom de la planète
+  (patron de permanence du design system).
+- *G dans le snapshot* : planetMultiplier = E(pop/cap) × G — l'affichage
+  planetEfficiency reste E (la cloche) ; G est montré séparément
+  (badge). Toutes les industries suivent (testé ×0.5 exact).
+
+**Vérifications.** Shared 113 (5 blocs gouvernance) ; serveur 32 + 157
+intégration (8 gouvernance : parqué/décollé sur débits réels, préview
+exacte via effectiveMask partagé et sans mutation, caps S/M/L, grade,
+§10 étranger/lié/monde d'autrui, 3 sièges + bonus min-tier 1.06) ; E2E
+20/20 dont governance.spec.ts ; captures gov-01…04 observées (§16) —
+gov-04 montre l'hospitalité mercantile (chunk L) apparaître dès
+l'installation du merchant : les privilèges de gouvernance s'activent
+par le même chemin `governingArchetypes`. Aucune migration.

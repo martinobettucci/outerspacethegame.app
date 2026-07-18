@@ -306,11 +306,13 @@ describe('établissement (DG §12.3, GB §19)', () => {
     expect(detail.stock.food_1?.amount).toBeCloseTo(COLONY_SEED_STOCK.food_1!, 0);
     expect(detail.stock.water?.amount).toBeCloseTo(COLONY_SEED_STOCK.water!, 0);
     expect(detail.stock.fuel_cold?.amount).toBeGreaterThan(0);
-    // « The ship is spent » — et le pilote gouverne la colonie (GB §12).
+    // « The ship is spent » — le pilote COMMON survit NON hébergé
+    // [interp amendée, chunk W] : seul un grade gouverneur (rareté ≥
+    // rare) prend un siège permanent de la colonie (GB §11/§12).
     expect(await ship(colonyShip)).toBeNull();
     const pilot = (await listNpcs(pool, owner)).find((n) => n.id === pilotId)!;
-    expect(pilot.boundHostType).toBe('planet');
-    expect(pilot.boundHostId).toBe(wildId);
+    expect(pilot.boundHostType).toBeNull();
+    expect(pilot.boundHostId).toBeNull();
     // La flotte ne liste plus l'Arche.
     const ships = await fleet(pool, owner);
     expect(ships.some((s) => s.id === colonyShip)).toBe(false);

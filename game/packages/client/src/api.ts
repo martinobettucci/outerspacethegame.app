@@ -176,6 +176,20 @@ export interface PlanetDetail {
   buildings: PlanetBuilding[];
   docks: PlanetDocks | null;
   triadNudge: boolean | null;
+  governance: {
+    required: number;
+    max: number;
+    governors: {
+      id: string;
+      role: string;
+      rarity: string;
+      people: string;
+      archetype: string;
+    }[];
+    personalShipParked: boolean;
+    g: number;
+    fullyGoverned: boolean;
+  };
   tech: {
     available: TechNodeKey[];
     maxLevel: Record<string, number>;
@@ -531,4 +545,16 @@ export const api = {
     call<{ status: string }>('POST', `/manual-offers/${offerId}/respond`, { action }),
   cancelManualOffer: (offerId: string) =>
     call<{ ok: true }>('POST', `/manual-offers/${offerId}/cancel`),
+  installGovernor: (planetId: string, npcId: string) =>
+    call<PlanetDetail['governance']>('POST', `/planets/${planetId}/governors`, {
+      npcId,
+    }),
+  previewGovernance: (planetId: string, npcIds: string[]) =>
+    call<{
+      archetypes: string[];
+      maskAllowed: string[];
+      maskLost: string[];
+      g: number;
+      fullyGoverned: boolean;
+    }>('POST', `/planets/${planetId}/governors/preview`, { npcIds }),
 };

@@ -51,6 +51,9 @@ import type pg from 'pg';
 import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { enqueue } from '../sim/events.js';
+// Cycle planets↔governance assumé : governance n'emprunte que
+// CommandError (liaison vive, usage différé) — sûr en ESM.
+import { governanceOf } from './governance.js';
 import {
   loadProductionSnapshot,
   recomputePlanetRates,
@@ -164,6 +167,21 @@ export interface PlanetDetail {
     reservedForSelf: number;
     dwellHours: number;
   } | null;
+  /** Gouvernance (GB §11) : exigence, sièges, G, vaisseau parqué. */
+  governance: {
+    required: number;
+    max: number;
+    governors: {
+      id: string;
+      role: NpcRole;
+      rarity: string;
+      people: string;
+      archetype: Archetype;
+    }[];
+    personalShipParked: boolean;
+    g: number;
+    fullyGoverned: boolean;
+  };
   colonizedAt: string | null;
   graceUntil: string | null;
   tech: {
@@ -371,6 +389,7 @@ export async function planetDetail(
       stock,
       triadNudge,
       docks,
+      governance: await governanceOf(client, bodyId, snap.size, playerId),
       deposits: Object.entries(snap.deposits)
         .map(([resource, remaining]) => {
           const rate = snap.rates.depositRates[resource as ResourceId] ?? 0;

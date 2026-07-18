@@ -10,11 +10,14 @@ import {
   BUILDINGS,
   efficiency,
   GAME_DAY_SECONDS,
+  governanceMultiplier,
   hoverIdleFuelUPerDay,
   popCap,
+  RARITY_TIER_INDEX,
   type BuildingKey,
   type PlanetSize,
   type Quality,
+  type Rarity,
   type ResourceId,
 } from '@atg/shared';
 import type pg from 'pg';
@@ -196,7 +199,32 @@ export async function loadProductionSnapshot(
   const population = body.population ?? 0;
   const cap = popCap(size, quality);
   const storageCapT = BASE_STORAGE_ALLOWANCE_T[size] + depotBonus;
-  const planetMultiplier = efficiency(population / cap); // × G (=1, P1)
+
+  // G — gouvernance (GB §11, DG §4.1, chunk W) : sous l'exigence de
+  // gouverneurs par taille, le monde tourne à 0.5 ; le vaisseau personnel
+  // du propriétaire À QUAI compte comme un gouverneur temporaire.
+  let governance = { g: 1 };
+  if (body.owner_id) {
+    const { rows: govRows } = await client.query(
+      `SELECT rarity FROM npcs
+       WHERE bound_host_type = 'planet' AND bound_host_id = $1`,
+      [bodyId],
+    );
+    const { rows: parked } = await client.query(
+      `SELECT 1 FROM ships
+       WHERE hull_category = 'personal' AND owner_id = $1
+         AND status = 'docked' AND docked_body_id = $2 LIMIT 1`,
+      [body.owner_id, bodyId],
+    );
+    governance = governanceMultiplier({
+      size,
+      installedTiers: govRows.map(
+        (r) => RARITY_TIER_INDEX[r.rarity as Rarity] ?? 0,
+      ),
+      personalShipParked: parked.length > 0,
+    });
+  }
+  const planetMultiplier = efficiency(population / cap) * governance.g;
 
   const rates = computeRates({
     planetMultiplier,

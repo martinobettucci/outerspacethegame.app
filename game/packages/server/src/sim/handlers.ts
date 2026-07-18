@@ -345,12 +345,21 @@ export const colonyEstablished: EventHandler = async (client, event) => {
     );
   }
 
-  // L'équipage partage le sort de la coque… en survivant mieux qu'elle :
-  // re-liaison comme gouverneur de la colonie (GB §12, [TUNE interp]).
+  // L'équipage partage le sort de la coque… en survivant mieux qu'elle.
+  // [TUNE interp amendé, chunk W] : gouverneur de la colonie SEULEMENT si
+  // grade gouverneur (rareté ≥ rare) — sinon un pilote common squatterait
+  // À JAMAIS le siège unique d'un monde moyen (l'installation est
+  // permanente, GB §11). Les autres redeviennent NON hébergés (roster).
   await client.query(
     `UPDATE npcs SET bound_host_type = 'planet', bound_host_id = $2
-     WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+     WHERE bound_host_type = 'ship' AND bound_host_id = $1
+       AND rarity IN ('rare', 'epic', 'legendary')`,
     [shipId, bodyId],
+  );
+  await client.query(
+    `UPDATE npcs SET bound_host_type = NULL, bound_host_id = NULL
+     WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+    [shipId],
   );
   await client.query(`DELETE FROM ships WHERE id = $1`, [shipId]);
 

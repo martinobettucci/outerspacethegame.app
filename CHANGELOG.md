@@ -65,6 +65,38 @@
   neutre + compartiment) + E2E amm.spec.ts (Mercantile réel : L2 par
   level-up gouverné, seed 60/30 → spot 0.5, swap 3 T → spot 0.4537,
   retrait 100 % → stock restitué), 4 captures observées, 20/20 E2E.
+- **Gouvernance v1 (chunk W)** : AUCUNE migration (les liaisons `npcs`
+  suffisent). Module partagé pur : exigences par taille S 0 / M 1 / L 3
+  (canon GB §11, caps d'installation identiques), G = 1.0 pleinement
+  gouverné, 0.5 sous l'exigence (canon pour les grands, généralisé aux
+  moyens [TUNE-v1 interp]), +2 % × tier de rareté (échelle 1-based du
+  chunk R) du gouverneur INSTALLÉ le plus faible [TUNE]. Le vaisseau
+  personnel parqué compte comme UN gouverneur temporaire (GB §21 —
+  satisfait l'exigence, masque déjà en place, ne porte ni ne dilue le
+  bonus [TUNE-v1 interp]) : un starter moyen tourne à plein tant que le
+  Sovereign anchor reste à quai, et tombe à ×0.5 s'il décolle. G injecté
+  dans le SNAPSHOT de production (planetMultiplier = E × G — les débits
+  de TOUTES les industries suivent, testé exactement ×0.5). Installation
+  PERMANENTE (grade gouverneur = rareté ≥ rare, PNJ possédé non hébergé,
+  §10 directs testés ; AUCUN chemin de retrait n'existe, par conception)
+  ; préview CANON-OBLIGATOIRE (archétypes, masque résultant, nœuds
+  PERDUS, G — lecture seule, candidats validés comme à l'installation) ;
+  interp chunk N AMENDÉE : le pilote fondateur d'une colonie ne prend un
+  siège permanent que s'il est de grade gouverneur — sinon il survit NON
+  hébergé (un common squatterait à jamais le siège unique d'un monde
+  moyen). UI : section Gouvernance (badge sièges + G coloré, rangées de
+  gouverneurs, avertissement demi-efficacité, install avec préview puis
+  confirmation TYPÉE du nom de la planète — patron de permanence du
+  design system). Instrumentation §15 : POST /test/grant-npc (les rolls
+  de pods sont seedés par playerId — non précomputables en E2E).
+  Tests : 5 blocs unit shared + 8 intégration (G sur débits réels,
+  parqué/décollé, caps, grade, §10, préview sans mutation, grand monde
+  3 sièges + bonus min-tier) + E2E governance.spec.ts (starter moyen
+  trouvé par l'API, ×1 → ×0.5 visible, préview, bouton inerte sans le
+  nom exact, permanence sans le vaisseau), 4 captures observées —
+  gov-04 montre l'hospitalité mercantile (chunk L) s'activer à
+  l'installation du merchant. Suites : shared 113, serveur 32 + 157,
+  E2E 20/20.
 - **Canal manuel (chunk T)** : migration 012 (`manual_offers` — l'offre
   épingle le vaisseau à quai de l'acheteur). Visibilité du warehouse
   public/privé (`buildings.config`, défaut PRIVÉ [TUNE-v1] — jamais de

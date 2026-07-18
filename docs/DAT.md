@@ -114,7 +114,9 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    `colonize` (≥ 200 settlers, anti-race lock) → 72 h
    `colony_established` event: ownership, population = delivered
    settlers, hull converted to depot L1 + spaceport L1 (tiles 0/1),
-   provisions + fuel unloaded, NPCs re-bound to the planet, ship deleted.
+   provisions + fuel unloaded, governor-grade crew (rarity ≥ rare) bound
+   to the planet — commons return to the roster unhosted [amended, chunk
+   W] — ship deleted.
    Arrival toll is deterministic (base 5 % − bound-pilot reductions,
    `settler_routes` accumulator quantized 1e-9). Fresh colonies carry a
    14-day grace (`colonized_at`; badge + API today, enforcement lands
@@ -221,6 +223,23 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    the owner's TELESCOPE scope (ship vision excluded — canon wording;
    innate hospitality is not a pair [interp]); null without an active
    market.
+13. **Governance v1 (implemented, chunk W):** per-size governor
+   requirements S 0 / M 1 / L 3 (= install caps, canon); the effective
+   G multiplier (1.0 fully governed, 0.5 under-requirement — canon for
+   large, generalized to medium [TUNE-v1]; +2% × 1-based rarity tier of
+   the weakest INSTALLED governor [TUNE]) multiplies the production
+   snapshot's planetMultiplier (E × G) so every industry rate follows.
+   The owner's parked personal ship counts as ONE temp governor
+   (requirement + mask; no rarity bonus). Installation is PERMANENT
+   (governor-grade = rarity ≥ rare; owned, unhosted NPC; no removal
+   path exists by design — conquest will transfer governors with the
+   world, P5). The canon-required PREVIEW is computed server-side
+   (candidates re-validated; returns archetypes, resulting mask, LOST
+   nodes vs current, G) and the UI gates install behind a TYPED planet
+   name confirmation. Colonization amendment: only governor-grade
+   founding crew takes a colony seat. Test instrumentation (§15):
+   POST /test/grant-npc (pod rolls are seeded by playerId — not
+   precomputable in E2E specs).
 
 ### Intel tiers (implemented, chunk Q)
 

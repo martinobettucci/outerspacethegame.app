@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Network,
   Clock3,
+  Landmark,
 } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
 import { api, type ApiError, type PlanetDetail } from '../api.js';
@@ -105,6 +106,31 @@ export function PlanetView({ planetId }: { planetId: string }) {
       .catch(() => setHospOffers([]));
   }, [planetId]);
   useEffect(() => refreshHospitality(), [refreshHospitality]);
+  // Gouvernance (GB §11) : candidats = PNJ non liés de grade gouverneur.
+  const [govCandidates, setGovCandidates] = useState<
+    { id: string; role: string; rarity: string; people: string }[]
+  >([]);
+  const refreshGovCandidates = useCallback(() => {
+    api
+      .npcs()
+      .then((r) =>
+        setGovCandidates(
+          r.npcs.filter(
+            (n) =>
+              !n.boundHostType &&
+              ['rare', 'epic', 'legendary'].includes(n.rarity),
+          ),
+        ),
+      )
+      .catch(() => setGovCandidates([]));
+  }, []);
+  useEffect(() => refreshGovCandidates(), [refreshGovCandidates]);
+  const [govPick, setGovPick] = useState('');
+  const [govPreview, setGovPreview] = useState<Awaited<
+    ReturnType<typeof api.previewGovernance>
+  > | null>(null);
+  const [govConfirm, setGovConfirm] = useState('');
+
   // Canal manuel (GB §9) : boîte de réception du vendeur.
   const [manualInbox, setManualInbox] = useState<
     Awaited<ReturnType<typeof api.planetManualOffers>>['offers']
@@ -1010,6 +1036,193 @@ export function PlanetView({ planetId }: { planetId: string }) {
               >
                 {t.planet.unlockFirst} {t.planet.programColony}
               </button>
+            )}
+          </section>
+
+          {/* Gouvernance (GB §11) : exigence par taille, G, installation
+              PERMANENTE avec préview canon-obligatoire + confirmation typée. */}
+          <section
+            aria-label={t.planet.governanceTitle}
+            style={{ display: 'grid', gap: 6, fontSize: 12 }}
+          >
+            <span
+              style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}
+            >
+              <Landmark size={14} color="var(--accent-400)" aria-hidden />
+              {t.planet.governanceTitle}
+              <span
+                data-testid="governance-g"
+                style={{
+                  marginLeft: 'auto',
+                  fontFamily: 'var(--font-mono)',
+                  color: planet.governance.fullyGoverned
+                    ? 'var(--success-500)'
+                    : 'var(--danger-500)',
+                }}
+              >
+                {planet.governance.governors.length}/{planet.governance.required}{' '}
+                {t.planet.governanceSeats} · G ×{planet.governance.g}
+              </span>
+            </span>
+            {planet.governance.personalShipParked && (
+              <span style={{ color: 'var(--accent-200)', fontSize: 11 }}>
+                {t.planet.governanceShipActing}
+              </span>
+            )}
+            {!planet.governance.fullyGoverned && (
+              <span style={{ color: 'var(--danger-500)', fontSize: 11 }}>
+                {t.planet.governanceUnderstaffed}
+              </span>
+            )}
+            {planet.governance.governors.map((g) => (
+              <span key={g.id} style={{ fontFamily: 'var(--font-mono)' }}>
+                {g.role} · {g.rarity} · {g.people} → {g.archetype}
+              </span>
+            ))}
+            {planet.governance.governors.length < planet.governance.max && (
+              <div style={{ display: 'grid', gap: 6 }}>
+                {govCandidates.length === 0 ? (
+                  <span style={{ color: 'var(--text-disabled)', fontSize: 11 }}>
+                    {t.planet.governanceNoCandidates}
+                  </span>
+                ) : (
+                  <>
+                    <label style={{ display: 'grid', gap: 2 }}>
+                      <span>{t.planet.governanceInstallLabel}</span>
+                      <select
+                        aria-label={t.planet.governanceInstallLabel}
+                        value={govPick}
+                        onChange={(e) => {
+                          setGovPick(e.target.value);
+                          setGovPreview(null);
+                          setGovConfirm('');
+                        }}
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          color: 'var(--text-primary)',
+                          padding: '4px 8px',
+                        }}
+                      >
+                        <option value="">—</option>
+                        {govCandidates.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.role} · {c.rarity} · {c.people}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={!govPick}
+                      onClick={() =>
+                        api
+                          .previewGovernance(planetId, [govPick])
+                          .then((r) => setGovPreview(r))
+                          .catch((err) =>
+                            setNotice((err as ApiError).message ?? t.errors.generic),
+                          )
+                      }
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: govPick ? 'var(--text-primary)' : 'var(--text-disabled)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '5px 10px',
+                        cursor: govPick ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      {t.planet.governancePreview}
+                    </button>
+                    {govPreview && (
+                      <div
+                        data-testid="governance-preview"
+                        style={{
+                          display: 'grid',
+                          gap: 4,
+                          background: 'var(--bg-overlay)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: 8,
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 11,
+                        }}
+                      >
+                        <span>
+                          → {govPreview.archetypes.join(' + ')} · G ×{govPreview.g}
+                        </span>
+                        <span>
+                          mask {govPreview.maskAllowed.length} ·{' '}
+                          <span style={{ color: 'var(--danger-500)' }}>
+                            −{govPreview.maskLost.length} {t.planet.governanceLost}
+                          </span>
+                        </span>
+                        {govPreview.maskLost.length > 0 && (
+                          <span style={{ color: 'var(--danger-500)' }}>
+                            {govPreview.maskLost.join(', ')}
+                          </span>
+                        )}
+                        <label style={{ display: 'grid', gap: 2 }}>
+                          <span style={{ color: 'var(--warning-500, #E8A33D)' }}>
+                            {t.planet.governanceConfirmHint}
+                          </span>
+                          <input
+                            aria-label={t.planet.governanceConfirmHint}
+                            value={govConfirm}
+                            onChange={(e) => setGovConfirm(e.target.value)}
+                            placeholder={planet.name}
+                            style={{
+                              background: 'var(--bg-raised)',
+                              border: '1px solid var(--stroke-subtle)',
+                              borderRadius: 'var(--radius-button)',
+                              color: 'var(--text-primary)',
+                              padding: '4px 8px',
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          disabled={govConfirm !== planet.name}
+                          onClick={() =>
+                            api
+                              .installGovernor(planetId, govPick)
+                              .then(() => {
+                                setNotice(t.planet.governanceInstalled);
+                                setGovPick('');
+                                setGovPreview(null);
+                                setGovConfirm('');
+                                refreshGovCandidates();
+                                void refresh();
+                              })
+                              .catch((err) =>
+                                setNotice(
+                                  (err as ApiError).message ?? t.errors.generic,
+                                ),
+                              )
+                          }
+                          style={{
+                            background:
+                              govConfirm === planet.name
+                                ? 'var(--danger-700)'
+                                : 'var(--bg-overlay)',
+                            color:
+                              govConfirm === planet.name
+                                ? 'var(--text-primary)'
+                                : 'var(--text-disabled)',
+                            border: 'none',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '6px 10px',
+                            cursor:
+                              govConfirm === planet.name ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          {t.planet.governanceInstall}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </section>
 

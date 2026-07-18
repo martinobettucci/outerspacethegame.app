@@ -154,6 +154,19 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   AMM section opens with a warning-tone triad line
   (`data-testid="triad-nudge"`) whenever no food pair exists within
   telescope range — it disappears the moment one is seeded.
+- **Governance (implemented, chunk W)** — planet sidebar section
+  (Landmark icon): right-aligned mono badge `n/required seats · G ×x`
+  (success when fully governed, danger otherwise), accent note
+  "Personal ship parked — acting governor", danger warning
+  "Under-governed — world runs at half efficiency", mono governor rows
+  `role · rarity · people → archetype`. Install flow enforces the
+  permanence pattern: candidate select (unbound rare+ NPCs, empty state
+  text otherwise) → neutral `Preview mask` → mono preview card
+  (resulting archetypes, G, allowed count, danger `−N lost` node list)
+  → warning-colored typed-confirmation input (placeholder = planet
+  name) → destructive-styled `Install forever` enabled ONLY on exact
+  match. This is the reference implementation of "irreversible action =
+  typed confirmation, never a simple OK".
 - **Manual channel (implemented, chunk T)** — three surfaces. Warehouse
   building panel: "Warehouse visibility" select (Private — hidden
   reserve / Public — browsable dockside) with an explanatory subtitle

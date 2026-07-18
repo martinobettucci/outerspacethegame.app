@@ -15,3 +15,4 @@ export * from './pods.js';
 export * from './amm.js';
 export * from './docks.js';
 export * from './manualTrade.js';
+export * from './governance.js';
