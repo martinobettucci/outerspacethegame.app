@@ -201,6 +201,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Provisioning (implemented, chunk AE)** — crewed non-personal hulls
+  docked/hovering/stranded on an owned world get a neutral `Provision`
+  button (Soup icon) beside `Refuel`; success notice "Provisions loaded
+  — crew stores topped up.", refusals surface the server reason. While
+  the planet below feeds the crew (own-world hover, served), the
+  survival section keeps the calm "host feeds the crew" line — the
+  danger drain line only appears when the ship itself pays.
 - **Vehicle warehouse (implemented, chunk AD)** — docked ships on an
   owned world (personal/probe excluded) get a neutral `Warehouse`
   button (Warehouse icon) after Undock; a warehoused hull swaps it for

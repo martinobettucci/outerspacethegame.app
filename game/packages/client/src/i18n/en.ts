@@ -142,6 +142,9 @@ export const t = {
     strandedHint:
       'The tank ran dry while loitering. Refuel from one of your worlds, or bring a tanker within 1 pc.',
     refuel: 'Refuel',
+    provision: 'Provision',
+    provisioned: 'Provisions loaded — crew stores topped up.',
+    provisionRefused: 'Provisioning refused',
     refueled: 'Tank refueled.',
     refuelRefused: 'Refuel refused',
     transferFuelTitle: 'Transfer fuel',

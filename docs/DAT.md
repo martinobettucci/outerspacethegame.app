@@ -257,8 +257,13 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    hulls burn 0.01 T/day of food AND water per crew member [TUNE]
    wherever the crew lives aboard — foreign/wild hover, idle, TRANSIT
    (the flight death clock), stranded; exempt: docked/warehoused (the
-   host feeds), own-world hover (planet-stock path pending like fuel
-   [TUNE-v1]), colonizing, derelict. Lazy stores (migration 014, fuel
+   host feeds), own-world hover WHEN SERVED (chunk AE: the planet stock
+   feeds the crew — food family + water consumed AFTER population
+   survival, all-or-nothing per family [TUNE-v1]; a dry world flips the
+   clock back onto ship stores at the next planet recompute, fuel
+   pattern), colonizing, derelict. `POST /ships/:id/provision` (owned
+   world; docked/hovering/stranded) refills food+water to hull capacity
+   (survivalCrewDays × 0.01 × crew) from the planet stock. Lazy stores (migration 014, fuel
    pattern) rebase in piggyback of every drain rebase + transit
    departure + crew changes; the clock only ARMS when stores exist
    [TUNE-v1 — announced]. At 25% of hull capacity

@@ -2538,3 +2538,54 @@ drain ni occuper un dock.
   captures wh-01…03 observées.
 - Suites complètes rejouées après synchro : shared 128, unit 32,
   intégration 201/201, **E2E 26/26 (10,2 min)**.
+
+## 2026-07-19 — Chunk AE : avitaillement & survol nourri par le monde (GB §6/§7, DG §3.5)
+
+**Problème.** Restes annoncés du chunk AB : l'exemption de survie en
+survol de SON monde était inconditionnelle [TUNE-v1] — le canon veut que
+le STOCK PLANÉTAIRE paie (« resupply round-trips ») et qu'un monde à sec
+laisse l'équipage sur ses provisions ; et AUCUNE commande joueur ne
+remplissait les réservoirs de survie (spawn et §15 seulement).
+
+### Canon appliqué (miroir exact du chemin fuel)
+
+- `hoverSurvivalNeeds` (0.01 T/j/tête, familles food_1→3 et water) entre
+  dans computeRates APRÈS la survie de la population (priorité canon) ;
+  servi ⇒ l'horloge de la coque est exempte ; non servi (familles vides
+  sans arrivage) ⇒ bascule au recompute suivant, les provisions paient.
+- Tout-ou-rien par FAMILLE (food ET water couvertes ensemble) [TUNE-v1
+  annoncé] — granularité identique au fuel par type.
+- Défaut PESSIMISTE côté coque : toute entrée en survol possédé arme le
+  drain, le recompute de la même transaction rétablit l'exemption —
+  aucun double-paiement possible.
+- Avitaillement `POST /ships/:id/provision` : sur SES mondes (à quai,
+  survol, échoué — miroir refuel), remplit food ET water à la capacité
+  de coque (survivalCrewDays × 0.01 × équipage), familles dans l'ordre
+  du catalogue, partiel si le stock manque.
+
+### Régressions débusquées (par relecture du seam, verrouillées par test)
+
+- `recomputePlanetRates` sélectionnait les coques en survol avec les
+  SEULES colonnes fuel ; le rebase en cascade de la survie évaluait des
+  champs absents → **provisions écrasées à zéro** à chaque recompute
+  d'un monde survolé par son propriétaire.
+- Même ligne partielle dans le handler `ship_arrival` → toute VRAIE
+  arrivée de transit vidait les provisions (et désarmait l'horloge).
+- Correctif : lignes `ships` COMPLÈTES (SELECT *) aux deux seams + tests
+  de régression dédiés (recompute et arrivée forgée rejouée).
+
+### Vérifications
+
+- Shared 128/128 (renommage `planetServes`), unit 32/32.
+- Intégration provision.test.ts **12/12** : régression recompute,
+  servi (besoin 0.01 visible + horloge exempte + zéro bord), monde à
+  sec → la coque paie, re-serve → désarmée, régression arrivée réelle,
+  remplissage exact 0.04→0.14, plein refusé, partiel famille dans
+  l'ordre, §10 ×3 (garde monde d'abord — même ordre que refuel).
+- E2E provision.spec.ts (12,9 s) : jauge 0.03 → Provision → 0.14/0.14,
+  refus « déjà pleines » en notice, survol possédé « host feeds the
+  crew » + ratePerDay 0 backend ; captures pv-01/pv-02 observées.
+- Test AB « survol de SON monde : exempt » mis à jour vers la sémantique
+  AE (exempt SI SERVI — stocks granted + relocate avec recompute §15) ;
+  suites complètes rejouées après synchro : intégration **213/213**,
+  **E2E 27/27 (10,2 min)**.

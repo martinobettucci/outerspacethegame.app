@@ -11,6 +11,7 @@ import { registerPlayer } from '../../src/services/players.js';
 import {
   assignCrew,
   fleet,
+  relocateShipForTest,
   setFleePolicy,
   setShipSurvivalForTest,
 } from '../../src/services/ships.js';
@@ -75,18 +76,24 @@ afterAll(async () => {
 });
 
 describe('drain selon statut et équipage', () => {
-  it('à quai : aucun drain ; en survol de SON monde : exempt [TUNE-v1]', async () => {
+  it('à quai : aucun drain ; en survol de SON monde SERVI : exempt (chunk AE)', async () => {
     let s = await ship(cargo);
     expect(Number(s.survival_rate_t_per_day)).toBe(0);
-    await pool.query(
-      `UPDATE ships SET status = 'hovering', hover_body_id = docked_body_id,
-         docked_body_id = NULL WHERE id = $1`,
-      [cargo],
-    );
-    // Rebase par l'instrumentation (mêmes chemins que les commandes).
+    // Le monde nourrit (chunk AE) : familles food+water en stock, puis
+    // entrée en survol par l'instrumentation (recompute inclus, §15).
+    for (const res of ['food_1', 'water']) {
+      await pool.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, 300, now())
+         ON CONFLICT (body_id, resource)
+           DO UPDATE SET amount_t = 300, rate_t_per_day = 0, as_of = now()`,
+        [ownerStarter, res],
+      );
+    }
     await setShipSurvivalForTest(pool, owner, cargo, { foodT: 2, waterT: 2 });
+    await relocateShipForTest(pool, owner, cargo, ownerStarter);
     s = await ship(cargo);
-    expect(Number(s.survival_rate_t_per_day)).toBe(0); // son monde : exempt
+    expect(Number(s.survival_rate_t_per_day)).toBe(0); // servi : exempt
   });
 
   it('en survol ÉTRANGER : −0.01 T/j par membre, bords low + out planifiés', async () => {

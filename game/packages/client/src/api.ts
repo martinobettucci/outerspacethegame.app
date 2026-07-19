@@ -499,6 +499,13 @@ export const api = {
       perDay: number;
       census: { takenAt: string; totals: Record<string, number> } | null;
     }>('GET', '/census/latest'),
+  provision: (shipId: string) =>
+    call<{
+      loadedFood: number;
+      loadedWater: number;
+      food: number;
+      water: number;
+    }>('POST', `/ships/${shipId}/provision`),
   refuel: (shipId: string, units?: number) =>
     call<{ loaded: number; fuelType: string; units: number }>(
       'POST',

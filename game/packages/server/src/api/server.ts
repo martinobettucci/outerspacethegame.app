@@ -27,6 +27,7 @@ import {
   listNpcs,
   moveShip,
   pendingShipBuilds,
+  provisionShip,
   refuelShip,
   relocateShipForTest,
   retrieveShip,
@@ -814,6 +815,12 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
       return { ok: true };
     });
+  });
+
+  app.post('/ships/:id/provision', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => provisionShip(deps.pool, player.id, id));
   });
 
   app.post('/ships/:id/refuel', async (req, reply) => {

@@ -19,6 +19,7 @@ import {
   Flag,
   Fuel,
   Lock,
+  Soup,
   Telescope,
   Warehouse as WarehouseIcon,
 } from 'lucide-react';
@@ -2386,6 +2387,48 @@ export function GalaxyMap() {
                   }}
                 >
                   <Fuel size={14} aria-hidden /> {t.galaxy.refuel}
+                </button>
+              );
+            })()}
+          {selectedShip.crewCount > 0 &&
+            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
+            ['docked', 'hovering', 'stranded'].includes(selectedShip.status) &&
+            (() => {
+              const siteId =
+                selectedShip.dockedBodyId ?? selectedShip.hoverBodyId;
+              const ownSite =
+                !!siteId && bodies.some((b) => b.id === siteId && b.owned);
+              if (!ownSite) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .provision(selectedShip.id)
+                      .then(() => {
+                        setNotice(t.galaxy.provisioned);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.provisionRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Soup size={14} aria-hidden /> {t.galaxy.provision}
                 </button>
               );
             })()}

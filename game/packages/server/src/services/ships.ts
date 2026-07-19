@@ -20,6 +20,7 @@ import {
   DOCK_DWELL_HOURS_DEFAULT,
   DOCK_RESERVED_SELF_DEFAULT,
   fitsVehicleSlot,
+  FOOD_RESOURCES,
   FUEL_TRANSFER_RADIUS_PC,
   GAME_DAY_SECONDS,
   type HullCategory,
@@ -32,6 +33,7 @@ import {
   SHIP_BUILD_HOURS,
   SHIP_RETRIEVE_HOURS,
   shipBuildCost,
+  survivalCapacityT,
   UNIVERSE_SIZE_PC,
   vehicleCapacity,
 } from '@atg/shared';
@@ -856,6 +858,136 @@ export async function refuelShip(
 }
 
 /**
+ * Avitaillement de SURVIE (GB §6/§7, DG §3.5) : depuis SON monde
+ * (à quai, en survol, ou échoué — miroir du ravitaillement fuel), les
+ * familles food (food_1→3) et water du stock remplissent les provisions
+ * de la coque jusqu'à la capacité de coque (survivalCrewDays × 0.01 ×
+ * équipage). Partiel si le stock manque ; refusé sans équipage (capacité
+ * nulle) ou si tout est déjà plein.
+ */
+export async function provisionShip(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ loadedFood: number; loadedWater: number; food: number; water: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: pre } = await client.query(
+      `SELECT docked_body_id, hover_body_id FROM ships WHERE id = $1`,
+      [shipId],
+    );
+    if (!pre[0]) throw new CommandError('not_found', 'Vaisseau inconnu');
+    const sourceBodyId = pre[0].docked_body_id ?? pre[0].hover_body_id;
+    if (!sourceBodyId) {
+      throw new CommandError('not_available', 'Aucun monde sous la coque');
+    }
+    const { rows: bodies } = await client.query(
+      `SELECT id, owner_id FROM bodies WHERE id = $1 FOR UPDATE`,
+      [sourceBodyId],
+    );
+    if (!bodies[0] || bodies[0].owner_id !== playerId) {
+      throw new CommandError(
+        'forbidden',
+        'Avitaillement sur vos mondes seulement (v1)',
+      );
+    }
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (
+      (ship.docked_body_id ?? ship.hover_body_id) !== sourceBodyId ||
+      !['docked', 'hovering', 'stranded'].includes(ship.status)
+    ) {
+      throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    if (ship.hull_category === 'probe' || ship.hull_category === 'personal') {
+      throw new CommandError('not_available', 'Cette coque n\'embarque pas de vivres');
+    }
+    const { rows: crewRows } = await client.query(
+      `SELECT count(*)::int AS crew FROM npcs
+       WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+      [shipId],
+    );
+    const crew = Number(crewRows[0]?.crew ?? 0);
+    const hull =
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
+    const capPerRes = survivalCapacityT(hull?.survivalCrewDays ?? 0, crew);
+    if (capPerRes <= 1e-9) {
+      throw new CommandError('not_available', 'Aucun équipage à nourrir');
+    }
+    const sv = evalShipSurvival(ship, nowMs);
+    const wantFood = Math.max(0, capPerRes - sv.food);
+    const wantWater = Math.max(0, capPerRes - sv.water);
+    if (wantFood <= 1e-9 && wantWater <= 1e-9) {
+      throw new CommandError('not_available', 'Provisions déjà pleines');
+    }
+    // Prélèvement par FAMILLE (mêmes familles que la survie au sol),
+    // dans l'ordre du catalogue — food_1 d'abord, comme la population.
+    const drawFamily = async (
+      family: readonly string[],
+      want: number,
+    ): Promise<number> => {
+      let drawn = 0;
+      for (const resource of family) {
+        if (drawn >= want - 1e-9) break;
+        const { rows: stockRows } = await client.query(
+          `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+           WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+          [sourceBodyId, resource],
+        );
+        if (!stockRows[0]) continue;
+        const available = evalLazy(
+          {
+            amount: stockRows[0].amount_t,
+            ratePerDay: stockRows[0].rate_t_per_day,
+            asOfMs: new Date(stockRows[0].as_of).getTime(),
+          },
+          nowMs,
+          { min: 0 },
+        );
+        const take = Math.min(want - drawn, available);
+        if (take <= 1e-9) continue;
+        await client.query(
+          `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+           WHERE body_id = $1 AND resource = $2`,
+          [sourceBodyId, resource, available - take, nowMs],
+        );
+        drawn += take;
+      }
+      return drawn;
+    };
+    const loadedFood = await drawFamily(FOOD_RESOURCES, wantFood);
+    const loadedWater = await drawFamily(['water'], wantWater);
+    if (loadedFood <= 1e-9 && loadedWater <= 1e-9) {
+      throw new CommandError(
+        'insufficient_resources',
+        'Ni vivres ni eau dans le stock de ce monde',
+      );
+    }
+    // Provisions écrites figées ; le rebase planétaire qui suit décide du
+    // vrai taux (servi par le stock en survol, ou horloge armée).
+    await rebaseShipSurvival(client, ship, nowMs, {
+      setFoodT: sv.food + loadedFood,
+      setWaterT: sv.water + loadedWater,
+    });
+    await recomputePlanetRates(client, sourceBodyId, nowMs);
+    await client.query('COMMIT');
+    return {
+      loadedFood,
+      loadedWater,
+      food: sv.food + loadedFood,
+      water: sv.water + loadedWater,
+    };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Transfert de carburant vaisseau→vaisseau (GB §13) : v1 entre VOS coques,
  * à ≤ FUEL_TRANSFER_RADIUS_PC [TUNE-GAP], même type de carburant, cap du
  * réservoir receveur, instantané [TUNE-v1]. Un receveur échoué repart en
@@ -1264,6 +1396,16 @@ export async function relocateShipForTest(
       [shipId, bodyId, bodies[0].x, bodies[0].y],
     );
     await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+    // État COHÉRENT (§15) : sur un monde possédé, le recompute décide qui
+    // paie (stock servi ⇒ exemptions fuel/survie) — comme les vraies
+    // commandes d'entrée en survol.
+    const { rows: over } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1`,
+      [bodyId],
+    );
+    if (over[0]?.owner_id === ship.owner_id) {
+      await recomputePlanetRates(client, bodyId, nowMs);
+    }
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);

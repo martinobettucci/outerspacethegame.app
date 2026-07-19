@@ -312,14 +312,18 @@ export function survivalDrainTPerDay(
   category: HullCategory | string,
   status: string,
   crewCount: number,
-  opts: { overOwnWorld?: boolean } = {},
+  opts: { planetServes?: boolean } = {},
 ): number {
   if (crewCount <= 0) return 0;
   if (category === 'probe' || category === 'personal') return 0;
   if (['docked', 'warehoused', 'derelict', 'colonizing'].includes(status)) {
     return 0;
   }
-  if (status === 'hovering' && opts.overOwnWorld) return 0;
+  // GB §7 : en survol de SON monde, le stock planétaire nourrit l'équipage
+  // — mais seulement s'il SERT réellement (familles food ET water couvertes,
+  // décision du recompute planétaire) ; monde à sec ⇒ les provisions de la
+  // coque paient (bascule au prochain recompute, patron fuel).
+  if (status === 'hovering' && opts.planetServes) return 0;
   return HOVER_SURVIVAL_T_PER_CREW_PER_DAY * crewCount;
 }
 

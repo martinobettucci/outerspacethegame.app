@@ -5,20 +5,21 @@
  * verrou FOR UPDATE du corps sérialise les rebases d'une même planète.
  */
 import {
-  isAmmSlot,
   BASE_STORAGE_ALLOWANCE_T,
+  type BuildingKey,
   BUILDINGS,
   efficiency,
   GAME_DAY_SECONDS,
   governanceMultiplier,
   hoverIdleFuelUPerDay,
-  popCap,
-  RARITY_TIER_INDEX,
-  type BuildingKey,
+  isAmmSlot,
   type PlanetSize,
+  popCap,
   type Quality,
   type Rarity,
+  RARITY_TIER_INDEX,
   type ResourceId,
+  survivalDrainTPerDay,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from './events.js';
@@ -31,17 +32,20 @@ import {
 } from './production.js';
 import { rebaseShipDrain, shipFuelState } from './shipDrain.js';
 
-/** Coque du propriétaire en survol — candidate au drain planétaire (GB §7). */
-interface HoverShip {
+/** Coque du propriétaire en survol — candidate au drain planétaire (GB §7).
+ * Ligne `ships` COMPLÈTE : le rebase en cascade touche aussi la SURVIE —
+ * une ligne partielle écraserait les provisions (régression corrigée,
+ * chunk AE). */
+interface HoverShip extends Record<string, unknown> {
   id: string;
   hull_category: string;
   hull_size: string | null;
-  fuel: Record<string, number> | null;
-  fuel_rate_u_per_day: number | string | null;
-  fuel_as_of: Date | string | null;
   /** fuel_<type> consommé par cette coque. */
   resource: ResourceId;
   needPerDay: number;
+  /** Équipage à bord (drain de survie 0.01 T/j/tête — DG §3.5). */
+  crew: number;
+  survivalNeedPerDay: number;
 }
 
 export interface ProductionSnapshot {
@@ -152,20 +156,42 @@ export async function loadProductionSnapshot(
   // en survol paient leur propre réservoir (jamais le stock d'ici).
   const hoverShips: HoverShip[] = [];
   const hoverFuelNeeds: Partial<Record<ResourceId, number>> = {};
+  const hoverSurvivalNeeds = { food: 0, water: 0 };
   if (body.owner_id) {
     const { rows: shipRows } = await client.query(
-      `SELECT id, hull_category, hull_size, fuel, fuel_rate_u_per_day, fuel_as_of
-       FROM ships
+      `SELECT * FROM ships
        WHERE hover_body_id = $1 AND owner_id = $2 AND status = 'hovering'
        ORDER BY id${lock}`,
       [bodyId, body.owner_id],
     );
+    const { rows: crewRows } = shipRows.length
+      ? await client.query(
+          `SELECT bound_host_id AS ship_id, count(*)::int AS crew FROM npcs
+           WHERE bound_host_type = 'ship' AND bound_host_id = ANY($1)
+           GROUP BY bound_host_id`,
+          [shipRows.map((s) => s.id)],
+        )
+      : { rows: [] };
+    const crewBy = new Map(crewRows.map((c) => [c.ship_id, Number(c.crew)]));
     for (const s of shipRows) {
       const needPerDay = hoverIdleFuelUPerDay(s.hull_category, s.hull_size);
-      if (needPerDay <= 0) continue;
+      const crew = crewBy.get(s.id) ?? 0;
+      // Besoin de survie du survol (GB §7 / DG §3.5) — calculé comme si la
+      // planète ne servait PAS (c'est le besoin brut à servir).
+      const survivalNeedPerDay = survivalDrainTPerDay(
+        s.hull_category,
+        'hovering',
+        crew,
+        { planetServes: false },
+      );
+      if (needPerDay <= 0 && survivalNeedPerDay <= 0) continue;
       const resource = `fuel_${shipFuelState(s).type}` as ResourceId;
-      hoverShips.push({ ...s, resource, needPerDay });
-      hoverFuelNeeds[resource] = (hoverFuelNeeds[resource] ?? 0) + needPerDay;
+      hoverShips.push({ ...s, resource, needPerDay, crew, survivalNeedPerDay });
+      if (needPerDay > 0) {
+        hoverFuelNeeds[resource] = (hoverFuelNeeds[resource] ?? 0) + needPerDay;
+      }
+      hoverSurvivalNeeds.food += survivalNeedPerDay;
+      hoverSurvivalNeeds.water += survivalNeedPerDay;
     }
   }
 
@@ -235,6 +261,7 @@ export async function loadProductionSnapshot(
     deposits,
     industries,
     hoverFuelNeeds,
+    hoverSurvivalNeeds,
   });
 
   return {
@@ -312,14 +339,27 @@ export async function recomputePlanetRates(
   // ressource [TUNE-v1, JOURNAL] ; le bord de stock à 0 déclenchera la
   // bascule planète→réservoir au prochain recompute.
   const hoverNeedByRes: Partial<Record<ResourceId, number>> = {};
+  let survivalNeedTotal = 0;
   for (const s of snap.hoverShips) {
     hoverNeedByRes[s.resource] = (hoverNeedByRes[s.resource] ?? 0) + s.needPerDay;
+    survivalNeedTotal += s.survivalNeedPerDay;
   }
+  // Survie : tout-ou-rien par FAMILLE (food ET water couvertes ensemble)
+  // [TUNE-v1, JOURNAL chunk AE] — même granularité que le fuel par type.
+  const survivalServed =
+    survivalNeedTotal <= 1e-9 ||
+    ((snap.rates.hoverSurvivalConsumption?.food ?? 0) >=
+      survivalNeedTotal - 1e-9 &&
+      (snap.rates.hoverSurvivalConsumption?.water ?? 0) >=
+        survivalNeedTotal - 1e-9);
   for (const s of snap.hoverShips) {
     const served =
+      s.needPerDay <= 1e-9 ||
       (snap.rates.hoverConsumption[s.resource] ?? 0) >=
-      (hoverNeedByRes[s.resource] ?? 0) - 1e-9;
-    await rebaseShipDrain(client, s, nowMs, served ? 'none' : 'tank');
+        (hoverNeedByRes[s.resource] ?? 0) - 1e-9;
+    await rebaseShipDrain(client, s, nowMs, served ? 'none' : 'tank', {
+      survivalServed,
+    });
   }
 
   // Replanifie les bords : on purge les bords futurs de CETTE planète puis

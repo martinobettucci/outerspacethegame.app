@@ -225,10 +225,10 @@ export const shipArrival: EventHandler = async (client, event) => {
   // rebase planétaire décide (stock ou réservoir) ; survol étranger/
   // sauvage ou vide ⇒ le réservoir paie (0 pour probe/personal).
   const nowMs = event.dueAt.getTime();
+  // Ligne COMPLÈTE : le rebase en cascade touche aussi la SURVIE — une
+  // ligne partielle écraserait les provisions (régression corrigée, AE).
   const { rows: landedRows } = await client.query(
-    `SELECT id, owner_id, hull_category, hull_size, status, hover_body_id,
-            fuel, fuel_rate_u_per_day, fuel_as_of
-     FROM ships WHERE id = $1`,
+    `SELECT * FROM ships WHERE id = $1`,
     [shipId],
   );
   const landed = landedRows[0];

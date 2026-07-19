@@ -63,7 +63,7 @@ export async function rebaseShipDrain(
   ship: ShipRow,
   nowMs: number,
   target: 'tank' | 'none',
-  opts: { setUnits?: number } = {},
+  opts: { setUnits?: number; survivalServed?: boolean } = {},
 ): Promise<{ type: string; units: number; ratePerDay: number }> {
   const evaluated = evalShipFuel(ship, nowMs);
   const units = Math.max(0, opts.setUnits ?? evaluated.units);
@@ -89,8 +89,11 @@ export async function rebaseShipDrain(
     }
   }
   // L'horloge de SURVIE suit chaque rebase de drain (mêmes points de
-  // bascule d'état) — elle décide seule de son taux selon le statut.
-  await rebaseShipSurvival(client, ship, nowMs);
+  // bascule d'état) — elle décide de son taux selon le statut, et le
+  // recompute planétaire lui transmet l'état « servi » (GB §7).
+  await rebaseShipSurvival(client, ship, nowMs, {
+    survivalServed: opts.survivalServed,
+  });
   return { type: evaluated.type, units, ratePerDay: rate };
 }
 
@@ -125,7 +128,7 @@ export async function rebaseShipSurvival(
   client: pg.PoolClient,
   ship: ShipRow,
   nowMs: number,
-  opts: { overOwnWorld?: boolean; setFoodT?: number; setWaterT?: number } = {},
+  opts: { survivalServed?: boolean; setFoodT?: number; setWaterT?: number } = {},
 ): Promise<{ food: number; water: number; ratePerDay: number }> {
   const { rows: crewRows } = await client.query(
     `SELECT count(*)::int AS crew FROM npcs
@@ -133,22 +136,19 @@ export async function rebaseShipSurvival(
     [ship.id],
   );
   const crew = Number(crewRows[0]?.crew ?? 0);
-  let overOwnWorld = opts.overOwnWorld ?? false;
-  if (!overOwnWorld && ship.status === 'hovering' && ship.hover_body_id && ship.owner_id) {
-    const { rows } = await client.query(
-      `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
-      [ship.hover_body_id, ship.owner_id],
-    );
-    overOwnWorld = !!rows[0];
-  }
   const evaluated = evalShipSurvival(ship, nowMs);
   const food = Math.max(0, opts.setFoodT ?? evaluated.food);
   const water = Math.max(0, opts.setWaterT ?? evaluated.water);
+  // « Servi » (GB §7 : le monde possédé survolé nourrit l'équipage) est
+  // DÉCIDÉ par recomputePlanetRates (familles food+water couvertes, tout-
+  // ou-rien) et transmis ici ; défaut PESSIMISTE — chaque entrée en survol
+  // d'un monde possédé passe par un recompute qui rétablit l'exemption
+  // dans la même transaction (patron fuel, aucun double-paiement).
   const perDay = survivalDrainTPerDay(
     ship.hull_category,
     ship.status,
     crew,
-    { overOwnWorld },
+    { planetServes: opts.survivalServed === true },
   );
   // [TUNE-v1 annoncé, JOURNAL] : l'horloge ne S'ARME que si des provisions
   // existent (worst > 0) — une coque jamais avitaillée ne meurt pas

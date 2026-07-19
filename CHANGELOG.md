@@ -4,6 +4,20 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Avitaillement de survie & survol nourri par le monde (chunk AE)** :
+  en survol de SON monde, le stock planétaire nourrit l'équipage (canon
+  GB §7) — familles food (food_1→3) et water consommées APRÈS la survie
+  de la population, tout-ou-rien par famille, l'horloge de la coque
+  restant exempte tant que le monde SERT ; monde à sec → bascule
+  automatique, les provisions de bord paient (patron fuel, décision au
+  recompute planétaire). Nouveau `POST /ships/:id/provision`
+  (avitaillement sur SES mondes — à quai, en survol ou échoué) qui
+  remplit food et water à la capacité de coque (survivalCrewDays × 0.01
+  × équipage) depuis le stock ; bouton Provision dans le panneau
+  vaisseau. **Deux régressions latentes corrigées** : le recompute
+  planétaire et l'arrivée de transit rebasaient la survie avec une ligne
+  `ships` partielle et écrasaient les provisions à zéro (verrouillé par
+  deux tests de régression).
 - **Entrepôt de véhicules (chunk AD)** : balances S/M/L SÉPARÉES par
   monde possédé — tampon au sol 2 M + 2 S (jamais de L), chaque warehouse
   ACTIF ajoutant 6 S/4 M/2 L × multiplicateur de niveau (L1 ×1, L2 ×2,

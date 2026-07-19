@@ -136,7 +136,7 @@ describe('survivalDrainTPerDay & capacité (GB §6, DG §3.5)', () => {
       expect(survivalDrainTPerDay('cargo', status, 3)).toBe(0);
     }
     expect(
-      survivalDrainTPerDay('cargo', 'hovering', 2, { overOwnWorld: true }),
+      survivalDrainTPerDay('cargo', 'hovering', 2, { planetServes: true }),
     ).toBe(0);
     expect(survivalDrainTPerDay('probe', 'hovering', 1)).toBe(0);
     expect(survivalDrainTPerDay('personal', 'idle', 1)).toBe(0);

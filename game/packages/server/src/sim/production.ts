@@ -76,6 +76,11 @@ export interface RatesInput {
    * « drains that planet's stock ») — T/jour par fuel_x (1 u = 1 T).
    */
   hoverFuelNeeds?: Partial<Record<ResourceId, number>>;
+  /**
+   * Besoins de SURVIE des équipages du propriétaire en survol (GB §7,
+   * DG §3.5 — 0.01 T/j/tête sur les familles food et water).
+   */
+  hoverSurvivalNeeds?: { food: number; water: number };
 }
 
 export interface RatesResult {
@@ -90,6 +95,8 @@ export interface RatesResult {
   popNeeds: { food: number; water: number; medicine: number };
   /** Drain de loitering SERVI par le stock, par fuel_x (T/jour). */
   hoverConsumption: Partial<Record<ResourceId, number>>;
+  /** Survie d'équipage en survol SERVIE par le stock (T/jour). */
+  hoverSurvivalConsumption: { food: number; water: number };
   /** Utilisation du stockage total au moment du calcul. */
   storageU: number;
 }
@@ -314,6 +321,12 @@ export function computeRates(input: RatesInput): RatesResult {
       need as number,
     );
   }
+  // Survie des équipages en survol (GB §7) : APRÈS la population (priorité
+  // canon), mêmes familles que la survie au sol.
+  const hoverSurvivalConsumption = {
+    food: consumeFamily(FOOD_RESOURCES, input.hoverSurvivalNeeds?.food ?? 0),
+    water: consumeFamily(['water'], input.hoverSurvivalNeeds?.water ?? 0),
+  };
 
   return {
     stockRates,
@@ -322,6 +335,7 @@ export function computeRates(input: RatesInput): RatesResult {
     popConsumption,
     popNeeds,
     hoverConsumption,
+    hoverSurvivalConsumption,
     storageU,
   };
 }
