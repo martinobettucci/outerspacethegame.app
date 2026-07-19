@@ -22,7 +22,10 @@ export default defineConfig({
   workers: 2,
   retries: 0,
   reporter: [['list']],
-  timeout: 60_000,
+  // 120 s : la scène planète au sol organique (chunk X) est plus lourde —
+  // à 2 workers sous WSL2, « boucle colonie » (16,8 s en solo) dépassait
+  // les 60 s par contention CPU (diagnostiqué session 38, flake pur).
+  timeout: 120_000,
   use: {
     baseURL: 'http://localhost:5173',
     viewport: { width: 1440, height: 900 },
