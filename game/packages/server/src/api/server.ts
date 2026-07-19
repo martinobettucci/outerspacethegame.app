@@ -1,7 +1,10 @@
 import {
   collectJunk,
   dumpCargo,
+  fitClaimRig,
   fitJunkCollector,
+  startClaim,
+  visibleDerelicts,
   visibleJunkFields,
 } from '../services/junk.js';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
@@ -400,6 +403,12 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     return {
       bodies: await visibleBodies(deps.pool, player.id),
       junkFields: await visibleJunkFields(deps.pool, player.id, {
+        baseSkyPc: BASE_SKY_PC,
+        telescopePcPerLevel: TELESCOPE_SCOPE_PC_PER_LEVEL,
+        probePc: PROBE_SCAN_PC,
+        shipPc: SHIP_SCAN_PC,
+      }),
+      derelicts: await visibleDerelicts(deps.pool, player.id, {
         baseSkyPc: BASE_SKY_PC,
         telescopePcPerLevel: TELESCOPE_SCOPE_PC_PER_LEVEL,
         probePc: PROBE_SCAN_PC,
@@ -895,6 +904,26 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => fitJunkCollector(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/claim-rig', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => fitClaimRig(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/claim', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ targetId: z.string().uuid() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      startClaim(deps.pool, player.id, id, parsed.data.targetId, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   app.post('/ships/:id/collect-junk', async (req, reply) => {

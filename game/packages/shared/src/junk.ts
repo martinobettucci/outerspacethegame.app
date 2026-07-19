@@ -62,3 +62,16 @@ export function junkHazardHpPerDay(amountT: number): number {
 /** Carcasse d'une coque détruite (T de junk) par taille [TUNE-v1] —
  * s'ajoute au fret qui se répand (GB §22 « destroyed ships become junk »). */
 export const JUNK_CARCASS_T: Record<string, number> = { s: 10, m: 20, l: 40 };
+
+/** Claim rig (DG §8.8) : réclamer les coques SANS propriétaire (épaves du
+ * survival-out — GB §6 « no honor », l'économie du salvage) [TUNE]. */
+export const CLAIM_RIG_COST: Partial<Record<ResourceId, number>> = {
+  steel_l: 25,
+  gold: 5,
+};
+/** Durée de la réclamation (heures de jeu — canon « after 2 h ») [TUNE]. */
+export const CLAIM_HOURS = 2;
+/** Proximité exigée, au départ ET à l'échéance (pc) [TUNE-v1 — le canon
+ * dit « proximity » sans la chiffrer ; même échelle que le transfert de
+ * carburant]. */
+export const CLAIM_RADIUS_PC = 1;

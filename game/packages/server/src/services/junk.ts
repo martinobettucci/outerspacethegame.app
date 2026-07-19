@@ -8,6 +8,9 @@
  * annoncée du « 30 T/day »] dans la limite des conteneurs libres.
  */
 import {
+  CLAIM_HOURS,
+  CLAIM_RADIUS_PC,
+  CLAIM_RIG_COST,
   containersUsed,
   evalJunkAmount,
   HULLS,
@@ -27,6 +30,7 @@ import {
 import type pg from 'pg';
 import { CommandError, payCost } from './planets.js';
 import { rebaseShipDrain } from '../sim/shipDrain.js';
+import { enqueue } from '../sim/events.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -347,6 +351,189 @@ export async function collectJunk(
   } finally {
     client.release();
   }
+}
+
+/** Monte le claim rig (atelier L2, 25 steelL + 5 gold [TUNE]). */
+export async function fitClaimRig(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ cost: typeof CLAIM_RIG_COST }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (['probe', 'personal'].includes(ship.hull_category)) {
+      throw new CommandError('not_available', 'Cette coque ne réclame pas');
+    }
+    if (ship.claim_rig) {
+      throw new CommandError('not_available', 'Le claim rig est déjà monté');
+    }
+    if (ship.status !== 'docked' || !ship.docked_body_id) {
+      throw new CommandError('not_available', 'Le rig se monte à quai');
+    }
+    const { rows: worlds } = await client.query(
+      `SELECT * FROM bodies WHERE id = $1 FOR UPDATE`,
+      [ship.docked_body_id],
+    );
+    if (!worlds[0] || worlds[0].owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
+    }
+    const { rows: shop } = await client.query(
+      `SELECT 1 FROM buildings
+       WHERE body_id = $1 AND key = 'workshop' AND status = 'active'
+         AND level >= 2`,
+      [ship.docked_body_id],
+    );
+    if (!shop[0]) {
+      throw new CommandError('not_available', 'Un workshop L2 actif est requis');
+    }
+    await payCost(client, worlds[0].id, worlds[0].climate, CLAIM_RIG_COST, nowMs);
+    await client.query(`UPDATE ships SET claim_rig = true WHERE id = $1`, [shipId]);
+    await client.query('COMMIT');
+    return { cost: CLAIM_RIG_COST };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Démarre une réclamation (GB §6 « no honor ») : coque STATIONNAIRE
+ * (survol/idle) à ≤ 1 pc [TUNE-v1] d'une épave SANS propriétaire, claim
+ * rig monté, une réclamation à la fois. L'événement salvage_claimed
+ * (2 h de jeu [TUNE]) RE-VÉRIFIE tout à l'échéance — bouger annule.
+ */
+export async function startClaim(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  targetId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ claimsAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (!ship.claim_rig) {
+      throw new CommandError('not_available', 'Aucun claim rig sur cette coque');
+    }
+    if (!['hovering', 'idle'].includes(ship.status)) {
+      throw new CommandError('not_available', 'On réclame immobile, sur zone');
+    }
+    if (ship.claiming_target_id) {
+      throw new CommandError('not_available', 'Réclamation déjà en cours');
+    }
+    const { rows: targets } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [targetId],
+    );
+    const target = targets[0];
+    if (!target || target.owner_id !== null || target.status !== 'derelict') {
+      throw new CommandError('not_available', 'Ceci n\'est pas une épave réclamable');
+    }
+    const d = Math.hypot(ship.x - target.x, ship.y - target.y);
+    if (d > CLAIM_RADIUS_PC) {
+      throw new CommandError(
+        'not_available',
+        `Trop loin de l'épave (≤ ${CLAIM_RADIUS_PC} pc)`,
+      );
+    }
+    const claimsAt = new Date(nowMs + (CLAIM_HOURS * 3_600_000) / timeScale);
+    await client.query(
+      `UPDATE ships SET claiming_target_id = $2 WHERE id = $1`,
+      [shipId, targetId],
+    );
+    await enqueue(client, 'salvage_claimed', claimsAt, {
+      shipId,
+      targetId,
+    });
+    await client.query('COMMIT');
+    return { claimsAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Détache une réclamation en cours (départ, arrêt) : lien + événement
+ * purgés. S'exécute dans la transaction appelante (ships verrouillé).
+ */
+export async function releaseClaim(
+  client: pg.PoolClient,
+  ship: Row,
+): Promise<void> {
+  if (!ship.claiming_target_id) return;
+  await client.query(
+    `DELETE FROM events WHERE processed_at IS NULL
+       AND kind = 'salvage_claimed' AND payload->>'shipId' = $1`,
+    [ship.id],
+  );
+  await client.query(
+    `UPDATE ships SET claiming_target_id = NULL WHERE id = $1`,
+    [ship.id],
+  );
+}
+
+/** Épaves SANS propriétaire visibles d'un joueur (mêmes scopes). */
+export async function visibleDerelicts(
+  pool: pg.Pool,
+  playerId: string,
+  scopes: { baseSkyPc: number; telescopePcPerLevel: number; probePc: number; shipPc: number },
+): Promise<
+  { id: string; x: number; y: number; name: string; hullCategory: string; hullSize: string | null }[]
+> {
+  const { rows } = await pool.query(
+    `
+    WITH scopes AS (
+      SELECT b.x, b.y,
+             $2::float + COALESCE((
+               SELECT sum($3::float * t.level)
+               FROM buildings t
+               WHERE t.body_id = b.id AND t.key = 'telescope'
+                 AND t.status = 'active'
+             ), 0) AS radius
+      FROM bodies b
+      WHERE b.owner_id = $1
+      UNION ALL
+      SELECT s.x, s.y,
+             CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
+      FROM ships s
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
+    )
+    SELECT d.id, d.x, d.y, d.name, d.hull_category, d.hull_size
+    FROM ships d
+    WHERE d.owner_id IS NULL AND d.status = 'derelict'
+      AND EXISTS (
+        SELECT 1 FROM scopes s
+        WHERE (d.x - s.x)^2 + (d.y - s.y)^2 <= s.radius^2
+      )
+    `,
+    [
+      playerId,
+      scopes.baseSkyPc,
+      scopes.telescopePcPerLevel,
+      scopes.probePc,
+      scopes.shipPc,
+    ],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    x: Number(r.x),
+    y: Number(r.y),
+    name: r.name,
+    hullCategory: r.hull_category,
+    hullSize: r.hull_size,
+  }));
 }
 
 /** Champs visibles d'un joueur (mêmes règles de vision que /galaxy). */

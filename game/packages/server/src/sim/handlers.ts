@@ -4,6 +4,7 @@
  */
 import {
   BUILDINGS,
+  CLAIM_RADIUS_PC,
   COLONY_SEED_STOCK,
   habitability,
   HULLS,
@@ -855,6 +856,55 @@ export const hullRepaired: EventHandler = async (client, event) => {
   }
 };
 
+/**
+ * salvage_claimed { shipId, targetId } — échéance des 2 h de proximité
+ * (GB §6) : RE-VÉRIFIE tout — réclamant vivant, stationnaire, toujours
+ * lié à CETTE cible, à portée ; cible toujours épave sans propriétaire —
+ * puis transfère : l'épave devient une coque IDLE possédée (sans
+ * équipage — la re-crewer exige un quai, annoncé). Idempotent.
+ */
+export const salvageClaimed: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  const targetId = String(event.payload.targetId ?? '');
+  if (!shipId || !targetId) return;
+  const { rows: claimers } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND claiming_target_id = $2
+       AND status IN ('hovering', 'idle') FOR UPDATE`,
+    [shipId, targetId],
+  );
+  const claimer = claimers[0];
+  if (!claimer) return; // parti, détourné ou détruit : réclamation morte
+  const { rows: targets } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND owner_id IS NULL
+       AND status = 'derelict' FOR UPDATE`,
+    [targetId],
+  );
+  const target = targets[0];
+  await client.query(
+    `UPDATE ships SET claiming_target_id = NULL WHERE id = $1`,
+    [shipId],
+  );
+  if (!target) return; // réclamée par un autre entre-temps
+  if (
+    Math.hypot(claimer.x - target.x, claimer.y - target.y) > CLAIM_RADIUS_PC
+  ) {
+    return; // dérivé hors de portée : la proximité n'a pas tenu
+  }
+  const nowMs = event.dueAt.getTime();
+  await client.query(
+    `UPDATE ships SET owner_id = $2, status = 'idle' WHERE id = $1`,
+    [targetId, claimer.owner_id],
+  );
+  // Coque récupérée : drains cohérents (réservoir/survie/usure à l'idle).
+  const { rows: full } = await client.query(
+    `SELECT * FROM ships WHERE id = $1`,
+    [targetId],
+  );
+  if (full[0]) {
+    await rebaseShipDrain(client, full[0], nowMs, 'tank');
+  }
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -876,6 +926,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     harvest_full: harvestFull,
     star_supernova: starSupernova,
     hull_repaired: hullRepaired,
+    salvage_claimed: salvageClaimed,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

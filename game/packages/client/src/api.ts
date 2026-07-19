@@ -49,6 +49,15 @@ export interface Me {
   planets: { id: string; name: string }[];
 }
 
+export interface DerelictView {
+  id: string;
+  x: number;
+  y: number;
+  name: string;
+  hullCategory: string;
+  hullSize: string | null;
+}
+
 export interface JunkFieldView {
   id: string;
   x: number;
@@ -239,6 +248,9 @@ export interface ShipView {
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
   junkCollector: boolean;
+  claimRig: boolean;
+  claimingTargetId: string | null;
+  claimsAt: string | null;
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -276,10 +288,11 @@ export const api = {
   logout: () => call<{ ok: true }>('POST', '/auth/logout'),
   me: () => call<Me>('GET', '/me'),
   galaxy: () =>
-    call<{ bodies: GalaxyBody[]; junkFields: JunkFieldView[] }>(
-      'GET',
-      '/galaxy',
-    ),
+    call<{
+      bodies: GalaxyBody[];
+      junkFields: JunkFieldView[];
+      derelicts: DerelictView[];
+    }>('GET', '/galaxy'),
   planet: (id: string) => call<PlanetDetail>('GET', `/planets/${id}`),
   unlock: (planetId: string, node: TechNodeKey) =>
     call<{ ok: true }>('POST', `/planets/${planetId}/unlock`, { node }),
@@ -525,6 +538,10 @@ export const api = {
       resource,
       tons,
     }),
+  fitClaimRig: (shipId: string) =>
+    call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/claim-rig`),
+  claim: (shipId: string, targetId: string) =>
+    call<{ claimsAt: string }>('POST', `/ships/${shipId}/claim`, { targetId }),
   fitJunkCollector: (shipId: string) =>
     call<{ cost: Record<string, number> }>(
       'POST',

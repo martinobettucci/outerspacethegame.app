@@ -4,6 +4,17 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Claim rig & salvage (chunk AJ)** : les épaves du survival-out
+  (owner NULL, « no honor » — GB §6) sont désormais RÉCLAMABLES. Le
+  claim rig (atelier L2, 25 steelL + 5 gold [TUNE]) permet, immobile à
+  ≤ 1 pc [TUNE-v1] d'une épave sans propriétaire, de lancer une
+  réclamation de 2 h de jeu [TUNE] — l'événement salvage_claimed
+  RE-VÉRIFIE tout à l'échéance (partir ou dériver annule ; une épave
+  déjà réclamée est refusée) puis transfère : l'épave devient une coque
+  IDLE possédée, sans équipage (la re-crewer exige un quai — remorquage
+  et transfert d'équipage en proximité : P4, annoncé). Les épaves sont
+  visibles au radar « Wrecks » (/galaxy, mêmes scopes de vision).
+  Migration 018.
 - **Champs de junk (chunk AI)** : larguer du fret dans le vide (survol/
   idle/échoué, 5 fois par jour réel et par coque [TUNE]) dépose un champ
   de junk dans une CELLULE de 0,5 pc — un champ max par cellule, les

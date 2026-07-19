@@ -26,6 +26,7 @@ export type EventKind =
   | 'harvest_full'
   | 'star_supernova'
   | 'hull_repaired'
+  | 'salvage_claimed'
   | 'noop';
 
 export interface GameEvent {

@@ -201,6 +201,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Salvage claims (implemented, chunk AJ)** — the contact index gains
+  a "Wrecks" optgroup (radar of ownerless derelicts, `† category size`
+  suffix); a stationary rigged ship within 1 pc shows a success-green
+  `Claim <name>` button (Anchor icon), swapped for an amber mono
+  `Claiming — HH:MM:SS` line while the two-hour hold runs. `Fit claim
+  rig` joins the dockside fitting buttons. Notice: "the graveyard is a
+  market."
 - **Junk fields (implemented, chunk AI)** — ships in space with cargo
   get a Jettison row in the hold section (resource select scoped to the
   hold + tons + neutral `Dump` button); standing in a junk cell shows an

@@ -43,6 +43,7 @@ import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
 import { releaseHarvest } from './harvest.js';
+import { releaseClaim } from './junk.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -71,6 +72,10 @@ export interface ShipView {
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
   junkCollector: boolean;
+  claimRig: boolean;
+  /** Épave en cours de réclamation (id) + échéance ISO, sinon null. */
+  claimingTargetId: string | null;
+  claimsAt: string | null;
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -160,6 +165,13 @@ export async function fleet(
   const retrievesBy = new Map(
     retrieving.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  const { rows: claiming } = await pool.query(
+    `SELECT payload->>'shipId' AS ship_id, due_at FROM events
+     WHERE kind = 'salvage_claimed' AND processed_at IS NULL`,
+  );
+  const claimsBy = new Map(
+    claiming.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
   const { rows: crewCounts } = await pool.query(
     `SELECT bound_host_id AS ship_id, count(*)::int AS crew FROM npcs
      WHERE bound_host_type = 'ship' GROUP BY bound_host_id`,
@@ -203,6 +215,9 @@ export async function fleet(
         radio: !!r.shield_radio,
       },
       junkCollector: !!r.junk_collector,
+      claimRig: !!r.claim_rig,
+      claimingTargetId: r.claiming_target_id ?? null,
+      claimsAt: claimsBy.get(r.id) ?? null,
       survival: (() => {
         const sv = evalShipSurvival(r, nowMs);
         return {
@@ -300,6 +315,11 @@ export async function moveShip(
     if (ship.harvesting_star_id) {
       await releaseHarvest(client, ship, nowMs);
       ship.harvesting_star_id = null;
+    }
+    // Départ = réclamation abandonnée (la proximité canon est rompue).
+    if (ship.claiming_target_id) {
+      await releaseClaim(client, ship);
+      ship.claiming_target_id = null;
     }
 
     // Résolution de la destination.

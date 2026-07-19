@@ -18,6 +18,7 @@ import {
   Users,
   Flag,
   Fuel,
+  Anchor,
   Lock,
   Shield as ShieldIcon,
   Soup,
@@ -34,7 +35,7 @@ import {
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
 } from '@atg/shared';
-import { api, type ApiError, type GalaxyBody, type JunkFieldView, type ShipView } from '../api.js';
+import { api, type ApiError, type DerelictView, type GalaxyBody, type JunkFieldView, type ShipView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
@@ -130,6 +131,7 @@ export function GalaxyMap() {
   const sceneRef = useRef<SceneRefs | null>(null);
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
   const [junkFields, setJunkFields] = useState<JunkFieldView[]>([]);
+  const [derelicts, setDerelicts] = useState<DerelictView[]>([]);
   const [dumpRes, setDumpRes] = useState('');
   const [dumpTons, setDumpTons] = useState('1');
   const [error, setError] = useState(false);
@@ -339,6 +341,11 @@ export function GalaxyMap() {
             JSON.stringify(current) === JSON.stringify(r.junkFields ?? [])
               ? current
               : (r.junkFields ?? []),
+          );
+          setDerelicts((current) =>
+            JSON.stringify(current) === JSON.stringify(r.derelicts ?? [])
+              ? current
+              : (r.derelicts ?? []),
           );
         })
         .catch(() => !cancelled && setError(true));
@@ -993,6 +1000,12 @@ export function GalaxyMap() {
             if (kind === 'body') {
               const body = bodies.find((candidate) => candidate.id === id);
               if (body) chooseBody(body);
+            } else if (kind === 'wreck' && !targeting) {
+              // Radar d'épaves : l'option localise (les coordonnées sont
+              // dans le libellé du panneau vaisseau le plus proche) — la
+              // réclamation se fait DEPUIS une coque à ≤ 1 pc.
+              setSelected(null);
+              setSelectedShip(null);
             } else if (kind === 'ship' && !targeting) {
               setSelected(null);
               setSelectedShip(
@@ -1014,6 +1027,15 @@ export function GalaxyMap() {
               </option>
             ))}
           </optgroup>
+          {!targeting && derelicts.length > 0 && (
+            <optgroup label="Wrecks">
+              {derelicts.map((wreck) => (
+                <option key={wreck.id} value={`wreck:${wreck.id}`}>
+                  {wreck.name} († {wreck.hullCategory} {wreck.hullSize ?? ''})
+                </option>
+              ))}
+            </optgroup>
+          )}
           {!targeting && ships.length > 0 && (
             <optgroup label="Fleet">
               {ships.map((ship) => (
@@ -2763,6 +2785,44 @@ export function GalaxyMap() {
                 <Package size={14} aria-hidden /> {t.galaxy.fitJunkCollector}
               </button>
             )}
+          {selectedShip.status === 'docked' &&
+            !selectedShip.claimRig &&
+            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
+            selectedShip.dockedBodyId &&
+            bodies.some(
+              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+            ) && (
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .fitClaimRig(selectedShip.id)
+                    .then(() => {
+                      setNotice(t.galaxy.claimRigFitted);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.claimRigRefused} — ${err.message ?? err.error}`,
+                      ),
+                    )
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Anchor size={14} aria-hidden /> {t.galaxy.fitClaimRig}
+              </button>
+            )}
           {selectedShip.status === 'idle' &&
             selectedShip.harvestRig &&
             !selectedShip.harvestingStarId &&
@@ -2816,6 +2876,64 @@ export function GalaxyMap() {
                 </button>
               );
             })()}
+          {['hovering', 'idle'].includes(selectedShip.status) &&
+            selectedShip.claimRig &&
+            !selectedShip.claimingTargetId &&
+            (() => {
+              const near = derelicts
+                .map((w) => ({
+                  w,
+                  d: Math.hypot(w.x - selectedShip.x, w.y - selectedShip.y),
+                }))
+                .filter(({ d }) => d <= 1)
+                .sort((a, z) => a.d - z.d)[0];
+              if (!near) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .claim(selectedShip.id, near.w.id)
+                      .then(() => {
+                        setNotice(t.galaxy.claimStarted);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.claimRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--success-500)',
+                    color: '#0D0D0D',
+                    border: 'none',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Anchor size={14} aria-hidden /> {t.galaxy.claim} {near.w.name}
+                </button>
+              );
+            })()}
+          {selectedShip.claimingTargetId && selectedShip.claimsAt && (
+            <p
+              style={{
+                margin: 0,
+                color: 'var(--warning-500)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+              }}
+            >
+              {t.galaxy.claiming} —{' '}
+              {new Date(selectedShip.claimsAt).toLocaleTimeString('en-US')}
+            </p>
+          )}
           {selectedShip.harvestingStarId && (
             <button
               type="button"

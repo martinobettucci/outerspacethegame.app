@@ -1,6 +1,9 @@
 /** Champs de junk (GB §22, DG §10.4) — cellule, décroissance, hasard. */
 import { describe, expect, it } from 'vitest';
 import {
+  CLAIM_HOURS,
+  CLAIM_RADIUS_PC,
+  CLAIM_RIG_COST,
   evalJunkAmount,
   JUNK_DUMPS_PER_DAY,
   JUNK_NO_DUMP_STARTER_PC,
@@ -41,5 +44,13 @@ describe('constantes canon [TUNE]', () => {
   it('5 dumps/jour, zone interdite 50 pc starters', () => {
     expect(JUNK_DUMPS_PER_DAY).toBe(5);
     expect(JUNK_NO_DUMP_STARTER_PC).toBe(50);
+  });
+});
+
+describe('claim rig (GB §6, DG §8.8) — constantes [TUNE]', () => {
+  it('25 steelL + 5 gold, 2 h, proximité 1 pc [TUNE-v1]', () => {
+    expect(CLAIM_RIG_COST).toEqual({ steel_l: 25, gold: 5 });
+    expect(CLAIM_HOURS).toBe(2);
+    expect(CLAIM_RADIUS_PC).toBe(1);
   });
 });

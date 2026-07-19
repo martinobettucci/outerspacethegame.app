@@ -218,3 +218,9 @@ documented down-path or an explicit "irreversible" statement
 - `ships.dump_day (text) / dump_count` — quota 5 largages/jour réel
   (jour UTC en TEXTE : une colonne date re-lue dérive selon la TZ).
 - `ships.last_junk_scoop` — cooldown du scoop (24 h-jeu).
+
+## 018_claim.sql (chunk AJ)
+
+- `ships.claim_rig` — accessoire d'atelier L2 (réclamation d'épaves).
+- `ships.claiming_target_id` — épave en cours de réclamation
+  (ON DELETE SET NULL : une cible annihilée retombe proprement).

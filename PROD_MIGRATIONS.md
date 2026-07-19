@@ -31,6 +31,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 15 | `game/packages/server/migrations/015_harvest.sql` | Récolte stellaire (GB §22, DG §8.8) : rig + lien harvesting_star_id sur ships, ledger paresseux du stock d'étoile + stock initial caché sur bodies | 001 | DROP des 2 colonnes ships et 3 colonnes bodies + index ships_harvesting |
 | 16 | `game/packages/server/migrations/016_wear.sql` | Usure de coque (GB §27) : HP paresseux + 3 boucliers sur ships | 001 | DROP des 6 colonnes |
 | 17 | `game/packages/server/migrations/017_junk.sql` | Champs de junk (GB §22, DG §10.4) : table junk_fields + collecteur/quota/scoop sur ships | 001 | DROP TABLE junk_fields + DROP des 4 colonnes ships |
+| 18 | `game/packages/server/migrations/018_claim.sql` | Claim rig (GB §6, DG §8.8) : rig + lien de réclamation sur ships | 001 | DROP des 2 colonnes |
 
 ## Services à déployer (au premier déploiement)
 

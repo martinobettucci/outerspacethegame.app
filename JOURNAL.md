@@ -2787,3 +2787,43 @@ quota.
 - Suites après synchro : shared 143, unit 32, intégration **254/254**,
   E2E **31 specs verts** (30/31 au run complet de 13,1 min — census
   réparé puis validé solo avec junk ; les 29 autres inchangés).
+
+## 2026-07-19 — Chunk AJ : claim rig & salvage (GB §6, DG §8.8)
+
+**Problème.** Depuis le chunk AB, les épaves du survival-out (owner
+NULL, « no honor ») disparaissaient de toutes les flottes SANS être
+réclamables — l'économie du salvage promise par le canon n'existait pas.
+
+### Canon appliqué
+
+- Claim rig : atelier L2, 25 steelL + 5 gold [TUNE].
+- Réclamation : IMMOBILE (survol/idle) à ≤ 1 pc [TUNE-v1 — « proximity »
+  non chiffrée par le canon ; même échelle que le transfert de
+  carburant], 2 h de JEU [TUNE], une réclamation à la fois.
+- salvage_claimed RE-VÉRIFIE tout à l'échéance : réclamant vivant,
+  toujours lié, stationnaire, à portée ; épave toujours sans
+  propriétaire — partir (moveShip purge), dériver, ou se faire doubler
+  = abandon propre, jamais de transfert fantôme.
+- Transfert : l'épave devient une coque IDLE possédée, SANS équipage —
+  la re-crewer exige un quai ; le remorquage et le transfert d'équipage
+  en proximité restent P4 (annoncé). La soute de l'épave voyage avec
+  elle (le butin est physique).
+- Radar « Wrecks » : épaves visibles sous les scopes de vision standard.
+
+### Vérifications
+
+- Shared 144/144 (constantes claim).
+- Intégration claim.test.ts **6/6** : coût/§10/double-fit, gardes
+  (à quai, cible possédée, trop loin), réclamation complète (2 h ÷
+  timeScale, vue flotte claimsAt, double-claim refusé, transfert
+  owner+idle), épave déjà réclamée refusée, départ annule (lien +
+  événement purgés), dérive à l'échéance = pas de transfert.
+- E2E claim.spec.ts : chaîne COMPLÈTE — Cargo S né au chantier, pilote
+  granté (§15), survol sauvage, survival-out réel → épave au radar
+  Wrecks → rig monté → vol à 0,5 pc → Claim → 2 h ÷ 7200 → l'épave
+  rejoint la flotte (idle) et quitte le radar ; captures cl-01/02.
+- Suites après synchro : shared 144, unit 32, intégration **260/260**,
+  E2E **32 specs verts** (31/32 au run complet de 13,6 min — governance
+  retombé sur son flake DOCUMENTÉ de tirage de taille starter, p=1/32
+  sur 5 essais, vert en solo 26,5 s ; le filtre DNA-taille reste en
+  SUGGESTIONS).

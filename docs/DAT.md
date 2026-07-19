@@ -339,6 +339,17 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    scopes as bodies. Migration 017 (dump_day stored as TEXT — a date
    column re-read through local TZ drifts a day).
 
+20. **Salvage claims (implemented, chunk AJ):** ownerless derelicts
+   (survival-out, GB §6 "no honor") are claimable. Claim rig
+   (workshop L2, 25 steelL + 5 gold [TUNE]); claiming requires being
+   STATIONARY within 1 pc [TUNE-v1] and holds for 2 game-hours [TUNE] —
+   the `salvage_claimed` event re-verifies everything at expiry
+   (leaving or drifting aborts; an already-claimed wreck refuses) then
+   transfers ownership: the wreck becomes an owned IDLE hull, crewless
+   (re-crewing still needs a dock; towing/proximity crew transfer are
+   P4, announced). Wrecks are visible under the standard vision scopes
+   (`derelicts` in /galaxy). moveShip cancels an in-flight claim.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —
