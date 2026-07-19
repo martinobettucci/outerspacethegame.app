@@ -29,12 +29,14 @@ import {
   pendingShipBuilds,
   refuelShip,
   relocateShipForTest,
+  retrieveShip,
   setFleePolicy,
   setShipFuelForTest,
   setShipSurvivalForTest,
   transferCargo,
   transferFuel,
   undockShip,
+  warehouseShip,
 } from '../services/ships.js';
 import {
   colonizeShip,
@@ -565,6 +567,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => undockShip(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/warehouse', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => warehouseShip(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/retrieve', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () =>
+      retrieveShip(deps.pool, player.id, id, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   app.post('/ships/:id/cargo', async (req, reply) => {

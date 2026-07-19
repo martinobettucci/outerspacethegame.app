@@ -175,6 +175,11 @@ export interface PlanetDetail {
   }[];
   buildings: PlanetBuilding[];
   docks: PlanetDocks | null;
+  /** Entrepôt de véhicules (GB §9) : balances par taille, séparées. */
+  vehicles: {
+    capacity: { s: number; m: number; l: number };
+    stored: { s: number; m: number; l: number };
+  };
   triadNudge: boolean | null;
   governance: {
     required: number;
@@ -215,6 +220,8 @@ export interface ShipView {
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
+  /** Redéploiement warehouse→quai en cours (ISO), sinon null. */
+  retrievesAt: string | null;
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -293,6 +300,13 @@ export const api = {
     call<{ bodyId: string }>('POST', `/ships/${shipId}/land`),
   undock: (shipId: string) =>
     call<{ bodyId: string }>('POST', `/ships/${shipId}/undock`),
+  warehouse: (shipId: string) =>
+    call<{ bodyId: string; crewReleased: number }>(
+      'POST',
+      `/ships/${shipId}/warehouse`,
+    ),
+  retrieve: (shipId: string) =>
+    call<{ readyAt: string }>('POST', `/ships/${shipId}/retrieve`),
   transferCargo: (
     shipId: string,
     input: { resource: string; tons: number; direction: 'load' | 'unload' },

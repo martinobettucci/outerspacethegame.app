@@ -44,6 +44,7 @@ function costText(cost: CostBundle): string {
 export function BuildingPanel({
   building,
   docks,
+  vehicles,
   triadNudge,
   workforceAssignable,
   workforceAssigned,
@@ -62,6 +63,8 @@ export function BuildingPanel({
   building: PlanetBuilding;
   /** Résumé planète des docks (spaceports actifs) — null si aucun. */
   docks?: PlanetDocks | null;
+  /** Balances de véhicules de la planète (GB §9) — entrepôt + tampon. */
+  vehicles?: { capacity: Record<'s' | 'm' | 'l', number>; stored: Record<'s' | 'm' | 'l', number> } | null;
   /** Nudge triade (DG §11.2) — aucun pair FOOD dans la portée télescope. */
   triadNudge?: boolean | null;
   workforceAssignable: number;
@@ -323,6 +326,18 @@ export function BuildingPanel({
           <div className="ls-section-heading">
             <Store size={14} aria-hidden /> {t.planet.warehouseVisibility}
           </div>
+          {vehicles && (
+            <p className="ls-mono-line" data-testid="vehicles-usage">
+              {t.planet.vehiclesTitle}{' '}
+              {(['s', 'm', 'l'] as const)
+                .map(
+                  (size) =>
+                    `${size.toUpperCase()} ${vehicles.stored[size]}/${vehicles.capacity[size]}`,
+                )
+                .join(' · ')}
+            </p>
+          )}
+          <p className="ls-section-subtitle">{t.planet.vehiclesHint}</p>
           <p className="ls-section-subtitle">{t.planet.warehouseVisibilityHint}</p>
           <label className="ls-field">
             <span>{t.planet.warehouseVisibility}</span>

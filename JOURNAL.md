@@ -2481,3 +2481,60 @@ résolution : 45 s d'absence tombaient SOUS le seuil, d'où la fenêtre de
 précision (+0,005) ; le zéro-dérive est la borne |mesuré − projeté|.
 Items 69 (sim core « reste la preuve E2E ») et 93 (« Offline catch-up
 correctness E2E ») soldés au backlog.
+
+## 2026-07-19 — Chunk AD : entrepôt de véhicules (GB §9, DG §6 round 6)
+
+**Problème.** Backlog ligne « Warehouse: balances S/M/L véhicules… » :
+le warehouse (bâtiment livré côté visibilité au chunk T) n'entreposait
+encore AUCUN véhicule ; le lien d'équipage (GB §12) n'avait pas son seul
+point de sortie canon ; aucun moyen de garer une coque sans payer de
+drain ni occuper un dock.
+
+### Canon appliqué
+
+- Balances **SÉPARÉES** par taille (round 6 : « jamais de débordement »,
+  contrairement aux docks S→M→L) : tampon au sol 2 M + 2 S (jamais de
+  L — TRANCHÉ session 22), chaque warehouse ACTIF ajoutant
+  6 S/4 M/2 L × mult(niveau) [1, 2, 3] — constantes DORMANTES de
+  `units.ts` (chunk E) enfin branchées, pas dupliquées.
+- **Libération d'équipage** à l'entreposage = seul point de sortie du
+  lien permanent (GB §12) ; ré-embarquement possible AU warehouse
+  (assignCrew accepte `warehoused` — même monde possédé).
+- **Zéro consommation** : drains carburant ET survie désarmés
+  (rebaseShipDrain 'none', l'équipage étant déjà parti).
+- **Redéploiement** : « needs a free dock » → capacité d'atterrissage du
+  chunk S rejouée au LANCEMENT (exception bootstrap sans spaceport,
+  comme landShip) ; durée 1/3/6 h par taille [TUNE, interp du « 1–6 h »
+  canon] ÷ TIME_SCALE ; événement `ship_retrieved` (idempotent : ne
+  repose que si encore `warehoused`) ; double-retrieve refusé.
+
+### Décisions v1 & interprétations (annoncées)
+
+- personnel/probe exclus de l'entrepôt (le Souverain ne se remise pas ;
+  la sonde n'occupe pas de dock) [interp].
+- Balances d'ITEMS (50/niveau) et blocage d'usine : DORMANTS tant
+  qu'aucune usine d'unités n'existe — listés au backlog en « Restent ».
+- Parking allié : P4 (factions), refus explicite « On remise sur SES
+  mondes ».
+- Si les docks se remplissent PENDANT le redéploiement, l'événement
+  repose quand même la coque (overfill toléré, cohérent §3.3b — la
+  vérification du dock est au lancement) [interp annoncée].
+
+### Vérifications
+
+- Shared 128/128 (7 nouveaux blocs docks : capacités [] /[1]/[2]/[3]
+  /[1,2], séparation sans débordement, SHIP_RETRIEVE_HOURS).
+- Intégration warehouse.test.ts **16/16** : tampon 2S/2M/0L, libération
+  + re-crew au warehouse, zéro-conso (taux 0, aucun bord), séparation
+  stricte (3ᵉ S refusé avec M libre), L structurel sans warehouse,
+  L1 → 8S/6M/2L, §10 directs (autrui/monde étranger/personnel/survol/
+  double-retrieve/retrieve non entreposé), 1 h S ÷ timeScale +
+  événement → re-quai, 3 h M, dock plein → refus.
+- E2E warehouse.spec.ts : warehouse construit, Warehouse → notice de
+  libération + « Assign pilot » réapparaît (npcs rafraîchis — correctif
+  trouvé PAR le test : le pilote libéré restait lié côté client),
+  re-crew au warehouse, balances `Vehicles S 1/8 · M 0/6 · L 0/2` sur
+  le bâtiment, Retrieve → re-quai réel (7200×) + balance vidée ;
+  captures wh-01…03 observées.
+- Suites complètes rejouées après synchro : shared 128, unit 32,
+  intégration 201/201, **E2E 26/26 (10,2 min)**.

@@ -20,6 +20,7 @@ import {
   Fuel,
   Lock,
   Telescope,
+  Warehouse as WarehouseIcon,
 } from 'lucide-react';
 import {
   ALL_RESOURCE_IDS,
@@ -2253,6 +2254,100 @@ export function GalaxyMap() {
               <ArrowUpFromLine size={14} aria-hidden /> {t.galaxy.undock}
             </button>
           )}
+          {selectedShip.status === 'docked' &&
+            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
+            selectedShip.dockedBodyId &&
+            bodies.some(
+              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+            ) && (
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .warehouse(selectedShip.id)
+                    .then(() => {
+                      setNotice(t.galaxy.warehouseDone);
+                      void refreshShips();
+                      void refreshNpcs(); // l'équipage LIBÉRÉ redevient assignable
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.warehouseRefused} — ${err.message ?? err.error}`,
+                      ),
+                    )
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <WarehouseIcon size={14} aria-hidden /> {t.galaxy.warehouseAction}
+              </button>
+            )}
+          {selectedShip.status === 'warehoused' &&
+            (selectedShip.retrievesAt ? (
+              <p
+                style={{
+                  margin: 0,
+                  color: 'var(--warning-500)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                }}
+              >
+                {t.galaxy.retrieving} —{' '}
+                {new Date(selectedShip.retrievesAt).toLocaleTimeString('en-US')}
+              </p>
+            ) : (
+              <>
+                <p
+                  style={{
+                    margin: 0,
+                    color: 'var(--text-secondary)',
+                    fontSize: 12,
+                  }}
+                >
+                  {t.galaxy.warehousedHint}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .retrieve(selectedShip.id)
+                      .then(() => {
+                        setNotice(t.galaxy.retrieveStarted);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.retrieveRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--success-500)',
+                    color: '#0D0D0D',
+                    border: 'none',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <WarehouseIcon size={14} aria-hidden /> {t.galaxy.retrieve}
+                </button>
+              </>
+            ))}
           {selectedShip.tankU > 0 &&
             ['docked', 'hovering', 'stranded'].includes(selectedShip.status) &&
             (() => {

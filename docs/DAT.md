@@ -241,7 +241,7 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    POST /test/grant-npc (pod rolls are seeded by playerId — not
    precomputable in E2E specs).
 
-13. **Industry retooling & delivery overfill (implemented, chunk Y):**
+14. **Industry retooling & delivery overfill (implemented, chunk Y):**
    re-targeting an ACTIVE industry writes the new recipe immediately and
    pauses production (status `retooling`, migration 013) until
    `retool_complete` at +24 game h [TUNE]; all-Industrialist governance
@@ -253,7 +253,7 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    across cargo unload, fixed trade, innate trade, AMM swap/route,
    manual accept) — only production halts at cap via the storage brake.
 
-14. **Survival clocks & derelicts (implemented, chunk AB):** crewed
+15. **Survival clocks & derelicts (implemented, chunk AB):** crewed
    hulls burn 0.01 T/day of food AND water per crew member [TUNE]
    wherever the crew lives aboard — foreign/wild hover, idle, TRANSIT
    (the flight death clock), stranded; exempt: docked/warehoused (the
@@ -267,6 +267,21 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    within tank range. survival_out kills the crew (host-fate), strips
    ownership (owner NULL) and leaves a DERELICT wreck — gone from the
    owner's fleet; salvage claims (items P4) and hijack (P5) pending.
+16. **Vehicle warehouse (implemented, chunk AD):** per-size SEPARATE
+   balances on each owned world — ground buffer 2 M + 2 S (never L)
+   plus, per ACTIVE warehouse, 6 S / 4 M / 2 L × level multiplier
+   (L1 ×1, L2 ×2, L3 ×3). `POST /ships/:id/warehouse` (docked on an
+   OWNED world, personal/probe excluded [interp]) stores the hull with
+   zero upkeep and RELEASES the bound crew — the only exit of the
+   permanent NPC bind (GB §12); re-crewing is allowed at the warehouse
+   (`assignCrew` accepts status `warehoused`). `POST
+   /ships/:id/retrieve` redeploys in 1/3/6 h by size [TUNE, canon
+   "1–6 h"] ÷ TIME_SCALE via the `ship_retrieved` event, requires a
+   free dock at launch (landing capacity rules; bootstrap exception
+   without an active spaceport) and refuses double redeployment.
+   Fleet view exposes `retrievesAt`; planet detail exposes
+   `vehicles {capacity, stored}`. Item balances (50/level) and factory
+   blocking stay dormant until unit factories exist; allied parking P4.
 
 ### Intel tiers (implemented, chunk Q)
 

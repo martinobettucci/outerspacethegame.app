@@ -827,6 +827,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
               <BuildingPanel
                 building={b}
                 docks={planet.docks}
+                vehicles={planet.vehicles}
                 triadNudge={planet.triadNudge}
                 workforceAssignable={planet.workforceAssignable}
                 workforceAssigned={planet.workforceAssigned}

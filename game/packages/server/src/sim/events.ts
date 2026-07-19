@@ -20,6 +20,7 @@ export type EventKind =
   | 'census_run'
   | 'dock_eviction'
   | 'retool_complete'
+  | 'ship_retrieved'
   | 'survival_low'
   | 'survival_out'
   | 'noop';

@@ -126,6 +126,15 @@ export const t = {
     fleeToggleDisarm: 'Disarm auto-flee',
     fleeUpdated: 'Flee policy updated.',
     undocked: 'Airborne — hovering.',
+    warehouseAction: 'Warehouse',
+    warehouseDone: 'Hull warehoused — crew released to your hand.',
+    warehouseRefused: 'Warehousing refused',
+    retrieve: 'Retrieve',
+    retrieveStarted: 'Redeployment under way.',
+    retrieveRefused: 'Redeployment refused',
+    retrieving: 'Redeploying',
+    warehousedHint:
+      'Zero upkeep in the vehicle warehouse. Crew was released on entry; redeploying takes 1/3/6 h by size and needs a free dock.',
     fuelTitle: 'Fuel',
     fuelPerDay: 'u/day',
     fuelServedByPlanet: 'loitering paid by the planet below',
@@ -281,6 +290,9 @@ export const t = {
     dwellHoursLabel: 'Visitor ground stay (game hours, 1–720)',
     reservedForSelfLabel: 'Docks reserved for own fleet (0–2)',
     docksApplied: 'Spaceport dock settings applied.',
+    vehiclesTitle: 'Vehicles',
+    vehiclesHint:
+      'Separate balances per size — ground buffer 2 M + 2 S without a warehouse; heavies need one.',
     warehouseVisibility: 'Warehouse visibility',
     warehouseVisibilityHint:
       'Public = stock browsable by anyone docked (advertisement AND leak). Private = hidden strategic reserve.',

@@ -4,6 +4,20 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Entrepôt de véhicules (chunk AD)** : balances S/M/L SÉPARÉES par
+  monde possédé — tampon au sol 2 M + 2 S (jamais de L), chaque warehouse
+  ACTIF ajoutant 6 S/4 M/2 L × multiplicateur de niveau (L1 ×1, L2 ×2,
+  L3 ×3). Entreposer (à quai sur SON monde ; personnel/sonde exclus)
+  coûte zéro entretien — drains carburant ET survie désarmés — et LIBÈRE
+  l'équipage : seul point de sortie du lien permanent (GB §12), le
+  ré-embarquement restant possible AU warehouse. Redéploiement en
+  1/3/6 h par taille [TUNE] ÷ échelle via l'événement `ship_retrieved`,
+  dock libre exigé au lancement, un seul redéploiement à la fois. Vues :
+  `retrievesAt` (flotte), `vehicles {capacity, stored}` (planète) ; UI
+  panneau vaisseau (boutons Warehouse/Retrieve, minuteur) et balances
+  affichées sur le bâtiment warehouse. Balances d'items (50/niveau) et
+  blocage d'usine : dormants sans usines d'unités (annoncé) ; parking
+  allié P4.
 - **Preuve E2E du rattrapage hors-ligne (chunk AC)** :
   offline-catchup.spec.ts — le Souverain lance un spaceport en chantier
   et une quille de Cargo S, une mine extrait à taux réel ; DÉCONNEXION,

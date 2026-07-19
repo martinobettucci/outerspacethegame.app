@@ -6,48 +6,49 @@
  * des transactions ; chaque commande rebase les débits de la planète.
  */
 import {
-  RETOOL_HOURS,
-  INSTANT_RETOOL_WINDOW_HOURS,
-  FOOD_RESOURCES,
-  isAmmSlot,
+  type AmmSlot,
+  type Archetype,
   BASIC_RESOURCES,
-  colonyGraceUntilMs,
-  isInColonyGrace,
   BUILD_HOURS_BY_LEVEL,
+  type BuildingKey,
   BUILDINGS,
+  type Climate,
+  CLIMATE_CRYSTAL,
+  colonyGraceUntilMs,
+  type CostBundle,
   DEMOLISH_HOURS,
   DEMOLISH_REFUND_RATIO,
-  CLIMATE_CRYSTAL,
   DOCK_DWELL_HOURS_DEFAULT,
   DOCK_DWELL_HOURS_MAX,
   DOCK_DWELL_HOURS_MIN,
   DOCK_RESERVED_SELF_DEFAULT,
   DOCK_RESERVED_SELF_MAX,
-  occupiesDock,
-  spaceportDocks,
   effectiveMask,
   efficiency,
-  planetTechAvailability,
-  popCap,
-  RECIPES,
-  resolveCost,
-  ROLE_TO_ARCHETYPE,
-  TECH_NODES,
-  WORKFORCE_ASSIGNABLE_SHARE,
-  WORKFORCE_OPTIMAL_BY_LEVEL,
-  type AmmSlot,
-  type Archetype,
-  type BuildingKey,
-  type Climate,
-  type CostBundle,
+  FOOD_RESOURCES,
+  INSTANT_RETOOL_WINDOW_HOURS,
+  isAmmSlot,
+  isInColonyGrace,
   type MarketSlot,
   type NpcRole,
+  occupiesDock,
   type PlanetSize,
+  planetTechAvailability,
+  popCap,
   type Quality,
   type RecipeId,
+  RECIPES,
+  resolveCost,
   type ResourceBundle,
   type ResourceId,
+  RETOOL_HOURS,
+  ROLE_TO_ARCHETYPE,
+  spaceportDocks,
+  TECH_NODES,
   type TechNodeKey,
+  vehicleCapacity,
+  WORKFORCE_ASSIGNABLE_SHARE,
+  WORKFORCE_OPTIMAL_BY_LEVEL,
 } from '@atg/shared';
 import type pg from 'pg';
 import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
@@ -169,6 +170,13 @@ export interface PlanetDetail {
     reservedForSelf: number;
     dwellHours: number;
   } | null;
+  /** Entrepôt de véhicules (GB §9) : balances par taille — Σ warehouses
+   * actifs × mult(niveau) + tampon au sol 2M/2S (jamais de L sans
+   * warehouse). Détail propriétaire uniquement (comme le reste). */
+  vehicles: {
+    capacity: { s: number; m: number; l: number };
+    stored: { s: number; m: number; l: number };
+  };
   /** Gouvernance (GB §11) : exigence, sièges, G, vaisseau parqué. */
   governance: {
     required: number;
@@ -286,6 +294,24 @@ export async function planetDetail(
       };
     }
 
+    // Entrepôt de véhicules (GB §9, chunk AD) : balances SÉPARÉES par
+    // taille — pas de débordement S→M→L, contrairement aux docks.
+    const vehicleCap = vehicleCapacity(
+      buildingRows
+        .filter((b) => b.key === 'warehouse' && b.status === 'active')
+        .map((b) => Number(b.level)),
+    );
+    const { rows: warehousedRows } = await client.query(
+      `SELECT hull_size, count(*)::int AS n FROM ships
+       WHERE docked_body_id = $1 AND status = 'warehoused'
+       GROUP BY hull_size`,
+      [bodyId],
+    );
+    const vehiclesStored = { s: 0, m: 0, l: 0 };
+    for (const r of warehousedRows) {
+      vehiclesStored[r.hull_size as 's' | 'm' | 'l'] = Number(r.n);
+    }
+
     // Nudge triade (DG §11.2) : les hubs veulent food/cells + water/cells
     // + fuel/cells — on alerte quand AUCUNE paire FOOD n'existe dans la
     // portée TÉLESCOPE du propriétaire (canon : « within telescope range »
@@ -391,6 +417,7 @@ export async function planetDetail(
       stock,
       triadNudge,
       docks,
+      vehicles: { capacity: vehicleCap, stored: vehiclesStored },
       governance: await governanceOf(client, bodyId, snap.size, playerId),
       deposits: Object.entries(snap.deposits)
         .map(([resource, remaining]) => {

@@ -648,6 +648,24 @@ export function survivalLow(timeScale: number): EventHandler {
   };
 }
 
+/**
+ * ship_retrieved { shipId } — fin du redéploiement warehouse→espace
+ * (DG §6) : la coque repasse À QUAI. Le dock libre a été vérifié au
+ * LANCEMENT ; un dock repris entre-temps tolère l'overfill [annoncé,
+ * même esprit que ship_built]. Idempotent (garde d'état).
+ */
+export const shipRetrieved: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const { rows } = await client.query(
+    `UPDATE ships SET status = 'docked', docked_at = to_timestamp($2 / 1000.0)
+     WHERE id = $1 AND status = 'warehoused'
+     RETURNING id`,
+    [shipId, event.dueAt.getTime()],
+  );
+  if (!rows[0]) return;
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -661,6 +679,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     colony_established: colonyEstablished,
     dock_eviction: dockEviction,
     retool_complete: retoolComplete,
+    ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;
     // par défaut (tests d'intégration sans flee) un timeScale de 1.

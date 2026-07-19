@@ -19,18 +19,21 @@ import {
   containersUsed,
   DOCK_DWELL_HOURS_DEFAULT,
   DOCK_RESERVED_SELF_DEFAULT,
+  fitsVehicleSlot,
   FUEL_TRANSFER_RADIUS_PC,
   GAME_DAY_SECONDS,
-  HULLS,
-  occupiesDock,
-  PROBE,
-  SHIP_BUILD_HOURS,
-  shipBuildCost,
-  UNIVERSE_SIZE_PC,
   type HullCategory,
+  HULLS,
   type HullSize,
   type LandingPolicy,
+  occupiesDock,
+  PROBE,
   type ResourceId,
+  SHIP_BUILD_HOURS,
+  SHIP_RETRIEVE_HOURS,
+  shipBuildCost,
+  UNIVERSE_SIZE_PC,
+  vehicleCapacity,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
@@ -55,6 +58,8 @@ export interface ShipView {
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
+  /** Redéploiement warehouse→quai en cours : ISO de fin, sinon null. */
+  retrievesAt: string | null;
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -136,6 +141,14 @@ export async function fleet(
   const establishesBy = new Map(
     establishing.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  // Comptes à rebours de redéploiement des coques 'warehoused' (chunk AD).
+  const { rows: retrieving } = await pool.query(
+    `SELECT payload->>'shipId' AS ship_id, due_at FROM events
+     WHERE kind = 'ship_retrieved' AND processed_at IS NULL`,
+  );
+  const retrievesBy = new Map(
+    retrieving.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
   const { rows: crewCounts } = await pool.query(
     `SELECT bound_host_id AS ship_id, count(*)::int AS crew FROM npcs
      WHERE bound_host_type = 'ship' GROUP BY bound_host_id`,
@@ -162,6 +175,7 @@ export async function fleet(
           ?.pax ?? 0,
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
+      retrievesAt: retrievesBy.get(r.id) ?? null,
       survival: (() => {
         const sv = evalShipSurvival(r, nowMs);
         return {
@@ -1016,6 +1030,173 @@ export async function setShipFuelForTest(
  * l'atterrissage, lui, reste le VRAI chemin (politique + docks). L'état
  * simulé reste cohérent : drain de survol armé sur le réservoir.
  */
+/**
+ * Entrepose une coque À QUAI sur SON monde (GB §9, DG §6 round 6) :
+ * balances de véhicules par taille (Σ warehouses actifs × mult(niveau) +
+ * tampon au sol 2M/2S — jamais de L sans warehouse), zéro consommation en
+ * entrepôt, et LIBÉRATION de l'équipage — le seul point de sortie du lien
+ * permanent (GB §12) : les PNJ retournent à la main du joueur. Exclusions
+ * [interp annoncée, JOURNAL] : personnal (le Souverain ne se remise pas),
+ * probe (jamais à quai au sens dock).
+ */
+export async function warehouseShip(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ bodyId: string; crewReleased: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (['personal', 'probe'].includes(ship.hull_category)) {
+      throw new CommandError('not_available', 'Cette coque ne se remise pas');
+    }
+    if (ship.status !== 'docked' || !ship.docked_body_id) {
+      throw new CommandError('not_available', 'On remise depuis le quai');
+    }
+    const { rows: owned } = await client.query(
+      `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2 FOR UPDATE`,
+      [ship.docked_body_id, playerId],
+    );
+    if (!owned[0]) {
+      throw new CommandError(
+        'forbidden',
+        'On remise sur SES mondes (parking allié : P4)',
+      );
+    }
+    const { rows: whRows } = await client.query(
+      `SELECT level FROM buildings
+       WHERE body_id = $1 AND key = 'warehouse' AND status = 'active'`,
+      [ship.docked_body_id],
+    );
+    const capacity = vehicleCapacity(whRows.map((w) => Number(w.level)));
+    const { rows: storedRows } = await client.query(
+      `SELECT hull_size, count(*)::int AS n FROM ships
+       WHERE docked_body_id = $1 AND status = 'warehoused'
+       GROUP BY hull_size`,
+      [ship.docked_body_id],
+    );
+    const stored = { s: 0, m: 0, l: 0 };
+    for (const r of storedRows) {
+      stored[r.hull_size as 's' | 'm' | 'l'] = Number(r.n);
+    }
+    const size = ship.hull_size as 's' | 'm' | 'l';
+    if (!fitsVehicleSlot(size, stored, capacity)) {
+      throw new CommandError(
+        'not_available',
+        capacity[size] === 0
+          ? 'Aucune balance L ici — le lourd exige un warehouse actif'
+          : `Balances ${size.toUpperCase()} pleines (${stored[size]}/${capacity[size]})`,
+      );
+    }
+    // Libération d'équipage — le SEUL point de sortie du lien (GB §12).
+    const { rows: released } = await client.query(
+      `UPDATE npcs SET bound_host_type = NULL, bound_host_id = NULL
+       WHERE bound_host_type = 'ship' AND bound_host_id = $1
+       RETURNING id`,
+      [shipId],
+    );
+    await client.query(
+      `UPDATE ships SET status = 'warehoused', docked_at = NULL WHERE id = $1`,
+      [shipId],
+    );
+    // Zéro consommation (canon) : drains désarmés, équipage déjà parti.
+    await rebaseShipDrain(client, { ...ship, status: 'warehoused' }, nowMs, 'none');
+    await client.query('COMMIT');
+    return { bodyId: ship.docked_body_id, crewReleased: released.length };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Redéploiement warehouse → quai (DG §6) : exige un DOCK LIBRE au
+ * lancement (capacité chunk S, côté propriétaire) et dure 1/3/6 h par
+ * taille [TUNE interp du « 1–6 h » canon] ÷ timeScale — l'événement
+ * ship_retrieved repose la coque à quai. Un redéploiement à la fois.
+ */
+export async function retrieveShip(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ readyAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (ship.status !== 'warehoused' || !ship.docked_body_id) {
+      throw new CommandError('not_available', "Cette coque n'est pas en entrepôt");
+    }
+    const { rows: pendingRows } = await client.query(
+      `SELECT 1 FROM events WHERE processed_at IS NULL
+         AND kind = 'ship_retrieved' AND payload->>'shipId' = $1`,
+      [shipId],
+    );
+    if (pendingRows[0]) {
+      throw new CommandError('not_available', 'Redéploiement déjà en cours');
+    }
+    // Dock libre exigé (canon « needs a free dock ») — même règle que
+    // l'atterrissage ; sans spaceport actif : exception bootstrap sur SON
+    // monde (cohérent avec landShip).
+    const { rows: bodyRows } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1 FOR UPDATE`,
+      [ship.docked_body_id],
+    );
+    const { rows: ports } = await client.query(
+      `SELECT level, config FROM buildings
+       WHERE body_id = $1 AND key = 'spaceport' AND status = 'active'`,
+      [ship.docked_body_id],
+    );
+    if (occupiesDock(ship.hull_category, ship.hull_size) && ports.length > 0) {
+      const spConfigs = ports.map((p) => ({
+        level: Number(p.level),
+        reservedForSelf: Number(
+          p.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT,
+        ),
+      }));
+      const { rows: occupants } = await client.query(
+        `SELECT hull_category, hull_size, owner_id FROM ships
+         WHERE docked_body_id = $1 AND status = 'docked'`,
+        [ship.docked_body_id],
+      );
+      const docked = occupants
+        .filter((o) => occupiesDock(o.hull_category, o.hull_size))
+        .map((o) => ({
+          size: o.hull_size as HullSize,
+          isOwner: o.owner_id === bodyRows[0]?.owner_id,
+        }));
+      const verdict = canAcceptLanding(spConfigs, docked, {
+        size: ship.hull_size as HullSize,
+        isOwner: ship.owner_id === bodyRows[0]?.owner_id,
+      });
+      if (!verdict.ok) {
+        throw new CommandError(
+          'not_available',
+          'Aucun dock libre pour le redéploiement',
+        );
+      }
+    }
+    const hours = SHIP_RETRIEVE_HOURS[ship.hull_size as 's' | 'm' | 'l'] ?? 1;
+    const readyAt = new Date(nowMs + (hours * 3_600_000) / timeScale);
+    await enqueue(client, 'ship_retrieved', readyAt, { shipId });
+    await client.query('COMMIT');
+    return { readyAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /** Instrumentation E2E (§15) : fixe les provisions de survie de SON
  * vaisseau puis rebase l'horloge (l'échéance réelle en découle). */
 export async function setShipSurvivalForTest(
@@ -1408,7 +1589,10 @@ export async function assignCrew(
     if (ship.hull_category === 'probe') {
       throw new CommandError('not_available', 'Une sonde est sans équipage (canon)');
     }
-    if (ship.status !== 'docked' || !ship.docked_body_id) {
+    if (
+      !['docked', 'warehoused'].includes(ship.status) ||
+      !ship.docked_body_id
+    ) {
       throw new CommandError('not_available', 'L\'équipage embarque à quai');
     }
     const { rows: owned } = await client.query(

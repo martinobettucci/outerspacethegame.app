@@ -201,6 +201,16 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Vehicle warehouse (implemented, chunk AD)** — docked ships on an
+  owned world (personal/probe excluded) get a neutral `Warehouse`
+  button (Warehouse icon) after Undock; a warehoused hull swaps it for
+  a muted hint line ("Zero upkeep… crew was released on entry;
+  redeploying takes 1/3/6 h by size and needs a free dock") above a
+  success-green `Retrieve` button, replaced by an amber mono
+  `Redeploying — HH:MM:SS` line once the redeploy event is pending.
+  The warehouse building panel opens with a mono balance line
+  (`data-testid="vehicles-usage"`): `Vehicles S 1/8 · M 0/6 · L 0/2`
+  plus the separate-balances hint, above the visibility select.
 - **Retool (implemented, chunk Y)** — the industry tuning section ends
   with a violet `Retool` button (active buildings only) that reopens the
   same RecipePicker used at placement; during the swap the panel shows a

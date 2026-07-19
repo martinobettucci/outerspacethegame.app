@@ -6,6 +6,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  vehicleCapacity,
+  fitsVehicleSlot,
+  SHIP_RETRIEVE_HOURS,
   canAcceptLanding,
   fitsInDocks,
   occupiesDock,
@@ -123,5 +126,28 @@ describe('canAcceptLanding — réservations & propriétaire', () => {
     expect(
       canAcceptLanding(two, threeDocked, { size: 's', isOwner: false }).ok,
     ).toBe(true);
+  });
+});
+
+describe('entrepôt de véhicules (GB §9, DG §6 round 6)', () => {
+  it('capacité = tampon (2M/2S, PAS de L) + Σ balances×niveau', () => {
+    expect(vehicleCapacity([])).toEqual({ s: 2, m: 2, l: 0 });
+    expect(vehicleCapacity([1])).toEqual({ s: 8, m: 6, l: 2 });
+    expect(vehicleCapacity([2])).toEqual({ s: 14, m: 10, l: 4 });
+    expect(vehicleCapacity([3])).toEqual({ s: 20, m: 14, l: 6 });
+    expect(vehicleCapacity([1, 2])).toEqual({ s: 20, m: 14, l: 6 });
+  });
+
+  it('balances SÉPARÉES : aucun débordement entre tailles', () => {
+    const cap = vehicleCapacity([]);
+    expect(fitsVehicleSlot('s', { s: 1, m: 0, l: 0 }, cap)).toBe(true);
+    expect(fitsVehicleSlot('s', { s: 2, m: 0, l: 0 }, cap)).toBe(false);
+    // M plein n'emprunte pas les S libres, L impossible sans warehouse.
+    expect(fitsVehicleSlot('m', { s: 0, m: 2, l: 0 }, cap)).toBe(false);
+    expect(fitsVehicleSlot('l', { s: 0, m: 0, l: 0 }, cap)).toBe(false);
+  });
+
+  it('redéploiement : heures par taille [TUNE interp 1–6 h]', () => {
+    expect(SHIP_RETRIEVE_HOURS).toEqual({ s: 1, m: 3, l: 6 });
   });
 });
