@@ -186,7 +186,7 @@ describe('fret à quai (DG §7 — 1 conteneur = 1 T)', () => {
     ).rejects.toMatchObject({ code: 'not_found' });
   });
 
-  it('décharge : la soute se vide, le stock remonte ; cap de stockage refusé EXPLICITEMENT', async () => {
+  it('décharge : la soute se vide, le stock remonte ; l\'overfill de livraison PASSE (§3.3b)', async () => {
     const before = await stockOf(haulerStarter, 'ore');
     const { cargo } = await transferCargo(pool, hauler, haulerCargo, {
       resource: 'ore',
@@ -196,20 +196,23 @@ describe('fret à quai (DG §7 — 1 conteneur = 1 T)', () => {
     expect(cargo.ore).toBeUndefined();
     expect(await stockOf(haulerStarter, 'ore')).toBeCloseTo(before + 2, 5);
 
-    // Stockage plein : on sature le stock au cap réel, la décharge refuse.
+    // Stockage saturé au cap : la décharge ATTERRIT quand même — canon
+    // §3.3b « swaps/deliveries may overfill; only production halts at
+    // cap » (aligné chunk Y ; l'ancien refus explicite était plus strict
+    // que le canon).
     const detail = await planetDetail(pool, hauler, haulerStarter);
     await pool.query(
       `UPDATE planet_stock SET amount_t = $2, rate_t_per_day = 0, as_of = now()
        WHERE body_id = $1 AND resource = 'ore'`,
       [haulerStarter, detail.storageCapT],
     );
-    await expect(
-      transferCargo(pool, hauler, haulerCargo, {
-        resource: 'water',
-        tons: 0.9,
-        direction: 'unload',
-      }),
-    ).rejects.toMatchObject({ code: 'not_available' });
+    await transferCargo(pool, hauler, haulerCargo, {
+      resource: 'water',
+      tons: 0.9,
+      direction: 'unload',
+    });
+    const after = await planetDetail(pool, hauler, haulerStarter);
+    expect(after.storageUsedT).toBeGreaterThan(after.storageCapT);
     // Restauration d'un niveau raisonnable pour la suite.
     await pool.query(
       `UPDATE planet_stock SET amount_t = 60, as_of = now()

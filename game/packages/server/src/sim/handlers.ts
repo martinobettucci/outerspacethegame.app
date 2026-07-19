@@ -38,6 +38,25 @@ export const constructionComplete: EventHandler = async (client, event) => {
   }
 };
 
+/**
+ * retool_complete { buildingId } — fin du rééquipage (DG §5.1) : la
+ * recette (déjà écrite) s'éveille, la production reprend au rebase.
+ */
+export const retoolComplete: EventHandler = async (client, event) => {
+  const buildingId = String(event.payload.buildingId ?? '');
+  if (!buildingId) return;
+  const { rows } = await client.query(
+    `UPDATE buildings
+       SET status = 'active', completes_at = NULL
+     WHERE id = $1 AND status = 'retooling' AND completes_at <= now()
+     RETURNING body_id`,
+    [buildingId],
+  );
+  if (rows[0]) {
+    await recomputePlanetRates(client, rows[0].body_id, event.dueAt.getTime());
+  }
+};
+
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
 export const demolitionComplete: EventHandler = async (client, event) => {
   const buildingId = String(event.payload.buildingId ?? '');
@@ -534,6 +553,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     ship_fuel_out: shipFuelOut,
     colony_established: colonyEstablished,
     dock_eviction: dockEviction,
+    retool_complete: retoolComplete,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

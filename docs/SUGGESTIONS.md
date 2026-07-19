@@ -16,8 +16,9 @@ Statuts : `proposé` · `retenu (chunk X)` · `livré (chunk X)` · `décliné`.
 | 2026-07-18 | Pools AMM du marché L2 (GB §9/§13, DG §11.1–11.2) | livré (chunk U) |
 | 2026-07-18 | Routage cells-étoile + double-fee + nudge triade (GB §13, DG §11.2) | livré (chunk V) |
 | 2026-07-18 | Survival-out des horloges de mort (équipages en base, strip → derelict, salvage claims — GB §6, DG §8.8/§10.3) avec le lifecycle NPC (liaison/libération warehouse) | proposé |
+| 2026-07-19 | Textures de sol générées (OPENAI_KEY fournie par le responsable dans .env local) intégrées à la dalle organique du chunk X | retenu (chantier suivant) |
 | 2026-07-18 | Preuve E2E du rattrapage hors-ligne (log off / return, zéro dérive — GB §15, DG §1) — backlog ligne « Offline catch-up correctness E2E » | proposé |
-| 2026-07-18 | Retool 24 h des industries + montée de niveau depot (restes chunk E/stockage) | proposé |
+| 2026-07-18 | Retool 24 h des industries + montée de niveau depot (restes chunk E/stockage) | livré (chunk Y — retool + overfill §3.3b ; niveaux de dépôt déjà couverts par le levelUp générique) |
 | 2026-07-18 | Warehouse : balances véhicules/items S/M/L, tampon libre, blocage d'usine (GB §9, DG §6) — prérequis des enchères P4 | proposé |
 | 2026-07-18 | Gouvernance v1 : masques par intersection déjà actifs → écran preview OBLIGATOIRE, gouverneur temporaire du vaisseau personnel, règle demi-efficacité (GB §11/§21, DG §4.1) | proposé |
 
@@ -32,4 +33,5 @@ Statuts : `proposé` · `retenu (chunk X)` · `livré (chunk X)` · `décliné`.
 | 2026-07-18 | Notification de hail hors de l'écran Comms (badge rail) — backlog chunk I « Restent » | proposé |
 | 2026-07-18 | CI (unit + intégration + E2E + captures) — item backlog non commencé, forte valeur maintenant que la suite est stable (21 specs) | proposé |
 | 2026-07-18 | Compose staging/prod (backlog « reste ») — à faire avec le premier déploiement réel | proposé |
+| 2026-07-19 | Retard d'affichage des badges « Active works » après l'éveil d'un chantier/retool (poll UI 4 s, plusieurs éléments FINALIZING persistants) — rafraîchir à la volée sur événement ou raccourcir le poll | proposé |
 | 2026-07-18 | Le roll de TAILLE du starter fait varier la franchise de stockage (800/1000/1200) : les E2E sur-dotés doivent poser un depot — envisager un pickEmailByDna filtrant aussi la taille (exposer rollStarterPlanet au helper) | proposé |

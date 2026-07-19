@@ -4,6 +4,29 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Retool 24 h & overfill-on-delivery (chunk Y)** : migration 013
+  (statut de bâtiment `retooling`). Rééquipage d'une industrie (DG §5.1
+  « re-targeting = 24 h retool » [TUNE]) : la nouvelle recette est
+  écrite immédiatement mais la production S'ARRÊTE (le rebase ne compte
+  que les industries actives) jusqu'à `retool_complete` ; gouvernance
+  TOUTE Industrialist (DG §4.1) = retool INSTANTANÉ, ≤ 1 switch par
+  fenêtre de 24 h (au-delà : retool standard [TUNE-v1 interp] ; fenêtre
+  dans buildings.config) ; les réductions de durée du monde-forge
+  (−25/40/50 %) attendent la spécialisation (annoncé) ; validation de
+  recette RÉUTILISÉE (max-1-extracteur/gisement avec auto-exclusion).
+  **Alignement canon §3.3b** : « swaps/deliveries may overfill
+  (physics) ; only production halts at cap » — les SIX refus de cap
+  historiques sont levés (décharge de fret, taux fixe, hospitalité
+  innée, swap AMM, route AMM, acceptation manuelle) : la livraison
+  atterrit TOUJOURS, le frein/halt de production absorbe le trop-plein
+  (les deux tests qui verrouillaient l'ancien comportement strict ont
+  été retournés en preuves d'overfill). UI : bouton Retool (industries
+  actives) rouvrant le sélecteur de recette, badge/minuteur
+  « Retooling · recette », notices instantané vs pause. Tests : 5
+  intégration retool (minuté avec production coupée puis éveil,
+  instantané + fenêtre occupée/libérée, §10 directs, gisement pris) +
+  2 tests amendés overfill + E2E retool.spec.ts (instantané puis 24 h
+  minutées à ×7200), captures ret-01…03 observées.
 - **Routage cells-étoile, double-fee & nudge triade (chunk V)** :
   composition pure partagée `ammRouteQuote` (la sortie de la jambe 1
   nourrit la jambe 2, chaque jambe prélève les frais de SON pool — le

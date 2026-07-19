@@ -340,10 +340,9 @@ export async function executeTrade(
         `Le marché n'a plus assez de ${slot.get} (${payable.toFixed(1)} T)`,
       );
     }
-    const usedT = Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0);
-    if (usedT + giveT - gotT > snap.storageCapT + 1e-9) {
-      throw new CommandError('not_available', 'Stockage du marché plein');
-    }
+    // Canon §3.3b : « swaps/deliveries may overfill (physics) ; only
+    // production halts at cap » — aucun refus de cap sur un échange, le
+    // frein/halt de production absorbe le trop-plein.
 
     // Soute : -give, +got — sous la capacité de conteneurs.
     const left = (cargo[slot.give] ?? 0) - giveT;
@@ -789,12 +788,8 @@ export async function executeAmmTrade(
       forUpdate: true,
     });
     if (!snap) throw new CommandError('not_found', 'Planète inconnue');
-    const usedT =
-      Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) + snap.pooledT;
-    const netT = giveT - q.outT;
-    if (netT > 0 && usedT + netT > snap.storageCapT + 1e-9) {
-      throw new CommandError('not_available', 'Stockage du marché plein');
-    }
+    // Canon §3.3b : les échanges peuvent sur-remplir — seul le frein de
+    // production sanctionne le trop-plein (aucun refus de cap ici).
 
     // Soute : −give, +got — sous la capacité de conteneurs.
     const left = (cargo[give] ?? 0) - giveT;
@@ -1075,12 +1070,7 @@ export async function executeAmmRoute(
       forUpdate: true,
     });
     if (!snap) throw new CommandError('not_found', 'Planète inconnue');
-    const usedT =
-      Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) + snap.pooledT;
-    const netT = giveT - outT;
-    if (netT > 0 && usedT + netT > snap.storageCapT + 1e-9) {
-      throw new CommandError('not_available', 'Stockage du marché plein');
-    }
+    // Canon §3.3b : les échanges peuvent sur-remplir (voir executeAmmTrade).
 
     // Écritures : réserves de chaque jambe, commissions maison, journal.
     const houseByRes = new Map<string, number>();
@@ -1343,10 +1333,8 @@ export async function executeInnateTrade(
         `Surplus insuffisant au-dessus du plancher (${sellable.toFixed(1)} T)`,
       );
     }
-    const usedT = Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0);
-    if (usedT + paidT - buyT > snap.storageCapT + 1e-9) {
-      throw new CommandError('not_available', 'Stockage du monde marchand plein');
-    }
+    // Canon §3.3b : l'hospitalité encaisse même au-delà du cap (delivery
+    // overfill) — seule la production s'arrête au trop-plein.
 
     const left = (cargo[offer.want] ?? 0) - paidT;
     if (left <= 1e-9) delete cargo[offer.want];

@@ -2341,3 +2341,39 @@ re-teintés en base de dev, stack réelle, captures observées : ocre /
 bleu-acier / vert acide, silhouettes distinctes par seed). L'état
 survol partage le mécanisme du pulse (alpha 1 + tint) — observé en
 placement, non capturé isolément (annoncé).
+
+## 2026-07-19 — Réconciliation amont + chunk Y : retool & overfill (DG §5.1, §3.3b)
+
+**Réconciliation.** Pull fast-forward des chunks W (gouvernance v1) et X
+(sol organique) livrés par la session parallèle (qui avait déjà fusionné
+mes U/V). Rejeu complet local : builds, 122 shared, 32 unit, 173
+intégration ; la suite E2E a montré UN flake — « boucle colonie » à
+16,8 s en solo mais > 60 s en suite à 2 workers (la scène au sol
+organique est plus lourde sous WSL2) → timeout global 60→120 s
+(commit dédié 1101a74).
+
+**Chunk Y — décisions.**
+- *Retool* : recette écrite IMMÉDIATEMENT + statut `retooling` (la
+  production s'éteint par le filtre actives-seules du rebase — même
+  mécanique que la montée de niveau) ; réveil par retool_complete.
+  Industrialist : instantané si gouvernance TOUTE industrialist ET
+  fenêtre 24 h libre (config.lastInstantRetoolMs) ; fenêtre occupée →
+  retool STANDARD plutôt qu'un refus [TUNE-v1 interp — canon muet].
+- *Overfill-on-delivery* : la lecture COMPLÈTE du canon §3.3b
+  (« swaps/deliveries may overfill (physics); only production halts at
+  cap ») a révélé que les refus de cap posés depuis le chunk J étaient
+  PLUS STRICTS que le canon — six sites levés, deux tests retournés.
+  Le trop-plein est absorbé par le frein/halt de production, visible au
+  census (§26 : le canon prime sur les choix d'implémentation passés).
+- *Constante dormante* : un RETOOL_HOURS préexistait (inutilisé) dans
+  buildings.ts — dédoublonné.
+- Le responsable a signalé la clé OPENAI_KEY dans .env (jamais commitée)
+  pour générer les textures de sol du chunk X — chantier suivant.
+
+**Vérifications.** Intégration 178 (5 retool + 2 amendés) ; E2E
+retool.spec.ts (instantané → fenêtre occupée → 24 h minutées à ×7200,
+captures ret-01…03 observées — le retard d'affichage des badges de
+chantier après l'éveil est consigné dans SUGGESTIONS.md) ; suite
+complète en cours au moment du commit, résultat au compte rendu.
+Migration 013 appliquée en dev uniquement (PROD_MIGRATIONS.md : 013 en
+attente).

@@ -71,7 +71,7 @@ export interface PlanetBuilding {
   key: BuildingKey;
   level: number;
   tileIndex: number | null;
-  status: 'constructing' | 'active' | 'demolishing';
+  status: 'constructing' | 'active' | 'demolishing' | 'retooling';
   completesAt: string | null;
   recipe: string | null;
   workforce: number;
@@ -358,6 +358,12 @@ export const api = {
       'POST',
       `/planets/${planetId}/buildings/${buildingId}/amm-liquidity`,
       input,
+    ),
+  retoolBuilding: (planetId: string, buildingId: string, recipe: string) =>
+    call<{ instant: boolean; completesAt: string | null }>(
+      'POST',
+      `/planets/${planetId}/buildings/${buildingId}/retool`,
+      { recipe },
     ),
   ammRoute: (
     planetId: string,

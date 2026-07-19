@@ -241,6 +241,18 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    POST /test/grant-npc (pod rolls are seeded by playerId — not
    precomputable in E2E specs).
 
+13. **Industry retooling & delivery overfill (implemented, chunk Y):**
+   re-targeting an ACTIVE industry writes the new recipe immediately and
+   pauses production (status `retooling`, migration 013) until
+   `retool_complete` at +24 game h [TUNE]; all-Industrialist governance
+   retools INSTANTLY, at most one free switch per 24 h window
+   (`config.lastInstantRetoolMs`) — beyond it the standard retool
+   applies [TUNE-v1 interp]; recipe validation is shared with placement
+   (max-1-extractor-per-deposit, self-excluded). Canon §3.3b alignment:
+   deliveries and swaps ALWAYS land (six historical cap refusals lifted
+   across cargo unload, fixed trade, innate trade, AMM swap/route,
+   manual accept) — only production halts at cap via the storage brake.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

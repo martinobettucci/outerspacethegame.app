@@ -368,7 +368,7 @@ describe('résolution par le vendeur (règlement physique)', () => {
     await cancelManualOffer(pool, buyer, greedy.id);
   });
 
-  it('monde SUR-CAP : le troc net-neutre passe, l\'entrée nette est refusée (§3.3b)', async () => {
+  it('monde SUR-CAP : troc net-neutre ET entrée nette passent (§3.3b, overfill de livraison)', async () => {
     // Sature le stock au-delà du cap (l'overfill existe physiquement).
     const detail = await planetDetail(pool, seller, sellerStarter);
     await pool.query(
@@ -388,7 +388,9 @@ describe('résolution par le vendeur (règlement physique)', () => {
     });
     const ok = await respondManualOffer(pool, seller, neutral.id, 'accept');
     expect(ok.status).toBe('accepted');
-    // Entrée NETTE (+1.5) sur monde toujours plein : refusée.
+    // Entrée NETTE (+1.5) sur monde toujours plein : la livraison
+    // SUR-REMPLIT (canon §3.3b, aligné chunk Y) — seule la production
+    // s'arrête au cap.
     await pool.query(`UPDATE ships SET cargo = '{"water": 2}' WHERE id = $1`, [
       buyerCargo,
     ]);
@@ -398,13 +400,10 @@ describe('résolution par le vendeur (règlement physique)', () => {
       giveResource: 'water',
       giveTons: 2,
     });
-    await expect(
-      respondManualOffer(pool, seller, net.id, 'accept'),
-    ).rejects.toMatchObject({
-      code: 'not_available',
-      message: expect.stringContaining('plein'),
-    });
-    await cancelManualOffer(pool, buyer, net.id);
+    const accepted = await respondManualOffer(pool, seller, net.id, 'accept');
+    expect(accepted.status).toBe('accepted');
+    const overfilled = await planetDetail(pool, seller, sellerStarter);
+    expect(overfilled.storageUsedT).toBeGreaterThan(overfilled.storageCapT);
   });
 
   it('expiration 48 h : balayée à la lecture, réponse refusée', async () => {

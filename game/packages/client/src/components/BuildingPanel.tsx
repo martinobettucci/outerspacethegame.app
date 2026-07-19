@@ -54,6 +54,7 @@ export function BuildingPanel({
   onAmmLiquidity,
   onBuildShip,
   shipBuilds,
+  onRetool,
   onLevelUp,
   onDemolish,
   onClose,
@@ -104,6 +105,8 @@ export function BuildingPanel({
     size: string;
     completesAt: string;
   }[];
+  /** Ouvre le sélecteur de recette en mode retool (industries actives). */
+  onRetool?: () => void;
   onLevelUp: () => void;
   onDemolish: () => void;
   onClose: () => void;
@@ -202,7 +205,9 @@ export function BuildingPanel({
           label={
             building.status === 'demolishing'
               ? `${t.planet.demolish} · L${building.level}`
-              : `${t.planet.constructing} · L${building.level}`
+              : building.status === 'retooling'
+                ? `${t.planet.retooling} · ${(building.recipe ?? '').replace(/_/g, ' ')}`
+                : `${t.planet.constructing} · L${building.level}`
           }
           tone={building.status === 'demolishing' ? 'danger' : 'warning'}
         />
@@ -788,6 +793,15 @@ export function BuildingPanel({
           >
             {t.planet.apply}
           </button>
+          {building.status === 'active' && onRetool && (
+            <button
+              type="button"
+              className="ls-button ls-button--violet ls-button--block"
+              onClick={onRetool}
+            >
+              <Gauge size={13} aria-hidden /> {t.planet.retool}
+            </button>
+          )}
         </section>
       )}
 

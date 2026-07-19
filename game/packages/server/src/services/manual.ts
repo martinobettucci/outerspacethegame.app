@@ -418,17 +418,9 @@ export async function respondManualOffer(
         `Stock insuffisant : ${offer.get_resource} (${available.toFixed(1)} T)`,
       );
     }
-    // Physique §3.3b : l'overfill EXISTE (seules les productions s'arrêtent
-    // au cap) — on ne refuse que si l'échange AGGRAVE un dépassement, pas
-    // un troc net-neutre ou déstockant sur un monde déjà plein.
-    const usedT = Object.values(snap.stocks).reduce(
-      (s, v) => s + ((v as number) ?? 0),
-      0,
-    );
-    const deltaT = giveT - getT;
-    if (deltaT > 0 && usedT + deltaT > snap.storageCapT + 1e-9) {
-      throw new CommandError('not_available', 'Stockage du monde plein');
-    }
+    // Canon §3.3b : « swaps/deliveries may overfill (physics) » — la
+    // lecture complète du canon (chunk Y) a levé le contrôle net-delta
+    // du chunk T : seule la PRODUCTION s'arrête au cap.
 
     const left = (cargo[offer.give_resource] ?? 0) - giveT;
     if (left <= 1e-9) delete cargo[offer.give_resource];

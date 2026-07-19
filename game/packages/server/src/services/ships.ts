@@ -1115,21 +1115,14 @@ export async function transferCargo(
           `Soute insuffisante : ${resource}`,
         );
       }
-      // Cap de stockage : refus EXPLICITE plutôt qu'une perte silencieuse.
+      // Canon §3.3b (aligné chunk Y) : « swaps/deliveries may overfill
+      // (physics) ; only production halts at cap » — la décharge atterrit
+      // TOUJOURS (rien ne se perd) ; le frein/halt de production absorbe
+      // le trop-plein, visible au census et à l'écran de stats.
       const snap = await loadProductionSnapshot(client, bodyId, nowMs, {
         forUpdate: true,
       });
       if (!snap) throw new CommandError('not_found', 'Planète inconnue');
-      const usedT = Object.values(snap.stocks).reduce(
-        (s, v) => s + (v ?? 0),
-        0,
-      );
-      if (usedT + tons > snap.storageCapT + 1e-9) {
-        throw new CommandError(
-          'not_available',
-          `Stockage plein (${Math.round(usedT)}/${snap.storageCapT} T)`,
-        );
-      }
       await client.query(
         `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
          VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))

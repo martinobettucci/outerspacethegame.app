@@ -310,6 +310,10 @@ export const t = {
     ammPctLabel: 'Withdraw (%)',
     ammWithdraw: 'Withdraw',
     ammLiquidityApplied: 'Pool liquidity updated.',
+    retool: 'Retool',
+    retooling: 'Retooling',
+    retoolStarted: 'Retool under way — production paused (24 game h).',
+    retoolInstant: 'Forge world: instant retool — production continues.',
     triadNudge:
       'No food pair within telescope range — hubs run food/cells + water/cells + fuel/cells (hospitality triad).',
     marketBuys: 'Buys',

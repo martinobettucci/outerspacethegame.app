@@ -168,6 +168,14 @@ evaluated stock.
   window. Warehouse public/private visibility lives in `buildings.config`
   (004 pattern) — no dedicated schema.
 
+## 013_retool (industry retooling, DG §5.1)
+
+- `buildings.status` gains `retooling`: production pauses while the new
+  recipe (written immediately) awaits `retool_complete`; the rebase only
+  counts ACTIVE industries, so no other schema is needed. The
+  Industrialist instant-switch window lives in `buildings.config`
+  (`lastInstantRetoolMs`, 004 pattern).
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

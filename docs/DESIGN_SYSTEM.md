@@ -178,6 +178,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   name) → destructive-styled `Install forever` enabled ONLY on exact
   match. This is the reference implementation of "irreversible action =
   typed confirmation, never a simple OK".
+- **Retool (implemented, chunk Y)** — the industry tuning section ends
+  with a violet `Retool` button (active buildings only) that reopens the
+  same RecipePicker used at placement; during the swap the panel shows a
+  warning `Retooling · <recipe>` OperationTimer and the status pill
+  reads `retooling`; notices distinguish the Industrialist instant path
+  ("Forge world: instant retool") from the standard pause ("production
+  paused (24 game h)").
 - **Manual channel (implemented, chunk T)** — three surfaces. Warehouse
   building panel: "Warehouse visibility" select (Private — hidden
   reserve / Public — browsable dockside) with an explanatory subtitle

@@ -6,6 +6,8 @@
  * des transactions ; chaque commande rebase les débits de la planète.
  */
 import {
+  RETOOL_HOURS,
+  INSTANT_RETOOL_WINDOW_HOURS,
   FOOD_RESOURCES,
   isAmmSlot,
   BASIC_RESOURCES,
@@ -598,6 +600,7 @@ async function validateRecipe(
   bodyId: string,
   buildingKey: BuildingKey,
   recipe: string | null,
+  opts: { excludeBuildingId?: string } = {},
 ): Promise<string | null> {
   const def = BUILDINGS[buildingKey];
   if (!def.batchesPerDayByLevel) {
@@ -641,8 +644,9 @@ async function validateRecipe(
       // Max 1 extracteur par gisement (DG §3.3) — toute instance non démolie.
       const { rows: taken } = await client.query(
         `SELECT 1 FROM buildings
-         WHERE body_id = $1 AND recipe = $2 AND status <> 'demolishing' LIMIT 1`,
-        [bodyId, recipe],
+         WHERE body_id = $1 AND recipe = $2 AND status <> 'demolishing'
+           AND ($3::uuid IS NULL OR id <> $3) LIMIT 1`,
+        [bodyId, recipe, opts.excludeBuildingId ?? null],
       );
       if (taken[0]) {
         throw new CommandError(
@@ -758,6 +762,95 @@ export async function placeBuilding(
     await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
     return { buildingId: created[0]!.id, completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Rééquipage d'une industrie (DG §5.1 : « re-targeting = 24 h retool »
+ * [TUNE]) : la nouvelle recette est écrite immédiatement mais la
+ * production S'ARRÊTE (statut `retooling`, le rebase ne compte que les
+ * industries actives) jusqu'à retool_complete. Gouvernance TOUTE
+ * Industrialist (DG §4.1) : retool INSTANTANÉ, ≤ 1 switch par fenêtre de
+ * 24 h — au-delà, le retool standard s'applique [TUNE-v1 interp]. Les
+ * réductions de durée du monde-forge (−25/40/50 %) arrivent avec la
+ * spécialisation (annoncé).
+ */
+export async function retoolBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  recipe: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ instant: boolean; completesAt: Date | null }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status, recipe, config FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    const b = rows[0];
+    if (!b) throw new CommandError('not_found', 'Bâtiment inconnu');
+    const def = BUILDINGS[b.key as BuildingKey];
+    if (!def?.batchesPerDayByLevel) {
+      throw new CommandError('not_available', 'Seule une industrie se rééquipe');
+    }
+    if (b.status !== 'active') {
+      throw new CommandError(
+        'not_available',
+        'Le bâtiment doit être actif pour se rééquiper',
+      );
+    }
+    if (b.recipe === recipe) {
+      throw new CommandError('recipe_invalid', 'Cette recette est déjà montée');
+    }
+    await validateRecipe(client, bodyId, b.key as BuildingKey, recipe, {
+      excludeBuildingId: buildingId,
+    });
+
+    // Chemin instantané : gouvernance TOUTE Industrialist, fenêtre libre.
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    const allIndustrialist =
+      archetypes.length > 0 && archetypes.every((a) => a === 'industrialist');
+    const windowMs =
+      (INSTANT_RETOOL_WINDOW_HOURS * 3_600_000) / timeScale;
+    const lastInstantMs = Number(b.config?.lastInstantRetoolMs ?? 0);
+    if (allIndustrialist && nowMs - lastInstantMs >= windowMs) {
+      await client.query(
+        `UPDATE buildings
+           SET recipe = $2,
+               config = config || jsonb_build_object('lastInstantRetoolMs', $3::bigint)
+         WHERE id = $1`,
+        [buildingId, recipe, nowMs],
+      );
+      await recomputePlanetRates(client, bodyId, nowMs);
+      await client.query('COMMIT');
+      return { instant: true, completesAt: null };
+    }
+
+    const completesAt = new Date(
+      nowMs + (RETOOL_HOURS * 3_600_000) / timeScale,
+    );
+    await client.query(
+      `UPDATE buildings
+         SET status = 'retooling', recipe = $2, completes_at = $3
+       WHERE id = $1`,
+      [buildingId, recipe, completesAt],
+    );
+    await enqueue(client, 'retool_complete', completesAt, { buildingId });
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { instant: false, completesAt };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

@@ -78,6 +78,7 @@ import {
   levelUpBuilding,
   placeBuilding,
   planetDetail,
+  retoolBuilding,
   setBuildingSettings,
   unlockNode,
 } from '../services/planets.js';
@@ -133,6 +134,7 @@ const manualRespondSchema = z.object({
   action: z.enum(['accept', 'decline']),
 });
 const governorSchema = z.object({ npcId: z.string().uuid() });
+const retoolSchema = z.object({ recipe: z.string().min(1).max(64) });
 const governorPreviewSchema = z.object({
   npcIds: z.array(z.string().uuid()).min(1).max(3),
 });
@@ -1045,6 +1047,18 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await postMessage(deps.pool, player.id, id, parsed.data.body);
       return { ok: true };
     });
+  });
+
+  app.post('/planets/:id/buildings/:bid/retool', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id, bid } = req.params as { id: string; bid: string };
+    const parsed = retoolSchema.safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      retoolBuilding(deps.pool, player.id, id, bid, parsed.data.recipe, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   app.patch('/planets/:id/buildings/:buildingId', async (req, reply) => {

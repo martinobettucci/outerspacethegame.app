@@ -88,6 +88,11 @@ export function PlanetView({ planetId }: { planetId: string }) {
     recipe: string | null;
   } | null>(null);
   const [recipePickerFor, setRecipePickerFor] = useState<BuildingKey | null>(null);
+  // Retool (DG §5.1) : sélecteur de recette réutilisé pour une industrie POSÉE.
+  const [retoolFor, setRetoolFor] = useState<{
+    buildingId: string;
+    key: BuildingKey;
+  } | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
@@ -850,6 +855,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     setNotice((err as ApiError).message ?? t.errors.generic);
                   }
                 }}
+                onRetool={() =>
+                  setRetoolFor({ buildingId: b.id, key: b.key })
+                }
                 onLevelUp={async () => {
                   try {
                     await api.levelUp(planetId, b.id);
@@ -1602,6 +1610,24 @@ export function PlanetView({ planetId }: { planetId: string }) {
             setRecipePickerFor(null);
           }}
           onCancel={() => setRecipePickerFor(null)}
+        />
+      )}
+      {retoolFor && (
+        <RecipePicker
+          planet={planet}
+          building={retoolFor.key}
+          onPick={async (recipe) => {
+            const target = retoolFor;
+            setRetoolFor(null);
+            try {
+              const r = await api.retoolBuilding(planetId, target.buildingId, recipe);
+              setNotice(r.instant ? t.planet.retoolInstant : t.planet.retoolStarted);
+              await refresh();
+            } catch (err) {
+              setNotice((err as ApiError).message ?? t.errors.generic);
+            }
+          }}
+          onCancel={() => setRetoolFor(null)}
         />
       )}
     </div>

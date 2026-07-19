@@ -89,8 +89,12 @@ export const BUILD_HOURS_BY_LEVEL = [6, 24, 72] as const;
 export const DEMOLISH_REFUND_RATIO = 0.5;
 export const DEMOLISH_HOURS = 6;
 
-/** Retooling d'une industrie (changement de recette), heures. [TUNE] DG §6 */
+/** Rééquipage d'une industrie : « re-targeting = 24 h retool ». [TUNE] */
 export const RETOOL_HOURS = 24;
+/** Gouvernance Industrialist : retool INSTANTANÉ, ≤ 1 switch par 24 h
+ * (DG §4.1) — au-delà de la fenêtre, le retool standard s'applique
+ * [TUNE-v1 interp]. */
+export const INSTANT_RETOOL_WINDOW_HOURS = 24;
 
 const half = (b: CostBundle): CostBundle =>
   Object.fromEntries(

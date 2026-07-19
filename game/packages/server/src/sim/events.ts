@@ -19,6 +19,7 @@ export type EventKind =
   | 'colony_established'
   | 'census_run'
   | 'dock_eviction'
+  | 'retool_complete'
   | 'noop';
 
 export interface GameEvent {
