@@ -315,7 +315,13 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    [interp]). Temperate worlds and buildings never require shields;
    transit/warehoused/colonizing/derelict exempt [TUNE-v1].
    Poison-harvest wear stays dormant until poison-deposit harvesting
-   exists (announced).
+   exists (announced). **Workshop repair (chunk AH, DG §8.7):** docked
+   on an OWNED world with an active workshop, damaged hulls regain
+   5% max-HP/hour × level mult (1/2/4, best workshop [TUNE-v1]);
+   steel_l is billed to the planet stock at 0.1 T/HP [TUNE-v1]
+   (all-or-nothing family, recompute flip — dry steel stops repair);
+   the `hull_repaired` edge stops billing at full; wear and repair NET
+   on hostile worlds; foreign worlds never serve (whom-to-serve P4).
 
 ### Intel tiers (implemented, chunk Q)
 

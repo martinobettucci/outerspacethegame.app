@@ -59,3 +59,17 @@ export function hullWearPerDay(
   wear += Math.max(0, opts.harvestDamagePerDay ?? 0);
   return wear;
 }
+
+/** Réparation d'atelier (DG §8.7) : fraction des HP max rendue par HEURE
+ * à quai d'un monde à workshop ACTIF [TUNE]. */
+export const REPAIR_FRACTION_PER_HOUR = 0.05;
+/** Multiplicateur par niveau d'atelier (×1/×2/×4 — DG §8.7) [TUNE]. */
+export const REPAIR_LEVEL_MULT: readonly number[] = [1, 2, 4];
+/** Acier consommé par HP rendu (« costs steel proportional ») [TUNE-v1]. */
+export const REPAIR_STEEL_T_PER_HP = 0.1;
+
+/** Taux de réparation (HP/jour) d'un atelier de niveau donné. */
+export function repairHpPerDay(maxHp: number, workshopLevel: number): number {
+  const mult = REPAIR_LEVEL_MULT[workshopLevel - 1] ?? 0;
+  return REPAIR_FRACTION_PER_HOUR * 24 * maxHp * mult;
+}

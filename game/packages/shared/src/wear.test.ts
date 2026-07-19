@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   HULL_WEAR_FLOOR_HP,
   hullWearPerDay,
+  repairHpPerDay,
+  REPAIR_STEEL_T_PER_HP,
   SHIELD_COST,
   SHIELD_KINDS,
   shieldForClimate,
@@ -50,5 +52,18 @@ describe('SHIELD_COST — 15 steelL + 5 cristal apparié [TUNE]', () => {
     expect(SHIELD_COST.hot).toEqual({ steel_l: 15, crystal_hot: 5 });
     expect(SHIELD_COST.cold).toEqual({ steel_l: 15, crystal_cold: 5 });
     expect(SHIELD_COST.radio).toEqual({ steel_l: 15, crystal_nox: 5 });
+  });
+});
+
+describe('repairHpPerDay — 5 %/h × mult(1/2/4) [TUNE]', () => {
+  it('Cargo S (80 HP) : L1 96, L2 192, L3 384 HP/jour ; niveau inconnu 0', () => {
+    expect(repairHpPerDay(80, 1)).toBeCloseTo(96, 9);
+    expect(repairHpPerDay(80, 2)).toBeCloseTo(192, 9);
+    expect(repairHpPerDay(80, 3)).toBeCloseTo(384, 9);
+    expect(repairHpPerDay(80, 0)).toBe(0);
+  });
+
+  it('acier proportionnel : 0,1 T/HP [TUNE-v1]', () => {
+    expect(REPAIR_STEEL_T_PER_HP).toBe(0.1);
   });
 });

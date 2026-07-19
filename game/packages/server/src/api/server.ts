@@ -40,6 +40,7 @@ import {
   retrieveShip,
   setFleePolicy,
   setShipFuelForTest,
+  setShipHullForTest,
   setShipSurvivalForTest,
   transferCargo,
   transferFuel,
@@ -773,6 +774,26 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
           [player.id, parsed.data.role, parsed.data.rarity],
         );
         return { npcId: rows[0]!.id };
+      });
+    });
+
+    app.post('/test/ship-hull', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          shipId: z.string().uuid(),
+          hp: z.number().min(0).max(100_000),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        await setShipHullForTest(
+          deps.pool,
+          player.id,
+          parsed.data.shipId,
+          parsed.data.hp,
+        );
+        return { ok: true };
       });
     });
 

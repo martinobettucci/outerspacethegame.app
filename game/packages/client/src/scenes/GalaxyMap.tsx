@@ -1235,6 +1235,17 @@ export function GalaxyMap() {
                   {t.galaxy.hullWearing}
                 </span>
               )}
+              {selectedShip.hull.wearPerDay < 0 && (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--success-500, #238C33)',
+                  }}
+                >
+                  +{(-selectedShip.hull.wearPerDay).toFixed(1)} HP/day ·{' '}
+                  {t.galaxy.hullRepairing}
+                </span>
+              )}
             </section>
           )}
           {['cargo', 'combat'].includes(selectedShip.hullCategory) &&

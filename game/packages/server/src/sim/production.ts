@@ -81,6 +81,8 @@ export interface RatesInput {
    * DG §3.5 — 0.01 T/j/tête sur les familles food et water).
    */
   hoverSurvivalNeeds?: { food: number; water: number };
+  /** Acier de RÉPARATION des coques à quai (DG §8.7) — T/jour. */
+  repairSteelNeeds?: number;
 }
 
 export interface RatesResult {
@@ -97,6 +99,8 @@ export interface RatesResult {
   hoverConsumption: Partial<Record<ResourceId, number>>;
   /** Survie d'équipage en survol SERVIE par le stock (T/jour). */
   hoverSurvivalConsumption: { food: number; water: number };
+  /** Acier de réparation SERVI par le stock (T/jour). */
+  repairSteelConsumption: number;
   /** Utilisation du stockage total au moment du calcul. */
   storageU: number;
 }
@@ -327,6 +331,11 @@ export function computeRates(input: RatesInput): RatesResult {
     food: consumeFamily(FOOD_RESOURCES, input.hoverSurvivalNeeds?.food ?? 0),
     water: consumeFamily(['water'], input.hoverSurvivalNeeds?.water ?? 0),
   };
+  // Acier de réparation des coques à quai (DG §8.7) — même règle.
+  const repairSteelConsumption = consumeFamily(
+    ['steel_l'],
+    input.repairSteelNeeds ?? 0,
+  );
 
   return {
     stockRates,
@@ -336,6 +345,7 @@ export function computeRates(input: RatesInput): RatesResult {
     popNeeds,
     hoverConsumption,
     hoverSurvivalConsumption,
+    repairSteelConsumption,
     storageU,
   };
 }

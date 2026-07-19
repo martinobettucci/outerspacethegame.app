@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Réparation d'atelier (chunk AH)** : à quai de SON monde à workshop
+  ACTIF, une coque endommagée regagne 5 % de ses HP max par heure ×
+  mult(1/2/4 selon le niveau — le MEILLEUR atelier sert [TUNE-v1]),
+  l'acier étant facturé au stock planétaire proportionnellement (0,1 T
+  de steelL par HP rendu [TUNE-v1], tout-ou-rien famille — acier à sec
+  ⇒ la réparation s'arrête au recompute, patron fuel/survie). Le bord
+  hull_repaired coupe l'acier au plein. L'usure et la réparation se
+  COMPENSENT (net) sur les mondes hostiles. Mondes d'autrui : aucun
+  service (politique whom-to-serve — P4). UI : ligne verte « under
+  repair — the workshop bills steel per HP » sous la jauge de coque.
 - **Usure de coque & boucliers (chunk AG)** : opérer sans le bouclier
   apparié en environnement hostile coûte 5 % des HP max/jour [TUNE] par
   source (cumul additif) — monde chaud/froid sous la coque, zone ≤ 5 pc

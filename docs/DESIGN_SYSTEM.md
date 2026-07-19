@@ -201,6 +201,10 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Workshop repair (implemented, chunk AH)** — while a docked hull is
+  regaining HP the hull card swaps the amber wear line for a
+  success-green mono `+96.0 HP/day · under repair — the workshop bills
+  steel per HP`; the bar stays green.
 - **Hull & shields (implemented, chunk AG)** — every ship panel shows a
   "Hull — X/Y HP" card (Shield icon) with a 6 px bar (success-green;
   danger-red while wearing) and, when a toll runs, an amber mono line

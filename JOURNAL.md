@@ -2699,3 +2699,38 @@ le piggyback exige un objet fidèle.
   péage éteint ; captures sh-01/02.
 - Suites complètes après synchro : shared 137, unit 32, intégration
   **236/236**, **E2E 29/29 (11,6 min)**.
+
+## 2026-07-19 — Chunk AH : réparation d'atelier (DG §8.7)
+
+**Problème.** L'usure (chunk AG) était irréversible — l'effet
+« repair 5%/h ×1/2/4 » du workshop, écrit au catalogue depuis le début,
+n'avait pas de mécanique.
+
+### Canon appliqué
+
+- À quai de SON monde à workshop ACTIF : +5 % des HP max/heure ×
+  mult(1/2/4) — le MEILLEUR atelier sert [TUNE-v1, un seul chantier par
+  coque]. « Costs steel proportional to HP restored » : 0,1 T de steelL
+  par HP [TUNE-v1], facturé au stock planétaire en CONTINU (motif
+  hoverFuelNeeds : consumeFamily après la survie de la population,
+  tout-ou-rien famille, flip servi/non-servi au recompute — acier à sec
+  ⇒ arrêt propre).
+- Bord hull_repaired au plein : l'acier cesse (le filtre hp < max du
+  snapshot ET le rebase du handler se recoupent — pas de facturation
+  fantôme).
+- Usure et réparation se COMPENSENT : monde chaud possédé avec atelier
+  L1 sans bouclier = net +92 HP/j.
+- Mondes d'autrui : AUCUN service (la politique whom-to-serve du canon
+  est P4) — refus structurel, pas de configuration.
+
+### Vérifications
+
+- Shared 139/139 (repairHpPerDay L1/L2/L3, acier 0,1 T/HP).
+- Intégration repair.test.ts **6/6** : +96/−9,6 T/j L1, ×2 en L2, acier
+  à sec → 0 puis reprise, plein → hull_repaired coupe tout, monde
+  d'autrui → 0, net hostile 92.
+- E2E repair.spec.ts : jauge 40/80 + ligne verte « +96.0 HP/day », HP
+  qui REMONTENT en temps réel (poll API), acier facturé (−9,6 T/j au
+  détail planète) ; capture rp-01 observée.
+- Suites complètes après synchro : shared 139, unit 32, intégration
+  **242/242**, **E2E 30/30 (12,4 min)**.

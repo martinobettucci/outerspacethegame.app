@@ -1157,6 +1157,42 @@ export async function transferFuel(
  * l'état réel — l'échouage E2E devient déterministe sans attendre des
  * jours réels de drain.
  */
+/** Instrumentation E2E (§15) : fixe les HP de coque de SON vaisseau —
+ * rebase complet (la réparation d'atelier s'arme aussitôt à quai). */
+export async function setShipHullForTest(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  hp: number,
+  nowMs = Date.now(),
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    await client.query(
+      `UPDATE ships SET hull_hp = $2, hull_as_of = to_timestamp($3 / 1000.0)
+       WHERE id = $1`,
+      [shipId, Math.max(0, hp), nowMs],
+    );
+    await rebaseShipDrain(
+      client,
+      { ...ship, hull_hp: Math.max(0, hp), hull_as_of: new Date(nowMs) },
+      nowMs,
+      ship.status === 'docked' ? 'none' : 'tank',
+    );
+    if (ship.status === 'docked' && ship.docked_body_id) {
+      await recomputePlanetRates(client, ship.docked_body_id, nowMs);
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function setShipFuelForTest(
   pool: pg.Pool,
   playerId: string,

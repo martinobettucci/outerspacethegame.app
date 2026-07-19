@@ -18,6 +18,8 @@ import {
   type Quality,
   type Rarity,
   RARITY_TIER_INDEX,
+  REPAIR_STEEL_T_PER_HP,
+  repairHpPerDay,
   type ResourceId,
   survivalDrainTPerDay,
 } from '@atg/shared';
@@ -30,7 +32,7 @@ import {
   type IndustryState,
   type RatesResult,
 } from './production.js';
-import { rebaseShipDrain, shipFuelState } from './shipDrain.js';
+import { evalShipHull, rebaseShipDrain, shipFuelState } from './shipDrain.js';
 
 /** Coque du propriétaire en survol — candidate au drain planétaire (GB §7).
  * Ligne `ships` COMPLÈTE : le rebase en cascade touche aussi la SURVIE —
@@ -74,6 +76,11 @@ export interface ProductionSnapshot {
     recipe: string | null;
   }[];
   hoverShips: HoverShip[];
+  /** Coques du propriétaire À QUAI en réparation (hp < max, atelier actif). */
+  repairShips: (Record<string, unknown> & {
+    id: string;
+    repairHpPerDay: number;
+  })[];
   rates: RatesResult;
 }
 
@@ -195,6 +202,33 @@ export async function loadProductionSnapshot(
     }
   }
 
+  // Réparation d'atelier (DG §8.7) : les coques du PROPRIÉTAIRE à quai,
+  // endommagées, sur un monde à workshop ACTIF — le MEILLEUR niveau sert
+  // [TUNE-v1]. L'acier est prélevé au stock (proportionnel aux HP rendus).
+  const repairShips: ProductionSnapshot['repairShips'] = [];
+  let repairSteelNeeds = 0;
+  if (body.owner_id) {
+    const bestWorkshop = buildingRows
+      .filter((b) => b.key === 'workshop' && b.status === 'active')
+      .reduce((best, b) => Math.max(best, Number(b.level)), 0);
+    if (bestWorkshop > 0) {
+      const { rows: dockedRows } = await client.query(
+        `SELECT * FROM ships
+         WHERE docked_body_id = $1 AND owner_id = $2 AND status = 'docked'
+         ORDER BY id${lock}`,
+        [bodyId, body.owner_id],
+      );
+      for (const r of dockedRows) {
+        const { hp, maxHp } = evalShipHull(r, nowMs);
+        if (maxHp <= 0 || hp >= maxHp - 1e-9) continue;
+        const rate = repairHpPerDay(maxHp, bestWorkshop);
+        if (rate <= 0) continue;
+        repairShips.push({ ...r, repairHpPerDay: rate });
+        repairSteelNeeds += rate * REPAIR_STEEL_T_PER_HP;
+      }
+    }
+  }
+
   let depotBonus = 0;
   const industries: IndustryState[] = [];
   for (const b of buildingRows) {
@@ -262,6 +296,7 @@ export async function loadProductionSnapshot(
     industries,
     hoverFuelNeeds,
     hoverSurvivalNeeds,
+    repairSteelNeeds,
   });
 
   return {
@@ -289,6 +324,7 @@ export async function loadProductionSnapshot(
       recipe: b.recipe,
     })),
     hoverShips,
+    repairShips,
     rates,
   };
 }
@@ -359,6 +395,21 @@ export async function recomputePlanetRates(
         (hoverNeedByRes[s.resource] ?? 0) - 1e-9;
     await rebaseShipDrain(client, s, nowMs, served ? 'none' : 'tank', {
       survivalServed,
+    });
+  }
+  // Réparation (DG §8.7) : tout-ou-rien sur la famille steel_l [TUNE-v1] —
+  // servie ⇒ chaque coque à quai regagne son taux d'atelier ; à sec ⇒ la
+  // réparation s'arrête au prochain recompute (patron fuel/survie).
+  const repairNeedTotal = snap.repairShips.reduce(
+    (t, r) => t + r.repairHpPerDay * REPAIR_STEEL_T_PER_HP,
+    0,
+  );
+  const repairServed =
+    repairNeedTotal <= 1e-9 ||
+    snap.rates.repairSteelConsumption >= repairNeedTotal - 1e-9;
+  for (const r of snap.repairShips) {
+    await rebaseShipDrain(client, r, nowMs, 'none', {
+      repairHpPerDay: repairServed ? r.repairHpPerDay : 0,
     });
   }
 

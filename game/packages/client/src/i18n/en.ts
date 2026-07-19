@@ -146,6 +146,7 @@ export const t = {
     fitHarvestRig: 'Fit harvest rig',
     hullTitle: 'Hull',
     hullWearing: 'wearing — hostile environment, no matching shield',
+    hullRepairing: 'under repair — the workshop bills steel per HP',
     fitShieldHot: 'Fit heat shield',
     fitShieldCold: 'Fit cryo shield',
     fitShieldRadio: 'Fit radiation shield',

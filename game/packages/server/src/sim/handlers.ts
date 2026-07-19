@@ -819,6 +819,27 @@ export const starSupernova: EventHandler = async (client, event) => {
   }
 };
 
+/**
+ * hull_repaired { shipId } — la coque atteint ses HP max : l'atelier
+ * cesse de facturer l'acier. Rebase pessimiste de la coque (plein ⇒
+ * taux 0) puis recompute du monde (le besoin d'acier tombe). Idempotent.
+ */
+export const hullRepaired: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND status = 'docked' FOR UPDATE`,
+    [shipId],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  const nowMs = event.dueAt.getTime();
+  await rebaseShipDrain(client, ship, nowMs, 'none');
+  if (ship.docked_body_id) {
+    await recomputePlanetRates(client, ship.docked_body_id, nowMs);
+  }
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -839,6 +860,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     survival_low: survivalLow(1),
     harvest_full: harvestFull,
     star_supernova: starSupernova,
+    hull_repaired: hullRepaired,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

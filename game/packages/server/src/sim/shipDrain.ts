@@ -69,7 +69,11 @@ export async function rebaseShipDrain(
   ship: ShipRow,
   nowMs: number,
   target: 'tank' | 'none',
-  opts: { setUnits?: number; survivalServed?: boolean } = {},
+  opts: {
+    setUnits?: number;
+    survivalServed?: boolean;
+    repairHpPerDay?: number;
+  } = {},
 ): Promise<{ type: string; units: number; ratePerDay: number }> {
   const evaluated = evalShipFuel(ship, nowMs);
   const units = Math.max(0, opts.setUnits ?? evaluated.units);
@@ -101,8 +105,11 @@ export async function rebaseShipDrain(
     survivalServed: opts.survivalServed,
   });
   // L'USURE de coque suit les mêmes points (GB §27 : climat, hasards,
-  // récolte d_safe — le péage se rebase là où l'état change).
-  await rebaseShipHull(client, ship, nowMs);
+  // récolte d_safe, réparation d'atelier — tout se rebase là où l'état
+  // change ; le taux de réparation SERVI vient du recompute planétaire).
+  await rebaseShipHull(client, ship, nowMs, {
+    repairHpPerDay: opts.repairHpPerDay,
+  });
   return { type: evaluated.type, units, ratePerDay: rate };
 }
 
@@ -258,6 +265,7 @@ export async function rebaseShipHull(
   client: pg.PoolClient,
   ship: ShipRow,
   nowMs: number,
+  opts: { repairHpPerDay?: number } = {},
 ): Promise<{ hp: number; maxHp: number; wearPerDay: number }> {
   const { hp, maxHp } = evalShipHull(ship, nowMs);
   if (maxHp <= 0) return { hp: 0, maxHp: 0, wearPerDay: 0 };
@@ -330,12 +338,39 @@ export async function rebaseShipHull(
     hazardZoneUnshielded,
     harvestDamagePerDay,
   });
-  const rate = hp > Math.min(HULL_WEAR_FLOOR_HP, maxHp) + 1e-9 ? -wearPerDay : 0;
+  // Réparation d'atelier (DG §8.7) : taux SERVI transmis par le recompute
+  // planétaire (défaut pessimiste 0) — nul si la coque est déjà pleine.
+  const repair =
+    ship.status === 'docked' && hp < maxHp - 1e-9
+      ? Math.max(0, opts.repairHpPerDay ?? 0)
+      : 0;
+  const net = repair - wearPerDay;
+  const rate =
+    net < 0 && hp > Math.min(HULL_WEAR_FLOOR_HP, maxHp) + 1e-9
+      ? net
+      : net > 0
+        ? net
+        : 0;
   await client.query(
     `UPDATE ships SET hull_hp = $2, hull_wear_hp_per_day = $3,
         hull_as_of = to_timestamp($4 / 1000.0)
      WHERE id = $1`,
     [ship.id, hp, rate, nowMs],
   );
+  // Bord de PLEIN (rate > 0) : l'événement hull_repaired arrête l'acier.
+  await client.query(
+    `DELETE FROM events
+     WHERE processed_at IS NULL AND kind = 'hull_repaired'
+       AND payload->>'shipId' = $1`,
+    [ship.id],
+  );
+  if (rate > 0) {
+    const at = whenReaches({ amount: hp, ratePerDay: rate, asOfMs: nowMs }, maxHp);
+    if (at !== null) {
+      await enqueue(client, 'hull_repaired', new Date(Math.ceil(at) + 2), {
+        shipId: ship.id,
+      });
+    }
+  }
   return { hp, maxHp, wearPerDay: -rate };
 }
