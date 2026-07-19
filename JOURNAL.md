@@ -3071,3 +3071,53 @@ backlog ligne 84.
 E_planet ≈ 0,6 au départ → 0,96 en ~13 j → pic ~18 j : arc de montée en
 puissance porté par la croissance existante. Chunk AP dédié (après AN) :
 re-balayage des tests qui supposent E_planet ≈ 0,95 + DG §2.2.
+
+## 2026-07-19 — Brainstorm responsable : mécanique CENTRALE population/emploi/exode (v2)
+
+**Décisions actées (2 tours de questions) — spec chiffrée à rédiger,
+PUIS simulations d'équilibrage, PUIS code. Chunks AO/AP suspendus.**
+
+- Croissance ∝ efficience moyenne de la planète × flux de vie (déficit
+  local eau/vivres/oxygène freine ; abondance locale bonus ; VIVRE
+  D'IMPORTS NE NOURRIT PAS LA CROISSANCE — mondes-comptoirs à
+  démographie molle, volontaire).
+- Cloche penchée CONSERVÉE entière par bâtiment (l'invariant « 35
+  ouvriers = production fixe » du 1er tour est ABANDONNÉ) : l'optimum
+  scale avec la population totale → à staff constant, u glisse à gauche
+  et la production S'ÉRODE — négligence = érosion, pas stagnation.
+  Effet « empire romain » assumé : trop d'expansion = fuites partout.
+- E_planet(pop/cap) global : SUPPRIMÉ (lecture annoncée au responsable,
+  sans objection à ce stade) — remplacé par optimums-par-pop +
+  parabole maladie/mortalité au-delà du cap (dépassement AUTORISÉ).
+- TOUS les bâtiments emploient (plus seulement les industries) ;
+  niveaux = plus de postes ET meilleure productivité par ouvrier.
+- Chômage : tolérance 7 % + période de grâce ; au-delà, mortalité par
+  vagues frappant TOUTE la population (le staff décrémente
+  proportionnellement → momentum de déclin vers l'extinction).
+- Toute planète NEUVE naît en horloge de mort (« la vie du
+  colonisateur ») — la grâce de colonisation (et starter) adoucit.
+- Horloges de mort planétaires : eau 0 → tous morts en 3 j ;
+  nourriture 0 → 10 j ; oxygène 0 → INSTANTANÉ (climats hostiles
+  seulement — temperate = oxygène ambiant, différenciation climatique).
+- Démographie 3 catégories : enfants —20 j→ actifs —60 j→ seniors
+  (mortels, ~30 j [TUNE]) ; rations réduites enfants/seniors [TUNE] ;
+  seuls les actifs sont employables ; pyramide affichée dans les stats.
+- Natalité : residential L1 l'ÉTABLIT, L2/L3 la boostent (quasi
+  obligatoire pour l'autosuffisance ; alternative = importer de la
+  population via transporteurs civils — aucun marché de population
+  mécanisé, la lore et le chat font le reste).
+- Cliniques : NOUVEAU bâtiment (stubs à créer) — baisse la maladie ;
+  surpopulation → maladie → morts.
+- Embarquement de settlers PAR catégorie, sans garde-fou moral (jeu
+  « no honor ») ; contrepartie : morts/exodés par catégorie visibles à
+  l'intel télescope de bon niveau — la réputation émerge.
+- Extinction : perte de propriété, bâtiments CONSERVÉS (bonus du
+  recolonisateur, grâce applicable), gouverneurs morts (host-fate).
+  À surveiller en simulation/P5 : siège → extinction → recolonisation
+  = conquête lente sans pillage.
+- Fréquence des ressources (question du responsable) : aucune — stock
+  continu lazy à la seconde, UI 4 s, tick 60 s = événements seulement.
+
+**Reste ouvert** : ancres d'équilibrage Q20 (moments cibles proposés :
+postes saturés J+20 / exode rentable J+35 ; négligence 10 j réversible,
+30 j fatale ; pyramide stable ≈ 18/55/27) — en attente du responsable.
