@@ -35,6 +35,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 19 | `game/packages/server/migrations/019_stargates.sql` | Stargates v1 (GB §6, DG §9.3) : table stargates | 001 | DROP TABLE stargates |
 | 20 | `game/packages/server/migrations/020_stargate_proposals.sql` | Consentement 50/50 des stargates (GB §6) : table stargate_proposals | 019 | DROP TABLE stargate_proposals |
 | 21 | `game/packages/server/migrations/021_auto_trade.sql` | Auto-trade du survol (GB §7) : règles jsonb sur ships | 001 | DROP de la colonne |
+| 22 | `game/packages/server/migrations/022_pop_v2.sql` | Population v2 chunk BA (DG §3.2-v2) : pyramide (`pop_children`/`pop_seniors`, backfill 18,2/27,3 %), `clock_deadlines`, `demo_counters` | 001 | DROP des colonnes |
 
 ## Services à déployer (au premier déploiement)
 

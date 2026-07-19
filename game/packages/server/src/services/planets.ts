@@ -123,6 +123,10 @@ export interface PlanetDetail {
   tiles: number;
   isStarter: boolean;
   population: number;
+  /** Pyramide v2 (DG §3.2-v2 a) — population = total. */
+  pyramid: { children: number; actives: number; seniors: number };
+  /** Horloges de mort en cours (échéance ISO par famille de survie). */
+  clockDeadlines: Partial<Record<'water' | 'food', string>>;
   popCap: number;
   illness: number;
   planetEfficiency: number;
@@ -394,6 +398,12 @@ export async function planetDetail(
       tiles: body.tiles,
       isStarter: body.is_starter,
       population: snap.population,
+      pyramid: {
+        children: Math.round(snap.pyramid.children),
+        actives: Math.round(snap.pyramid.actives),
+        seniors: Math.round(snap.pyramid.seniors),
+      },
+      clockDeadlines: snap.clockDeadlines,
       popCap: cap,
       illness: snap.illness,
       planetEfficiency: efficiency(snap.population / cap),

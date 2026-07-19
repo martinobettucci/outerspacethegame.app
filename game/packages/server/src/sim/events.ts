@@ -29,6 +29,7 @@ export type EventKind =
   | 'salvage_claimed'
   | 'stargate_built'
   | 'auto_trade_check'
+  | 'pop_clock'
   | 'noop';
 
 export interface GameEvent {

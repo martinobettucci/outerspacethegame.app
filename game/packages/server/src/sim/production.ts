@@ -19,6 +19,7 @@ import {
   efficiency,
   FOOD_RESOURCES,
   MEDICINE_RESOURCES,
+  OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   RECIPES,
   storageBrake,
@@ -62,6 +63,13 @@ export interface RatesInput {
   planetMultiplier: number;
   /** Population (consommation de survie). */
   population: number;
+  /**
+   * v2 (DG §3.2-v2 b) : têtes PONDÉRÉES pour les rations (actifs 1×,
+   * enfants/seniors 0,6×). Absent = population brute (compat v1).
+   */
+  weightedHeadsCount?: number;
+  /** v2 : la population respire l'oxygène AU STOCK (climat hostile). */
+  breathesOxygen?: boolean;
   /** Cap de stockage total (franchise + dépôts). */
   storageCapT: number;
   /** Réserves AMM (T) — physiques, comptées au cap, non dépensables. */
@@ -92,9 +100,9 @@ export interface RatesResult {
   depositRates: Partial<Record<ResourceId, number>>;
   industries: IndustryRate[];
   /** Consommation de survie effective (pour H au pop_daily). */
-  popConsumption: { food: number; water: number; medicine: number };
+  popConsumption: { food: number; water: number; medicine: number; oxygen: number };
   /** Besoins théoriques (pour les saturations). */
-  popNeeds: { food: number; water: number; medicine: number };
+  popNeeds: { food: number; water: number; medicine: number; oxygen: number };
   /** Drain de loitering SERVI par le stock, par fuel_x (T/jour). */
   hoverConsumption: Partial<Record<ResourceId, number>>;
   /** Survie d'équipage en survol SERVIE par le stock (T/jour). */
@@ -205,12 +213,14 @@ export function computeRates(input: RatesInput): RatesResult {
   }
 
   // 2. Consommation de survie de la population (nourriture en priorité
-  //    food_1 → food_3, médecine med_1 → med_3 [TUNE]).
-  const per1000 = input.population / 1_000;
+  //    food_1 → food_3, médecine med_1 → med_3 [TUNE]). v2 : têtes
+  //    pondérées (C/S ×0,6) + oxygène au stock sur climat hostile.
+  const per1000 = (input.weightedHeadsCount ?? input.population) / 1_000;
   const popNeeds = {
     food: POP_NEEDS_PER_1000_PER_DAY.food * per1000,
     water: POP_NEEDS_PER_1000_PER_DAY.water * per1000,
     medicine: POP_NEEDS_PER_1000_PER_DAY.medicine * per1000,
+    oxygen: input.breathesOxygen ? OXYGEN_PER_1000_PER_DAY * per1000 : 0,
   };
 
   // 3. Point fixe : partage des intrants à sec au prorata des demandes.
@@ -313,6 +323,8 @@ export function computeRates(input: RatesInput): RatesResult {
     food: consumeFamily(FOOD_RESOURCES, popNeeds.food),
     water: consumeFamily(['water'], popNeeds.water),
     medicine: consumeFamily(MEDICINE_RESOURCES, popNeeds.medicine),
+    oxygen:
+      popNeeds.oxygen > EMPTY ? consumeFamily(['oxygen'], popNeeds.oxygen) : 0,
   };
 
   // Drain de loitering des coques en survol (GB §7) : après la survie de

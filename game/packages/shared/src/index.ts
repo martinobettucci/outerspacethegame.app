@@ -21,3 +21,4 @@ export * from './wear.js';
 export * from './junk.js';
 export * from './stargates.js';
 export * from './autoTrade.js';
+export * from './popv2.js';

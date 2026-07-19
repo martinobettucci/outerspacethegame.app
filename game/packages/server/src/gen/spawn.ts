@@ -23,6 +23,7 @@ import {
   PEOPLES,
   popCap,
   SeededStream,
+  STABLE_PYRAMID,
   STARTER_PRE_UNLOCKED,
   type People,
   type ResourceBundle,
@@ -212,9 +213,9 @@ export async function spawnStarterSystem(
   const { rows: pRows } = await client.query<{ id: string }>(
     `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
         tiles, owner_id, is_starter, account_bound_until, colonized_at,
-        population, pop_as_of)
+        population, pop_children, pop_seniors, pop_as_of)
      VALUES ('planet', $1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10,
-        to_timestamp($11 / 1000.0), $12, to_timestamp($11 / 1000.0))
+        to_timestamp($11 / 1000.0), $12, $13, $14, to_timestamp($11 / 1000.0))
      RETURNING id`,
     [
       rollName(starterSeed, 'planet'),
@@ -229,6 +230,9 @@ export async function spawnStarterSystem(
       boundUntil,
       now,
       starterPop,
+      // Pyramide stationnaire v2 (DG §3.2-v2 l) — population = TOTAL.
+      Math.round(starterPop * STABLE_PYRAMID.children),
+      Math.round(starterPop * STABLE_PYRAMID.seniors),
     ],
   );
   const starterPlanetId = pRows[0]!.id;

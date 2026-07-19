@@ -185,6 +185,8 @@ export interface PlanetDetail {
   tiles: number;
   isStarter: boolean;
   population: number;
+  pyramid: { children: number; actives: number; seniors: number };
+  clockDeadlines: Partial<Record<'water' | 'food', string>>;
   popCap: number;
   illness: number;
   planetEfficiency: number;

@@ -255,7 +255,17 @@ export const COLONY_FITTING_COST: CostBundle = {
 };
 export const COLONY_FITTING_CORES = 1;
 export const COLONY_MIN_SETTLERS = 200;
-export const COLONY_SEED_STOCK: ResourceBundle = { food_1: 30, water: 30 };
+/**
+ * Provisions d'amorçage du kit colonial. [TUNE] Oxygène ajouté au chunk
+ * BA (DG §3.2-v2 b/i) : sur un climat hostile la population respire AU
+ * STOCK et l'épuisement est une mort INSTANTANÉE — coloniser hot/cold
+ * sans bouteilles serait un suicide immédiat.
+ */
+export const COLONY_SEED_STOCK: ResourceBundle = {
+  food_1: 30,
+  water: 30,
+  oxygen: 20,
+};
 export const COLONY_ESTABLISH_HOURS = 72;
 
 /** Consommation « survie » générique : quelles ressources comptent. */

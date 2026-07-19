@@ -6,8 +6,10 @@
  */
 import {
   BASE_STORAGE_ALLOWANCE_T,
+  breathesFromStock,
   type BuildingKey,
   BUILDINGS,
+  type Climate,
   efficiency,
   GAME_DAY_SECONDS,
   governanceMultiplier,
@@ -22,6 +24,7 @@ import {
   repairHpPerDay,
   type ResourceId,
   survivalDrainTPerDay,
+  weightedHeads,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from './events.js';
@@ -55,7 +58,14 @@ export interface ProductionSnapshot {
   ownerId: string | null;
   size: PlanetSize;
   quality: Quality;
+  climate: Climate;
   population: number;
+  /** Pyramide v2 (actives dérivés : population − enfants − seniors). */
+  pyramid: { children: number; actives: number; seniors: number };
+  /** Échéances FIXES des horloges de mort en cours (ISO), par famille. */
+  clockDeadlines: Partial<Record<'water' | 'food', string>>;
+  /** Compteurs cumulés morts/exodés par catégorie (intel, BD). */
+  demoCounters: unknown;
   illness: number;
   popAsOfMs: number | null;
   storageCapT: number;
@@ -98,7 +108,9 @@ export async function loadProductionSnapshot(
 ): Promise<ProductionSnapshot | null> {
   const lock = opts.forUpdate ? ' FOR UPDATE' : '';
   const { rows: bodyRows } = await client.query(
-    `SELECT id, owner_id, size, quality, tiles, population, illness, pop_as_of
+    `SELECT id, owner_id, size, quality, climate, tiles, population,
+            pop_children, pop_seniors, illness, pop_as_of, clock_deadlines,
+            demo_counters
      FROM bodies WHERE id = $1 AND body_type = 'planet'${lock}`,
     [bodyId],
   );
@@ -257,6 +269,16 @@ export async function loadProductionSnapshot(
   const size = body.size as PlanetSize;
   const quality = body.quality as Quality;
   const population = body.population ?? 0;
+  // Pyramide v2 (DG §3.2-v2 a) : population = TOTAL, actives = dérivés.
+  const pyramid = {
+    children: Number(body.pop_children ?? 0),
+    actives: Math.max(
+      0,
+      population - Number(body.pop_children ?? 0) - Number(body.pop_seniors ?? 0),
+    ),
+    seniors: Number(body.pop_seniors ?? 0),
+  };
+  const climate = body.climate as Climate;
   const cap = popCap(size, quality);
   const storageCapT = BASE_STORAGE_ALLOWANCE_T[size] + depotBonus;
 
@@ -289,6 +311,10 @@ export async function loadProductionSnapshot(
   const rates = computeRates({
     planetMultiplier,
     population,
+    // v2 (BA) : rations pondérées (C/S ×0,6) + oxygène au stock sur les
+    // climats hostiles (temperate = ambiant).
+    weightedHeadsCount: weightedHeads(pyramid),
+    breathesOxygen: breathesFromStock(climate),
     storageCapT,
     stocks,
     pooledT,
@@ -304,7 +330,13 @@ export async function loadProductionSnapshot(
     ownerId: body.owner_id,
     size,
     quality,
+    climate,
     population,
+    pyramid,
+    clockDeadlines: (body.clock_deadlines ?? {}) as Partial<
+      Record<'water' | 'food', string>
+    >,
+    demoCounters: body.demo_counters ?? {},
     illness: body.illness ?? 0,
     popAsOfMs: body.pop_as_of ? toMs(body.pop_as_of) : null,
     storageCapT,

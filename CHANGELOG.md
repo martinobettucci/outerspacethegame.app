@@ -4,6 +4,28 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Population v2 — cœur démographique (chunk BA — DG §3.2-v2, GB §10
+  v2, Round 9 / guide v0.10)** : la population devient TROIS ÂGES
+  (enfants —20 j→ actifs —60 j→ seniors —~30 j→ †, pyramide stationnaire
+  18,2/54,5/27,3), matérialisés par le pop_daily v2 (la croissance
+  logistique v1 est RETIRÉE). Natalité UNIQUEMENT via residential actif
+  (0,12/0,18/0,24 par actif/j [TUNE]) × M_growth = (0,5 + 0,5·Ē) ×
+  M_life — les flux de vie sont LOCAUX : vivre d'imports ne nourrit
+  jamais la croissance (canon). Rations pondérées (enfants/seniors
+  ×0,6) ; OXYGÈNE respiré au stock sur climats hostiles seulement
+  (temperate = ambiant), 0,6 T/1000/j [TUNE], provision de 20 T ajoutée
+  au kit colonial. Horloges de mort planétaires : famille à sec + besoin
+  non servi ⇒ échéance FIXE (eau 3 j, vivres 10 j — morts linéaires
+  quotidiennes puis mort TOTALE à l'échéance par pop_clock, levée si le
+  stock revient) ; oxygène = mort INSTANTANÉE (vérifiée au bord de stock
+  exact ET au quotidien). Maladie v2 : parabole de sur-cap (1,2·o²,
+  morts 0,25·o²·P [TUNE]) avec crochet clinique (bâtiment au chunk BC).
+  Compteurs morts/exodés par catégorie persistés (intel au chunk BD).
+  Migration 022 (pyramide + backfill, horloges, compteurs). RESTENT
+  (annoncé) : emploi universel + popScale + suppression E_planet +
+  starter 350 + mortalité de chômage (chunk BB — dépendance d'ordre),
+  clinique/UI (BC), embarquement par catégorie + extinction-perte de
+  propriété + intel (BD).
 - **Anti-softlock du démarrage (chunk AN — GB §19 « starter knowledge »,
   décision responsable du 2026-07-19 après playtest)** : l'ouverture
   « télescope d'abord » pouvait consommer la dotation AVANT l'unlock de

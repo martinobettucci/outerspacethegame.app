@@ -384,6 +384,26 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    (arrival, undock, §15 relocate). AMM slots stay out of scope v1
    (announced).
 
+### Population v2 — demographics core (implemented, chunk BA; DG §3.2-v2)
+
+Population is three ages (`bodies.population` = TOTAL; `pop_children` /
+`pop_seniors` columns; actives derived), materialized daily by the v2
+`pop_daily` handler: aging flows (20/60/30 game days) → natality
+(residential-gated, × M_growth = eff × LOCAL life-flux — imports never
+feed growth) → over-capacity parabola (illness + deaths, clinic hook) →
+death clocks. Death clocks are FIXED deadlines stored in
+`bodies.clock_deadlines` with a `pop_clock` event at the deadline
+(re-checks the famine; stale = silent): water 3 d, food 10 d, with
+linear daily deaths in between; oxygen (breathed from stock on hostile
+climates only, temperate = ambient) is an INSTANT total death, checked
+at the exact `stock_edge` zero-crossing AND daily. Per-category
+death/exodus counters persist in `bodies.demo_counters` (read by intel,
+chunk BD). Colony kits carry 20 T oxygen. Ordering constraint
+(documented in JOURNAL): universal employment + popScale + E_planet
+removal + unemployment mortality ship TOGETHER in chunk BB; clinic
+building + stats/alarm UI in BC; per-category embarkation + extinction
+ownership-strip + intel exposure in BD.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

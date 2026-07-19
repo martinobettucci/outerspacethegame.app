@@ -3172,3 +3172,48 @@ Verdict : saturation J+21,1 / exode J+39,1 / horloges exactes /
 pyramide stationnaire 18,2/54,5/27,3 / colonie stabilisée / siège
 mesuré. Les mondes en boom penchent jeunes (55 % d'enfants) — identité
 « monde-pouponnière » assumée. **Prêt pour l'implémentation (v0.10).**
+
+## 2026-07-19 — Chunk BA : population v2, le cœur démographique (guide v0.10)
+
+**Découpage imposé par les dépendances** (découvert à la conception) :
+la mortalité de chômage exige l'emploi universel + popScale (sinon tous
+les mondes actuels — où seules les industries emploient — meurent), et
+le starter 350 exige la suppression d'E_planet (sinon E(0,17) ≈ 0,32
+écrase la production). BA livre donc la DÉMOGRAPHIE seule ; BB livrera
+emploi + E_planet† + starter 350 + chômage d'un bloc.
+
+### Livré (BA)
+
+- Migration 022 : `pop_children`/`pop_seniors` (population = TOTAL,
+  actives dérivés ; backfill pyramide stationnaire), `clock_deadlines`,
+  `demo_counters`.
+- shared/popv2.ts pur : époques, pyramide, rations pondérées, oxygène
+  par climat, natalité par residential, M_growth, parabole de sur-cap,
+  cliniques (crochet), horloges linéaires à échéance fixe, applyDeaths.
+- pop_daily v2 : vieillissement → natalité (Ē staff-pondéré des
+  industries, neutre 0,7 sans emploi ; ρ par famille = flux LOCAUX) →
+  maladie/parabole → horloges (posent pop_clock, morts quotidiennes,
+  levée au retour du stock) → oxygène instantané. pop_clock re-vérifie
+  la famine à l'échéance (périmé = silencieux). L'oxygène instantané est
+  AUSSI vérifié au stock_edge exact. wipePopulation : compteurs imputés,
+  pyramide à zéro (la perte de propriété attend BD — annoncé).
+- production.ts : têtes pondérées + besoin oxygène ; kit colonial +20 T
+  d'oxygène (coloniser hot/cold sans bouteilles = suicide immédiat).
+- Spawn : pyramide stationnaire ; colonie : settlers tous ACTIFS (choix
+  par catégorie au chunk BD). planetDetail expose pyramid +
+  clockDeadlines (UI au chunk BC).
+
+### Vérifications
+
+- Unit shared 167/167 (+14 popv2 : pyramide=point fixe du
+  vieillissement, imports≠croissance, parabole, horloge intégrée qui
+  tue TOUT LE MONDE, cliniques).
+- Intégration 285/285 dont 3 nouveaux blocs v2 : natalité EXACTE au
+  berceau (mêmes fonctions pures que le handler) vs vieillissement pur
+  sans residential ; horloge eau (échéance +3 j posée, pop_clock,
+  mort totale, compteurs) ; oxygène hostile instantané vs temperate
+  ambiant. L'ancien test de croissance logistique v1 est REMPLACÉ.
+- E2E : suite complète de non-régression (l'E2E propre à la démographie
+  reste impossible à l'échelle réelle — 1 jour = 1 jour — précédent
+  documenté ligne pop sim du backlog ; la preuve UI arrive avec la
+  pyramide/alarmes du chunk BC).

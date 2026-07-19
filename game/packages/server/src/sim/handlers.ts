@@ -3,18 +3,28 @@
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
  */
 import {
+  agingFlows,
+  applyDeaths,
+  breathesFromStock,
   BUILDINGS,
   CLAIM_RADIUS_PC,
+  CLOCK_DAYS,
+  clockDeathsPerDay,
   COLONY_SEED_STOCK,
-  habitability,
+  efficiency,
+  FOOD_RESOURCES,
+  growthModulator,
   HULLS,
-  illnessDelta,
+  illnessDeathsPerDay,
+  illnessDeltaV2,
   isAmmSlot,
   JUNK_CARCASS_T,
+  NATALITY_BY_RESIDENTIAL,
+  overcapDeathsPerDay,
   popCap,
-  populationDelta,
   settlerLosses,
   settlerTripRisk,
+  type Pyramid,
 } from '@atg/shared';
 import type pg from 'pg';
 import { aggregateCensus } from './census.js';
@@ -83,7 +93,19 @@ export const demolitionComplete: EventHandler = async (client, event) => {
 export const stockEdge: EventHandler = async (client, event) => {
   const bodyId = String(event.payload.bodyId ?? '');
   if (!bodyId) return;
-  await recomputePlanetRates(client, bodyId, event.dueAt.getTime());
+  const nowMs = event.dueAt.getTime();
+  const snap = await recomputePlanetRates(client, bodyId, nowMs);
+  // Oxygène (DG §3.2-v2 i) : la population d'un climat hostile qui
+  // épuise son stock meurt INSTANTANÉMENT — vérifié au bord exact.
+  if (
+    snap?.ownerId &&
+    snap.population > 0 &&
+    snap.rates.popNeeds.oxygen > 1e-9 &&
+    snap.rates.popConsumption.oxygen < snap.rates.popNeeds.oxygen - 1e-9 &&
+    (snap.stocks.oxygen ?? 0) <= 1e-6
+  ) {
+    await wipePopulation(client, snap, nowMs);
+  }
 };
 
 /**
@@ -102,10 +124,85 @@ export const depositDry: EventHandler = async (client, event) => {
   await recomputePlanetRates(client, bodyId, event.dueAt.getTime());
 };
 
+type ResourceIdLike = Parameters<typeof String>[0] & string;
+
 /**
- * pop_daily { bodyId } — matérialisation quotidienne de la population
- * (DG §3.2) : H depuis les saturations du jour, maladie, ΔP ; puis rebase
- * (la consommation de survie suit la nouvelle population) et replanifie.
+ * Mort totale de la population (horloge échue, oxygène à sec) : compteurs
+ * imputés, pyramide à zéro, horloges levées, rebase. La PERTE DE
+ * PROPRIÉTÉ de l'extinction (GB §10 v2) arrive au chunk BD — d'ici là la
+ * planète reste possédée mais vide (annoncé).
+ */
+async function wipePopulation(
+  client: pg.PoolClient,
+  snap: {
+    bodyId: string;
+    pyramid: Pyramid;
+    demoCounters?: unknown;
+  },
+  nowMs: number,
+): Promise<void> {
+  const counters = readCounters(snap);
+  counters.deaths.children += snap.pyramid.children;
+  counters.deaths.actives += snap.pyramid.actives;
+  counters.deaths.seniors += snap.pyramid.seniors;
+  await client.query(
+    `UPDATE bodies SET population = 0, pop_children = 0, pop_seniors = 0,
+            clock_deadlines = '{}'::jsonb, demo_counters = $2,
+            pop_as_of = to_timestamp($3 / 1000.0)
+     WHERE id = $1`,
+    [snap.bodyId, JSON.stringify(counters), nowMs],
+  );
+  await client.query(
+    `DELETE FROM events WHERE processed_at IS NULL AND kind = 'pop_clock'
+       AND payload->>'bodyId' = $1`,
+    [snap.bodyId],
+  );
+  await recomputePlanetRates(client, snap.bodyId, nowMs);
+}
+
+interface DemoCounters {
+  deaths: { children: number; actives: number; seniors: number };
+  exodus: { children: number; actives: number; seniors: number };
+}
+
+function readCounters(snap: {
+  demoCounters?: unknown;
+}): DemoCounters {
+  const raw = (snap as { demoCounters?: Partial<DemoCounters> }).demoCounters;
+  return {
+    deaths: {
+      children: raw?.deaths?.children ?? 0,
+      actives: raw?.deaths?.actives ?? 0,
+      seniors: raw?.deaths?.seniors ?? 0,
+    },
+    exodus: {
+      children: raw?.exodus?.children ?? 0,
+      actives: raw?.exodus?.actives ?? 0,
+      seniors: raw?.exodus?.seniors ?? 0,
+    },
+  };
+}
+
+/** Impute `deaths` proportionnellement aux catégories dans les compteurs. */
+function addProportionalDeaths(
+  counters: DemoCounters,
+  pyr: Pyramid,
+  deaths: number,
+): void {
+  const pop = pyr.children + pyr.actives + pyr.seniors;
+  if (deaths <= 0 || pop <= 0) return;
+  const frac = Math.min(1, deaths / pop);
+  counters.deaths.children += pyr.children * frac;
+  counters.deaths.actives += pyr.actives * frac;
+  counters.deaths.seniors += pyr.seniors * frac;
+}
+
+/**
+ * pop_daily { bodyId } — matérialisation quotidienne v2 (DG §3.2-v2,
+ * chunk BA) : vieillissement 3 âges, natalité (residential × M_growth),
+ * maladie/morts paraboliques de sur-cap, horloges de mort linéaires à
+ * échéance fixe (eau 3 j / vivres 10 j ; oxygène = instantané, traité
+ * aussi au bord de stock). Puis rebase et replanification.
  */
 export const popDaily: EventHandler = async (client, event) => {
   const bodyId = String(event.payload.bodyId ?? '');
@@ -115,27 +212,163 @@ export const popDaily: EventHandler = async (client, event) => {
   if (!snap || !snap.ownerId) return;
 
   const sat = (served: number, need: number) => (need > 1e-9 ? served / need : 1);
-  const foodSat = sat(snap.rates.popConsumption.food, snap.rates.popNeeds.food);
-  const waterSat = sat(snap.rates.popConsumption.water, snap.rates.popNeeds.water);
   const medSat = sat(
     snap.rates.popConsumption.medicine,
     snap.rates.popNeeds.medicine,
   );
-  const h = habitability(foodSat, waterSat, medSat);
   const cap = popCap(snap.size, snap.quality);
-  const u = snap.population / cap;
+
+  // 1. Vieillissement (jamais modulé — §3.2-v2 a/d).
+  let pyr: Pyramid = { ...snap.pyramid };
+  const flows = agingFlows(pyr, 1);
+  pyr = {
+    children: pyr.children - flows.toActives,
+    actives: pyr.actives + flows.toActives - flows.toSeniors,
+    seniors: pyr.seniors + flows.toSeniors - flows.seniorDeaths,
+  };
+  const counters = readCounters(snap);
+  counters.deaths.seniors += flows.seniorDeaths;
+
+  // 2. Natalité : residential ACTIF × M_growth (Ē staff-pondéré des
+  //    industries — l'emploi universel arrive au chunk BB — × flux de
+  //    vie LOCAL : les imports ne nourrissent jamais la croissance).
+  const resLevel = Math.max(
+    0,
+    ...snap.buildings
+      .filter((b) => b.key === 'residential' && b.status === 'active')
+      .map((b) => b.level),
+  );
+  const clinicLevel = Math.max(
+    0,
+    ...snap.buildings
+      .filter((b) => (b.key as string) === 'clinic' && b.status === 'active')
+      .map((b) => b.level),
+  );
+  let staffSum = 0;
+  let effSum = 0;
+  for (const ind of snap.rates.industries) {
+    const st = snap.industries.find((i) => i.buildingId === ind.buildingId);
+    const staff = st?.workforce ?? 0;
+    if (staff > 0) {
+      staffSum += staff;
+      effSum += efficiency(ind.workforceU) * staff;
+    }
+  }
+  const meanEff = staffSum > 0 ? effSum / staffSum : 0.7;
+  const rateOf = snap.rates.stockRates as Record<string, number | undefined>;
+  const gross = (family: readonly string[], consumed: number) =>
+    family.reduce((s, r) => s + (rateOf[r] ?? 0), 0) + consumed;
+  const rhos = [
+    sat(
+      gross(FOOD_RESOURCES, snap.rates.popConsumption.food +
+        snap.rates.hoverSurvivalConsumption.food),
+      snap.rates.popNeeds.food,
+    ),
+    sat(
+      gross(['water'], snap.rates.popConsumption.water +
+        snap.rates.hoverSurvivalConsumption.water),
+      snap.rates.popNeeds.water,
+    ),
+    ...(snap.rates.popNeeds.oxygen > 1e-9
+      ? [
+          sat(
+            gross(['oxygen'], snap.rates.popConsumption.oxygen),
+            snap.rates.popNeeds.oxygen,
+          ),
+        ]
+      : []),
+  ];
+  const births =
+    (NATALITY_BY_RESIDENTIAL[resLevel] ?? 0) *
+    pyr.actives *
+    growthModulator(meanEff, rhos);
+  pyr.children += births;
+
+  // 3. Maladie v2 (parabole de sur-cap, clinique) + morts.
+  const popNow = pyr.children + pyr.actives + pyr.seniors;
+  const over = popNow / cap - 1;
   const newIllness = Math.min(
     1,
-    Math.max(0, snap.illness + illnessDelta(u, snap.illness, medSat < 1)),
+    Math.max(0, snap.illness + illnessDeltaV2(over, snap.illness, medSat < 1)),
   );
-  const delta = populationDelta(snap.population, cap, h, newIllness);
-  const newPop = Math.max(0, Math.round(snap.population + delta));
+  const parabDeaths =
+    illnessDeathsPerDay(newIllness, clinicLevel, popNow) +
+    overcapDeathsPerDay(popNow, cap);
+  addProportionalDeaths(counters, pyr, parabDeaths);
+  pyr = applyDeaths(pyr, parabDeaths);
 
+  // 4. Horloges de mort (eau/vivres) : famille À SEC et besoin non servi
+  //    ⇒ échéance FIXE posée + morts linéaires quotidiennes ; le retour
+  //    du stock lève l'horloge. Oxygène : mort INSTANTANÉE totale.
+  const clocks: Partial<Record<'water' | 'food', string>> = {
+    ...snap.clockDeadlines,
+  };
+  const stockOf = snap.stocks as Record<string, number | undefined>;
+  const familyStock = (family: readonly string[]) =>
+    family.reduce((s, r) => s + (stockOf[r] ?? 0), 0);
+  const starving = (family: 'water' | 'food') => {
+    const need =
+      family === 'water' ? snap.rates.popNeeds.water : snap.rates.popNeeds.food;
+    const served =
+      family === 'water'
+        ? snap.rates.popConsumption.water
+        : snap.rates.popConsumption.food;
+    const stock = familyStock(family === 'water' ? ['water'] : FOOD_RESOURCES);
+    return need > 1e-9 && served < need - 1e-9 && stock <= 1e-6;
+  };
+  for (const family of ['water', 'food'] as const) {
+    if (starving(family)) {
+      if (!clocks[family]) {
+        const deadline = nowMs + CLOCK_DAYS[family] * 86_400_000;
+        clocks[family] = new Date(deadline).toISOString();
+        await enqueue(client, 'pop_clock', new Date(deadline), {
+          bodyId,
+          family,
+        });
+      } else {
+        const pop = pyr.children + pyr.actives + pyr.seniors;
+        const d = Math.min(
+          pop,
+          clockDeathsPerDay(pop, nowMs, new Date(clocks[family]!).getTime()),
+        );
+        addProportionalDeaths(counters, pyr, d);
+        pyr = applyDeaths(pyr, d);
+      }
+    } else if (clocks[family]) {
+      delete clocks[family];
+      await client.query(
+        `DELETE FROM events WHERE processed_at IS NULL AND kind = 'pop_clock'
+           AND payload->>'bodyId' = $1 AND payload->>'family' = $2`,
+        [bodyId, family],
+      );
+    }
+  }
+  if (
+    snap.rates.popNeeds.oxygen > 1e-9 &&
+    snap.rates.popConsumption.oxygen < snap.rates.popNeeds.oxygen - 1e-9 &&
+    familyStock(['oxygen']) <= 1e-6
+  ) {
+    addProportionalDeaths(counters, pyr, pyr.children + pyr.actives + pyr.seniors);
+    pyr = { children: 0, actives: 0, seniors: 0 };
+  }
+
+  const round3 = (v: number) => Math.max(0, Math.round(v * 1000) / 1000);
+  const newPop = round3(pyr.children) + round3(pyr.actives) + round3(pyr.seniors);
   await client.query(
-    `UPDATE bodies SET population = $2, illness = $3,
-            pop_as_of = to_timestamp($4 / 1000.0)
+    `UPDATE bodies SET population = $2, pop_children = $3, pop_seniors = $4,
+            illness = $5, clock_deadlines = $6, demo_counters = $7,
+            pop_as_of = to_timestamp($8 / 1000.0)
      WHERE id = $1`,
-    [bodyId, newPop, newIllness, nowMs],
+    [
+      bodyId,
+      newPop,
+      round3(pyr.children),
+      round3(pyr.seniors),
+      newIllness,
+      JSON.stringify(clocks),
+      JSON.stringify(counters),
+      nowMs,
+    ],
   );
   // La population a changé ⇒ E_planet et la consommation aussi : rebase.
   await recomputePlanetRates(client, bodyId, nowMs);
@@ -152,6 +385,42 @@ export const popDaily: EventHandler = async (client, event) => {
      VALUES (to_timestamp($1 / 1000.0), 'pop_daily', $2)`,
     [nowMs + 86_400_000, JSON.stringify({ bodyId })],
   );
+};
+
+/**
+ * pop_clock { bodyId, family } — échéance d'une horloge de mort (eau 3 j
+ * / vivres 10 j, DG §3.2-v2 i) : si la famine court TOUJOURS, toute la
+ * population restante meurt (canon « everyone dies ») ; si le stock est
+ * revenu entre-temps, l'événement périmé se tait (l'horloge a été levée
+ * par le pop_daily). Idempotent.
+ */
+export const popClock: EventHandler = async (client, event) => {
+  const bodyId = String(event.payload.bodyId ?? '');
+  const family = String(event.payload.family ?? '') as 'water' | 'food';
+  if (!bodyId || !['water', 'food'].includes(family)) return;
+  const nowMs = event.dueAt.getTime();
+  const snap = await recomputePlanetRates(client, bodyId, nowMs);
+  if (!snap || !snap.ownerId || snap.population <= 0) return;
+  if (!snap.clockDeadlines[family]) return; // horloge levée entre-temps
+  const need =
+    family === 'water' ? snap.rates.popNeeds.water : snap.rates.popNeeds.food;
+  const served =
+    family === 'water'
+      ? snap.rates.popConsumption.water
+      : snap.rates.popConsumption.food;
+  const stock = (family === 'water' ? ['water'] : [...FOOD_RESOURCES]).reduce(
+    (s, r) => s + (snap.stocks[r as keyof typeof snap.stocks] ?? 0),
+    0,
+  );
+  if (need > 1e-9 && served < need - 1e-9 && stock <= 1e-6) {
+    await wipePopulation(client, snap, nowMs);
+  } else {
+    // Famine résolue : lever l'horloge persistée.
+    await client.query(
+      `UPDATE bodies SET clock_deadlines = clock_deadlines - $2 WHERE id = $1`,
+      [bodyId, family],
+    );
+  }
 };
 
 /**
@@ -334,9 +603,13 @@ export const colonyEstablished: EventHandler = async (client, event) => {
     return;
   }
 
+  // v2 (chunk BA) : les settlers débarqués sont tous ACTIFS — la
+  // pyramide se construira par la natalité (le choix par catégorie à
+  // l'embarquement arrive au chunk BD).
   await client.query(
     `UPDATE bodies SET owner_id = $2, colonized_at = to_timestamp($3 / 1000.0),
-       population = $4, illness = 0, pop_as_of = to_timestamp($3 / 1000.0)
+       population = $4, pop_children = 0, pop_seniors = 0, illness = 0,
+       clock_deadlines = '{}'::jsonb, pop_as_of = to_timestamp($3 / 1000.0)
      WHERE id = $1`,
     [bodyId, ship.owner_id, nowMs, ship.settlers],
   );
@@ -972,6 +1245,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     construction_complete: constructionComplete,
     demolition_complete: demolitionComplete,
     stock_edge: stockEdge,
+    pop_clock: popClock,
     deposit_dry: depositDry,
     pop_daily: popDaily,
     ship_arrival: shipArrival,

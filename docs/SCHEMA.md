@@ -29,7 +29,7 @@
 |---|---|---|
 | `players` | account, politics archetype | politics = personal-ship identity (GB §21) |
 | `sessions` | server-side auth sessions | token stored hashed |
-| `bodies` | planets, stars, black holes | planet: size/climate/quality/tiles/owner/population(+illness, daily materialization); star: class/fuel_type/hidden stock/`r_nova`; spatial index on 64 pc grid (DG §9.2) |
+| `bodies` | planets, stars, black holes | planet: size/climate/quality/tiles/owner/population TOTALE + pyramide v2 (`pop_children`/`pop_seniors`, actives dérivés — DG §3.2-v2), illness, `clock_deadlines` (horloges de mort, échéances fixes), `demo_counters` (morts/exodés par catégorie, intel BD); star: class/fuel_type/hidden stock/`r_nova`; spatial index on 64 pc grid (DG §9.2) |
 | `deposits` | finite per-planet deposits | lazy `(amount_t, rate_t_per_day, as_of)`; dry-forever at 0 (GB §3) |
 | `planet_stock` | ready fungible stock per planet | lazy; capped by base allowance + depots (DG §3.3b) at evaluation |
 | `buildings` | placed instances | `status ∈ constructing/active/demolishing`, `completes_at`, one tile per building (`UNIQUE(body_id, tile_index)`), `recipe` for industry, `run_pct`, `workforce` |

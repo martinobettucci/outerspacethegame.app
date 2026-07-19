@@ -204,17 +204,30 @@ describe('boucle colonie', () => {
     expect(ore.rate_t_per_day).toBe(0);
   });
 
-  it('pop_daily : croissance saine avec vivres, famine sans vivres', async () => {
+  it('pop_daily v2 : natalité avec residential, vieillissement pur sans (DG §3.2-v2)', async () => {
     const t0 = Date.now();
-    const mk = async (name: string, stocks: [string, number][]) => {
+    const mk = async (
+      name: string,
+      stocks: [string, number][],
+      withResidential: boolean,
+    ) => {
+      // Pyramide stationnaire d'un monde de 1 200 (218/655/327).
       const { rows: b } = await pool.query<{ id: string }>(
         `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
-            quality, tiles, owner_id, population, pop_as_of)
+            quality, tiles, owner_id, population, pop_children, pop_seniors,
+            pop_as_of)
          SELECT 'planet', $1, 900100, 900100, $2, 's', 'temperate', 'F', 8,
-                p.id, 1200, to_timestamp($3 / 1000.0)
+                p.id, 1200, 218, 327, to_timestamp($3 / 1000.0)
          FROM players p LIMIT 1 RETURNING id`,
         [name, `pop-${name}-${run}`, t0],
       );
+      if (withResidential) {
+        await pool.query(
+          `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+           VALUES ($1, 'residential', 1, 0, 'active', 0)`,
+          [b[0]!.id],
+        );
+      }
       for (const [res, qty] of stocks) {
         await pool.query(
           `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
@@ -225,31 +238,145 @@ describe('boucle colonie', () => {
       await enqueue(pool, 'pop_daily', new Date(t0 + DAY), { bodyId: b[0]!.id });
       return b[0]!.id;
     };
-    const fed = await mk('Fedworld', [
-      ['food_1', 100],
-      ['water', 100],
-      ['med_1', 10],
-    ]);
-    const starving = await mk('Hungerworld', [['water', 100]]);
+    const cradle = await mk(
+      'Cradleworld',
+      [
+        ['food_1', 100],
+        ['water', 100],
+        ['med_1', 10],
+      ],
+      true,
+    );
+    const aging = await mk(
+      'Agingworld',
+      [
+        ['food_1', 100],
+        ['water', 100],
+      ],
+      false,
+    );
 
     await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
 
-    const pop = async (id: string) =>
-      (await pool.query('SELECT population, illness FROM bodies WHERE id = $1', [id]))
-        .rows[0];
-    const fedPop = await pop(fed);
-    const hungryPop = await pop(starving);
-    // Nourri : ΔP = 0.05 × 1200 × (1 − 0.6) × 1 = +24.
-    expect(Number(fedPop.population)).toBe(1224);
-    // Affamé : H = 0 ⇒ aucune croissance.
-    expect(Number(hungryPop.population)).toBeLessThanOrEqual(1200);
+    const read = async (id: string) =>
+      (
+        await pool.query(
+          `SELECT population, pop_children, pop_seniors, demo_counters
+           FROM bodies WHERE id = $1`,
+          [id],
+        )
+      ).rows[0];
+    // Attendus v2 EXACTS (mêmes fonctions pures que le handler).
+    const actives0 = 1200 - 218 - 327; // 655
+    const seniorDeaths = 327 / 30;
+    // Berceau : residential L1, Ē neutre 0,7 (aucune industrie), flux de
+    // vie LOCAUX nuls (ρ = 0 ⇒ déficit ×0,5 par famille — le stock plein
+    // ne nourrit PAS la croissance, canon).
+    const mEff = 0.5 + 0.5 * 0.7;
+    const mLife = 0.5 * 0.5;
+    const births = 0.12 * actives0 * mEff * mLife;
+    const fedRow = await read(cradle);
+    const expectFed = 1200 + births - seniorDeaths;
+    expect(Number(fedRow.population)).toBeCloseTo(expectFed, 1);
+    expect(Number(fedRow.pop_children)).toBeGreaterThan(218); // berceau
+    // Sans residential : natalité NULLE — le monde vieillit (−S/30).
+    const agingRow = await read(aging);
+    expect(Number(agingRow.population)).toBeCloseTo(1200 - seniorDeaths, 1);
+    expect(Number(agingRow.demo_counters.deaths.seniors)).toBeCloseTo(
+      seniorDeaths,
+      1,
+    );
     // Le pop_daily suivant est replanifié.
     const { rows: next } = await pool.query(
       `SELECT count(*)::int AS n FROM events WHERE processed_at IS NULL
        AND kind = 'pop_daily' AND payload->>'bodyId' IN ($1, $2)`,
-      [fed, starving],
+      [cradle, aging],
     );
     expect(next[0].n).toBe(2);
+  });
+
+  it('horloge de mort v2 : eau à sec → échéance 3 j posée → tout le monde meurt (canon)', async () => {
+    const t0 = Date.now();
+    const { rows: b } = await pool.query<{ id: string }>(
+      `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+          quality, tiles, owner_id, population, pop_children, pop_seniors,
+          pop_as_of)
+       SELECT 'planet', 'Thirstworld', 900200, 900200, $1, 's', 'temperate',
+              'F', 8, p.id, 900, 164, 245, to_timestamp($2 / 1000.0)
+       FROM players p LIMIT 1 RETURNING id`,
+      [`thirst-${run}`, t0],
+    );
+    const id = b[0]!.id;
+    await pool.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, 'food_1', 500, to_timestamp($2 / 1000.0))`,
+      [id, t0],
+    );
+    // Aucune eau : le premier pop_daily pose l'échéance FIXE à +3 j.
+    await enqueue(pool, 'pop_daily', new Date(t0 + DAY), { bodyId: id });
+    await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
+    const { rows: clocks } = await pool.query(
+      `SELECT clock_deadlines FROM bodies WHERE id = $1`,
+      [id],
+    );
+    expect(clocks[0].clock_deadlines.water).toBeTruthy();
+    const deadline = new Date(clocks[0].clock_deadlines.water).getTime();
+    expect(deadline).toBeCloseTo(t0 + DAY + 3 * DAY, -4);
+    const { rows: ev } = await pool.query(
+      `SELECT count(*)::int AS n FROM events WHERE processed_at IS NULL
+       AND kind = 'pop_clock' AND payload->>'bodyId' = $1`,
+      [id],
+    );
+    expect(ev[0].n).toBe(1);
+    // À l'échéance : mort TOTALE (l'événement re-vérifie la famine).
+    await processDueEvents(pool, baseHandlers(), { nowMs: deadline + 1000 });
+    const { rows: after } = await pool.query(
+      `SELECT population, demo_counters FROM bodies WHERE id = $1`,
+      [id],
+    );
+    expect(Number(after[0].population)).toBe(0);
+    expect(
+      Number(after[0].demo_counters.deaths.children) +
+        Number(after[0].demo_counters.deaths.actives) +
+        Number(after[0].demo_counters.deaths.seniors),
+    ).toBeGreaterThan(800);
+  });
+
+  it("oxygène v2 : climat hostile à sec = mort instantanée ; temperate = ambiant", async () => {
+    const t0 = Date.now();
+    const mk = async (name: string, climate: string) => {
+      const { rows: b } = await pool.query<{ id: string }>(
+        `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+            quality, tiles, owner_id, population, pop_children, pop_seniors,
+            pop_as_of)
+         SELECT 'planet', $1, 900300, 900300, $2, 's', $3, 'F', 8,
+                p.id, 600, 109, 164, to_timestamp($4 / 1000.0)
+         FROM players p LIMIT 1 RETURNING id`,
+        [name, `oxy-${name}-${run}`, climate, t0],
+      );
+      for (const [res, qty] of [
+        ['food_1', 100],
+        ['water', 100],
+      ] as const) {
+        await pool.query(
+          `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+           VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+          [b[0]!.id, res, qty, t0],
+        );
+      }
+      await enqueue(pool, 'pop_daily', new Date(t0 + DAY), { bodyId: b[0]!.id });
+      return b[0]!.id;
+    };
+    const hostile = await mk('Chokeworld', 'hot'); // zéro oxygène en stock
+    const ambient = await mk('Breezeworld', 'temperate');
+    await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
+    const pop = async (id: string) =>
+      Number(
+        (await pool.query(`SELECT population FROM bodies WHERE id = $1`, [id]))
+          .rows[0].population,
+      );
+    expect(await pop(hostile)).toBe(0); // instantané (canon)
+    expect(await pop(ambient)).toBeGreaterThan(0); // l'air est gratuit
   });
 
   it('rattrapage hors-ligne : évaluer à t+N = matérialiser à t+k puis évaluer (zéro dérive)', async () => {
