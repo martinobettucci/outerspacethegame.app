@@ -14,6 +14,8 @@ import {
   ALL_RESOURCE_IDS,
   STARGATE_BUILD_HOURS,
   STARGATE_COST,
+  STARGATE_PROPOSAL_TTL_HOURS,
+  STARGATE_SPLIT_COST,
   stargateExitOffset,
 } from '@atg/shared';
 import type pg from 'pg';
@@ -235,8 +237,15 @@ export async function traverseStargate(
     }
     // Péage « hard gate » (canon) : non-propriétaires seulement [interp],
     // payé depuis la SOUTE, encaissé au stock du monde d'ENTRÉE.
+    const { rows: endpointOwners } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id IN ($1, $2)`,
+      [gate.a_body_id, gate.b_body_id],
+    );
+    const isStakeholder =
+      gate.owner_id === playerId ||
+      endpointOwners.some((e) => e.owner_id === playerId);
     if (
-      gate.owner_id !== playerId &&
+      !isStakeholder &&
       gate.toll_resource &&
       Number(gate.toll_amount) > 0
     ) {
@@ -357,7 +366,7 @@ export async function visibleStargates(
       SELECT s.x, s.y,
              CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
       FROM ships s
-      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked', 'stranded')
     )
     SELECT g.* FROM stargates g
     WHERE EXISTS (
@@ -383,4 +392,319 @@ export async function visibleStargates(
     tollResource: r.toll_resource,
     tollAmount: Number(r.toll_amount ?? 0),
   }));
+}
+
+
+/**
+ * Propose un gate 50/50 vers le monde d'AUTRUI (canon « both consent ») :
+ * yard ACTIF côté proposeur, cible possédée par un AUTRE joueur, aucune
+ * paire existante (gate ou proposition ouverte). L'acceptation paiera
+ * LES DEUX moitiés — rien n'est débité à la proposition.
+ */
+export async function proposeStargate(
+  pool: pg.Pool,
+  playerId: string,
+  fromBodyId: string,
+  toBodyId: string,
+): Promise<{ proposalId: string }> {
+  if (fromBodyId === toBodyId) {
+    throw new CommandError('not_available', 'Un gate relie DEUX mondes distincts');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ids = [fromBodyId, toBodyId].sort();
+    const { rows: bodies } = await client.query(
+      `SELECT * FROM bodies WHERE id = ANY($1) AND body_type = 'planet'
+       ORDER BY id FOR UPDATE`,
+      [ids],
+    );
+    const origin = bodies.find((b) => b.id === fromBodyId);
+    const dest = bodies.find((b) => b.id === toBodyId);
+    if (!origin || !dest) throw new CommandError('not_found', 'Monde inconnu');
+    if (origin.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Le monde de départ doit être à vous');
+    }
+    if (!dest.owner_id) {
+      throw new CommandError('not_available', 'La cible est un monde sauvage');
+    }
+    if (dest.owner_id === playerId) {
+      throw new CommandError(
+        'not_available',
+        'Vos deux mondes : construisez directement (pas de consentement à demander)',
+      );
+    }
+    if (origin.config?.annihilated || dest.config?.annihilated) {
+      throw new CommandError('not_available', 'Un des mondes n\'existe plus');
+    }
+    const { rows: yards } = await client.query(
+      `SELECT 1 FROM buildings
+       WHERE body_id = $1 AND key = 'stargate_yard' AND status = 'active'`,
+      [fromBodyId],
+    );
+    if (!yards[0]) {
+      throw new CommandError('not_available', 'Un stargate_yard ACTIF est requis ici');
+    }
+    const { rows: dupGate } = await client.query(
+      `SELECT 1 FROM stargates
+       WHERE (a_body_id = $1 AND b_body_id = $2)
+          OR (a_body_id = $2 AND b_body_id = $1)`,
+      [fromBodyId, toBodyId],
+    );
+    if (dupGate[0]) {
+      throw new CommandError('not_available', 'Un gate existe déjà entre ces mondes');
+    }
+    const { rows: dupProp } = await client.query(
+      `SELECT 1 FROM stargate_proposals
+       WHERE status = 'open'
+         AND ((from_body_id = $1 AND to_body_id = $2)
+           OR (from_body_id = $2 AND to_body_id = $1))`,
+      [fromBodyId, toBodyId],
+    );
+    if (dupProp[0]) {
+      throw new CommandError(
+        'not_available',
+        'Une proposition est déjà ouverte entre ces mondes',
+      );
+    }
+    const { rows: created } = await client.query(
+      `INSERT INTO stargate_proposals (proposer_id, from_body_id, to_body_id)
+       VALUES ($1, $2, $3) RETURNING id`,
+      [playerId, fromBodyId, toBodyId],
+    );
+    await client.query('COMMIT');
+    return { proposalId: created[0]!.id };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Balayage paresseux du TTL (48 h réelles [TUNE-v1]). */
+async function expireStaleProposals(client: pg.PoolClient): Promise<void> {
+  await client.query(
+    `UPDATE stargate_proposals SET status = 'expired', resolved_at = now()
+     WHERE status = 'open'
+       AND created_at < now() - ($1 || ' hours')::interval`,
+    [String(STARGATE_PROPOSAL_TTL_HOURS)],
+  );
+}
+
+/**
+ * Répond à une proposition (propriétaire du monde CIBLE uniquement —
+ * §10). Accepter re-vérifie tout (yard, doublon, concurrence), paie LES
+ * DEUX moitiés — chacune sur SON monde, cristal résolu par SON climat —
+ * puis lance le chantier (l'événement stargate_built activera).
+ */
+export async function respondStargateProposal(
+  pool: pg.Pool,
+  playerId: string,
+  proposalId: string,
+  accept: boolean,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ gateId: string | null }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await expireStaleProposals(client);
+    const { rows: props } = await client.query(
+      `SELECT * FROM stargate_proposals WHERE id = $1 FOR UPDATE`,
+      [proposalId],
+    );
+    const prop = props[0];
+    if (!prop || prop.status !== 'open') {
+      throw new CommandError('not_found', 'Proposition close ou inconnue');
+    }
+    const ids = [prop.from_body_id, prop.to_body_id].sort();
+    const { rows: bodies } = await client.query(
+      `SELECT * FROM bodies WHERE id = ANY($1) ORDER BY id FOR UPDATE`,
+      [ids],
+    );
+    const origin = bodies.find((b) => b.id === prop.from_body_id);
+    const dest = bodies.find((b) => b.id === prop.to_body_id);
+    if (!dest || dest.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Seul le propriétaire du monde cible répond');
+    }
+    if (!accept) {
+      await client.query(
+        `UPDATE stargate_proposals SET status = 'declined', resolved_at = now()
+         WHERE id = $1`,
+        [proposalId],
+      );
+      await client.query('COMMIT');
+      return { gateId: null };
+    }
+    if (!origin || origin.owner_id !== prop.proposer_id) {
+      throw new CommandError(
+        'not_available',
+        'Le monde du proposeur a changé de mains — proposition caduque',
+      );
+    }
+    if (origin.config?.annihilated || dest.config?.annihilated) {
+      throw new CommandError('not_available', 'Un des mondes n\'existe plus');
+    }
+    const { rows: yards } = await client.query(
+      `SELECT level FROM buildings
+       WHERE body_id = $1 AND key = 'stargate_yard' AND status = 'active'`,
+      [prop.from_body_id],
+    );
+    if (!yards[0]) {
+      throw new CommandError('not_available', 'Le yard du proposeur n\'est plus actif');
+    }
+    const { rows: dupGate } = await client.query(
+      `SELECT 1 FROM stargates
+       WHERE (a_body_id = $1 AND b_body_id = $2)
+          OR (a_body_id = $2 AND b_body_id = $1)`,
+      [prop.from_body_id, prop.to_body_id],
+    );
+    if (dupGate[0]) {
+      throw new CommandError('not_available', 'Un gate existe déjà entre ces mondes');
+    }
+    const capacity = yards.reduce((t, y) => t + Number(y.level), 0);
+    const { rows: building } = await client.query(
+      `SELECT count(*)::int AS n FROM stargates
+       WHERE status = 'building' AND (a_body_id = $1 OR b_body_id = $1)`,
+      [prop.from_body_id],
+    );
+    if (Number(building[0].n) >= capacity) {
+      throw new CommandError(
+        'not_available',
+        'Chantiers du yard proposeur saturés — réessayez plus tard',
+      );
+    }
+    // LES DEUX moitiés, chacune chez soi (cristal résolu par climat).
+    await payCost(client, prop.from_body_id, origin.climate, STARGATE_SPLIT_COST, nowMs);
+    await payCost(client, prop.to_body_id, dest.climate, STARGATE_SPLIT_COST, nowMs);
+    const completesAt = new Date(
+      nowMs + (STARGATE_BUILD_HOURS * 3_600_000) / timeScale,
+    );
+    const { rows: created } = await client.query(
+      `INSERT INTO stargates (a_body_id, b_body_id, owner_id, status, completes_at)
+       VALUES ($1, $2, $3, 'building', $4) RETURNING id`,
+      [prop.from_body_id, prop.to_body_id, prop.proposer_id, completesAt],
+    );
+    await enqueue(client, 'stargate_built', completesAt, {
+      gateId: created[0]!.id,
+    });
+    await client.query(
+      `UPDATE stargate_proposals SET status = 'accepted', resolved_at = now()
+       WHERE id = $1`,
+      [proposalId],
+    );
+    await client.query('COMMIT');
+    return { gateId: created[0]!.id };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Annule SA proposition ouverte. */
+export async function cancelStargateProposal(
+  pool: pg.Pool,
+  playerId: string,
+  proposalId: string,
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM stargate_proposals WHERE id = $1 FOR UPDATE`,
+      [proposalId],
+    );
+    if (!rows[0] || rows[0].status !== 'open') {
+      throw new CommandError('not_found', 'Proposition close ou inconnue');
+    }
+    if (rows[0].proposer_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette proposition n\'est pas la vôtre');
+    }
+    await client.query(
+      `UPDATE stargate_proposals SET status = 'cancelled', resolved_at = now()
+       WHERE id = $1`,
+      [proposalId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Propositions me concernant (entrantes par monde cible + sortantes). */
+export async function listStargateProposals(
+  pool: pg.Pool,
+  playerId: string,
+): Promise<{
+  incoming: {
+    id: string;
+    fromBodyId: string;
+    fromBodyName: string;
+    toBodyId: string;
+    proposerName: string;
+    createdAt: string;
+  }[];
+  outgoing: {
+    id: string;
+    fromBodyId: string;
+    toBodyId: string;
+    toBodyName: string;
+    status: string;
+  }[];
+}> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await expireStaleProposals(client);
+    const { rows: incoming } = await client.query(
+      `SELECT p.id, p.from_body_id, fb.name AS from_name, p.to_body_id,
+              pl.display_name AS proposer_name, p.created_at
+       FROM stargate_proposals p
+       JOIN bodies tb ON tb.id = p.to_body_id
+       JOIN bodies fb ON fb.id = p.from_body_id
+       JOIN players pl ON pl.id = p.proposer_id
+       WHERE p.status = 'open' AND tb.owner_id = $1
+       ORDER BY p.created_at DESC`,
+      [playerId],
+    );
+    const { rows: outgoing } = await client.query(
+      `SELECT p.id, p.from_body_id, p.to_body_id, tb.name AS to_name, p.status
+       FROM stargate_proposals p
+       JOIN bodies tb ON tb.id = p.to_body_id
+       WHERE p.proposer_id = $1
+       ORDER BY p.created_at DESC
+       LIMIT 20`,
+      [playerId],
+    );
+    await client.query('COMMIT');
+    return {
+      incoming: incoming.map((r) => ({
+        id: r.id,
+        fromBodyId: r.from_body_id,
+        fromBodyName: r.from_name,
+        toBodyId: r.to_body_id,
+        proposerName: r.proposer_name,
+        createdAt: new Date(r.created_at).toISOString(),
+      })),
+      outgoing: outgoing.map((r) => ({
+        id: r.id,
+        fromBodyId: r.from_body_id,
+        toBodyId: r.to_body_id,
+        toBodyName: r.to_name,
+        status: r.status,
+      })),
+    };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }

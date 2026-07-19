@@ -72,7 +72,7 @@ export async function visibleBodies(
       SELECT s.x, s.y,
              CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
       FROM ships s
-      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked', 'stranded')
     )
     SELECT DISTINCT ON (b.id)
            b.id, b.body_type, b.name, b.x, b.y, b.size, b.climate, b.quality,
@@ -187,7 +187,7 @@ export async function bodyIntel(
   // portée ⇒ deep sight [TUNE-GAP].
   const { rows: presenceRows } = await pool.query(
     `SELECT hull_category FROM ships
-     WHERE owner_id = $1 AND status IN ('hovering', 'idle', 'docked')
+     WHERE owner_id = $1 AND status IN ('hovering', 'idle', 'docked', 'stranded')
        AND (x - $2::float)^2 + (y - $3::float)^2 <=
            (CASE WHEN hull_category = 'probe' THEN $4::float ELSE $5::float END)^2`,
     [playerId, body.x, body.y, PROBE_SCAN_PC, SHIP_SCAN_PC],

@@ -549,6 +549,35 @@ export const api = {
       resource,
       tons,
     }),
+  stargateProposals: () =>
+    call<{
+      incoming: {
+        id: string;
+        fromBodyId: string;
+        fromBodyName: string;
+        toBodyId: string;
+        proposerName: string;
+        createdAt: string;
+      }[];
+      outgoing: {
+        id: string;
+        fromBodyId: string;
+        toBodyId: string;
+        toBodyName: string;
+        status: string;
+      }[];
+    }>('GET', '/stargate-proposals'),
+  proposeStargate: (fromBodyId: string, toBodyId: string) =>
+    call<{ proposalId: string }>('POST', '/stargate-proposals', {
+      fromBodyId,
+      toBodyId,
+    }),
+  respondStargateProposal: (proposalId: string, accept: boolean) =>
+    call<{ gateId: string | null }>(
+      'POST',
+      `/stargate-proposals/${proposalId}/respond`,
+      { accept },
+    ),
   buildStargate: (fromBodyId: string, toBodyId: string) =>
     call<{ gateId: string; completesAt: string }>('POST', '/stargates', {
       fromBodyId,

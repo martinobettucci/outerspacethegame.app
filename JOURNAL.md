@@ -2884,3 +2884,50 @@ stratégique de toute la couche interception/piraterie à venir.
   E2E **33/33 (15,4 min au run complet)** — un premier run avait été
   interrompu par la contention à 2 workers (2 timeouts + 6 non lancés),
   le run complet suivant est intégralement vert.
+
+## 2026-07-19 — Chunk AL : consentement 50/50 des stargates (GB §6, DG §9.3)
+
+**Problème.** Le chunk AK avait livré les gates MÊME propriétaire ; le
+canon exige aussi la voie inter-joueurs : « the price is split between
+the two owners — both consent ». Sans elle, le réseau ne peut pas
+franchir les frontières politiques.
+
+### Canon appliqué
+
+- Proposition ÉPINGLÉE (patron des offres manuelles) : depuis un monde
+  du proposeur à yard ACTIF vers le monde d'AUTRUI ; rien n'est débité
+  à la proposition ; TTL 48 h réelles [TUNE-v1], balayage paresseux ;
+  une seule proposition ouverte par paire ; §10 sur chaque verbe.
+- Réponse : le propriétaire CIBLE uniquement. ACCEPTER re-vérifie tout
+  (yard toujours actif, monde du proposeur non retourné, doublon,
+  concurrence du yard) puis paie LES DEUX moitiés — 125 cells +
+  200 steelH + 50 crystal_any chacun, chacune sur SON monde, cristal
+  résolu par SON climat — atomiquement : trésorerie courte d'un côté =
+  refus, rien n'est débité nulle part.
+- Le gate créé porte owner = proposeur (écriture du péage) mais les
+  DEUX propriétaires d'endpoints sont EXEMPTS de péage (co-payeurs
+  [interp] — sinon l'accepteur paierait pour traverser son propre
+  investissement).
+
+### Vérifications
+
+- Shared 147/147 (moitiés exactes du SPLIT).
+- Intégration stargate-consent.test.ts **7/7** : §10 (départ d'autrui,
+  vers soi → « construisez directement », sans yard, sauvage), doublon,
+  proposeur ne répond pas, trésorerie courte = refus sans débit,
+  acceptation = les 4 moitiés exactes débitées + chantier owner=Alice,
+  activation + traversée SANS péage du co-payeur (soute vide), déclin,
+  annulation (§10).
+- E2E stargate-consent.spec.ts (2 comptes séquentiels, patron
+  manual.spec) : Alice pose le yard au plateau, VOIT le monde de Bob
+  (coque relocalisée §15), propose depuis la section Stargates ; Bob se
+  connecte, accepte dans l'inbox « Gate proposals » de SON monde (ses
+  moitiés partent : 75 cells/100 steelH restants), le gate s'active et
+  Bob traverse SANS péage ; captures gc-01…03.
+- Complétude collatérale découverte par le test : les coques ÉCHOUÉES
+  n'avaient pas d'yeux (absentes des statuts de vision) — une coque à
+  sec en survol étranger rendait le monde invisible. `stranded` ajouté
+  aux quatre requêtes de scope (bodies/junk/derelicts/gates + présence
+  intel).
+- Suites après synchro : shared 147, unit 32, intégration **276/276**,
+  E2E **34/34 (16,0 min)**.

@@ -361,7 +361,13 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    1 ship/tick/direction [TUNE], exit SCATTERED U(0–15) pc via seeded
    hash(shipId, tick) — deterministic, camper-proof. Gates die with
    either endpoint (CASCADE + supernova purge). Personal ships only
-   traverse toward their owner's worlds (GB §21).
+   traverse toward their owner's worlds (GB §21). **50/50 consent
+   (chunk AL):** a proposal pins from an active-yard world to ANOTHER
+   player's world (nothing debited; 48 real-hours TTL [TUNE-v1], lazy
+   sweep); only the TARGET owner responds; accepting re-verifies
+   everything, pays BOTH halves (each on their own world,
+   climate-resolved crystal) and starts the build. Both endpoint owners
+   are toll-EXEMPT (co-payers [interp]).
 
 ### Intel tiers (implemented, chunk Q)
 

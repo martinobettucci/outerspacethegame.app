@@ -71,6 +71,8 @@ export function BuildingPanel({
   stargateContext?: {
     bodyId: string;
     myPlanets: { id: string; name: string }[];
+    foreignPlanets: { id: string; name: string; ownerName: string | null }[];
+    onPropose: (destId: string) => void;
     gates: {
       id: string;
       aBodyId: string;
@@ -456,6 +458,35 @@ export function BuildingPanel({
               {t.planet.stargateBuild}
             </button>
           </form>
+          {stargateContext.foreignPlanets.length > 0 && (
+            <form
+              style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+              onSubmit={(event) => {
+                event.preventDefault();
+                const data = new FormData(event.currentTarget);
+                const dest = String(data.get('gatePropose') ?? '');
+                if (dest) stargateContext.onPropose(dest);
+              }}
+            >
+              <label className="ls-field" style={{ flex: 1 }}>
+                <span>{t.planet.stargateProposeDest}</span>
+                <select name="gatePropose" className="ls-select" defaultValue="">
+                  <option value="" disabled>
+                    —
+                  </option>
+                  {stargateContext.foreignPlanets.map((pl) => (
+                    <option key={pl.id} value={pl.id}>
+                      {pl.name}
+                      {pl.ownerName ? ` — ${pl.ownerName}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className="ls-button">
+                {t.planet.stargatePropose}
+              </button>
+            </form>
+          )}
         </section>
       )}
 

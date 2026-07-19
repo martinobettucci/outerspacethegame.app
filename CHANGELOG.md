@@ -4,6 +4,19 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Consentement 50/50 des stargates (chunk AL)** : le flux canon
+  inter-joueurs (« the price is split between the two owners — both
+  consent »). Une PROPOSITION s'épingle depuis un monde à yard ACTIF
+  vers le monde d'AUTRUI (rien n'est débité à la proposition — patron
+  des offres manuelles, TTL 48 h réelles [TUNE-v1], balayage paresseux) ;
+  seul le propriétaire CIBLE répond ; ACCEPTER re-vérifie tout, paie LES
+  DEUX moitiés (125 cells + 200 steelH + 50 cristal chacun, chacune sur
+  SON monde, cristal résolu par SON climat) et lance le chantier
+  (propriétaire d'écriture = proposeur). Les DEUX propriétaires
+  d'endpoints sont EXEMPTS de péage (co-payeurs [interp]). Migration
+  020. UI : « Propose to a foreign world » dans la section Stargates
+  (mondes étrangers visibles), inbox « Gate proposals » sur le monde
+  cible (Accept & pay half / Decline).
 - **Stargates v1 (chunk AK)** : le raccourci SÛR du réseau (GB §6).
   Chantier au stargate_yard ACTIF (coût 250 cells + 400 steelH + 100
   cristal du climat [TUNE], 48 h de jeu [TUNE-v1], 1 chantier concurrent

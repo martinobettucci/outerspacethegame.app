@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
-import {
+import { Orbit,
   ArrowLeft,
   Users,
   Database,
@@ -85,6 +85,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const [myPlanets, setMyPlanets] = useState<{ id: string; name: string }[]>([]);
   const [gates, setGates] = useState<StargateView[]>([]);
   const [gateBodyNames, setGateBodyNames] = useState<Record<string, string>>({});
+  const [foreignPlanets, setForeignPlanets] = useState<
+    { id: string; name: string; ownerName: string | null }[]
+  >([]);
+  const [gateProposals, setGateProposals] = useState<
+    {
+      id: string;
+      fromBodyName: string;
+      toBodyId: string;
+      proposerName: string;
+    }[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<{
     building: BuildingKey;
@@ -122,6 +133,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
         setGates(r.stargates.filter((g) => g.aBodyId === planetId || g.bBodyId === planetId));
         setGateBodyNames(
           Object.fromEntries(r.bodies.map((b) => [b.id, b.name])),
+        );
+        setForeignPlanets(
+          r.bodies
+            .filter((b) => b.bodyType === 'planet' && b.ownerId && !b.owned)
+            .map((b) => ({ id: b.id, name: b.name, ownerName: b.ownerName })),
+        );
+      });
+      void api.stargateProposals().then((r) => {
+        if (cancelled) return;
+        setGateProposals(
+          r.incoming.filter((prop) => prop.toBodyId === planetId),
         );
       });
     };
@@ -865,6 +887,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
                           `${t.planet.stargateBuildRefused} — ${err.message ?? err.error}`,
                         ),
                       ),
+                  foreignPlanets,
+                  onPropose: (destId) =>
+                    void api
+                      .proposeStargate(planetId, destId)
+                      .then(() => setNotice(t.planet.stargateProposed))
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.planet.stargateProposeRefused} — ${err.message ?? err.error}`,
+                        ),
+                      ),
                   onSetToll: (gateId, resource, amount) =>
                     void api
                       .setStargateToll(gateId, resource, amount)
@@ -1392,6 +1424,78 @@ export function PlanetView({ planetId }: { planetId: string }) {
 
           {/* Canal manuel (GB §9) : offres d'achat reçues sur ce monde —
               le serveur ne liste que les ouvertes, propriétaire seulement. */}
+          {gateProposals.length > 0 && (
+            <section
+              aria-label={t.planet.stargateProposalsTitle}
+              style={{ display: 'grid', gap: 6, fontSize: 12 }}
+            >
+              <span
+                style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}
+              >
+                <Orbit size={14} color="var(--accent-400)" aria-hidden />
+                {t.planet.stargateProposalsTitle}
+              </span>
+              {gateProposals.map((prop) => (
+                <div
+                  key={prop.id}
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    background: 'var(--bg-overlay)',
+                    borderRadius: 'var(--radius-card-sm, 10px)',
+                    padding: '6px 10px',
+                  }}
+                >
+                  <span>
+                    {prop.proposerName} {t.planet.stargateProposalLine}{' '}
+                    <strong>{prop.fromBodyName}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className="ls-button"
+                    onClick={() =>
+                      void api
+                        .respondStargateProposal(prop.id, true)
+                        .then(() => {
+                          setNotice(t.planet.stargateAccepted);
+                          setGateProposals((current) =>
+                            current.filter((x) => x.id !== prop.id),
+                          );
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(
+                            `${t.planet.stargateRespondRefused} — ${err.message ?? err.error}`,
+                          ),
+                        )
+                    }
+                  >
+                    {t.planet.stargateAccept}
+                  </button>
+                  <button
+                    type="button"
+                    className="ls-button"
+                    onClick={() =>
+                      void api
+                        .respondStargateProposal(prop.id, false)
+                        .then(() => {
+                          setNotice(t.planet.stargateDeclined);
+                          setGateProposals((current) =>
+                            current.filter((x) => x.id !== prop.id),
+                          );
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                        )
+                    }
+                  >
+                    {t.planet.stargateDecline}
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
           {manualInbox.length > 0 && (
             <section
               aria-label={t.planet.manualOffersTitle}

@@ -1,5 +1,9 @@
 import {
   buildStargate,
+  cancelStargateProposal,
+  listStargateProposals,
+  proposeStargate,
+  respondStargateProposal,
   setStargateToll,
   traverseStargate,
   visibleStargates,
@@ -928,6 +932,42 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       buildStargate(deps.pool, player.id, parsed.data.fromBodyId, parsed.data.toBodyId, {
         timeScale: deps.config.TIME_SCALE,
       }),
+    );
+  });
+
+  app.get('/stargate-proposals', async (req) => {
+    const player = await requirePlayer(req);
+    return listStargateProposals(deps.pool, player.id);
+  });
+
+  app.post('/stargate-proposals', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const parsed = z
+      .object({ fromBodyId: z.string().uuid(), toBodyId: z.string().uuid() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      proposeStargate(deps.pool, player.id, parsed.data.fromBodyId, parsed.data.toBodyId),
+    );
+  });
+
+  app.post('/stargate-proposals/:id/respond', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ accept: z.boolean() }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      respondStargateProposal(deps.pool, player.id, id, parsed.data.accept, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
+  });
+
+  app.post('/stargate-proposals/:id/cancel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () =>
+      cancelStargateProposal(deps.pool, player.id, id).then(() => ({ ok: true })),
     );
   });
 

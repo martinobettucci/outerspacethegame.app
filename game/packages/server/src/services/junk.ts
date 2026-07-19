@@ -508,7 +508,7 @@ export async function visibleDerelicts(
       SELECT s.x, s.y,
              CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
       FROM ships s
-      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked', 'stranded')
     )
     SELECT d.id, d.x, d.y, d.name, d.hull_category, d.hull_size
     FROM ships d
@@ -559,7 +559,7 @@ export async function visibleJunkFields(
       SELECT s.x, s.y,
              CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
       FROM ships s
-      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked')
+      WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked', 'stranded')
     )
     SELECT j.id, j.x, j.y, j.amount_t, j.as_of
     FROM junk_fields j

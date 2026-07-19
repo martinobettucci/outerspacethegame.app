@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   STARGATE_BUILD_HOURS,
+  STARGATE_SPLIT_COST,
   STARGATE_COST,
   STARGATE_EXIT_SCATTER_MAX_PC,
   stargateExitOffset,
@@ -33,5 +34,11 @@ describe('constantes canon [TUNE]', () => {
       crystal_any: 100,
     });
     expect(STARGATE_BUILD_HOURS).toBe(48);
+    // Moitiés exactes du partage 50/50 (canon).
+    expect(STARGATE_SPLIT_COST).toEqual({
+      fuel_cells: 125,
+      steel_h: 200,
+      crystal_any: 50,
+    });
   });
 });

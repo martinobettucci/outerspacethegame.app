@@ -201,6 +201,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Stargate consent (implemented, chunk AL)** — the yard's Stargates
+  section gains a second form, `Propose to a foreign world (50/50
+  split)` (select of visible foreign-owned worlds, `owner — name`
+  labels); the TARGET world's view shows a "Gate proposals" inbox card
+  (`<proposer> proposes a 50/50 gate from <world>`) with `Accept & pay
+  half` / `Decline` buttons. Notices spell out the money: "both halves
+  are paid on acceptance."
 - **Stargates (implemented, chunk AK)** — the stargate_yard panel opens
   a "Stargates" section (Orbit icon): per-gate mono lines
   (`→ <far world> · active · toll N res`) with an inline toll form

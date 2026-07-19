@@ -231,3 +231,10 @@ documented down-path or an explicit "irreversible" statement
   endpoint supprimé ; l'annihilation purge explicitement), statut
   building/active, péage (resource + amount), horodatage par direction
   (capacité 1/tick/direction).
+
+## 020_stargate_proposals.sql (chunk AL)
+
+- `stargate_proposals` — consentement 50/50 (canon) : proposition
+  épinglée (open/accepted/declined/cancelled/expired), TTL 48 h réelles
+  balayé paresseusement ; l'acceptation paie les deux moitiés et crée le
+  gate (table stargates).

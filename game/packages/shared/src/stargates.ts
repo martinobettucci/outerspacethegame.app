@@ -18,6 +18,14 @@ export const STARGATE_COST: Partial<Record<ResourceId | 'crystal_any', number>> 
   steel_h: 400,
   crystal_any: 100,
 };
+/** Moitié du coût — partage 50/50 entre propriétaires DIFFÉRENTS
+ * (canon : « both consent ») : chacun paie SA moitié sur SON monde. */
+export const STARGATE_SPLIT_COST: Partial<
+  Record<ResourceId | 'crystal_any', number>
+> = { fuel_cells: 125, steel_h: 200, crystal_any: 50 };
+/** TTL d'une proposition de gate (heures RÉELLES) [TUNE-v1]. */
+export const STARGATE_PROPOSAL_TTL_HOURS = 48;
+
 /** Durée du chantier (heures de jeu) [TUNE-v1 — non chiffrée par le
  * guide ; le yard limite la CONCURRENCE (1/niveau), pas la durée]. */
 export const STARGATE_BUILD_HOURS = 48;
