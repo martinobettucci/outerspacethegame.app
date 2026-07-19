@@ -5,6 +5,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  survivalDrainTPerDay,
+  survivalCapacityT,
   FUEL_TRANSFER_RADIUS_PC,
   HOVER_IDLE_FUEL_U_PER_DAY,
   hoverIdleFuelUPerDay,
@@ -117,5 +119,32 @@ describe('constantes de transfert', () => {
   it('FUEL_TRANSFER_RADIUS_PC = 1 [TUNE-GAP] ; taux de base 0.2 [TUNE]', () => {
     expect(FUEL_TRANSFER_RADIUS_PC).toBe(1);
     expect(HOVER_IDLE_FUEL_U_PER_DAY).toBeCloseTo(0.2, 9);
+  });
+});
+
+describe('survivalDrainTPerDay & capacité (GB §6, DG §3.5)', () => {
+  it('0 sans équipage, 0.01 T/j/ressource par membre là où on vit à bord', () => {
+    expect(survivalDrainTPerDay('cargo', 'hovering', 0)).toBe(0);
+    expect(survivalDrainTPerDay('cargo', 'hovering', 1)).toBeCloseTo(0.01, 12);
+    expect(survivalDrainTPerDay('cargo', 'transit', 2)).toBeCloseTo(0.02, 12);
+    expect(survivalDrainTPerDay('cargo', 'idle', 1)).toBeCloseTo(0.01, 12);
+    expect(survivalDrainTPerDay('cargo', 'stranded', 1)).toBeCloseTo(0.01, 12);
+  });
+
+  it('exemptions : quai/entrepôt/derelict/colonizing, son monde, probe/personal', () => {
+    for (const status of ['docked', 'warehoused', 'derelict', 'colonizing']) {
+      expect(survivalDrainTPerDay('cargo', status, 3)).toBe(0);
+    }
+    expect(
+      survivalDrainTPerDay('cargo', 'hovering', 2, { overOwnWorld: true }),
+    ).toBe(0);
+    expect(survivalDrainTPerDay('probe', 'hovering', 1)).toBe(0);
+    expect(survivalDrainTPerDay('personal', 'idle', 1)).toBe(0);
+  });
+
+  it('capacité = survivalCrewDays × 0.01 × équipage (ancre de l\'alarme 25 %)', () => {
+    expect(survivalCapacityT(14, 1)).toBeCloseTo(0.14, 12);
+    expect(survivalCapacityT(60, 2)).toBeCloseTo(1.2, 12);
+    expect(survivalCapacityT(14, 0)).toBe(0);
   });
 });

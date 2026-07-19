@@ -3,6 +3,7 @@
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
  */
 import {
+  HULLS,
   isAmmSlot,
   BUILDINGS,
   COLONY_SEED_STOCK,
@@ -15,9 +16,9 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { aggregateCensus } from './census.js';
-import type { EventHandler } from './events.js';
+import { enqueue, type EventHandler } from './events.js';
 import { recomputePlanetRates } from './rebase.js';
-import { evalShipFuel, rebaseShipDrain } from './shipDrain.js';
+import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
 
 /**
  * construction_complete { buildingId } — active un bâtiment échu puis
@@ -541,6 +542,112 @@ export function censusRun(intervalMs: number): EventHandler {
   };
 }
 
+/**
+ * survival_out { shipId } — l'horloge de survie expire (GB §6) : l'équipage
+ * MEURT avec son hôte (host-fate canon), la coque devient DERELICT et la
+ * propriété est DÉPOUILLÉE (owner_id NULL — épave salvageable ; les claims
+ * arrivent avec les items P4). Idempotent : garde sur l'état réel.
+ */
+export const survivalOut: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const { rows: ships } = await client.query(
+    `SELECT * FROM ships WHERE id = $1
+       AND status NOT IN ('derelict', 'docked', 'warehoused', 'colonizing')
+     FOR UPDATE`,
+    [shipId],
+  );
+  const ship = ships[0];
+  if (!ship) return;
+  const nowMs = event.dueAt.getTime();
+  const sv = evalShipSurvival(ship, nowMs);
+  if (Math.min(sv.food, sv.water) > 1e-9) return; // rebasé entre-temps
+  // Host-fate : l'équipage meurt avec la coque.
+  await client.query(
+    `DELETE FROM npcs WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+    [shipId],
+  );
+  await client.query(
+    `UPDATE ships SET status = 'derelict', owner_id = NULL,
+        fuel_rate_u_per_day = 0, survival_rate_t_per_day = 0,
+        survival_as_of = to_timestamp($2 / 1000.0),
+        hover_body_id = hover_body_id, docked_body_id = NULL
+     WHERE id = $1`,
+    [shipId, nowMs],
+  );
+  await client.query(
+    `DELETE FROM events WHERE processed_at IS NULL
+       AND kind IN ('survival_low', 'ship_fuel_out')
+       AND payload->>'shipId' = $1`,
+    [shipId],
+  );
+};
+
+/**
+ * survival_low { shipId } — alarme des 25 % (DG §3.5, anti-extorsion) :
+ * si la politique auto-flee-home est ARMÉE et la coque libre de voler
+ * (hovering/idle, du carburant, un monde possédé), elle prend la route du
+ * monde possédé le plus proche À PORTÉE du réservoir. FACTORY : timeScale
+ * du worker (les durées de vol sont des événements).
+ */
+export function survivalLow(timeScale: number): EventHandler {
+  return async (client, event) => {
+    const shipId = String(event.payload.shipId ?? '');
+    if (!shipId) return;
+    const { rows: ships } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 AND flee_armed
+         AND status IN ('hovering', 'idle') FOR UPDATE`,
+      [shipId],
+    );
+    const ship = ships[0];
+    if (!ship) return;
+    const nowMs = event.dueAt.getTime();
+    const hull =
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS];
+    if (!hull || hull.speedPcPerDay <= 0) return;
+    const stats = { speed: hull.speedPcPerDay, burnPerPc: hull.burnUPerPc };
+    const tank = evalShipFuel(ship, nowMs);
+    const range = stats.burnPerPc > 0 ? tank.units / stats.burnPerPc : Infinity;
+    const { rows: homes } = await client.query(
+      `SELECT id, x, y FROM bodies
+       WHERE owner_id = $1 AND body_type = 'planet'
+       ORDER BY (x - $2)^2 + (y - $3)^2 LIMIT 1`,
+      [ship.owner_id, ship.x, ship.y],
+    );
+    const home = homes[0];
+    if (!home) return;
+    const distance = Math.hypot(home.x - ship.x, home.y - ship.y);
+    if (distance < 0.5 || distance > range + 1e-9) return; // hors de portée : l'horloge court
+    const needed = distance * stats.burnPerPc;
+    const travelDays = distance / stats.speed;
+    const arrivesAt = new Date(nowMs + (travelDays * 86_400_000) / timeScale);
+    await client.query(
+      `UPDATE ships SET status = 'transit', docked_body_id = NULL,
+          hover_body_id = NULL, docked_at = NULL,
+          origin_x = $2, origin_y = $3, dest_x = $4, dest_y = $5,
+          dest_body_id = $6, departed_at = to_timestamp($7 / 1000.0),
+          arrives_at = $8,
+          fuel = $9, fuel_rate_u_per_day = 0,
+          fuel_as_of = to_timestamp($7 / 1000.0)
+       WHERE id = $1`,
+      [
+        shipId,
+        ship.x,
+        ship.y,
+        home.x,
+        home.y,
+        home.id,
+        nowMs,
+        arrivesAt,
+        JSON.stringify({ [tank.type]: tank.units - needed }),
+      ],
+    );
+    await enqueue(client, 'ship_arrival', arrivesAt, { shipId });
+    // La survie continue de courir en transit : rebase sur le nouvel état.
+    await rebaseShipSurvival(client, { ...ship, status: 'transit' }, nowMs);
+  };
+}
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -554,6 +661,10 @@ export function baseHandlers(): Record<string, EventHandler> {
     colony_established: colonyEstablished,
     dock_eviction: dockEviction,
     retool_complete: retoolComplete,
+    survival_out: survivalOut,
+    // survival_low exige timeScale : injecté par le worker (survivalLow) ;
+    // par défaut (tests d'intégration sans flee) un timeScale de 1.
+    survival_low: survivalLow(1),
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

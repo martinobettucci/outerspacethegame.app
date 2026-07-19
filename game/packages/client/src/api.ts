@@ -221,6 +221,9 @@ export interface ShipView {
   fuelRatePerDay: number;
   fuelAsOf: string | null;
   tankU: number;
+  survival: { food: number; water: number; ratePerDay: number };
+  crewCount: number;
+  fleeArmed: boolean;
   mission: {
     originX: number;
     originY: number;
@@ -359,6 +362,8 @@ export const api = {
       `/planets/${planetId}/buildings/${buildingId}/amm-liquidity`,
       input,
     ),
+  setFleePolicy: (shipId: string, armed: boolean) =>
+    call<{ ok: true }>('POST', `/ships/${shipId}/flee-policy`, { armed }),
   retoolBuilding: (planetId: string, buildingId: string, recipe: string) =>
     call<{ instant: boolean; completesAt: string | null }>(
       'POST',

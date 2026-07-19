@@ -4,6 +4,33 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Horloges de survie & derelict (chunk AB)** : migration 014
+  (`owner_id` nullable, réservoir de survie PARESSEUX
+  survival_rate/as_of, `flee_armed` défaut vrai). Drain 0,01 T/j de food
+  ET water PAR membre d'équipage [TUNE] partout où l'équipage vit à bord
+  (survol étranger/sauvage, idle, TRANSIT — l'horloge de mort du vol —,
+  échoué) ; exempt : à quai/entrepôt (l'hôte nourrit [TUNE-v1]), survol
+  de SON monde (le chemin stock-planète comme le fuel reste à brancher
+  [TUNE-v1 annoncé]), colonizing, derelict, probe/personal ; l'horloge
+  ne S'ARME que si des provisions existent [TUNE-v1 annoncé — l'Arche
+  porte ses vivres en soute ; le hauler de spawn (2/2) vit la boucle].
+  Rebase de survie en PIGGYBACK de chaque rebase de drain + départ en
+  transit + changement d'équipage. Alarme à 25 % de la capacité de coque
+  (survivalCrewDays × 0,01 × équipage [TUNE-v1 interp]) : politique
+  auto-flee-home ARMÉE par défaut (anti-extorsion DG §3.5), désarmable —
+  la coque prend la route du monde possédé le plus proche À PORTÉE du
+  réservoir (handler factory timeScale). survival_out : équipage MORT
+  (host-fate canon), coque DERELICT dépouillée (owner NULL — disparue de
+  la flotte, épave salvageable ; claims avec les items P4, hijack P5).
+  UI : bouton « Assign pilot » étendu aux coques cargo/combat
+  (complétude — il n'existait que sur les civils), section « Crew
+  survival » (jauge, taux, politique, bascule). Instrumentation §15 :
+  POST /test/ship-survival. Tests : 3 blocs unit shared + 7 intégration
+  (statuts/exemptions, bords planifiés, §10, flee armé/désarmé à portée
+  déterministe, out idempotent) + E2E survival.spec.ts (jauge → drain
+  sauvage → bascule → expiration → épave disparue), captures sv-01…03
+  observées. Une régression réelle attrapée par les tests : les coques
+  équipées SANS provisions mouraient au départ — d'où la garde.
 - **Texturation de l'UI (chunk AA, demande du responsable)** :
   `game/scripts/genUiTextures.mjs` — quatre fonds tuilables TRÈS bas
   contraste générés par gpt-image-2 (ui-panel tissage carbone, ui-card

@@ -27,6 +27,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 11 | `game/packages/server/migrations/011_docks.sql` | Docks de spaceport (GB §9/§14, DG §5.1/§8.6) : `ships.docked_at` (garde d'éviction de séjour + affichage), backfill `now()` pour les coques déjà à quai | 001 | ALTER TABLE ships DROP COLUMN docked_at |
 | 12 | `game/packages/server/migrations/012_manual_offers.sql` | Canal manuel (GB §9, DG §6) : table `manual_offers` (offres épinglées au vaisseau à quai, TTL 48 h) | 001 | DROP TABLE manual_offers |
 | 13 | `game/packages/server/migrations/013_retool.sql` | Retool des industries (DG §5.1) : statut de bâtiment `retooling` (contrainte CHECK élargie) | 001 | Recréer la contrainte sans `retooling` (aucun bâtiment dans cet état) |
+| 14 | `game/packages/server/migrations/014_survival.sql` | Horloges de survie (GB §6, DG §3.5) : owner_id nullable (derelict), réservoir de survie paresseux, politique flee_armed | 001, 008 | Re-NOT NULL owner_id (après réattribution des épaves), DROP des 3 colonnes |
 
 ## Services à déployer (au premier déploiement)
 

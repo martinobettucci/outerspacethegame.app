@@ -29,7 +29,9 @@ import {
   pendingShipBuilds,
   refuelShip,
   relocateShipForTest,
+  setFleePolicy,
   setShipFuelForTest,
+  setShipSurvivalForTest,
   transferCargo,
   transferFuel,
   undockShip,
@@ -748,6 +750,25 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
 
+    app.post('/test/ship-survival', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          shipId: z.string().uuid(),
+          foodT: z.number().min(0).max(10_000),
+          waterT: z.number().min(0).max(10_000),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        await setShipSurvivalForTest(deps.pool, player.id, parsed.data.shipId, {
+          foodT: parsed.data.foodT,
+          waterT: parsed.data.waterT,
+        });
+        return { ok: true };
+      });
+    });
+
     app.post('/test/relocate-ship', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z
@@ -765,6 +786,17 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
   }
+
+  app.post('/ships/:id/flee-policy', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ armed: z.boolean() }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, async () => {
+      await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
+      return { ok: true };
+    });
+  });
 
   app.post('/ships/:id/refuel', async (req, reply) => {
     const player = await requirePlayer(req);

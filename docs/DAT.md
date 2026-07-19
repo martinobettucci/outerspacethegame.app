@@ -253,6 +253,21 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    across cargo unload, fixed trade, innate trade, AMM swap/route,
    manual accept) — only production halts at cap via the storage brake.
 
+14. **Survival clocks & derelicts (implemented, chunk AB):** crewed
+   hulls burn 0.01 T/day of food AND water per crew member [TUNE]
+   wherever the crew lives aboard — foreign/wild hover, idle, TRANSIT
+   (the flight death clock), stranded; exempt: docked/warehoused (the
+   host feeds), own-world hover (planet-stock path pending like fuel
+   [TUNE-v1]), colonizing, derelict. Lazy stores (migration 014, fuel
+   pattern) rebase in piggyback of every drain rebase + transit
+   departure + crew changes; the clock only ARMS when stores exist
+   [TUNE-v1 — announced]. At 25% of hull capacity
+   (survivalCrewDays × 0.01 × crew) the default-armed auto-flee-home
+   policy (disarmable) routes the ship to the nearest OWNED world
+   within tank range. survival_out kills the crew (host-fate), strips
+   ownership (owner NULL) and leaves a DERELICT wreck — gone from the
+   owner's fleet; salvage claims (items P4) and hijack (P5) pending.
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

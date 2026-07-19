@@ -2430,3 +2430,43 @@ nébuleux + cartes), vue planète (rail + inspecteur + deck), panneau
 d'inspection galaxie — textures perceptibles sans jamais gêner la
 lecture ; suite E2E complète relancée après le changement de styles
 (résultat au compte rendu).
+
+## 2026-07-19 — Chunk AB : horloges de survie, auto-flee, derelict (GB §6, DG §3.5/§8.8)
+
+**Décisions.**
+- *Réservoir paresseux* (motif fuel 008) : taux UNIQUE appliqué à food et
+  water (0,01 × équipage), matérialisé au rebase — le rebase de survie
+  est un PIGGYBACK de rebaseShipDrain (tous les points de bascule
+  couverts d'un coup) + départ en transit + assignation d'équipage.
+- *Où l'on mange* : partout où l'équipage vit à bord, TRANSIT compris
+  (c'est l'horloge de mort du vol — le fuel, lui, reste pré-brûlé v1) ;
+  exemptions [TUNE-v1] : quai/entrepôt (l'hôte nourrit), survol de SON
+  monde (le chemin stock-planète viendra comme pour le fuel), colonizing
+  (vivres du kit à part), derelict.
+- *Garde d'armement* : l'horloge ne s'arme que si worst(food,water) > 0 —
+  les tests d'intégration ont attrapé la régression (l'Arche de
+  colonisation, équipée mais aux réservoirs de survie vides, mourait à
+  l'instant du départ) ; l'avitaillement devient une boucle de jeu là où
+  les réservoirs sont remplis (hauler de spawn 2/2).
+- *Alarme 25 %* : ancrée à la CAPACITÉ de coque (survivalCrewDays × 0,01
+  × équipage [TUNE-v1 interp — canon « 25% remaining » sans ancre]) ;
+  auto-flee-home armée par défaut, désarmable ; la fuite ne part que si
+  le monde possédé le plus proche est À PORTÉE du réservoir (sinon
+  l'horloge court — pas de téléportation de complaisance).
+- *survival_out* : host-fate (équipage supprimé), derelict DÉPOUILLÉE
+  (owner NULL, migration 014) — l'épave disparaît de la flotte et de
+  l'index ; salvage claims (items P4) et hijack (P5) : restent.
+- *Complétude UI* : « Assign pilot » n'existait que sur les coques
+  civiles — étendu à cargo/combat (l'horloge suit l'équipage, il faut
+  pouvoir équiper).
+- *Arithmétique piégeuse* : 1e-6 T à 0,01 T/j = 8,64 s (pas 8 ms) — la
+  fixture d'expiration utilise 1e-8 (86 ms) et n'avance JAMAIS l'échéance
+  avant as_of (l'évaluation à rebours remonterait au-dessus de la garde).
+
+**Vérifications.** Shared 125 (3 blocs) ; 32 unit + 185 intégration (7
+survie) ; E2E survival.spec.ts 20 s (jauge/politique/expiration), suite
+complète au moment du commit ; captures sv-01…03 observées (§16) —
+sv-03 : l'épave a disparu de la flotte ET de l'index de contacts.
+Migration 014 appliquée en dev uniquement (PROD_MIGRATIONS : 014 en
+attente). Boucle reconfigurée par le responsable : cron horaire :23
+(2a10e521), l'ancienne boucle dynamique arrêtée.

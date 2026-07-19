@@ -279,6 +279,50 @@ export const HOVER_SIZE_MULT: Record<HullSize, number> = { s: 1, m: 2, l: 4 };
  */
 export const HOVER_SURVIVAL_T_PER_CREW_PER_DAY = 0.01;
 
+/** Alarme de survie (DG §3.5) : à 25 % restants de la capacité de la
+ * coque, auto-flee-home ARMÉE par défaut (anti-extorsion). [TUNE] */
+export const SURVIVAL_ALARM_FRACTION = 0.25;
+
+/** Ressources de survie suivies par l'horloge (l'oxygène attend son
+ * système de recyclage [TUNE-GAP] — il embarque mais ne draine pas v1). */
+export const SURVIVAL_CLOCK_RESOURCES = ['food', 'water'] as const;
+
+/**
+ * Capacité de provisions de la coque PAR ressource de survie (T) :
+ * survivalCrewDays × 0.01 × équipage — l'ancre déterministe de l'alarme
+ * des 25 % [TUNE-v1 interp : le canon dit « 25% remaining » sans ancre].
+ */
+export function survivalCapacityT(
+  survivalCrewDays: number,
+  crewCount: number,
+): number {
+  return survivalCrewDays * HOVER_SURVIVAL_T_PER_CREW_PER_DAY * Math.max(0, crewCount);
+}
+
+/**
+ * Drain de survie (T/jour PAR ressource food et water) : 0.01 × équipage.
+ * Il court PARTOUT où l'équipage vit à bord — survol étranger/sauvage,
+ * idle, TRANSIT (c'est l'horloge de mort du vol, GB §6), échoué — mais
+ * pas : à quai / en entrepôt (l'hôte nourrit [TUNE-v1]), en survol de SON
+ * monde (le stock planétaire paiera comme le fuel — chemin planète à
+ * brancher, v1 : exempt [TUNE-v1 annoncé]), colonizing (les provisions du
+ * kit sont comptées à part), derelict (plus personne à bord).
+ */
+export function survivalDrainTPerDay(
+  category: HullCategory | string,
+  status: string,
+  crewCount: number,
+  opts: { overOwnWorld?: boolean } = {},
+): number {
+  if (crewCount <= 0) return 0;
+  if (category === 'probe' || category === 'personal') return 0;
+  if (['docked', 'warehoused', 'derelict', 'colonizing'].includes(status)) {
+    return 0;
+  }
+  if (status === 'hovering' && opts.overOwnWorld) return 0;
+  return HOVER_SURVIVAL_T_PER_CREW_PER_DAY * crewCount;
+}
+
 /**
  * Conso de loitering d'une coque (hovering OU idle — GB §7 : « both consume
  * resources » ; le guide ne chiffre qu'un taux, appliqué aux deux).

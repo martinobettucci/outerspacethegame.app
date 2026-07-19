@@ -36,7 +36,7 @@ import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
-import { evalShipFuel, rebaseShipDrain } from '../sim/shipDrain.js';
+import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -61,6 +61,10 @@ export interface ShipView {
   fuelRatePerDay: number;
   fuelAsOf: string | null;
   tankU: number;
+  /** Provisions de survie ÉVALUÉES (food/water T), équipage et politique. */
+  survival: { food: number; water: number; ratePerDay: number };
+  crewCount: number;
+  fleeArmed: boolean;
   mission: {
     originX: number;
     originY: number;
@@ -132,6 +136,11 @@ export async function fleet(
   const establishesBy = new Map(
     establishing.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  const { rows: crewCounts } = await pool.query(
+    `SELECT bound_host_id AS ship_id, count(*)::int AS crew FROM npcs
+     WHERE bound_host_type = 'ship' GROUP BY bound_host_id`,
+  );
+  const crewBy = new Map(crewCounts.map((c) => [c.ship_id, Number(c.crew)]));
   return rows.map((r) => {
     const pos = shipPosition(r, nowMs);
     const tank = evalShipFuel(r, nowMs);
@@ -153,6 +162,16 @@ export async function fleet(
           ?.pax ?? 0,
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
+      survival: (() => {
+        const sv = evalShipSurvival(r, nowMs);
+        return {
+          food: Math.floor(sv.food * 1000) / 1000,
+          water: Math.floor(sv.water * 1000) / 1000,
+          ratePerDay: sv.ratePerDay,
+        };
+      })(),
+      crewCount: crewBy.get(r.id) ?? 0,
+      fleeArmed: !!r.flee_armed,
       fuel: { [tank.type]: tank.units },
       fuelType: tank.type,
       fuelRatePerDay: Number(r.fuel_rate_u_per_day ?? 0),
@@ -383,6 +402,9 @@ export async function moveShip(
       );
       if (owned[0]) await recomputePlanetRates(client, bodyId, nowMs);
     }
+    // Horloge de survie : l'équipage mange AUSSI en transit (GB §6 — le
+    // vol a une horloge de mort ; le fuel, lui, est pré-brûlé v1).
+    await rebaseShipSurvival(client, { ...ship, status: 'transit' }, nowMs);
     await client.query('COMMIT');
     return { arrivesAt, fuelBurned, distancePc: distance };
   } catch (err) {
@@ -994,6 +1016,47 @@ export async function setShipFuelForTest(
  * l'atterrissage, lui, reste le VRAI chemin (politique + docks). L'état
  * simulé reste cohérent : drain de survol armé sur le réservoir.
  */
+/** Instrumentation E2E (§15) : fixe les provisions de survie de SON
+ * vaisseau puis rebase l'horloge (l'échéance réelle en découle). */
+export async function setShipSurvivalForTest(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { foodT: number; waterT: number; nowMs?: number },
+): Promise<void> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    await rebaseShipSurvival(client, ship, nowMs, {
+      setFoodT: opts.foodT,
+      setWaterT: opts.waterT,
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Arme/désarme la politique auto-flee-home (DG §3.5, anti-extorsion). */
+export async function setFleePolicy(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  armed: boolean,
+): Promise<void> {
+  const { rows } = await pool.query(
+    `UPDATE ships SET flee_armed = $3
+     WHERE id = $1 AND owner_id = $2 RETURNING id`,
+    [shipId, playerId, armed],
+  );
+  if (!rows[0]) throw new CommandError('not_found', 'Vaisseau inconnu');
+}
+
 export async function relocateShipForTest(
   pool: pg.Pool,
   playerId: string,
@@ -1385,7 +1448,13 @@ export async function assignCrew(
       `UPDATE npcs SET bound_host_type = 'ship', bound_host_id = $2 WHERE id = $1`,
       [npcId, shipId],
     );
-    await client.query('COMMIT');
+    // L'équipage vient de changer : l'horloge de survie se rebase.
+  const { rows: shipNow } = await client.query(
+    `SELECT * FROM ships WHERE id = $1`,
+    [shipId],
+  );
+  if (shipNow[0]) await rebaseShipSurvival(client, shipNow[0], Date.now());
+  await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

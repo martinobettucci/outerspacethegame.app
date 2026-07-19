@@ -1176,6 +1176,114 @@ export function GalaxyMap() {
               ) : null}
             </section>
           )}
+          {['cargo', 'combat'].includes(selectedShip.hullCategory) &&
+            selectedShip.crewCount === 0 &&
+            (() => {
+              // Tout hull équipable embarque un pilote libre (les coques
+              // civiles ont le leur dans la section settlers) — l'horloge
+              // de survie (GB §6) suit l'équipage.
+              const freePilot = npcs.find(
+                (n) => n.role === 'pilot' && !n.boundHostId,
+              );
+              return freePilot ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .assignCrew(selectedShip.id, freePilot.id)
+                      .then(() => {
+                        setNotice(t.galaxy.pilotAssigned);
+                        void refreshNpcs();
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                      )
+                  }
+                  style={{
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    justifySelf: 'start',
+                  }}
+                >
+                  {t.galaxy.assignPilot} ({freePilot.rarity})
+                </button>
+              ) : null;
+            })()}
+          {selectedShip.crewCount > 0 && (
+            <section
+              aria-label={t.galaxy.survivalTitle}
+              style={{
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                display: 'grid',
+                gap: 4,
+              }}
+            >
+              <strong
+                style={{
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Users size={13} aria-hidden /> {t.galaxy.survivalTitle} —{' '}
+                <span style={{ fontFamily: 'var(--font-mono)' }}>
+                  {selectedShip.crewCount} crew · {selectedShip.survival.food.toFixed(2)}{' '}
+                  food / {selectedShip.survival.water.toFixed(2)} water T{' '}
+                  {t.galaxy.survivalStores}
+                </span>
+              </strong>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>
+                {selectedShip.survival.ratePerDay < 0
+                  ? `${selectedShip.survival.ratePerDay.toFixed(2)} T/d · ${t.galaxy.survivalDraining}`
+                  : t.galaxy.survivalIdle}
+              </span>
+              <span
+                style={{
+                  color: selectedShip.fleeArmed
+                    ? 'var(--success-500, #238C33)'
+                    : 'var(--danger-300, #F24141)',
+                }}
+              >
+                {selectedShip.fleeArmed ? t.galaxy.fleeArmed : t.galaxy.fleeDisarmed}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .setFleePolicy(selectedShip.id, !selectedShip.fleeArmed)
+                    .then(() => {
+                      setNotice(t.galaxy.fleeUpdated);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                    )
+                }
+                style={{
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '4px 10px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  justifySelf: 'start',
+                }}
+              >
+                {selectedShip.fleeArmed
+                  ? t.galaxy.fleeToggleDisarm
+                  : t.galaxy.fleeToggleArm}
+              </button>
+            </section>
+          )}
           {selectedShip.containers > 0 && (
             <section
               aria-label={t.galaxy.cargoTitle}

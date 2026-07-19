@@ -176,6 +176,17 @@ evaluated stock.
   Industrialist instant-switch window lives in `buildings.config`
   (`lastInstantRetoolMs`, 004 pattern).
 
+## 014_survival (death clocks & derelict, GB §6 / DG §3.5)
+
+- `ships.owner_id` becomes NULLABLE: survival-out STRIPS ownership — a
+  derelict is an ownerless salvageable wreck (claims arrive with items).
+- `ships.survival_rate_t_per_day` + `survival_as_of`: lazy survival
+  stores (single rate applied to both food and water in the `survival`
+  jsonb, 008 fuel pattern); edges live in the events queue
+  (survival_low / survival_out).
+- `ships.flee_armed boolean DEFAULT true`: the anti-extortion
+  auto-flee-home policy (DG §3.5), disarmable per ship.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,

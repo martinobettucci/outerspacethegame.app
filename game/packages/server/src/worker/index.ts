@@ -7,7 +7,7 @@ import { GAME_DAY_SECONDS } from '@atg/shared';
 import { config } from '../config.js';
 import { createPool } from '../db/pool.js';
 import { processDueEvents } from '../sim/events.js';
-import { baseHandlers, censusRun } from '../sim/handlers.js';
+import { baseHandlers, censusRun, survivalLow } from '../sim/handlers.js';
 
 const pool = createPool();
 // Census : CENSUS_PER_DAY snapshots/jour [TUNE], divisé par TIME_SCALE.
@@ -16,6 +16,7 @@ const censusIntervalMs =
 const handlers = {
   ...baseHandlers(),
   census_run: censusRun(censusIntervalMs),
+  survival_low: survivalLow(config.TIME_SCALE),
 };
 let running = true;
 

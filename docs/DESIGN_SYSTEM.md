@@ -193,6 +193,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   a missing texture falls back to the flat procedural fill. Regenerate
   with `node game/scripts/genSoil.mjs` (OPENAI_KEY in local .env,
   never committed; full-size archives in docs/design/prototypes).
+- **Crew survival (implemented, chunk AB)** — crewed ship panels gain a
+  "Crew survival" section: mono gauge `N crew · X food / Y water T
+  stores`, a drain line (`-0.01 T/d · draining while the crew lives
+  aboard` vs `host feeds the crew`), the flee policy state in
+  success-green (armed) or danger-red (DISARMED) and its toggle button;
+  cargo/combat hulls now expose `Assign pilot` (was civil-only).
+  Derelicts simply vanish from the fleet and contact index — absence is
+  the statement.
 - **Retool (implemented, chunk Y)** — the industry tuning section ends
   with a violet `Retool` button (active buildings only) that reopens the
   same RecipePicker used at placement; during the swap the panel shows a

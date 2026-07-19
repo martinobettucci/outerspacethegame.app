@@ -20,6 +20,8 @@ export type EventKind =
   | 'census_run'
   | 'dock_eviction'
   | 'retool_complete'
+  | 'survival_low'
+  | 'survival_out'
   | 'noop';
 
 export interface GameEvent {
