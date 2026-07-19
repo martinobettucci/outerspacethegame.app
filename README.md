@@ -108,6 +108,10 @@ asset) and `docs/design/prototypes/soil-<climate>.png` (full-size
 archive). Missing textures are harmless — the planet view falls back to
 the procedural slab.
 
+`node game/scripts/genUiTextures.mjs` regenerates the four UI chrome
+backgrounds (`ui-panel`, `ui-card`, `ui-shell`, `ui-veil`) with the same
+pipeline and requirements.
+
 ## Environment variables
 
 | Variable | Role | Required | Notes |

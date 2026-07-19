@@ -2403,3 +2403,30 @@ limitation notée au chunk X (aucun canal d'images).
 masquage propre, profondeur de dalle conservée, slots lisibles ;
 suite E2E complète relancée après l'intégration (résultat au compte
 rendu). Aucun test de simulation touché (changement purement visuel).
+
+## 2026-07-19 — Chunk AA : texturation de l'UI (gpt-image-2)
+
+**Contexte.** Après les sols (chunk Z), le responsable demande des fonds
+texturés pour les panneaux et cartes de l'UI — texturation de chrome,
+pas de remplacement d'art de jeu.
+
+**Décisions.**
+- Famille de QUATRE textures cohérentes (panel/card/shell/veil), prompts
+  « extremely subtle, low contrast, near-black indigo » — la lisibilité
+  du texte prime (§22) ; webp 512² (2–24 Ko, le bas contraste compresse
+  très bien).
+- Intégration en couche intermédiaire du background multi-couches
+  existant : les gradients de teinte restent PAR-DESSUS (alphas 0.97 →
+  ~0.88-0.92) et la couleur de base dessous — les états, bordures et
+  accents des composants sont inchangés ; retirer la texture = retour
+  exact à l'avant.
+- Surfaces : ls-command-panel, ls-construction-card, ls-modal-layer
+  (planet-panels) ; galaxy-panel, planet-inspector, planet-plaque
+  (scenes) ; ls-command-rail (shell). Les micro-cartes (offres marché,
+  hospitalité…) restent sur leurs rgba — trop petites pour une trame.
+
+**Vérifications.** Sonde jetable : modale de recette sur deck (voile
+nébuleux + cartes), vue planète (rail + inspecteur + deck), panneau
+d'inspection galaxie — textures perceptibles sans jamais gêner la
+lecture ; suite E2E complète relancée après le changement de styles
+(résultat au compte rendu).

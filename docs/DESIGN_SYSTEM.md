@@ -178,6 +178,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   name) → destructive-styled `Install forever` enabled ONLY on exact
   match. This is the reference implementation of "irreversible action =
   typed confirmation, never a simple OK".
+- **UI texturing (implemented, chunk AA)** — four generated tileable
+  backgrounds (`/generated/ui-{panel,card,shell,veil}.webp`, 512²,
+  near-black indigo, extremely low contrast) sit as the MIDDLE layer of
+  existing multi-layer backgrounds (tint gradients above at ~0.9 alpha,
+  base color below): command panels & deck cards, galaxy panel, planet
+  inspector & plaque, command rail, modal veil. Chrome texturing only —
+  never game art; text contrast is the hard constraint (§22).
+  Regenerate with `node game/scripts/genUiTextures.mjs`.
 - **Generated soils (implemented, chunk Z)** — each climate slab is a
   gpt-image-2 texture (`/generated/soil-<climate>.webp`, 768², painterly
   dark-moody per this system) tiling under the chunk-X procedural

@@ -217,7 +217,8 @@
   border: 1px solid rgba(91, 128, 190, 0.33) !important;
   border-radius: 2px 14px 2px 14px !important;
   background:
-    linear-gradient(155deg, rgba(18, 31, 55, 0.97), rgba(6, 12, 23, 0.98)) !important;
+    linear-gradient(155deg, rgba(18, 31, 55, 0.88), rgba(6, 12, 23, 0.91)),
+    url('/generated/ui-panel.webp') repeat !important;
   box-shadow: var(--elevation-floating), inset 0 0 42px rgba(42, 63, 105, 0.12) !important;
   animation: inspector-enter 260ms var(--ease-command) both;
   scrollbar-gutter: stable;
@@ -406,7 +407,8 @@
   border-radius: 2px 12px 2px 12px !important;
   padding: 7px 12px !important;
   background:
-    linear-gradient(145deg, rgba(16, 27, 48, 0.97), rgba(8, 14, 27, 0.97)) !important;
+    linear-gradient(145deg, rgba(16, 27, 48, 0.88), rgba(8, 14, 27, 0.9)),
+    url('/generated/ui-panel.webp') repeat !important;
   box-shadow: var(--elevation-raised) !important;
   animation: inspector-enter 240ms var(--ease-command) both;
 }
@@ -549,7 +551,8 @@
   border-radius: 2px 14px 2px 14px !important;
   padding: 14px !important;
   background:
-    linear-gradient(160deg, rgba(16, 27, 48, 0.97), rgba(6, 12, 23, 0.98)) !important;
+    linear-gradient(160deg, rgba(16, 27, 48, 0.88), rgba(6, 12, 23, 0.91)),
+    url('/generated/ui-panel.webp') repeat !important;
   box-shadow: var(--elevation-floating) !important;
   scrollbar-gutter: stable;
   animation: inspector-enter 260ms var(--ease-command) both;

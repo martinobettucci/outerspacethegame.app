@@ -16,6 +16,7 @@ Statuts : `proposé` · `retenu (chunk X)` · `livré (chunk X)` · `décliné`.
 | 2026-07-18 | Pools AMM du marché L2 (GB §9/§13, DG §11.1–11.2) | livré (chunk U) |
 | 2026-07-18 | Routage cells-étoile + double-fee + nudge triade (GB §13, DG §11.2) | livré (chunk V) |
 | 2026-07-18 | Survival-out des horloges de mort (équipages en base, strip → derelict, salvage claims — GB §6, DG §8.8/§10.3) avec le lifecycle NPC (liaison/libération warehouse) | proposé |
+| 2026-07-19 | Texturation UI (panneaux/cartes/rail/voile) via gpt-image-2 | livré (chunk AA) |
 | 2026-07-19 | Textures de sol générées (OPENAI_KEY fournie par le responsable dans .env local) intégrées à la dalle organique du chunk X | livré (chunk Z — genSoil.mjs, 4 climats §16) |
 | 2026-07-18 | Preuve E2E du rattrapage hors-ligne (log off / return, zéro dérive — GB §15, DG §1) — backlog ligne « Offline catch-up correctness E2E » | proposé |
 | 2026-07-18 | Retool 24 h des industries + montée de niveau depot (restes chunk E/stockage) | livré (chunk Y — retool + overfill §3.3b ; niveaux de dépôt déjà couverts par le levelUp générique) |

@@ -12,7 +12,8 @@
   isolation: isolate;
   color: var(--text-primary);
   background:
-    linear-gradient(145deg, rgba(24, 36, 65, 0.98), rgba(9, 14, 27, 0.985) 72%),
+    linear-gradient(145deg, rgba(24, 36, 65, 0.88), rgba(9, 14, 27, 0.9) 72%),
+    url('/generated/ui-panel.webp') repeat,
     var(--bg-raised);
   border: 1px solid rgba(110, 150, 232, 0.22);
   border-radius: 14px;
@@ -632,7 +633,8 @@
   overflow: hidden;
   color: var(--text-primary);
   background:
-    linear-gradient(160deg, rgba(24, 36, 65, 0.985), rgba(8, 12, 23, 0.99) 72%),
+    linear-gradient(160deg, rgba(24, 36, 65, 0.88), rgba(8, 12, 23, 0.92) 72%),
+    url('/generated/ui-card.webp') repeat,
     var(--bg-raised);
   border: 1px solid rgba(110, 150, 232, 0.22);
   border-radius: 14px;
@@ -994,6 +996,7 @@
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 44%, rgba(42, 27, 82, 0.24), transparent 42%),
+    url('/generated/ui-veil.webp') repeat,
     rgba(3, 5, 10, 0.82);
   backdrop-filter: blur(5px);
 }

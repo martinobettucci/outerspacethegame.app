@@ -1102,7 +1102,8 @@
   background:
     linear-gradient(180deg, rgba(92, 141, 255, 0.075), transparent 24%),
     linear-gradient(90deg, rgba(139, 216, 255, 0.025), transparent 45%),
-    rgba(5, 12, 23, 0.96);
+    url('/generated/ui-shell.webp') repeat,
+    rgba(5, 12, 23, 0.9);
   scrollbar-color: rgba(139, 216, 255, 0.2) transparent;
   scrollbar-width: thin;
 }

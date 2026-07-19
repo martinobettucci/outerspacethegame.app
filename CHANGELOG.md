@@ -4,6 +4,18 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Texturation de l'UI (chunk AA, demande du responsable)** :
+  `game/scripts/genUiTextures.mjs` — quatre fonds tuilables TRÈS bas
+  contraste générés par gpt-image-2 (ui-panel tissage carbone, ui-card
+  plaques rivetées, ui-shell strates stellaires, ui-veil nébuleuse),
+  archives PNG pleines dans docs/design/prototypes, assets webp 512²
+  (2–24 Ko). Intégrés en couche INTERMÉDIAIRE des fonds existants
+  (gradients par-dessus, alphas abaissés 0.97→~0.9) sur : panneaux de
+  commande et cartes du deck (planet-panels), panneau galaxie,
+  inspecteur et plaque planète (scenes), rail (shell), voile modal.
+  Ce n'est PAS un remplacement d'art de jeu — texturation de chrome
+  uniquement ; lisibilité §22 vérifiée à la vision (sonde jetable,
+  3 captures : modale+deck, vue planète, panneau galaxie).
 - **Textures de sol générées par climat (chunk Z, demande du
   responsable)** : `game/scripts/genSoil.mjs` — pipeline reproductible
   OpenAI Images (gpt-image-2, clé `OPENAI_KEY` du .env local, JAMAIS
