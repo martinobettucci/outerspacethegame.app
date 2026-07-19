@@ -2377,3 +2377,29 @@ chantier après l'éveil est consigné dans SUGGESTIONS.md) ; suite
 complète en cours au moment du commit, résultat au compte rendu.
 Migration 013 appliquée en dev uniquement (PROD_MIGRATIONS.md : 013 en
 attente).
+
+## 2026-07-19 — Chunk Z : sols générés par climat (gpt-image-2)
+
+**Contexte.** Le responsable a provisionné OPENAI_KEY dans .env (local,
+jamais commitée) et demandé gpt-image-2 pour les terrains — levée de la
+limitation notée au chunk X (aucun canal d'images).
+
+**Décisions.**
+- Pipeline `scripts/genSoil.mjs` : prompts par climat (style « top-down
+  seamless, painterly sci-fi, dark moody » aligné DESIGN_SYSTEM), taille
+  1024², qualité medium ; repli gpt-image-1 si le modèle demandé
+  n'existe pas sur le compte (gpt-image-2 a répondu directement) ;
+  archive PNG pleine dans docs/design/prototypes (convention), asset
+  webp 768² via ffmpeg (dépendance documentée dans le script).
+- Intégration : TilingSprite (tileScale 0.42, alpha 0.88) masqué par le
+  contour organique, ajouté SOUS le mouchetis — les accents procéduraux
+  du chunk X (rim, specks, slots fantômes) restent par-dessus ; échec de
+  chargement → rendu procédural inchangé (aucune régression possible).
+- §16 : le roll de climat du STARTER est contraint (16 comptes = 1 seul
+  climat) — la sonde jetable force le climat en base dev entre quatre
+  captures du même monde (restauré ensuite), méthode consignée ici.
+
+**Vérifications.** Captures soil-{temperate,hot,cold,poison} observées :
+masquage propre, profondeur de dalle conservée, slots lisibles ;
+suite E2E complète relancée après l'intégration (résultat au compte
+rendu). Aucun test de simulation touché (changement purement visuel).

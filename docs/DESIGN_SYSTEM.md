@@ -178,6 +178,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   name) → destructive-styled `Install forever` enabled ONLY on exact
   match. This is the reference implementation of "irreversible action =
   typed confirmation, never a simple OK".
+- **Generated soils (implemented, chunk Z)** — each climate slab is a
+  gpt-image-2 texture (`/generated/soil-<climate>.webp`, 768², painterly
+  dark-moody per this system) tiling under the chunk-X procedural
+  accents (rim, specks, ghost slots) and masked by the organic contour;
+  a missing texture falls back to the flat procedural fill. Regenerate
+  with `node game/scripts/genSoil.mjs` (OPENAI_KEY in local .env,
+  never committed; full-size archives in docs/design/prototypes).
 - **Retool (implemented, chunk Y)** — the industry tuning section ends
   with a violet `Retool` button (active buildings only) that reopens the
   same RecipePicker used at placement; during the swap the panel shows a

@@ -5,7 +5,7 @@
  * lumière bump/light arrive au chunk suivant du renderer.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js';
 import { GifSprite } from 'pixi.js/gif';
 import {
   ArrowLeft,
@@ -357,6 +357,30 @@ export function PlanetView({ planetId }: { planetId: string }) {
     ground.fill({ color: fill });
     ground.stroke({ color: lighten(fill, 18), width: 2, alpha: 0.5 });
     board.addChild(ground);
+    // Texture de sol GÉNÉRÉE par climat (gpt-image-2, scripts/genSoil.mjs,
+    // demande du responsable) : posée sous le mouchetis, masquée par le
+    // contour organique ; absente → le rendu procédural du chunk X reste.
+    const soilLayer = new Container();
+    board.addChild(soilLayer);
+    void Assets.load(`/generated/soil-${planet.climate}.webp`)
+      .then((tex) => {
+        if (soilLayer.destroyed) return;
+        const soil = new TilingSprite({
+          texture: tex as Texture,
+          width: terrainA * 2.6,
+          height: terrainB * 2.6,
+        });
+        soil.position.set(tcx - terrainA * 1.3, tcy - terrainB * 1.3);
+        soil.tileScale.set(0.42);
+        soil.alpha = 0.88;
+        const soilMask = new Graphics();
+        soilMask.poly(outline);
+        soilMask.fill({ color: 0xffffff });
+        soilLayer.addChild(soilMask);
+        soilLayer.mask = soilMask;
+        soilLayer.addChildAt(soil, 0);
+      })
+      .catch(() => undefined);
     const speckLayer = new Container();
     const speckMask = new Graphics();
     speckMask.poly(outline);

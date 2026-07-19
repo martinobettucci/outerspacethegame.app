@@ -97,6 +97,17 @@ pnpm build              # build all packages
 The comms E2E ("the Silence breaks") drives the seeded demo pair; the ping
 quota is 20/day per player, so after ~20 same-day reruns run `pnpm resetDb`.
 
+## Asset generation (climate soils)
+
+`node game/scripts/genSoil.mjs` (from the repo root) regenerates the
+per-climate soil textures through OpenAI Images (`gpt-image-2`, falls
+back to `gpt-image-1`). Requires `OPENAI_KEY` in the root `.env` (never
+committed) and `ffmpeg` (webp 768² conversion). Outputs:
+`game/packages/client/public/generated/soil-<climate>.webp` (served
+asset) and `docs/design/prototypes/soil-<climate>.png` (full-size
+archive). Missing textures are harmless — the planet view falls back to
+the procedural slab.
+
 ## Environment variables
 
 | Variable | Role | Required | Notes |

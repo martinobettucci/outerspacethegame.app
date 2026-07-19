@@ -4,6 +4,17 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Textures de sol générées par climat (chunk Z, demande du
+  responsable)** : `game/scripts/genSoil.mjs` — pipeline reproductible
+  OpenAI Images (gpt-image-2, clé `OPENAI_KEY` du .env local, JAMAIS
+  commitée) → 4 sols 1024² (temperate mousse sombre, hot terre craquelée
+  braise, cold permafrost veiné, poison boue chartreuse), archives PNG
+  pleines dans docs/design/prototypes (convention CLAUDE.md), assets
+  servis en webp 768² (~130–180 Ko, ffmpeg). La vue planète pose la
+  texture en TilingSprite MASQUÉE par le contour organique du chunk X,
+  sous le mouchetis/rim (accents conservés) ; texture absente → repli
+  procédural intact. §16 : sonde jetable sur la vraie stack, captures
+  des 4 climats observées (climat forcé en base dev entre les prises).
 - **Retool 24 h & overfill-on-delivery (chunk Y)** : migration 013
   (statut de bâtiment `retooling`). Rééquipage d'une industrie (DG §5.1
   « re-targeting = 24 h retool » [TUNE]) : la nouvelle recette est
