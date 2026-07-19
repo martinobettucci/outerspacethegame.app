@@ -91,8 +91,8 @@
 > « croissance logistique + E_planet global » actuel. Chaque sous-item
 > cite sa décision ; les valeurs restent [TUNE] jusqu'aux simulations.
 
-- [ ] Spec chiffrée : nouvelle section DESIGN_GUIDE « Population & Employment v2 » + amendement GB §10 (canon), relue par le responsable avant toute ligne de code → GB §10; DG §3.2/§3.4
-- [ ] **Ancres d'équilibrage Q20 — EN ATTENTE DU RESPONSABLE** (proposées : postes saturés J+20 / exode rentable J+35 ; négligence 10 j réversible, 30 j fatale ; pyramide stable ≈ 18/55/27, vie senior ~30 j [TUNE])
+- [~] Spec chiffrée : DESIGN_GUIDE **§3.2-v2 RÉDIGÉE** (a–m : démographie, rations, natalité, modulateur, emploi universel + table baseJobs 29 types, formule sans E_planet, chômage γ, parabole, horloges, settlers/intel, extinction, spawn, ancres) + GB §10 réécrit + bannières de supersession (§3.2, §3.4) — reste : relecture du responsable → GB §10; DG §3.2-v2
+- [x] **Ancres d'équilibrage Q20 — VALIDÉES par le responsable (2026-07-19)** : postes saturés J+20 / exode rentable J+35 ; négligence 10 j réversible, 30 j fatale ; famines 10 j/3 j/instant ; pyramide stable ≈ 18/55/27 (+ 2 ancres ajoutées : stabilisation d'une colonie de 200, mesure du chemin siège→extinction)
 - [ ] Croissance ∝ efficience moyenne de la planète × flux de vie LOCAL (eau/vivres/oxygène : déficit freine, abondance bonus ; **vivre d'imports ne nourrit pas la croissance** — mondes-comptoirs à démographie molle, volontaire)
 - [ ] Emploi universel : TOUS les bâtiments emploient (plus seulement les industries) ; optimums par type × niveau ; niveaux = plus de postes ET meilleure productivité par ouvrier
 - [ ] Optimums scalés par la population totale + **cloche penchée entière CONSERVÉE** (décision 2e tour — l'invariant « 35 ouvriers = production fixe » du 1er tour est ABANDONNÉ) : à staff constant la production s'ÉRODE quand la pop monte — négligence = érosion, effet « empire romain » assumé ; **E_planet(pop/cap) global SUPPRIMÉ** (lecture annoncée, sans objection)

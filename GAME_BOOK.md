@@ -283,16 +283,56 @@ Per-building configuration includes:
 
 ---
 
-## 10. Efficiency (the bell curve)
+## 10. Efficiency, population & employment
 
-- Efficiency follows a **right-shifted bell curve**: you never want to overpopulate
-  or max out any single stock — the optimum leaves headroom on every axis.
-  Overcrowding drops efficiency and spreads illness.
-- **The curve is per-domain AND per-resource.** Each unit/resource has its own
-  curve and a live position on it.
-- **Required UI:** viewing a resource/unit shows its exact curve and current
-  position. Each planet has a **stats page** listing every unit on it with its
-  efficiency curve, so the player can rectify.
+*(Rewritten 2026-07-19 — owner brainstorm, two Q/A rounds; anchors
+validated. The quantified spec lives in DESIGN_GUIDE §3.2-v2; sequence:
+spec → simulated balance → code.)*
+
+- Efficiency follows a **right-shifted bell curve**: you never want to
+  overstaff or max out any single stock — the optimum leaves headroom on
+  every axis. **The curve is per-domain AND per-resource**, and it is kept
+  whole: under-staffing is punished too. This is a survival game — keeping
+  balance is the craft, and over-expansion leaks everywhere (the "Roman
+  Empire" effect).
+- **Population is three ages** — children, actives, seniors — aging on
+  fixed epochs; only actives work; children and seniors eat smaller
+  rations but produce nothing. The pyramid is public on the stats page.
+- **Every building employs.** A building's optimal staffing **scales with
+  the planet's total population**: productivity scales with population
+  *through employment*, never through a global multiplier. Leave a grown
+  planet un-rebalanced and every building drifts left on its bell —
+  neglect **erodes**.
+- **Natality needs residential districts** (L1 establishes it, higher
+  levels boost it) and follows good management: average efficiency and
+  local surplus of water/food/oxygen feed the cradle; deficits brake it
+  **even when imported stock fills the warehouses** — imports feed
+  bellies, not growth.
+- **Unemployment kills.** Past a small tolerance and a grace period, the
+  jobless die in waves that strike the whole population — employees
+  included, dragging every building's staffing down with them (momentum).
+  Every new world is born on this clock; the colony grace shields the
+  opening. Beyond a threshold, **exodus — settling other worlds — becomes
+  the rational move**: population pressure is the engine of expansion.
+- **Over-capacity is allowed** but illness and mortality grow
+  **parabolically** past the cap; **clinics** (a dedicated building)
+  push illness down.
+- **Survival stocks are death clocks**: water out = everyone dies in
+  3 days; food out = 10 days; oxygen out = instant — and oxygen is only
+  breathed from stock on hostile climates (temperate worlds have ambient
+  air).
+- **Extinction strips ownership.** The world reverts to wild **keeping
+  its buildings and unlocked knowledge** (a recolonizer's windfall);
+  installed governors die with it (host-fate).
+- **No moral guardrails** on demographic choices (ship away your actives,
+  dump your seniors — "no honor"); the counterweight is **observability**:
+  good telescopes read a world's deaths and exoduses by category, so a
+  sovereign's conduct is legible to the neighbourhood.
+- **Required UI:** viewing a resource/unit shows its exact curve and
+  current position. Each planet's **stats page** lists every unit with its
+  efficiency, the demographic pyramid, employment and unemployment rates,
+  illness, natality factors, and the projected dry date of every survival
+  stock.
 
 ---
 

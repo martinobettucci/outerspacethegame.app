@@ -126,7 +126,12 @@ invulnerable scouts or mules).
 `size, climate, quality, tiles[], deposits{}, population, popCap, techDNA,
 governors[], buildings[], stargates[], owner, factionBanner`.
 
-### 3.2 Population
+### 3.2 Population — ⚠ SUPERSEDED
+> **Superseded by §3.2-v2 (owner decision 2026-07-19, JOURNAL).** The
+> growth/illness model below describes the code AS CURRENTLY SHIPPED; do
+> not build anything new on it. It is replaced wholesale once §3.2-v2 is
+> simulated and implemented.
+
 - **Cap:** `popCap = base(size) × qMult(quality)`;
   base: small 2 000 / medium 12 000 / large 60 000;
   qMult: F 1.0, E 1.3, D 1.7, C 2.2, B 3.0, A 4.0 [TUNE].
@@ -145,6 +150,180 @@ governors[], buildings[], stargates[], owner, factionBanner`.
   with a **fractional accumulator per route** — route = the persistent
   (origin, destination) planet pair — so deaths carry over between cohorts
   (no free sub-20 cohorts). Deterministic, a known toll, not dice.
+
+### 3.2-v2 Population, demographics & employment (v2 — THE central mechanic)
+
+> **Status: SPEC — decided with the owner on 2026-07-19 (two Q/A rounds,
+> JOURNAL same day; balance anchors validated). Sequence imposed by the
+> owner: this spec → simulated balance campaigns → code.** Supersedes
+> §3.2 (growth/illness) and the `E_planet` global multiplier of §3.4.
+> Every number is [TUNE] until the Balance Round confirms it.
+
+**Design intent (owner).** Planet productivity must scale with population
+*through employment*, never through a global multiplier. Growth follows
+good management; neglect erodes; physical over-capacity kills in waves;
+beyond a threshold **exodus (settling other worlds) becomes the rational
+move** — population pressure is the engine of expansion. Keeping balance
+is essential; over-expansion leaks everywhere ("Roman Empire" effect).
+
+#### a) Demographic classes & aging
+Population `P = C + A + S` (children / actives / seniors). Continuous
+daily flows (materialized by the daily demographics event):
+
+```
+C → A : C / 20 per day        (childhood 20 days)   [TUNE]
+A → S : A / 60 per day        (active life 60 days) [TUNE]
+S → †  : S / 30 per day        (senior life 30 days) [TUNE]
+```
+
+Stable pyramid ≈ **18.2 % C / 54.5 % A / 27.3 % S** (validated anchor).
+Only **actives** are employable. The old flat `assignable = 60 % × P`
+rule is **retired** — the actives count replaces it (≈ 55 % naturally).
+The planet stats page must show the pyramid explicitly.
+
+#### b) Consumption (per 1 000 heads per day)
+- Actives: food 1 T · water 1 T · medicine 0.1 T [TUNE].
+- Children & seniors: **0.6 ×** those rations [TUNE].
+- **Oxygen** (NEW): consumed **only on hostile climates** (hot / cold /
+  poison) at 0.6 T/1 000/day [TUNE], same 0.6× ration for C/S.
+  **Temperate = ambient oxygen, zero stock draw** — the life-side climate
+  differentiator (owner-validated).
+
+#### c) Natality (residential establishes it)
+```
+births/day = n(residential) × A × M_growth      → newborns enter C
+n = 0                      without an ACTIVE residential   (canon)
+n = 0.020 / 0.030 / 0.040  per active/day at L1 / L2 / L3  [TUNE]
+```
+No residential ⇒ **zero natality**: the planet ages out unless population
+is imported (Civil transports; deliberately no mechanized population
+market — lore and chat do the rest).
+
+#### d) Growth modulator — good management feeds the cradle
+`M_growth = M_eff × M_life`, applied to natality only (aging never
+modulated):
+
+- `M_eff = 0.5 + 0.5 × Ē` where `Ē` = staff-weighted mean of building
+  efficiencies `E(u)` over all employing buildings; a planet with no
+  employing building uses the neutral `Ē = 0.7` [TUNE-interp].
+- `M_life = Π f(ρ_r)` over r ∈ {water, food, oxygen-if-consumed}, with
+  `ρ_r = local production rate / consumption rate`:
+  `ρ < 1 → 0.5` (deficit **brakes even with stock — imports never feed
+  growth**, owner-validated; comptoir worlds have soft demographics);
+  `1 ≤ ρ < 1.5 → 1.0`; `ρ ≥ 1.5 → 1.15` per resource, product capped at
+  1.5 [TUNE].
+
+#### e) Employment — every building employs
+```
+jobsOptimal(building) = baseJobs(type) × levelMult × popScale
+levelMult = 1 / 2.4 / 5        (L1/L2/L3 — higher levels absorb more
+                                AND out-produce at equal staff) [TUNE]
+popScale  = clamp( (P / 2 000)^0.5 , 0.5 , 2.0 )               [TUNE]
+```
+`popScale` is THE shifting-optimum mechanic: as `P` grows, every
+building's optimum drifts up; unattended staff slides LEFT on the bell →
+production **erodes** (neglect ≠ stagnation, owner 2nd-round decision —
+the 1st-round "35 workers always produce the same" invariant is
+ABANDONED).
+
+`baseJobs` per type [TUNE — full table, complétude]:
+
+| type | jobs | type | jobs | type | jobs |
+|---|---|---|---|---|---|
+| telescope | 10 | probe_pad | 15 | depot | 10 |
+| warehouse | 20 | mine | 50 | farm | 50 |
+| waterworks | 50 | smelter | 50 | crystal_extractor | 50 |
+| refinery | 50 | fuelcell_plant | 50 | spaceport | 30 |
+| workshop | 40 | market | 30 | residential | 15 |
+| lab | 40 | obs_station | 30 | shipyard | 60 |
+| military_district | 60 | weapon_foundry | 60 | research_center | 50 |
+| diplomatic_district | 40 | casino | 50 | commerce_district | 50 |
+| faction_hq | 40 | stargate_yard | 80 | terraformer | 60 |
+| artificial_planet_yard | 100 | **clinic (NEW)** | 30 | | |
+
+Industries keep their historical optimum (50) at `popScale = 1`,
+preserving current early-game feel.
+
+#### f) Production formula (E_planet removed)
+```
+flow = batches(level) × E(staff / jobsOptimal) × runPct × brake × G
+```
+The tilted bell `E(u)` of §3.4 is kept **whole** (under-staffing is
+punished too — survival game, owner-validated). `E_planet(P/popCap)`
+is **deleted**; its anti-crowding role moves to §h, its scale role to
+`popScale`. Governance `G` and the storage `brake` are unchanged.
+
+#### g) Unemployment kills (waves & momentum)
+```
+τ = 1 − Σ staff / A                    (unemployment rate, actives only)
+tolerance   = 7 %                                   (owner-fixed)
+grace       = τ must exceed tolerance for 3 consecutive days   [TUNE]
+deaths/day  = γ × (τ − 0.07) × P,  γ = 0.02                    [TUNE]
+```
+Deaths strike **all categories proportionally** and **decrement every
+building's staff proportionally** (people die everywhere, not just the
+unemployed — owner decision): each wave drags every building's `u` left,
+the erosion momentum that can spiral to extinction. Every NEW planet is
+born on this death clock ("the settler's life", owner) — but the
+**14-day colony grace (starter included) keeps the unemployment clock
+inert** so the opening is build-up, not triage.
+
+#### h) Over-capacity — allowed, parabolic
+`P > popCap` is permitted. With `o = P/popCap − 1`:
+```
+illness pressure += 1.2 × o²  per day        [TUNE]
+extra deaths/day += 0.015 × o² × P           [TUNE]   (parabolic, owner)
+```
+**Clinic (NEW 29th building)**: illness index reduction −0.10/−0.20/−0.35
+by level [TUNE], floor 0; tier 2, politics-free [TUNE]; card, tech node,
+costs and **asset stubs** to produce (ASSET_PIPELINE). Illness deaths:
+`0.03 × I × P`/day (§3.2 value carried over) [TUNE].
+
+#### i) Planet death clocks (survival stocks)
+When a survival stock hits **zero** and local net flow is negative:
+- **water = 0 → the whole population dies in 3 days** (P/3 per day);
+- **food = 0 → dies in 10 days** (P/10 per day);
+- **oxygen = 0 (where consumed) → instant total death.**
+Projected dry dates + loud alarms are mandatory UI (inverse of the
+deposit projected-dry-date pattern). Oxygen being binary, its alarm must
+fire far in advance.
+
+#### j) Settlers by category, reputation via intel
+Embarkation picks **C / A / S counts explicitly** (extends §12; route
+toll & risk apply to total heads). **No moral guardrails** (canon "no
+honor"): shipping away all actives, or dumping seniors on a hospice
+world, is allowed. Counterweight: per-category **death and exodus
+counters** are part of planetary intel at telescope **tier ≥ 3** [TUNE]
+— neighbours can see how a sovereign governs; reputation emerges.
+
+#### k) Extinction & recolonization
+`P = 0` ⇒ ownership stripped (planet reverts to wild **with its
+buildings and tech unlocks preserved** — a recolonizer's bonus, owner);
+installed governors **die** (host-fate); colonization grace applies to
+the newcomer; population restarts at whatever the settlers bring.
+**Watch in simulation/P5**: siege → starvation → extinction →
+recolonization is a slow, plunder-free conquest path.
+
+#### l) Spawn demographics
+Starters (and colony landings by default) arrive at the stable pyramid
+(≈ 18/55/27). Starter population ≈ **650** [TUNE] — sized by JOB
+scarcity (replaces the retired `u₀` debate; converges with the owner's
+0.35 instinct): a competent opening should reach `τ ≤ 7 %` right around
+the end of the 14-day grace.
+
+#### m) Balance anchors (owner-validated 2026-07-19)
+The Balance Round must tune every [TUNE] above so that:
+1. a well-managed starter S-F **saturates its jobs ≈ J+20** and finds
+   **exodus rationally profitable ≈ J+35**;
+2. **10 days of neglect** (no re-staffing) is erosion, fully
+   recoverable; **30 days** tips into irreversible decline;
+3. a food famine is recoverable if acted on before J+10; water is the
+   3-day emergency; oxygen is binary with long-range alarms;
+4. the stable pyramid holds at ≈ 18/55/27;
+5. (added) a 200-settler colony that builds normally **stabilizes**
+   (losses tolerated, extinction must not be the default outcome);
+6. (added) the siege-to-extinction path is measured and reported, not
+   silently discovered by players.
 
 ### 3.3 Deposits & depletion
 Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):
@@ -201,8 +380,13 @@ E(u) = max(0.12, exp( −(u−μ)² / (2σ(u)²) ))
   population × 60% [TUNE].
 - Storage-sensitive units (markets, depots): `u = stockHeld / stockCap`.
 - Planet-wide: `E_planet = E(P/popCap)` (starter pop 1 200 ⇒ ≈ 0.95).
+  **⚠ SUPERSEDED by §3.2-v2 (owner, 2026-07-19): `E_planet` is DELETED
+  once v2 ships — its scale role moves to `popScale`, its anti-crowding
+  role to the parabolic over-capacity rules. The per-building bell
+  STAYS, whole.**
 - **Effective efficiency = E_unit × E_planet × G** (G = governance §4);
   industry additionally applies the player throttle `runPct`.
+  *(v2: `E_unit × G` only — see §3.2-v2 f.)*
 
 **Expected behavior/UI (canon):** every resource/unit view renders its curve
 with the live position marked; the per-planet stats page lists every unit,

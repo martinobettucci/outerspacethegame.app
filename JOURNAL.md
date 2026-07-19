@@ -3121,3 +3121,30 @@ PUIS simulations d'équilibrage, PUIS code. Chunks AO/AP suspendus.**
 **Reste ouvert** : ancres d'équilibrage Q20 (moments cibles proposés :
 postes saturés J+20 / exode rentable J+35 ; négligence 10 j réversible,
 30 j fatale ; pyramide stable ≈ 18/55/27) — en attente du responsable.
+
+## 2026-07-19 — Population v2 : ancres Q20 validées, SPEC RÉDIGÉE
+
+Le responsable valide les 4 ancres proposées (saturation J+20 / exode
+J+35 ; négligence 10 j réversible, 30 j fatale ; famines 10 j / 3 j /
+oxygène instantané ; pyramide 18/55/27). Deux ancres ajoutées par
+l'agent : (5) une colonie de 200 settlers qui construit normalement se
+STABILISE ; (6) le chemin siège→extinction est mesuré, pas découvert.
+
+**Spec écrite** : DESIGN_GUIDE §3.2-v2 (a–m) — démographie C/A/S
+(20/60/30 j), rations 0,6× enfants/seniors, oxygène ambiant sur
+temperate seulement, natalité 0 sans residential (0,020/0,030/0,040 par
+actif/j [TUNE]), modulateur M_eff × M_life (imports ≠ croissance),
+emploi universel (table baseJobs EXHAUSTIVE — 28 bâtiments + clinique),
+popScale = clamp(√(P/2000), 0,5, 2) [TUNE], levelMult 1/2,4/5, formule
+de production SANS E_planet, chômage tolérance 7 % + grâce 3 j [TUNE]
++ γ = 0,02 [TUNE] frappant tout le monde (staff décrémenté), parabole
+au-delà du cap (1,2 o² maladie, 0,015 o² morts [TUNE]), clinique
+−0,10/−0,20/−0,35, horloges 3/10/instant, settlers par catégorie +
+compteurs morts/exodés à l'intel palier ≥ 3 [TUNE], extinction avec
+bâtiments ET savoirs conservés, spawn ≈ 650 hab [TUNE] à la pyramide
+stable (dimensionné pour τ ≤ 7 % à la fin de la grâce de 14 j). GB §10
+réécrit en canon v2 ; §3.2 et E_planet de §3.4 marqués SUPERSEDED
+(le code livré reste v1 jusqu'à l'implémentation).
+
+Prochaine étape (séquence responsable) : campagnes simulées
+d'équilibrage sur les 6 ancres — en attente du GO sur la spec.
