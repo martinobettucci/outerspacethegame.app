@@ -2470,3 +2470,14 @@ sv-03 : l'épave a disparu de la flotte ET de l'index de contacts.
 Migration 014 appliquée en dev uniquement (PROD_MIGRATIONS : 014 en
 attente). Boucle reconfigurée par le responsable : cron horaire :23
 (2a10e521), l'ancienne boucle dynamique arrêtée.
+
+## 2026-07-19 — Chunk AC : preuve E2E du rattrapage hors-ligne (GB §15, DG §1)
+
+Preuve utilisateur : travaux lancés → logout → 120 s réelles → retour :
+événements rattrapés (spaceport actif, quille née à quai) ET stock lazy
+= témoin + taux × Δt_réel (±0,05 — l'arrondi API à 2 décimales borne la
+résolution : 45 s d'absence tombaient SOUS le seuil, d'où la fenêtre de
+120 s ≈ 0,013 T à ~9,6 T/j). L'assertion « ça a coulé » est au seuil de
+précision (+0,005) ; le zéro-dérive est la borne |mesuré − projeté|.
+Items 69 (sim core « reste la preuve E2E ») et 93 (« Offline catch-up
+correctness E2E ») soldés au backlog.

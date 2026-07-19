@@ -4,6 +4,16 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Preuve E2E du rattrapage hors-ligne (chunk AC)** :
+  offline-catchup.spec.ts — le Souverain lance un spaceport en chantier
+  et une quille de Cargo S, une mine extrait à taux réel ; DÉCONNEXION,
+  120 s d'absence réelle (≈ 10 j-jeu d'événements) ; au retour : le
+  spaceport est ACTIF, le vaisseau est NÉ à quai (worker, échelle
+  ×7200), et le stock lazy vaut témoin + taux × Δt_réel à ±0,05 T près
+  (zéro dérive — l'exactitude 1e-9 est prouvée en intégration
+  colony-loop ; ici la preuve UTILISATEUR de bout en bout, GB §15/DG
+  §1). Captures off-01/02 observées. Items backlog « sim core » et
+  « Offline catch-up correctness E2E » soldés.
 - **Horloges de survie & derelict (chunk AB)** : migration 014
   (`owner_id` nullable, réservoir de survie PARESSEUX
   survival_rate/as_of, `flee_armed` défaut vrai). Drain 0,01 T/j de food

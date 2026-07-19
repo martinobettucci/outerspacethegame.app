@@ -66,7 +66,7 @@
 
 - [~] Monorepo/app scaffolding + containerized dev env (Compose: Postgres, API, worker, client; runDev/runStaging/runProd) → GB §1; DAT §2/§6 — dev opérationnel et vérifié (build + unit + intégration + E2E + captures observées) ; **reste : Compose staging/prod** (avec le premier déploiement)
 - [~] Migrations framework + baseline schema from docs/SCHEMA.md + PROD_MIGRATIONS.md → GB §1; DAT §3 — runner transactionnel + 001_baseline appliqué + PROD_MIGRATIONS créé ; tests intégration OK ; preuve E2E complète au premier parcours P2
-- [~] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; rattrapage hors-ligne prouvé en intégration (zéro dérive) ; reste la preuve E2E de bout en bout (P2)
+- [x] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; rattrapage hors-ligne prouvé en intégration (zéro dérive) ; preuve E2E de bout en bout LIVRÉE (chunk AC, offline-catchup.spec.ts)
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2
 - [ ] Policy/instruction engine core (declarative rulesets + evaluator; manual-first override; stackable conditions; predefined strategy library) → GB §15; DG §9.2/§3.5
 - [~] Auth + account lifecycle (starter spawn, account-bind 45 d, new-account combat shield + voids, receive-cap) → GB §19; DG §2.2/§18 — registerPlayer + spawn + bind 45 j + sessions/login/logout API (cookie httpOnly, hash de jeton) FAITS et testés (intégration + E2E) ; restent : bouclier combat 14 j + voids, receive-cap (avec le combat P5)
@@ -91,7 +91,7 @@
 - [x] Sol de terrain par climat + slots de tuiles discrets (survol/placement) — demande du responsable, session 36 → prototype 02-iso-colony — **livré (chunk X)** : dalle organique procédurale par climat (bruit stable par planète, rim, mouchetis), slots fantômes révélés au survol et pulsés en mode placement (reduced-motion respecté), falaises par tuile retirées, hit-areas inchangées (game-flow 12/12 + 4 specs plateau rejoués), §16 sur les 4 climats. **Restent** : textures GÉNÉRÉES (fal.ai/OpenAI Images) en remplacement du procédural — bloqué par l'absence de clé d'images dans l'environnement (hôtes fal.* refusés par le proxy, aucune FAL_KEY/OPEN_AI_KEY) ; état survol à capturer isolément
 - [ ] Warehouse: balances S/M/L véhicules + items, zéro conso, tampon libre 2M/2S/10, blocage d'usine, public/privé, entrées/sorties manuelles du privé → GB §9; DG §6
 - [ ] Depot/warehouse/NFT states machine (installed/warehoused/cargo/escrow/NFT-locked/packing) → GB §9/§16; DG §7/§14
-- [ ] Offline catch-up correctness E2E (log off / return, zero drift) → GB §15; DG §1
+- [x] Offline catch-up correctness E2E (log off / return, zero drift) → GB §15; DG §1 — **livré (chunk AC)** : offline-catchup.spec.ts (travaux lancés → logout → 120 s réelles → retour : spaceport actif, quille née à quai, stock lazy = témoin + taux × Δt à ±0,05), captures off-01/02 ; l'exactitude mathématique 1e-9 reste prouvée par l'intégration colony-loop
 
 ## P3 — Galaxie & mouvement
 
