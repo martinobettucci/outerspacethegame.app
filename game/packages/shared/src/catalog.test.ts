@@ -20,6 +20,7 @@ import {
 import { ALL_HULL_KEYS, HULLS } from './ships.js';
 import {
   ALL_TECH_KEYS,
+  STARTER_PRE_UNLOCKED,
   TECH_NODES,
   archetypeAllows,
   effectiveMask,
@@ -183,6 +184,34 @@ describe('masques de gouvernance (GB §11, DG §4.1)', () => {
         (k) => TECH_NODES[k].politics === a && archetypeAllows(a, k),
       );
       expect(extra.length, a).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('savoir de départ du starter (GB §19 « starter knowledge »)', () => {
+  it('les nœuds pré-débloqués sont exactement des T0 jamais-masqués, apolitiques, sans prérequis', () => {
+    expect(STARTER_PRE_UNLOCKED.length).toBeGreaterThan(0);
+    for (const key of STARTER_PRE_UNLOCKED) {
+      const node = TECH_NODES[key];
+      expect(node.tier, key).toBe(0);
+      expect(node.neverMasked, key).toBe(true);
+      expect(node.politics, key).toBeNull();
+      expect(node.prerequisites.length, key).toBe(0);
+      // Toujours dans le masque commun (aucun gouverneur requis).
+      expect(effectiveMask([]).has(key), key).toBe(true);
+    }
+    // La mine EST dans le set — c'est elle qui casse le softlock.
+    expect(STARTER_PRE_UNLOCKED).toContain('mine');
+    // colony_program reste un unlock payant (objectif de milieu de partie).
+    expect(STARTER_PRE_UNLOCKED).not.toContain('colony_program');
+  });
+
+  it('pré-débloqués = disponibles dans TOUT ADN de seed (jamais masqués en pratique)', () => {
+    for (let i = 0; i < 25; i++) {
+      const dna = planetTechAvailability(`starter-knowledge-probe-${i}`);
+      for (const key of STARTER_PRE_UNLOCKED) {
+        expect(dna.available.has(key), `${key} seed ${i}`).toBe(true);
+      }
     }
   });
 });

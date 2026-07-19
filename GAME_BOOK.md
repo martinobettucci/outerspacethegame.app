@@ -576,6 +576,14 @@ The engine of specialization, progression and production-balancing.
   is always **≥ the price of a telescope + a probe + some spare**, and
   **telescope + probe are never gated** (first level of every tree, §18). Every
   player can therefore always bootstrap toward exploration.
+- **Starter knowledge (canon, owner decision 2026-07-19):** the starter planet
+  begins with the **T0 never-gated building set already unlocked as knowledge**
+  — telescope, probe pad, depot, **mine** (placement is still paid). Rationale:
+  the extractable-value guarantee above is worthless if the player can spend
+  their grant *before* affording the mine unlock — with zero income and only a
+  50 % demolition refund on *placed* value, that opening was an unrecoverable
+  softlock. Knowledge is permanent (§18), so granting the basics at spawn stays
+  within the same rule. Colonized and purchased planets are unaffected.
 - **Planet spawn:** the free first planet and bought planets alike spawn **as near
   to the player as possible** — but placement is random, so you sometimes draw a
   **distant** planet (bad luck or good luck; the game never tells you which).

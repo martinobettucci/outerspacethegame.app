@@ -147,7 +147,10 @@ describe('planète : lecture et autorisations (CLAUDE.md §10)', () => {
 });
 
 describe('tech + construction (GB §18, DG §5/§6)', () => {
-  it('unlock depot → build depot : coût déduit, tuile occupée, chantier + événement', async () => {
+  it('unlock workshop → build workshop : coût déduit, tuile occupée, chantier + événement', async () => {
+    // Le depot naît débloqué (GB §19 savoir de départ) — le flux d'unlock
+    // par l'API se prouve sur le workshop (T1, prérequis mine = savoir de
+    // départ, masque commun, pas une industrie → pose sans recette).
     const before = (
       await app.inject({
         method: 'GET',
@@ -160,7 +163,7 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
     const unlock = await app.inject({
       method: 'POST',
       url: `/planets/${starterA}/unlock`,
-      payload: { node: 'depot' },
+      payload: { node: 'workshop' },
       headers: { cookie: cookieA },
     });
     expect(unlock.statusCode).toBe(200);
@@ -168,7 +171,7 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
     const build = await app.inject({
       method: 'POST',
       url: `/planets/${starterA}/build`,
-      payload: { building: 'depot', tileIndex: 0 },
+      payload: { building: 'workshop', tileIndex: 0 },
       headers: { cookie: cookieA },
     });
     expect(build.statusCode).toBe(200);
@@ -180,11 +183,11 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
         headers: { cookie: cookieA },
       })
     ).json();
-    // depot : unlock 10 ore + placement 10 ore (arrondi via règle 50 %).
+    // workshop : unlock 30 ore + 10 si ; placement = moitié (règle 50 %).
     expect(after.stock.ore.amount).toBeLessThan(oreBefore);
-    const depot = after.buildings.find((b: { key: string }) => b.key === 'depot');
-    expect(depot.status).toBe('constructing');
-    expect(depot.tileIndex).toBe(0);
+    const shop = after.buildings.find((b: { key: string }) => b.key === 'workshop');
+    expect(shop.status).toBe('constructing');
+    expect(shop.tileIndex).toBe(0);
     const { rows } = await pool.query(
       `SELECT count(*)::int AS n FROM events
        WHERE kind = 'construction_complete' AND processed_at IS NULL`,
@@ -205,7 +208,7 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
     const notUnlocked = await app.inject({
       method: 'POST',
       url: `/planets/${starterA}/build`,
-      payload: { building: 'farm', tileIndex: 1 },
+      payload: { building: 'waterworks', tileIndex: 1 },
       headers: { cookie: cookieA },
     });
     expect(notUnlocked.statusCode).toBe(409);
@@ -248,10 +251,11 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
 
   it('ressources insuffisantes → 409 explicite, rien n\'est débité', async () => {
     // stargate_yard coûte 1 000 steelH — impossible au départ.
+    // (telescope naît débloqué — le 200 du flux d'unlock se prouve sur farm.)
     const res = await app.inject({
       method: 'POST',
       url: `/planets/${starterA}/unlock`,
-      payload: { node: 'telescope' },
+      payload: { node: 'farm' },
       headers: { cookie: cookieA },
     });
     expect(res.statusCode).toBe(200);

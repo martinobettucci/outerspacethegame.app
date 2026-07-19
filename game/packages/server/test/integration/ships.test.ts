@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { unlockNode, placeBuilding } from '../../src/services/planets.js';
+import { placeBuilding } from '../../src/services/planets.js';
 import { fleet, launchProbe, moveShip, shipPosition } from '../../src/services/ships.js';
 import { visibleBodies } from '../../src/services/world.js';
 import { createTestPool } from './helpers.js';
@@ -155,7 +155,6 @@ describe('sondes & vision (GB §4, DG §8.1)', () => {
       launchProbe(pool, playerId, starterId, { x: 500_100, y: 500_100 }, FAST),
     ).rejects.toMatchObject({ code: 'not_available' });
 
-    await unlockNode(pool, playerId, starterId, 'probe_pad', t0);
     await placeBuilding(pool, playerId, starterId, 'probe_pad', null, FAST);
     await new Promise((res) => setTimeout(res, 60));
     await processDueEvents(pool, baseHandlers());

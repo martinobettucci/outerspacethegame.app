@@ -15,7 +15,6 @@ import {
   levelUpBuilding,
   placeBuilding,
   setBuildingSettings,
-  unlockNode,
 } from '../../src/services/planets.js';
 import { createTestPool } from './helpers.js';
 
@@ -93,7 +92,6 @@ describe('montée de niveau (GB §18, DG §5.1)', () => {
   let mineId = '';
 
   it('mine L1 → L2 : coût payé, production coupée pendant le chantier, débit L2 après', async () => {
-    await unlockNode(pool, playerId, planetId, 'mine');
     const placed = await placeBuilding(pool, playerId, planetId, 'mine', 0, {
       ...FAST,
       recipe: 'extract:ore',
@@ -218,7 +216,6 @@ describe('démolition (DG §6)', () => {
   it('remboursement 50 % crédité, production coupée, tuile et gisement libérés à l\'issue', async () => {
     // Un dépôt à démolir (placement 10 ore ⇒ remboursement 5). Le depot est
     // never-masked : unlock déterministe quel que soit l'ADN du starter.
-    await unlockNode(pool, playerId, planetId, 'depot');
     await placeBuilding(pool, playerId, planetId, 'depot', 2, FAST);
     await activateAll();
     const { rows: dep } = await pool.query(

@@ -2976,3 +2976,98 @@ autrui est une horloge de mort sans recours.
   l'API (le parcours UI marché est couvert par market.spec), règle
   configurée DANS l'UI d'Alice, survol étranger → rachat AUTOMATIQUE
   par le worker (0,12 food / soute 2,9) ; captures at-01/02 observées.
+
+## 2026-07-19 — Chunk AN : anti-softlock du démarrage (GB §19, playtest responsable)
+
+**Problème (signalé par le responsable en jouant).** « Je construis à
+peine un télescope, je tombe à sec, et plus aucun moyen de poser une
+mine » + « je ne comprends pas le colony program ». Diagnostic chiffré :
+dotation ore 60–78 ; télescope 30 ore + 15 si (unlock + pose), dépôt
+20 ore, mine 22,5 ore ; l'unlock (savoir) n'est JAMAIS remboursé et la
+démolition ne rend que 50 % de la POSE ; tout revenu (trace comprise)
+exige une mine POSÉE. L'ouverture « télescope + dépôt d'abord » laissait
+10–28 ore < 22,5 : softlock définitif, contraire à la garantie GB §19.
+
+### Décision (responsable, 3 leviers cumulés)
+
+1. **Savoir de départ (canon amendé GB §19)** : le starter naît avec les
+   T0 jamais-masqués DÉBLOQUÉS (telescope, probe_pad, depot, mine) — la
+   pose reste payante. `STARTER_PRE_UNLOCKED` (shared), insertion
+   `tech_unlocks` au spawn. colony_program reste payant.
+2. **Dotation relevée [TUNE]** : `{ore 100, carbon 44, silicon 28,
+   hydrogen 24, oxygen 20, food 32, water 32}` (somme 280).
+3. **Onboarding** : bandeau « First steps » (starter sans mine, testid
+   first-steps-hint), description du programme colonial, tooltip
+   d'effets sur chaque carte.
+
+### Leçon de la fournée — le plafond du frein
+
+Premier jet à somme 375 (`ore 120…`) : la suite d'intégration a flanché
+PAR INTERMITTENCE (levelup, dérive du rattrapage 0,18 T). Cause : roll
+max ×1.3 + 150 u fuel = 637 T > 0,7 × 800 T — le starter S naissait
+DANS le frein de stockage selon le roll, et le test de dérive suppose à
+bon droit des taux stables sans bord. Recalibré somme 280 (max 514 T,
+u ≈ 0,64) et VERROUILLÉ par invariant unit (spawn-grant.test) :
+dotation ≥ 1,5 × coût d'ouverture par ressource ET roll max + fuel ≤
+frein − 40 T. DG §2.2 documente la contrainte de plafond.
+
+### Balayage des tests existants
+
+7 `unlockNode` de nœuds T0 retirés (starters — colony-loop ×4,
+levelup ×2, ships ×1), 3 parcours game-flow passés en pose directe,
+bornes spawn.test 100–130/≥32, helper E2E unlockCard déjà tolérant.
+api.test : le flux d'unlock par l'API se prouve désormais sur workshop
+(prérequis mine = savoir de départ) et farm, plus « waterworks » pour le
+refus not_unlocked ; already_unlocked prouvé sur depot pré-acquis.
+
+### Directives responsable enregistrées (même session, à venir)
+
+- **Chunk AO** : main de cartes FILTRÉE (posables/unlockables seulement,
+  le reste vit dans l'arbre techno) + éventail semi-replié, carte sortie
+  au survol.
+- **Télescope = bâtiment SUR TUILE** (changement de canon DG §5.1 ; sort
+  du probe pad à trancher par le responsable) + stubs à créer.
+- **Stats planète** : production NETTE par ressource/jour (+ et −).
+- **Pods/Recruitment** : expliquer dans l'UI le refus « compte < 45 j »
+  (le responsable ne trouvait pas ses cartes NPC — l'onglet existe mais
+  refuse en silence un compte neuf).
+
+### Vérifications
+
+- Unit shared 153/153 (savoir de départ : T0/never-masked/apolitique/
+  sans prérequis, mine incluse, colony_program exclu, 25 seeds d'ADN).
+- Unit server 34/34 (invariants dotation : marge 1,5× + plafond frein).
+- Intégration 283/283 (savoir de départ au spawn + already_unlocked en
+  direct §10, bornes de stock, suites complètes rejouées).
+- E2E : suite complète sur BASE FRAÎCHE (resetDb — leçon : le quota de
+  pings 20/j est fenêtré 24 h RÉELLES, 3 runs sur la même base
+  l'épuisent) : 35/35 puis game-flow 12/12 ; onboarding.spec (hint →
+  pose mine SANS unlock → hint dissous → colony program expliqué),
+  captures onb-01…03 OBSERVÉES (onb-03 re-cadrée : scroll de la section
+  Programs — une assertion vraie ne suffit pas, la capture doit montrer
+  la preuve §16). Durcissements honnêtes au passage : attente de
+  l'ACTIVATION du chantier naval avant d'exiger la section quille
+  (flake révélé par la base fraîche), « population » → « colonists »
+  dans le bandeau (collision de localisateur getByText).
+
+
+## 2026-07-19 — Décision responsable : pop de départ u₀ = 0,35 (chunk AP à venir)
+
+**Constat (responsable, en jeu).** 0,6 × cap = 720+ assignables sur un
+starter S-F pour ~500–600 postes optimaux (50/industrie L1) : on staffe
+TOUT à l'optimum, aucun arbitrage de main-d'œuvre, jamais. Sur un
+starter medium (cap 12 000+), la tension est impossible par
+construction.
+
+**Réponse à « comment évolue la population ? »** : DÉJÀ implémentée
+(pop_daily) — logistique r = 0,05/j [TUNE] vers popCap, porte
+H = min(vivres, eau) × (0,8 + 0,2 × médecine), maladie, surpeuplement
+(E redescend au-delà de u = 0,7 ; les settlers de colonisation sont la
+soupape). Restent les effets non-industriels (residential → cap) —
+backlog ligne 84.
+
+**Décision** : STARTER_POP_UTILIZATION 0,6 → **0,35** [TUNE] — S-F :
+700 hab / 420 assignables ≈ 8 industries L1 → arbitrages réels ;
+E_planet ≈ 0,6 au départ → 0,96 en ~13 j → pic ~18 j : arc de montée en
+puissance porté par la croissance existante. Chunk AP dédié (après AN) :
+re-balayage des tests qui supposent E_planet ≈ 0,95 + DG §2.2.

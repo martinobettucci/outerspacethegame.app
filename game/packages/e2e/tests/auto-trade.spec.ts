@@ -36,10 +36,14 @@ test('auto-trade : la coque se ravitaille toute seule chez l\'épicier', async (
   }
   const api = page.request;
   for (const node of ['depot', 'market']) {
+    // « Assurer le savoir » : le depot naît débloqué (GB §19) —
+    // already_unlocked est un succès de fixture.
     const unlock = await api.post(`/api/planets/${bobPlanet}/unlock`, {
       data: { node },
     });
-    expect(unlock.ok(), `unlock ${node}`).toBe(true);
+    if (!unlock.ok()) {
+      expect((await unlock.json()).error, `unlock ${node}`).toBe('already_unlocked');
+    }
   }
   const place = await api.post(`/api/planets/${bobPlanet}/build`, {
     data: { building: 'market', tileIndex: 0, recipe: null },

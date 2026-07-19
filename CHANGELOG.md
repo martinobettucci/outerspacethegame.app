@@ -4,6 +4,22 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Anti-softlock du démarrage (chunk AN — GB §19 « starter knowledge »,
+  décision responsable du 2026-07-19 après playtest)** : l'ouverture
+  « télescope d'abord » pouvait consommer la dotation AVANT l'unlock de
+  la mine — zéro revenu, remboursement de démolition insuffisant :
+  impasse définitive. Trois leviers cumulés : (1) le starter naît avec
+  les QUATRE savoirs T0 jamais-masqués déjà débloqués (telescope,
+  probe_pad, depot, mine — la pose reste payante ; colony_program reste
+  un unlock payant) ; (2) dotation relevée `{ore 100, carbon 44,
+  silicon 28, hydrogen 24, oxygen 20, food 32, water 32}` [TUNE] avec
+  contrainte de plafond DOCUMENTÉE ET TESTÉE : roll max ×1.3 + 150 u de
+  fuel ≤ frein de stockage 0.7 × 800 T − 40 T (jamais pré-freiné —
+  « new colonies start healthy ») ; (3) onboarding : bandeau « First
+  steps » sur le starter tant qu'aucune mine n'est posée, description du
+  programme colonial (objectif de milieu de partie), tooltip d'effets
+  sur chaque carte de la main. Canon amendé : GAME_BOOK §19 (starter
+  knowledge), DESIGN_GUIDE §2.2 (valeurs + plafond). Aucune migration.
 - **Auto-trade du survol étranger (chunk AM)** : le canon « if food <
   20, buy 200 food best effort » est jouable. Jusqu'à 3 règles par coque
   ({ressource, seuil, quantité} [TUNE-v1]) ; en survol d'un monde

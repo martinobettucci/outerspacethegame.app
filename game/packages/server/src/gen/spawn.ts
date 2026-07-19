@@ -8,7 +8,9 @@
  *    PREMIER joueur d'un univers n'a pas de voisin possible — cas de
  *    bootstrap documenté au JOURNAL).
  * 2. starter tempéré, D–F, ≥ 10 tuiles, gisements garantis (rolls.ts).
- * 3. stock de départ ×U(1.0, 1.3) + 150 u de fuel du type de l'étoile.
+ * 3. stock de départ ×U(1.0, 1.3) + 150 u de fuel du type de l'étoile,
+ *    et savoir T0 pré-débloqué (telescope/probe_pad/depot/mine — GB §19
+ *    « starter knowledge », la pose reste payante).
  * 4. pop 1 200, vaisseau personnel docké, Cargo-S, 1 pilote commun.
  * 5. anti-abus : starter lié au compte 45 j, is_starter (jamais mintable).
  *
@@ -21,6 +23,7 @@ import {
   PEOPLES,
   popCap,
   SeededStream,
+  STARTER_PRE_UNLOCKED,
   type People,
   type ResourceBundle,
   type StarFuelType,
@@ -44,15 +47,24 @@ export const STARTER_ACCOUNT_BIND_DAYS = 45;
 export const STARTER_POP_UTILIZATION = 0.6;
 export const STARTER_FUEL_U = 150;
 
-/** Stock de départ (avant ×U(1.0, 1.3)). [TUNE] DG §2.2 */
+/**
+ * Stock de départ (avant ×U(1.0, 1.3)). [TUNE] DG §2.2 — relevé le
+ * 2026-07-19 (décision responsable) : l'ancienne dotation (ore 60…) ne
+ * couvrait pas une ouverture « télescope d'abord » PLUS la mine —
+ * softlock sans revenu ni rattrapage. Contrainte de plafond : le roll
+ * MAXIMAL (×1.3) + 150 u de fuel doit rester NETTEMENT sous le frein de
+ * stockage 0.7 × 800 T d'un starter S (DG §3.3b) — « new colonies start
+ * healthy », et l'exactitude paresseuse suppose des taux stables entre
+ * bords. Somme 280 → max 364 + 150 = 514 T (u ≈ 0.64).
+ */
 export const STARTER_STOCK: ResourceBundle = {
-  ore: 60,
-  carbon: 40,
-  silicon: 30,
-  hydrogen: 20,
+  ore: 100,
+  carbon: 44,
+  silicon: 28,
+  hydrogen: 24,
   oxygen: 20,
-  food_1: 30,
-  water: 30,
+  food_1: 32,
+  water: 32,
 };
 
 /** Ceinture de développement où naissent les poches (compacte). [TUNE] */
@@ -227,6 +239,15 @@ export async function spawnStarterSystem(
       `INSERT INTO deposits (body_id, resource, initial_t, amount_t, as_of)
        VALUES ($1, $2, $3, $3, to_timestamp($4 / 1000.0))`,
       [starterPlanetId, d.resource, d.initialT, now],
+    );
+  }
+
+  // Savoir de départ (GB §19 « starter knowledge ») : les T0
+  // jamais-masqués naissent débloqués — la pose reste payante.
+  for (const nodeKey of STARTER_PRE_UNLOCKED) {
+    await client.query(
+      `INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)`,
+      [starterPlanetId, nodeKey],
     );
   }
 

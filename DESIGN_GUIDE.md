@@ -90,9 +90,17 @@ for anyone with scope on it [TUNE]. (The only gauge the universe ever gives.)
    climate crystal, and one of lithium|gold}** [TUNE], and the **starter
    guarantee**: extractable value ≥ cost(telescope) + cost(probe) + 25% spare
    (canon).
-3. Grant starter stock: `{ore 60, carbon 40, silicon 30, hydrogen 20, oxygen
-   20, food 30, water 30}` T ×U(1.0, 1.3) [TUNE] + **150 u propulsion fuel
-   matched to the nearest star's type** [TUNE].
+3. Grant starter stock: `{ore 100, carbon 44, silicon 28, hydrogen 24, oxygen
+   20, food 32, water 32}` T ×U(1.0, 1.3) [TUNE — raised from
+   `{60/40/30/20/20/30/30}` on 2026-07-19: the old grant could not cover a
+   natural telescope-first opening plus the mine, softlocking the account.
+   Ceiling constraint: the MAX roll (×1.3) + the 150 u fuel grant must stay
+   clearly below the §3.3b storage brake (0.7 × 800 T on a small starter) —
+   colonies start *healthy*, never pre-braked; sum 280 → max 514 T, u ≈ 0.64]
+   + **150 u propulsion fuel matched to the nearest star's type** [TUNE].
+   The starter planet also begins with the **T0 never-gated set pre-unlocked
+   as knowledge** — telescope, probe pad, depot, mine — placement still paid
+   (GB §19 « starter knowledge », owner decision 2026-07-19).
 4. Starting population: **1 200** [TUNE] (u = 0.6 on a small-F cap ⇒ E_planet
    ≈ 0.95 — new colonies start *healthy*). Personal ship docked. 1 free small
    Cargo hull (unupgraded) + **1 Common pilot NPC** [TUNE].

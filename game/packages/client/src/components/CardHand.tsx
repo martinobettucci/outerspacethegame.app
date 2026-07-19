@@ -126,7 +126,7 @@ export function CardHand({
         return (
           <article
             key={card.key}
-            title={card.reason}
+            title={card.reason ? `${card.reason} — ${def.effects}` : def.effects}
             className="ls-construction-card"
             data-selected={isSelected ? 'true' : 'false'}
             data-blocked={card.status === 'blocked' ? 'true' : 'false'}

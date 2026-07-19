@@ -19,7 +19,8 @@ import {
   POCKET_WILD_MAX_PC,
   STARTER_POP_UTILIZATION,
 } from '../../src/gen/spawn.js';
-import { efficiency, popCap } from '@atg/shared';
+import { efficiency, popCap, STARTER_PRE_UNLOCKED } from '@atg/shared';
+import { unlockNode } from '../../src/services/planets.js';
 
 let pool: pg.Pool;
 const run = randomUUID().slice(0, 8);
@@ -110,11 +111,26 @@ describe('spawn starter — garanties DG §2.2', () => {
     const stock = Object.fromEntries(
       rows.map((r) => [r.resource, Number(r.amount_t)]),
     );
-    expect(stock.ore).toBeGreaterThanOrEqual(60);
-    expect(stock.ore).toBeLessThanOrEqual(78);
-    expect(stock.water).toBeGreaterThanOrEqual(30);
+    expect(stock.ore).toBeGreaterThanOrEqual(100);
+    expect(stock.ore).toBeLessThanOrEqual(130);
+    expect(stock.water).toBeGreaterThanOrEqual(32);
     const star = await body(first.spawn.starId);
     expect(stock[`fuel_${star.star_fuel_type}`]).toBe(150);
+  });
+
+  it('savoir de départ (GB §19) : telescope/probe_pad/depot/mine débloqués, colony_program non', async () => {
+    const { rows } = await pool.query(
+      'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
+      [first.spawn.starterPlanetId],
+    );
+    const unlocked = new Set(rows.map((r) => r.node_key));
+    for (const key of STARTER_PRE_UNLOCKED) expect(unlocked.has(key)).toBe(true);
+    expect(unlocked.has('colony_program')).toBe(false);
+    expect(unlocked.size).toBe(STARTER_PRE_UNLOCKED.length);
+    // La pose reste payante : re-déverrouiller est refusé (déjà su).
+    await expect(
+      unlockNode(pool, first.playerId, first.spawn.starterPlanetId, 'mine'),
+    ).rejects.toMatchObject({ code: 'already_unlocked' });
   });
 
   it('géométrie de la poche : étoile ≤ 40 pc et hors R_nova ; 2 sauvages ≤ 60 pc', async () => {

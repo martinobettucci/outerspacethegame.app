@@ -853,6 +853,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
           </section>
         )}
 
+        {planet.isStarter &&
+          !planet.buildings.some((b) => b.key === 'mine') && (
+            <p
+              role="note"
+              data-testid="first-steps-hint"
+              className="planet-placement-hint"
+            >
+              {t.planet.firstStepsHint}
+            </p>
+          )}
         {selectedCard && (
           <p className="planet-placement-hint">
             {t.planet.selectCardHint}
@@ -1199,6 +1209,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
             <span style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
               <FlaskConical size={14} color="var(--primary-300)" aria-hidden />
               {t.planet.programs}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {t.planet.programColonyDesc}
             </span>
             {planet.tech.unlocked.includes('colony_program') ? (
               <span style={{ fontSize: 12, color: 'var(--success-500)' }}>

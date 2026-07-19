@@ -286,6 +286,8 @@ export const t = {
     curveHint: 'Sweet spot at 70% utilization. Past it, everything degrades fast.',
     backToGalaxy: 'Back to galaxy',
     selectCardHint: 'Select a card, then click a free tile to build.',
+    firstStepsHint:
+      'First steps — place a Mine on a deposit first: it is your only income of build materials. Then a Depot (storage), Waterworks and a Farm (your colonists eat food and drink water daily). Telescope, probe pad, depot and mine start already unlocked here — you only pay placement.',
     unlockFirst: 'Unlock',
     place: 'Place',
     locked: 'Locked',
@@ -424,6 +426,8 @@ export const t = {
     marketNoSlot: 'No offer posted yet.',
     programs: 'Programs',
     programColony: 'colony program',
+    programColonyDesc:
+      'A mid-game goal, not a building: unlocking it lets a workshop L2 here fit a Civil M/L ship as a colony ship (settlers aboard, terraform core, provisions) to claim an uninhabited world.',
     programUnlocked: 'Unlocked — colony fittings enabled here.',
     infrastructure: 'Infrastructure',
     infrastructureNone: 'None yet — telescopes and probe pads need no tile.',

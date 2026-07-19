@@ -48,10 +48,14 @@ test('stargate : chantier au yard, traversée instantanée dispersée', async ({
   // 1. Colonie n° 2 par l'API (parcours UI déjà prouvé — colonization.spec).
   const api = page.request;
   const unlock = async (node: string) => {
+    // « Assurer le savoir » : les T0 naissent débloqués sur un starter
+    // (GB §19) — already_unlocked est un succès de fixture.
     const r = await api.post(`/api/planets/${planetId}/unlock`, {
       data: { node },
     });
-    expect(r.ok(), `unlock ${node}`).toBe(true);
+    if (!r.ok()) {
+      expect((await r.json()).error, `unlock ${node}`).toBe('already_unlocked');
+    }
   };
   const place = async (building: string, tileIndex: number) => {
     const r = await api.post(`/api/planets/${planetId}/build`, {

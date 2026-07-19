@@ -111,6 +111,22 @@ export const TECH_NODES: Record<TechNodeKey, TechNodeDef> = {
 
 export const ALL_TECH_KEYS = Object.keys(TECH_NODES) as TechNodeKey[];
 
+/**
+ * Savoir de départ du starter (GB §19 « starter knowledge », décision
+ * responsable 2026-07-19) : les bâtiments T0 jamais-masqués naissent
+ * DÉBLOQUÉS sur la planète starter — la pose reste payante. Sans cela,
+ * dépenser la dotation avant l'unlock de la mine (ouverture télescope
+ * d'abord, parfaitement naturelle) laissait le compte sans AUCUN revenu
+ * ni rattrapage : softlock définitif. colony_program reste un unlock
+ * payant (objectif de milieu de partie, tier 3).
+ */
+export const STARTER_PRE_UNLOCKED: readonly TechNodeKey[] = [
+  'telescope',
+  'probe_pad',
+  'depot',
+  'mine',
+];
+
 /** Probabilité de conservation d'une branche par palier. [TUNE] DG §5 */
 export const SEED_KEEP_PROBABILITY: Record<number, number> = {
   0: 1,

@@ -12,7 +12,7 @@ import { enqueue, processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { recomputePlanetRates } from '../../src/sim/rebase.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { placeBuilding, setBuildingSettings, unlockNode } from '../../src/services/planets.js';
+import { placeBuilding, setBuildingSettings } from '../../src/services/planets.js';
 import { createTestPool } from './helpers.js';
 
 const DAY = 86_400_000;
@@ -49,7 +49,6 @@ describe('boucle colonie', () => {
     });
     const planetId = spawn.starterPlanetId;
 
-    await unlockNode(pool, playerId, planetId, 'mine', t0);
     const { buildingId } = await placeBuilding(
       pool,
       playerId,
@@ -104,7 +103,6 @@ describe('boucle colonie', () => {
       politics: 'civic',
       universeSeed: `loop-universe-${run}`,
     });
-    await unlockNode(pool, playerId, spawn.starterPlanetId, 'mine', t0);
     const { buildingId } = await placeBuilding(
       pool,
       playerId,
@@ -130,7 +128,6 @@ describe('boucle colonie', () => {
       universeSeed: `loop-universe-${run}`,
     });
     const planetId = spawn.starterPlanetId;
-    await unlockNode(pool, playerId, planetId, 'mine', t0);
     await placeBuilding(pool, playerId, planetId, 'mine', 0, {
       nowMs: t0,
       timeScale: 100_000,
@@ -265,7 +262,6 @@ describe('boucle colonie', () => {
       universeSeed: `loop-universe-${run}`,
     });
     const planetId = spawn.starterPlanetId;
-    await unlockNode(pool, playerId, planetId, 'mine', t0);
     await placeBuilding(pool, playerId, planetId, 'mine', 0, {
       nowMs: t0,
       timeScale: 3600 * 6,
