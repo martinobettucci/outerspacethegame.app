@@ -41,7 +41,7 @@ import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
-import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
+import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
 import { releaseHarvest } from './harvest.js';
 import { CommandError } from './planets.js';
 
@@ -67,6 +67,9 @@ export interface ShipView {
   harvestRig: boolean;
   /** Étoile en cours de récolte (id), sinon null. */
   harvestingStarId: string | null;
+  /** Coque : HP évalués, max, usure/jour (GB §27 — péage, plancher 1). */
+  hull: { hp: number; maxHp: number; wearPerDay: number };
+  shields: { hot: boolean; cold: boolean; radio: boolean };
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -185,6 +188,19 @@ export async function fleet(
       retrievesAt: retrievesBy.get(r.id) ?? null,
       harvestRig: !!r.harvest_rig,
       harvestingStarId: r.harvesting_star_id ?? null,
+      hull: (() => {
+        const h = evalShipHull(r, nowMs);
+        return {
+          hp: Math.round(h.hp * 10) / 10,
+          maxHp: h.maxHp,
+          wearPerDay: -Number(r.hull_wear_hp_per_day ?? 0),
+        };
+      })(),
+      shields: {
+        hot: !!r.shield_hot,
+        cold: !!r.shield_cold,
+        radio: !!r.shield_radio,
+      },
       survival: (() => {
         const sv = evalShipSurvival(r, nowMs);
         return {
@@ -749,7 +765,17 @@ export async function undockShip(
     if (over[0]?.owner_id === playerId) {
       await recomputePlanetRates(client, ship.docked_body_id, nowMs);
     } else {
-      await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+      await rebaseShipDrain(
+        client,
+        {
+          ...ship,
+          status: 'hovering',
+          hover_body_id: ship.docked_body_id,
+          docked_body_id: null,
+        },
+        nowMs,
+        'tank',
+      );
     }
     await client.query('COMMIT');
     return { bodyId: ship.docked_body_id };
@@ -1408,7 +1434,19 @@ export async function relocateShipForTest(
        WHERE id = $1`,
       [shipId, bodyId, bodies[0].x, bodies[0].y],
     );
-    await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+    await rebaseShipDrain(
+      client,
+      {
+        ...ship,
+        status: 'hovering',
+        hover_body_id: bodyId,
+        docked_body_id: null,
+        x: bodies[0].x,
+        y: bodies[0].y,
+      },
+      nowMs,
+      'tank',
+    );
     // État COHÉRENT (§15) : sur un monde possédé, le recompute décide qui
     // paie (stock servi ⇒ exemptions fuel/survie) — comme les vraies
     // commandes d'entrée en survol.

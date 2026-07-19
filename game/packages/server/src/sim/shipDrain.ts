@@ -8,7 +8,13 @@
  * sur une ligne `ships` déjà verrouillée FOR UPDATE.
  */
 import {
+  harvestHullDamagePerDay,
+  HAZARD_RADIUS_PC,
+  HULL_WEAR_FLOOR_HP,
   HULLS,
+  hullWearPerDay,
+  shieldForClimate,
+  starIsFlaring,
   SURVIVAL_ALARM_FRACTION,
   survivalCapacityT,
   survivalDrainTPerDay, hoverIdleFuelUPerDay } from '@atg/shared';
@@ -94,6 +100,9 @@ export async function rebaseShipDrain(
   await rebaseShipSurvival(client, ship, nowMs, {
     survivalServed: opts.survivalServed,
   });
+  // L'USURE de coque suit les mêmes points (GB §27 : climat, hasards,
+  // récolte d_safe — le péage se rebase là où l'état change).
+  await rebaseShipHull(client, ship, nowMs);
   return { type: evaluated.type, units, ratePerDay: rate };
 }
 
@@ -193,4 +202,140 @@ export async function rebaseShipSurvival(
     }
   }
   return { food, water, ratePerDay: rate };
+}
+
+
+/** HP max de la coque (0 si inconnu — sondes : exemptes d'usure v1). */
+export function shipMaxHp(ship: ShipRow): number {
+  return (
+    HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS]
+      ?.armorHp ?? 0
+  );
+}
+
+/** HP de coque ÉVALUÉS à nowMs — hull_hp NULL = coque neuve ; plancher
+ * canon 1 HP (péage, jamais une mort — GB §27). */
+export function evalShipHull(
+  ship: ShipRow,
+  nowMs: number,
+): { hp: number; maxHp: number } {
+  const maxHp = shipMaxHp(ship);
+  if (maxHp <= 0) return { hp: 0, maxHp: 0 };
+  const floor = Math.min(HULL_WEAR_FLOOR_HP, maxHp);
+  const amount = ship.hull_hp === null || ship.hull_hp === undefined
+    ? maxHp
+    : Number(ship.hull_hp);
+  if (!ship.hull_as_of) return { hp: Math.max(floor, Math.min(maxHp, amount)), maxHp };
+  return {
+    hp: Math.max(
+      floor,
+      Math.min(
+        maxHp,
+        evalLazy(
+          {
+            amount,
+            ratePerDay: Number(ship.hull_wear_hp_per_day ?? 0),
+            asOfMs: new Date(ship.hull_as_of).getTime(),
+          },
+          nowMs,
+          { min: floor },
+        ),
+      ),
+    ),
+    maxHp,
+  };
+}
+
+/**
+ * Rebase de l'USURE de coque (GB §27 SETTLED, DG §8.8) : matérialise les
+ * HP, recalcule le taux selon les sources hostiles NON blindées — climat
+ * du monde sous la coque (hot/cold), zone de hasard ≤ 5 pc (trou noir ou
+ * étoile en flare), dégâts de proximité du harvest rig (d < d_safe) —
+ * et écrit le tout. AUCUN bord : le péage planche à 1 HP. Transit,
+ * entrepôt, colonisation et épaves : exempts [TUNE-v1 annoncé].
+ */
+export async function rebaseShipHull(
+  client: pg.PoolClient,
+  ship: ShipRow,
+  nowMs: number,
+): Promise<{ hp: number; maxHp: number; wearPerDay: number }> {
+  const { hp, maxHp } = evalShipHull(ship, nowMs);
+  if (maxHp <= 0) return { hp: 0, maxHp: 0, wearPerDay: 0 };
+  let hostileClimateUnshielded = false;
+  let hazardZoneUnshielded = false;
+  let harvestDamagePerDay = 0;
+  if (['docked', 'hovering', 'idle', 'stranded'].includes(ship.status)) {
+    const bodyId = ship.docked_body_id ?? ship.hover_body_id;
+    if (bodyId) {
+      const { rows } = await client.query(
+        `SELECT climate FROM bodies WHERE id = $1`,
+        [bodyId],
+      );
+      const kind = shieldForClimate(rows[0]?.climate ?? null);
+      if (kind && !ship[`shield_${kind}`]) hostileClimateUnshielded = true;
+    }
+    if (!ship.shield_radio) {
+      const sx = Number(ship.x);
+      const sy = Number(ship.y);
+      const { rows: hazards } = await client.query(
+        `SELECT body_type, x, y, star_fuel_stock, star_fuel_rate_u_per_day,
+                star_fuel_as_of, star_fuel_initial
+         FROM bodies
+         WHERE (body_type = 'black_hole' OR body_type = 'star')
+           AND x BETWEEN $1 AND $2 AND y BETWEEN $3 AND $4`,
+        [
+          sx - HAZARD_RADIUS_PC,
+          sx + HAZARD_RADIUS_PC,
+          sy - HAZARD_RADIUS_PC,
+          sy + HAZARD_RADIUS_PC,
+        ],
+      );
+      for (const h of hazards) {
+        if (Math.hypot(h.x - ship.x, h.y - ship.y) > HAZARD_RADIUS_PC) continue;
+        if (h.body_type === 'black_hole') {
+          hazardZoneUnshielded = true;
+          break;
+        }
+        const stock = h.star_fuel_as_of
+          ? evalLazy(
+              {
+                amount: Number(h.star_fuel_stock ?? 0),
+                ratePerDay: Number(h.star_fuel_rate_u_per_day ?? 0),
+                asOfMs: new Date(h.star_fuel_as_of).getTime(),
+              },
+              nowMs,
+              { min: 0 },
+            )
+          : Number(h.star_fuel_stock ?? 0);
+        if (starIsFlaring(stock, Number(h.star_fuel_initial ?? 0))) {
+          hazardZoneUnshielded = true;
+          break;
+        }
+      }
+    }
+    if (ship.harvesting_star_id) {
+      const { rows: stars } = await client.query(
+        `SELECT x, y FROM bodies WHERE id = $1`,
+        [ship.harvesting_star_id],
+      );
+      if (stars[0]) {
+        harvestDamagePerDay = harvestHullDamagePerDay(
+          Math.hypot(stars[0].x - ship.x, stars[0].y - ship.y),
+        );
+      }
+    }
+  }
+  const wearPerDay = hullWearPerDay(maxHp, {
+    hostileClimateUnshielded,
+    hazardZoneUnshielded,
+    harvestDamagePerDay,
+  });
+  const rate = hp > Math.min(HULL_WEAR_FLOOR_HP, maxHp) + 1e-9 ? -wearPerDay : 0;
+  await client.query(
+    `UPDATE ships SET hull_hp = $2, hull_wear_hp_per_day = $3,
+        hull_as_of = to_timestamp($4 / 1000.0)
+     WHERE id = $1`,
+    [ship.id, hp, rate, nowMs],
+  );
+  return { hp, maxHp, wearPerDay: -rate };
 }

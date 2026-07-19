@@ -201,6 +201,13 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Hull & shields (implemented, chunk AG)** — every ship panel shows a
+  "Hull — X/Y HP" card (Shield icon) with a 6 px bar (success-green;
+  danger-red while wearing) and, when a toll runs, an amber mono line
+  `−4.0 HP/day · wearing — hostile environment, no matching shield`.
+  Docked hulls on an owned world list the MISSING shields as neutral
+  buttons (`Fit heat/cryo/radiation shield`); success notice "Shield
+  mounted — the toll stops here."
 - **Star harvest (implemented, chunk AF)** — docked hulls on an owned
   workshop world get a neutral `Fit harvest rig` button (Sun icon);
   idle rigged hulls within 8 pc of a star show a success-green

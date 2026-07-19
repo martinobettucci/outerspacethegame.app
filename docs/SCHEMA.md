@@ -202,3 +202,9 @@ documented down-path or an explicit "irreversible" statement
 - `bodies.star_fuel_rate_u_per_day / star_fuel_as_of` — stock d'étoile
   PARESSEUX (Σ rendements des récolteurs).
 - `bodies.star_fuel_initial` — stock initial CACHÉ (seuil du flare 5 %).
+
+## 016_wear.sql (chunk AG)
+
+- `ships.hull_hp / hull_wear_hp_per_day / hull_as_of` — HP de coque
+  PARESSEUX (NULL = coque neuve ; plancher 1 HP, aucun bord).
+- `ships.shield_hot / shield_cold / shield_radio` — boucliers d'atelier.

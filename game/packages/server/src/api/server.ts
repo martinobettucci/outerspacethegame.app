@@ -20,6 +20,7 @@ import { verifyPassword } from '../services/passwords.js';
 import { bodyIntel, visibleBodies } from '../services/world.js';
 import {
   fitHarvestRig,
+  fitShield,
   setStarStockForTest,
   startHarvest,
   stopHarvest,
@@ -836,6 +837,18 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
       return { ok: true };
     });
+  });
+
+  app.post('/ships/:id/shield', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ kind: z.enum(['hot', 'cold', 'radio']) })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      fitShield(deps.pool, player.id, id, parsed.data.kind),
+    );
   });
 
   app.post('/ships/:id/harvest-rig', async (req, reply) => {

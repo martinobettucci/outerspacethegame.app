@@ -228,6 +228,9 @@ export interface ShipView {
   retrievesAt: string | null;
   harvestRig: boolean;
   harvestingStarId: string | null;
+  /** Coque (GB §27) : HP évalués, max, usure/jour (péage, plancher 1). */
+  hull: { hp: number; maxHp: number; wearPerDay: number };
+  shields: { hot: boolean; cold: boolean; radio: boolean };
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -505,6 +508,10 @@ export const api = {
       perDay: number;
       census: { takenAt: string; totals: Record<string, number> } | null;
     }>('GET', '/census/latest'),
+  fitShield: (shipId: string, kind: 'hot' | 'cold' | 'radio') =>
+    call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/shield`, {
+      kind,
+    }),
   fitHarvestRig: (shipId: string) =>
     call<{ cost: Record<string, number> }>(
       'POST',

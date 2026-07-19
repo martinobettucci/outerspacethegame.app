@@ -17,3 +17,4 @@ export * from './docks.js';
 export * from './manualTrade.js';
 export * from './governance.js';
 export * from './stars.js';
+export * from './wear.js';

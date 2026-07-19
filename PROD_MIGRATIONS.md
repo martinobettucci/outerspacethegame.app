@@ -29,6 +29,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 13 | `game/packages/server/migrations/013_retool.sql` | Retool des industries (DG §5.1) : statut de bâtiment `retooling` (contrainte CHECK élargie) | 001 | Recréer la contrainte sans `retooling` (aucun bâtiment dans cet état) |
 | 14 | `game/packages/server/migrations/014_survival.sql` | Horloges de survie (GB §6, DG §3.5) : owner_id nullable (derelict), réservoir de survie paresseux, politique flee_armed | 001, 008 | Re-NOT NULL owner_id (après réattribution des épaves), DROP des 3 colonnes |
 | 15 | `game/packages/server/migrations/015_harvest.sql` | Récolte stellaire (GB §22, DG §8.8) : rig + lien harvesting_star_id sur ships, ledger paresseux du stock d'étoile + stock initial caché sur bodies | 001 | DROP des 2 colonnes ships et 3 colonnes bodies + index ships_harvesting |
+| 16 | `game/packages/server/migrations/016_wear.sql` | Usure de coque (GB §27) : HP paresseux + 3 boucliers sur ships | 001 | DROP des 6 colonnes |
 
 ## Services à déployer (au premier déploiement)
 

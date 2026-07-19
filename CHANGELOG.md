@@ -4,6 +4,20 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Usure de coque & boucliers (chunk AG)** : opérer sans le bouclier
+  apparié en environnement hostile coûte 5 % des HP max/jour [TUNE] par
+  source (cumul additif) — monde chaud/froid sous la coque, zone ≤ 5 pc
+  d'un trou noir ou d'une étoile en flare (radio) — plus les dégâts de
+  proximité du harvest rig (d < d_safe, D_max×((5−d)/5)², aucun bouclier
+  ne les atténue [TUNE-v1]). Un PÉAGE canon, jamais une mort : plancher
+  1 HP ; tempéré jamais ; bâtiments jamais ; transit/entrepôt/colonies
+  exempts [TUNE-v1]. HP de coque PARESSEUX (migration 016, motif fuel),
+  rebase en piggyback de tous les points d'état (les spreads périmés de
+  six call sites ont été corrigés au passage). Trois boucliers d'atelier
+  (workshop L2, 15 steelL + 5 cristal apparié [TUNE], radio → nox
+  [interp]). UI : jauge de coque + ligne d'usure ambrée + boutons de
+  montage. Poison-harvest : dormant (aucune récolte de gisement poison
+  n'existe encore, annoncé).
 - **Récolte stellaire & Starfall (chunk AF)** : le harvest rig
   (accessoire d'atelier, 20 steelL + 5 crystal + 5 gold [TUNE]) se monte
   à quai ; une coque IMMOBILE à ≤ 8 pc d'une étoile du même type de

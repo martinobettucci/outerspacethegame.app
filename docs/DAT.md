@@ -303,6 +303,20 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    a public boolean on visible stars. Departure auto-stops harvest.
    Hull damage inside d_safe awaits the hull-wear chunk (announced).
 
+18. **Hull wear & shields (implemented, chunk AG):** environmental
+   toll (GB §27 SETTLED) — 5% max-HP/day per UNSHIELDED hostile source,
+   additive [TUNE-v1]: hot/cold world under the hull (docked or
+   hovering), ≤ 5 pc of a black hole or FLARING star (radio shield),
+   plus harvest-rig proximity damage below d_safe (no shield mitigates
+   [TUNE-v1]). Lazy hull ledger (migration 016; NULL = pristine),
+   rebased piggyback on every ship-state seam; floor 1 HP — a toll,
+   never a kill (destruction comes with combat P5). Three
+   workshop-L2 shields (15 steelL + 5 matching crystal; radio → nox
+   [interp]). Temperate worlds and buildings never require shields;
+   transit/warehoused/colonizing/derelict exempt [TUNE-v1].
+   Poison-harvest wear stays dormant until poison-deposit harvesting
+   exists (announced).
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

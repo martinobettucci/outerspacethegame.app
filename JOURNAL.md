@@ -2652,3 +2652,50 @@ test d'intégration (jusqu'à 6 passes).
   vert.
 - Suites complètes après synchro : shared 132, unit 32, intégration
   **227/227**, **E2E 28/28 (10,8 min)**.
+
+## 2026-07-19 — Chunk AG : usure de coque & boucliers (GB §27 SETTLED, DG §8.8)
+
+**Problème.** Ligne 107 : les environnements hostiles ne coûtaient rien
+— et les dégâts d_safe du harvest rig (chunk AF, « Restent ») n'avaient
+pas de substrat de HP. Le canon (round 4) est un PÉAGE déterministe,
+jamais un blocage ni une mort.
+
+### Canon appliqué
+
+- 5 % des HP max/jour par source hostile NON blindée, cumul additif
+  [TUNE-v1] : climat hot/cold du monde SOUS la coque (à quai ou en
+  survol), zone ≤ 5 pc d'un trou noir ou d'une étoile en FLARE (bouclier
+  radio) ; les dégâts de proximité du rig (d < d_safe) s'ajoutent tels
+  quels, sans atténuation [TUNE-v1]. Tempéré : jamais. Bâtiments :
+  jamais. Transit/entrepôt/colonisation/épaves : exempts [TUNE-v1].
+- Plancher canon **1 HP** — le péage ne tue jamais (la destruction
+  arrive avec le combat P5). Aucun bord : ledger paresseux pur.
+- Trois boucliers d'atelier (workshop **L2**, politics-free) :
+  15 steelL + 5 cristal apparié [TUNE] — radio → crystal_nox [interp :
+  le cristal des mondes poison, l'environnement radiatif par excellence].
+- Poison-harvest : DORMANT (la récolte de gisement poison n'existe pas
+  encore — annoncé).
+
+### Leçon de la fournée : les spreads périmés
+
+Le rebase de coque lit la position/statut/liens de l'OBJET passé — six
+call sites passaient des spreads {...ship} SANS les champs qu'ils
+venaient de modifier en SQL (hover_body_id au relocate/undock/éviction/
+échec de colonisation, harvesting_star_id au release, rien au
+re-quai du retrieved). Sans conséquence pour fuel/survie (leurs entrées
+ne dépendaient pas de ces champs), mais l'usure UTILISE le monde sous la
+coque : tous corrigés, spreads EXACTS partout + rebase complet au
+ship_retrieved. Même famille que la régression AE (ligne partielle) —
+le piggyback exige un objet fidèle.
+
+### Vérifications
+
+- Shared 137/137 (wear.test.ts : cumul, climats, coûts, plancher).
+- Intégration wear.test.ts **9/9** : L1 refusé/L2 payé, §10, tempéré 0,
+  chaud −4 sans / 0 avec bouclier, flare −4 puis rallumée 0, trou noir
+  −4 puis radio 0, cumul flare+rig −24 avec récolte active, plancher 1.
+- E2E shields.spec.ts : flare → vol 3 pc → jauge et ligne −4.0 HP/day →
+  retour, workshop L2 réel (level up), bouclier radiatif payé → re-vol →
+  péage éteint ; captures sh-01/02.
+- Suites complètes après synchro : shared 137, unit 32, intégration
+  **236/236**, **E2E 29/29 (11,6 min)**.

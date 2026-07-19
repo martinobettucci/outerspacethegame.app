@@ -19,6 +19,7 @@ import {
   Flag,
   Fuel,
   Lock,
+  Shield as ShieldIcon,
   Soup,
   Telescope,
   Warehouse as WarehouseIcon,
@@ -1183,6 +1184,57 @@ export function GalaxyMap() {
                 ) ? (
                 <span>{t.galaxy.fuelServedByPlanet}</span>
               ) : null}
+            </section>
+          )}
+          {selectedShip.hull.maxHp > 0 && (
+            <section
+              aria-label={t.galaxy.hullTitle}
+              style={{
+                display: 'grid',
+                gap: 4,
+                background: 'var(--bg-overlay)',
+                borderRadius: 'var(--radius-card-sm, 10px)',
+                padding: '8px 10px',
+                fontSize: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldIcon size={14} aria-hidden />
+                <strong>
+                  {t.galaxy.hullTitle} — {selectedShip.hull.hp.toFixed(1)}/
+                  {selectedShip.hull.maxHp} HP
+                </strong>
+              </div>
+              <div
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: 'var(--bg-sunken, #101018)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.min(100, (selectedShip.hull.hp / selectedShip.hull.maxHp) * 100)}%`,
+                    height: '100%',
+                    background:
+                      selectedShip.hull.wearPerDay > 0
+                        ? 'var(--danger-500, #F24141)'
+                        : 'var(--success-500, #238C33)',
+                  }}
+                />
+              </div>
+              {selectedShip.hull.wearPerDay > 0 && (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--warning-400, #D9CF4A)',
+                  }}
+                >
+                  −{selectedShip.hull.wearPerDay.toFixed(1)} HP/day ·{' '}
+                  {t.galaxy.hullWearing}
+                </span>
+              )}
             </section>
           )}
           {['cargo', 'combat'].includes(selectedShip.hullCategory) &&
@@ -2477,6 +2529,53 @@ export function GalaxyMap() {
                 <Sun size={14} aria-hidden /> {t.galaxy.fitHarvestRig}
               </button>
             )}
+          {selectedShip.status === 'docked' &&
+            selectedShip.hullCategory !== 'probe' &&
+            selectedShip.dockedBodyId &&
+            bodies.some(
+              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+            ) &&
+            (
+              [
+                ['hot', t.galaxy.fitShieldHot],
+                ['cold', t.galaxy.fitShieldCold],
+                ['radio', t.galaxy.fitShieldRadio],
+              ] as const
+            )
+              .filter(([kind]) => !selectedShip.shields[kind])
+              .map(([kind, label]) => (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() =>
+                    api
+                      .fitShield(selectedShip.id, kind)
+                      .then(() => {
+                        setNotice(t.galaxy.shieldFitted);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.shieldRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ShieldIcon size={14} aria-hidden /> {label}
+                </button>
+              ))}
           {selectedShip.status === 'idle' &&
             selectedShip.harvestRig &&
             !selectedShip.harvestingStarId &&

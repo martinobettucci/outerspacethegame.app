@@ -314,7 +314,12 @@ export const colonyEstablished: EventHandler = async (client, event) => {
       [shipId, bodyId],
     );
     // Survol d'un monde d'autrui : le réservoir paie (GB §7).
-    await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+    await rebaseShipDrain(
+      client,
+      { ...ship, status: 'hovering', hover_body_id: bodyId, docked_body_id: null },
+      nowMs,
+      'tank',
+    );
     return;
   }
 
@@ -469,7 +474,12 @@ export const dockEviction: EventHandler = async (client, event) => {
     [shipId, bodyId],
   );
   const nowMs = event.dueAt.getTime();
-  await rebaseShipDrain(client, { ...ship, status: 'hovering' }, nowMs, 'tank');
+  await rebaseShipDrain(
+    client,
+    { ...ship, status: 'hovering', hover_body_id: bodyId, docked_body_id: null },
+    nowMs,
+    'tank',
+  );
 };
 
 /**
@@ -667,6 +677,14 @@ export const shipRetrieved: EventHandler = async (client, event) => {
     [shipId, event.dueAt.getTime()],
   );
   if (!rows[0]) return;
+  // Drains & usure cohérents au re-quai (un monde chaud use dès le sol).
+  const { rows: full } = await client.query(
+    `SELECT * FROM ships WHERE id = $1`,
+    [shipId],
+  );
+  if (full[0]) {
+    await rebaseShipDrain(client, full[0], event.dueAt.getTime(), 'none');
+  }
 };
 
 /**

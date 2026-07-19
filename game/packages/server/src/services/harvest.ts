@@ -15,14 +15,16 @@ import {
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
   HULLS,
+  SHIELD_COST,
   type HullCategory,
   type HullSize,
+  type ShieldKind,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { payCost, CommandError } from './planets.js';
-import { evalShipFuel, rebaseShipDrain, type ShipRow } from '../sim/shipDrain.js';
+import { evalShipFuel, rebaseShipDrain, rebaseShipHull, type ShipRow } from '../sim/shipDrain.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -235,6 +237,12 @@ export async function startHarvest(
     }
     // Étoile : Σ rendements BRUTS (le drawdown ignore l'entretien).
     await settleStarHarvest(client, star, nowMs, -yieldPerDay);
+    // Usure : les dégâts de proximité (d < d_safe) s'arment ICI (GB §27).
+    await rebaseShipHull(
+      client,
+      { ...ship, harvesting_star_id: starId },
+      nowMs,
+    );
     await client.query('COMMIT');
     return { netPerDay, yieldPerDay, distancePc: d };
   } catch (err) {
@@ -294,8 +302,14 @@ export async function releaseHarvest(
     `UPDATE ships SET harvesting_star_id = NULL WHERE id = $1`,
     [ship.id],
   );
-  // Réservoir : matérialisation + retour au drain idle (statut inchangé).
-  await rebaseShipDrain(client, ship, nowMs, 'tank');
+  // Réservoir : matérialisation + retour au drain idle (statut inchangé) —
+  // spread EXACT (le lien vient d'être rompu : les dégâts d_safe cessent).
+  await rebaseShipDrain(
+    client,
+    { ...ship, harvesting_star_id: null },
+    nowMs,
+    'tank',
+  );
   const { rows: stars } = await client.query(
     `SELECT * FROM bodies WHERE id = $1 AND body_type = 'star' FOR UPDATE`,
     [starId],
@@ -312,6 +326,66 @@ function shipTankU(ship: Row): number {
     HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
       ?.tankU ?? 0
   );
+}
+
+/**
+ * Monte un BOUCLIER climatique/radiatif (GB §27 SETTLED, DG §8.8 —
+ * workshop L2, politics-free) : 15 steelL + 5 cristal apparié [TUNE],
+ * à quai sur SON monde. La sonde n'opère pas (exclue) ; le personnel
+ * atterrit sur les mondes hostiles comme les autres : autorisé.
+ */
+export async function fitShield(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  kind: ShieldKind,
+  opts: { nowMs?: number } = {},
+): Promise<{ cost: Partial<Record<string, number>> }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (ship.hull_category === 'probe') {
+      throw new CommandError('not_available', 'Une sonde ne porte pas de bouclier');
+    }
+    if (ship[`shield_${kind}`]) {
+      throw new CommandError('not_available', 'Ce bouclier est déjà monté');
+    }
+    if (ship.status !== 'docked' || !ship.docked_body_id) {
+      throw new CommandError('not_available', 'Le bouclier se monte à quai');
+    }
+    const { rows: worlds } = await client.query(
+      `SELECT * FROM bodies WHERE id = $1 FOR UPDATE`,
+      [ship.docked_body_id],
+    );
+    if (!worlds[0] || worlds[0].owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
+    }
+    const { rows: shop } = await client.query(
+      `SELECT 1 FROM buildings
+       WHERE body_id = $1 AND key = 'workshop' AND status = 'active'
+         AND level >= 2`,
+      [ship.docked_body_id],
+    );
+    if (!shop[0]) {
+      throw new CommandError('not_available', 'Un workshop L2 actif est requis');
+    }
+    await payCost(client, worlds[0].id, worlds[0].climate, SHIELD_COST[kind], nowMs);
+    await client.query(
+      `UPDATE ships SET shield_${kind} = true WHERE id = $1`,
+      [shipId],
+    );
+    // Le péage cesse immédiatement si ce bouclier couvrait la source.
+    await rebaseShipHull(client, { ...ship, [`shield_${kind}`]: true }, nowMs);
+    await client.query('COMMIT');
+    return { cost: SHIELD_COST[kind] };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /** Instrumentation §15 : fixe le stock d'une étoile (bords replanifiés). */
