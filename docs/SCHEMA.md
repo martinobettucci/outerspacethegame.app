@@ -224,3 +224,10 @@ documented down-path or an explicit "irreversible" statement
 - `ships.claim_rig` — accessoire d'atelier L2 (réclamation d'épaves).
 - `ships.claiming_target_id` — épave en cours de réclamation
   (ON DELETE SET NULL : une cible annihilée retombe proprement).
+
+## 019_stargates.sql (chunk AK)
+
+- `stargates` — paire d'endpoints UNIQUE (CASCADE : le gate meurt avec un
+  endpoint supprimé ; l'annihilation purge explicitement), statut
+  building/active, péage (resource + amount), horodatage par direction
+  (capacité 1/tick/direction).

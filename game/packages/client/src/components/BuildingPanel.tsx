@@ -7,6 +7,7 @@ import { useState } from 'react';
 import {
   AlertTriangle,
   Anchor,
+  Orbit,
   ChevronsUp,
   Gauge,
   Store,
@@ -45,6 +46,7 @@ export function BuildingPanel({
   building,
   docks,
   vehicles,
+  stargateContext,
   triadNudge,
   workforceAssignable,
   workforceAssigned,
@@ -65,6 +67,22 @@ export function BuildingPanel({
   docks?: PlanetDocks | null;
   /** Balances de véhicules de la planète (GB §9) — entrepôt + tampon. */
   vehicles?: { capacity: Record<'s' | 'm' | 'l', number>; stored: Record<'s' | 'm' | 'l', number> } | null;
+  /** Contexte stargate_yard (chunk AK) : mondes possédés + gates du monde. */
+  stargateContext?: {
+    bodyId: string;
+    myPlanets: { id: string; name: string }[];
+    gates: {
+      id: string;
+      aBodyId: string;
+      bBodyId: string;
+      status: string;
+      tollResource: string | null;
+      tollAmount: number;
+    }[];
+    bodyName: (id: string) => string;
+    onBuild: (destId: string) => void;
+    onSetToll: (gateId: string, resource: string | null, amount: number) => void;
+  };
   /** Nudge triade (DG §11.2) — aucun pair FOOD dans la portée télescope. */
   triadNudge?: boolean | null;
   workforceAssignable: number;
@@ -354,6 +372,90 @@ export function BuildingPanel({
               <option value="public">{t.planet.warehousePublic}</option>
             </select>
           </label>
+        </section>
+      )}
+
+      {building.key === 'stargate_yard' && stargateContext && (
+        <section aria-label={t.planet.stargateTitle} className="ls-section">
+          <div className="ls-section-heading">
+            <Orbit size={14} aria-hidden /> {t.planet.stargateTitle}
+          </div>
+          <p className="ls-section-subtitle">{t.planet.stargateHint}</p>
+          {stargateContext.gates.map((gate) => (
+            <div key={gate.id} className="ls-mono-line" style={{ display: 'grid', gap: 4 }}>
+              <span>
+                → {stargateContext.bodyName(
+                  gate.aBodyId === stargateContext.bodyId ? gate.bBodyId : gate.aBodyId,
+                )}{' '}
+                · {gate.status === 'active' ? t.planet.stargateActive : t.planet.stargateBuilding}
+                {gate.tollResource
+                  ? ` · ${t.galaxy.gateToll} ${gate.tollAmount} ${gate.tollResource.replace('_', ' ')}`
+                  : ''}
+              </span>
+              {gate.status === 'active' && (
+                <form
+                  style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const data = new FormData(event.currentTarget);
+                    const res = String(data.get('tollRes') ?? '');
+                    const amount = Number(data.get('tollAmount') ?? 0);
+                    stargateContext.onSetToll(gate.id, res || null, amount);
+                  }}
+                >
+                  <input
+                    aria-label={t.planet.stargateTollLabel}
+                    name="tollRes"
+                    defaultValue={gate.tollResource ?? ''}
+                    placeholder="resource"
+                    className="ls-select"
+                    style={{ maxWidth: 110 }}
+                  />
+                  <input
+                    aria-label="Toll amount"
+                    name="tollAmount"
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    defaultValue={gate.tollAmount}
+                    className="ls-select"
+                    style={{ width: 70 }}
+                  />
+                  <button type="submit" className="ls-button">
+                    Apply toll
+                  </button>
+                </form>
+              )}
+            </div>
+          ))}
+          <form
+            style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              const dest = String(data.get('gateDest') ?? '');
+              if (dest) stargateContext.onBuild(dest);
+            }}
+          >
+            <label className="ls-field" style={{ flex: 1 }}>
+              <span>{t.planet.stargateDest}</span>
+              <select name="gateDest" className="ls-select" defaultValue="">
+                <option value="" disabled>
+                  —
+                </option>
+                {stargateContext.myPlanets
+                  .filter((pl) => pl.id !== stargateContext.bodyId)
+                  .map((pl) => (
+                    <option key={pl.id} value={pl.id}>
+                      {pl.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <button type="submit" className="ls-button">
+              {t.planet.stargateBuild}
+            </button>
+          </form>
         </section>
       )}
 

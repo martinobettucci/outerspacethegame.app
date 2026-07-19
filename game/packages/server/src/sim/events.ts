@@ -27,6 +27,7 @@ export type EventKind =
   | 'star_supernova'
   | 'hull_repaired'
   | 'salvage_claimed'
+  | 'stargate_built'
   | 'noop';
 
 export interface GameEvent {

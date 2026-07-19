@@ -169,6 +169,10 @@ export const t = {
     claiming: 'Claiming',
     wrecks: 'Wrecks',
     wreck: 'Ownerless wreck',
+    traverse: 'Traverse gate',
+    traversed: 'Gate crossed — scattered off the fixed point.',
+    traverseRefused: 'Traversal refused',
+    gateToll: 'toll',
     wreckHint:
       'Survival ran out — no honor. Hold within 1 pc with a claim rig to make it yours.',
     fitShieldHot: 'Fit heat shield',
@@ -336,6 +340,17 @@ export const t = {
     dwellHoursLabel: 'Visitor ground stay (game hours, 1–720)',
     reservedForSelfLabel: 'Docks reserved for own fleet (0–2)',
     docksApplied: 'Spaceport dock settings applied.',
+    stargateTitle: 'Stargates',
+    stargateHint:
+      'The safe path — instant, tolled at your pleasure. One build per yard level; the gate dies with either endpoint.',
+    stargateDest: 'Destination (your worlds)',
+    stargateBuild: 'Build gate',
+    stargateBuilt: 'Gate under construction — the network grows.',
+    stargateBuildRefused: 'Gate refused',
+    stargateTollLabel: 'Toll (resource + amount, non-owners)',
+    stargateTollApplied: 'Toll set.',
+    stargateActive: 'active',
+    stargateBuilding: 'building',
     vehiclesTitle: 'Vehicles',
     vehiclesHint:
       'Separate balances per size — ground buffer 2 M + 2 S without a warehouse; heavies need one.',

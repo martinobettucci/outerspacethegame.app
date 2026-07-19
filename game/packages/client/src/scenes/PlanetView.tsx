@@ -21,7 +21,7 @@ import {
   Landmark,
 } from 'lucide-react';
 import type { BuildingKey } from '@atg/shared';
-import { api, type ApiError, type PlanetDetail } from '../api.js';
+import { type StargateView, api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import { ALL_RESOURCE_IDS, BUILDINGS, INNATE_TRADABLE } from '@atg/shared';
@@ -82,6 +82,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
   const appRef = useRef<Application | null>(null);
   const boardRef = useRef<Container | null>(null);
   const [planet, setPlanet] = useState<PlanetDetail | null>(null);
+  const [myPlanets, setMyPlanets] = useState<{ id: string; name: string }[]>([]);
+  const [gates, setGates] = useState<StargateView[]>([]);
+  const [gateBodyNames, setGateBodyNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<{
     building: BuildingKey;
@@ -110,6 +113,26 @@ export function PlanetView({ planetId }: { planetId: string }) {
       .then((r) => setHospOffers(r.offers))
       .catch(() => setHospOffers([]));
   }, [planetId]);
+  useEffect(() => {
+    let cancelled = false;
+    const loadGates = () => {
+      void api.me().then((r) => !cancelled && setMyPlanets(r.planets));
+      void api.galaxy().then((r) => {
+        if (cancelled) return;
+        setGates(r.stargates.filter((g) => g.aBodyId === planetId || g.bBodyId === planetId));
+        setGateBodyNames(
+          Object.fromEntries(r.bodies.map((b) => [b.id, b.name])),
+        );
+      });
+    };
+    loadGates();
+    const timer = setInterval(loadGates, 8_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [planetId]);
+
   useEffect(() => refreshHospitality(), [refreshHospitality]);
   // Gouvernance (GB §11) : candidats = PNJ non liés de grade gouverneur.
   const [govCandidates, setGovCandidates] = useState<
@@ -828,6 +851,28 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 building={b}
                 docks={planet.docks}
                 vehicles={planet.vehicles}
+                stargateContext={{
+                  bodyId: planetId,
+                  myPlanets,
+                  gates,
+                  bodyName: (id) => gateBodyNames[id] ?? myPlanets.find((pl) => pl.id === id)?.name ?? '…',
+                  onBuild: (destId) =>
+                    void api
+                      .buildStargate(planetId, destId)
+                      .then(() => setNotice(t.planet.stargateBuilt))
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.planet.stargateBuildRefused} — ${err.message ?? err.error}`,
+                        ),
+                      ),
+                  onSetToll: (gateId, resource, amount) =>
+                    void api
+                      .setStargateToll(gateId, resource, amount)
+                      .then(() => setNotice(t.planet.stargateTollApplied))
+                      .catch((err: ApiError) =>
+                        setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                      ),
+                }}
                 triadNudge={planet.triadNudge}
                 workforceAssignable={planet.workforceAssignable}
                 workforceAssigned={planet.workforceAssigned}

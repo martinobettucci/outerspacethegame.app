@@ -35,7 +35,7 @@ import {
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
 } from '@atg/shared';
-import { api, type ApiError, type DerelictView, type GalaxyBody, type JunkFieldView, type ShipView } from '../api.js';
+import { api, type ApiError, type DerelictView, type GalaxyBody, type JunkFieldView, type ShipView, type StargateView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
@@ -132,6 +132,7 @@ export function GalaxyMap() {
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
   const [junkFields, setJunkFields] = useState<JunkFieldView[]>([]);
   const [derelicts, setDerelicts] = useState<DerelictView[]>([]);
+  const [stargates, setStargates] = useState<StargateView[]>([]);
   const [dumpRes, setDumpRes] = useState('');
   const [dumpTons, setDumpTons] = useState('1');
   const [error, setError] = useState(false);
@@ -346,6 +347,11 @@ export function GalaxyMap() {
             JSON.stringify(current) === JSON.stringify(r.derelicts ?? [])
               ? current
               : (r.derelicts ?? []),
+          );
+          setStargates((current) =>
+            JSON.stringify(current) === JSON.stringify(r.stargates ?? [])
+              ? current
+              : (r.stargates ?? []),
           );
         })
         .catch(() => !cancelled && setError(true));
@@ -2934,6 +2940,56 @@ export function GalaxyMap() {
               {new Date(selectedShip.claimsAt).toLocaleTimeString('en-US')}
             </p>
           )}
+          {['docked', 'hovering'].includes(selectedShip.status) &&
+            (() => {
+              const at = selectedShip.dockedBodyId ?? selectedShip.hoverBodyId;
+              if (!at) return null;
+              const gate = stargates.find(
+                (g) =>
+                  g.status === 'active' &&
+                  (g.aBodyId === at || g.bBodyId === at),
+              );
+              if (!gate) return null;
+              const destId = gate.aBodyId === at ? gate.bBodyId : gate.aBodyId;
+              const destName =
+                bodies.find((b) => b.id === destId)?.name ?? 'the far side';
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .traverse(selectedShip.id, gate.id)
+                      .then(() => {
+                        setNotice(t.galaxy.traversed);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.traverseRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--accent-500, #23468C)',
+                    color: 'var(--text-primary)',
+                    border: 'none',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Telescope size={14} aria-hidden /> {t.galaxy.traverse} →{' '}
+                  {destName}
+                  {gate.tollResource && gate.ownerId !== undefined
+                    ? ` (${t.galaxy.gateToll} ${gate.tollAmount} ${gate.tollResource.replace('_', ' ')})`
+                    : ''}
+                </button>
+              );
+            })()}
           {selectedShip.harvestingStarId && (
             <button
               type="button"

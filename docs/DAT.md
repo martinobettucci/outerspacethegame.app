@@ -350,6 +350,19 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    P4, announced). Wrecks are visible under the standard vision scopes
    (`derelicts` in /galaxy). moveShip cancels an in-flight claim.
 
+21. **Stargates v1 (implemented, chunk AK):** the SAFE network path
+   (GB §6). Built at an ACTIVE stargate_yard (250 cells + 400 steelH +
+   100 climate crystal [TUNE]; 48 game-hours [TUNE-v1]; 1 concurrent
+   build per yard level; unique pair) — v1 requires BOTH endpoints
+   owned by the builder (the canonical 50/50 split with cross-player
+   consent ships with its own consent flow, announced). Traversal is
+   INSTANT and fuel-free: hard-gate toll from the ship's HOLD for
+   non-owners (credited to the ENTRY world's stock [interp]), capacity
+   1 ship/tick/direction [TUNE], exit SCATTERED U(0–15) pc via seeded
+   hash(shipId, tick) — deterministic, camper-proof. Gates die with
+   either endpoint (CASCADE + supernova purge). Personal ships only
+   traverse toward their owner's worlds (GB §21).
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

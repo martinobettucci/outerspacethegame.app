@@ -2827,3 +2827,60 @@ réclamables — l'économie du salvage promise par le canon n'existait pas.
   retombé sur son flake DOCUMENTÉ de tirage de taille starter, p=1/32
   sur 5 essais, vert en solo 26,5 s ; le filtre DNA-taille reste en
   SUGGESTIONS).
+
+## 2026-07-19 — Chunk AK : stargates v1 (GB §6, DG §9.3–9.4)
+
+**Problème.** Ligne 110 : le « chemin sûr » du réseau n'existait pas —
+tout vol était du free-flight risqué. Les stargates sont le contrepoint
+stratégique de toute la couche interception/piraterie à venir.
+
+### Canon appliqué & v1 (annoncé)
+
+- Chantier au stargate_yard ACTIF : 250 cells + 400 steelH + 100
+  crystal_any (résolu par climat — patron payCost existant) [TUNE] ;
+  48 h de jeu [TUNE-v1 — durée non chiffrée par le guide] ; 1 chantier
+  concurrent par NIVEAU de yard ; paire unique (les deux sens).
+- **v1 même propriétaire** : le partage 50/50 avec consentement des
+  deux propriétaires (canon) exige un flux de consentement inter-joueurs
+  — patron des offres manuelles, proposé en SUGGESTIONS. Refus
+  explicite en attendant.
+- Traversée INSTANTANÉE, zéro carburant : péage « hard gate » depuis la
+  SOUTE des non-propriétaires (pas de ressource ⇒ pas de passage),
+  encaissé au stock du monde d'ENTRÉE [interp] ; propriétaire exempt
+  [interp] ; capacité 1 vaisseau/tick/direction [TUNE] ; le personnel ne
+  traverse que vers SES mondes (GB §21) ; récolte/réclamation
+  abandonnées au passage (on quitte la zone).
+- Sortie DISPERSÉE : U(0–15) pc, hash seedé (shipId, tick d'arrivée) —
+  déterministe (rejouable), imprévisible pour les campeurs (bat le
+  rayon d'engagement ~4,5 pc). Testé borné ET déterministe.
+- Le gate MEURT avec l'un ou l'autre endpoint : CASCADE pour les
+  endpoints supprimés, purge explicite pour les mondes ANNIHILÉS
+  (cendre) au handler de supernova. Aucune « sortie void » v1 : la
+  traversée étant instantanée, aucun état en vol n'existe (annoncé —
+  les exits void arrivent avec les endpoints mobiles).
+
+### Vérifications
+
+- Shared 147/147 (scatter borné + déterminisme, constantes).
+- Intégration stargates.test.ts **9/9** : §10 (endpoint d'autrui, même
+  monde, sans yard), coût payé climat-résolu, doublon AVANT saturation
+  (ordre des gardes corrigé par le test), activation, traversée
+  propriétaire sans péage + dispersion ≈ scatterPc, capacité par tick
+  refusée puis servie, péage hard (impayable → refus ; payé → soute
+  débitée + stock crédité), personnel d'autrui refusé, supernova →
+  gate mort avec l'endpoint annihilé.
+- E2E stargates.spec.ts : colonie n° 2 par l'API (le parcours UI de la
+  colonisation est déjà prouvé par colonization.spec — décision de
+  périmètre annoncée), puis LE SUJET en UI : yard T4 débloqué/posé au
+  plateau, section Stargates (destination + Build gate + notice),
+  activation ~24 s, bouton « Traverse gate → colonie », arrivée idle
+  dispersée ≤ 15 pc ; captures sg-01/02.
+- Trois leçons d'outillage E2E au passage : les titres de cartes rendent
+  les underscores en espaces (unlockCard/placeCard matchent désormais le
+  libellé AFFICHÉ, clé API conservée pour hasBuilding) ; une coque à sec
+  s'échoue dans le vide de sortie (avitailler avant de traverser) ; le
+  kit colonie mange la trésorerie du gate (re-grant).
+- Suites après synchro : shared 147, unit 32, intégration **269/269**,
+  E2E **33/33 (15,4 min au run complet)** — un premier run avait été
+  interrompu par la contention à 2 workers (2 timeouts + 6 non lancés),
+  le run complet suivant est intégralement vert.

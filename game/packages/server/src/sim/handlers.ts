@@ -818,6 +818,25 @@ export const starSupernova: EventHandler = async (client, event) => {
     );
   }
 
+  // Les gates meurent avec l'un ou l'autre endpoint (canon GB §6) — les
+  // mondes ANNIHILÉS restent en base (cendre) : purge explicite.
+  if (worlds.length > 0) {
+    const wiped = worlds.map((w) => w.id);
+    const { rows: deadGates } = await client.query(
+      `DELETE FROM stargates
+       WHERE a_body_id = ANY($1) OR b_body_id = ANY($1)
+       RETURNING id`,
+      [wiped],
+    );
+    for (const g of deadGates) {
+      await client.query(
+        `DELETE FROM events WHERE processed_at IS NULL
+           AND kind = 'stargate_built' AND payload->>'gateId' = $1`,
+        [g.id],
+      );
+    }
+  }
+
   // 3. L'étoile elle-même : L → trou noir ; S/M → plus rien (canon).
   await client.query(
     `UPDATE ships SET harvesting_star_id = NULL WHERE harvesting_star_id = $1`,
@@ -905,6 +924,17 @@ export const salvageClaimed: EventHandler = async (client, event) => {
   }
 };
 
+/** stargate_built { gateId } — fin du chantier : le gate s'active. */
+export const stargateBuilt: EventHandler = async (client, event) => {
+  const gateId = String(event.payload.gateId ?? '');
+  if (!gateId) return;
+  await client.query(
+    `UPDATE stargates SET status = 'active', completes_at = NULL
+     WHERE id = $1 AND status = 'building' AND completes_at <= now()`,
+    [gateId],
+  );
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -927,6 +957,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     star_supernova: starSupernova,
     hull_repaired: hullRepaired,
     salvage_claimed: salvageClaimed,
+    stargate_built: stargateBuilt,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

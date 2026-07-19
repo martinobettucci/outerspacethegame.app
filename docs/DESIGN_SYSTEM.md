@@ -201,6 +201,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Stargates (implemented, chunk AK)** — the stargate_yard panel opens
+  a "Stargates" section (Orbit icon): per-gate mono lines
+  (`→ <far world> · active · toll N res`) with an inline toll form
+  (resource + amount + Apply), and a build form (destination select
+  scoped to the owner's OTHER worlds + `Build gate`). Ship panels at an
+  active endpoint show a primary-blue `Traverse gate → <dest>` button
+  (toll suffix for foreign gates); success notice "Gate crossed —
+  scattered off the fixed point."
 - **Salvage claims (implemented, chunk AJ)** — the contact index gains
   a "Wrecks" optgroup (radar of ownerless derelicts, `† category size`
   suffix); a stationary rigged ship within 1 pc shows a success-green

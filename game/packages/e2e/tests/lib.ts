@@ -118,9 +118,11 @@ export async function boardHelpers(
   const panel = page.getByRole('region', { name: 'Building settings' });
 
   const unlockCard = async (key: string) => {
+    // Le titre de carte affiche les underscores en espaces : la CLÉ API
+    // reste l'argument, le filtre matche le libellé rendu.
     const card = hand
       .getByRole('article')
-      .filter({ hasText: new RegExp(`^${key}`) })
+      .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
       .first();
     await expect(async () => {
       const btn = card.getByRole('button', { name: 'Unlock' });
@@ -148,7 +150,7 @@ export async function boardHelpers(
       if (!(await hasBuilding(key))) {
         const btn = hand
           .getByRole('article')
-          .filter({ hasText: new RegExp(`^${key}`) })
+          .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
           .first()
           .getByRole('button', { name: 'Place' });
         if ((await btn.getAttribute('aria-pressed')) !== 'true') {

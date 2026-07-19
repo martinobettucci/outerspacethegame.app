@@ -49,6 +49,16 @@ export interface Me {
   planets: { id: string; name: string }[];
 }
 
+export interface StargateView {
+  id: string;
+  aBodyId: string;
+  bBodyId: string;
+  ownerId: string;
+  status: string;
+  tollResource: string | null;
+  tollAmount: number;
+}
+
 export interface DerelictView {
   id: string;
   x: number;
@@ -292,6 +302,7 @@ export const api = {
       bodies: GalaxyBody[];
       junkFields: JunkFieldView[];
       derelicts: DerelictView[];
+      stargates: StargateView[];
     }>('GET', '/galaxy'),
   planet: (id: string) => call<PlanetDetail>('GET', `/planets/${id}`),
   unlock: (planetId: string, node: TechNodeKey) =>
@@ -538,6 +549,22 @@ export const api = {
       resource,
       tons,
     }),
+  buildStargate: (fromBodyId: string, toBodyId: string) =>
+    call<{ gateId: string; completesAt: string }>('POST', '/stargates', {
+      fromBodyId,
+      toBodyId,
+    }),
+  setStargateToll: (gateId: string, resource: string | null, amount: number) =>
+    call<{ ok: boolean }>('POST', `/stargates/${gateId}/toll`, {
+      resource,
+      amount,
+    }),
+  traverse: (shipId: string, gateId: string) =>
+    call<{ x: number; y: number; scatterPc: number }>(
+      'POST',
+      `/ships/${shipId}/traverse`,
+      { gateId },
+    ),
   fitClaimRig: (shipId: string) =>
     call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/claim-rig`),
   claim: (shipId: string, targetId: string) =>

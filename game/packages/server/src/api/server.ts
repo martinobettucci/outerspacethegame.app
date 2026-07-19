@@ -1,4 +1,10 @@
 import {
+  buildStargate,
+  setStargateToll,
+  traverseStargate,
+  visibleStargates,
+} from '../services/stargates.js';
+import {
   collectJunk,
   dumpCargo,
   fitClaimRig,
@@ -409,6 +415,12 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         shipPc: SHIP_SCAN_PC,
       }),
       derelicts: await visibleDerelicts(deps.pool, player.id, {
+        baseSkyPc: BASE_SKY_PC,
+        telescopePcPerLevel: TELESCOPE_SCOPE_PC_PER_LEVEL,
+        probePc: PROBE_SCAN_PC,
+        shipPc: SHIP_SCAN_PC,
+      }),
+      stargates: await visibleStargates(deps.pool, player.id, {
         baseSkyPc: BASE_SKY_PC,
         telescopePcPerLevel: TELESCOPE_SCOPE_PC_PER_LEVEL,
         probePc: PROBE_SCAN_PC,
@@ -904,6 +916,50 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => fitJunkCollector(deps.pool, player.id, id));
+  });
+
+  app.post('/stargates', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const parsed = z
+      .object({ fromBodyId: z.string().uuid(), toBodyId: z.string().uuid() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      buildStargate(deps.pool, player.id, parsed.data.fromBodyId, parsed.data.toBodyId, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
+  });
+
+  app.post('/stargates/:id/toll', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({
+        resource: z.string().min(1).max(64).nullable(),
+        amount: z.number().min(0),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      setStargateToll(deps.pool, player.id, id, parsed.data).then(() => ({
+        ok: true,
+      })),
+    );
+  });
+
+  app.post('/ships/:id/traverse', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ gateId: z.string().uuid() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      traverseStargate(deps.pool, player.id, id, parsed.data.gateId, {
+        tickMs: deps.config.TICK_MS,
+      }),
+    );
   });
 
   app.post('/ships/:id/claim-rig', async (req, reply) => {

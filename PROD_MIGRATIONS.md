@@ -32,6 +32,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 16 | `game/packages/server/migrations/016_wear.sql` | Usure de coque (GB §27) : HP paresseux + 3 boucliers sur ships | 001 | DROP des 6 colonnes |
 | 17 | `game/packages/server/migrations/017_junk.sql` | Champs de junk (GB §22, DG §10.4) : table junk_fields + collecteur/quota/scoop sur ships | 001 | DROP TABLE junk_fields + DROP des 4 colonnes ships |
 | 18 | `game/packages/server/migrations/018_claim.sql` | Claim rig (GB §6, DG §8.8) : rig + lien de réclamation sur ships | 001 | DROP des 2 colonnes |
+| 19 | `game/packages/server/migrations/019_stargates.sql` | Stargates v1 (GB §6, DG §9.3) : table stargates | 001 | DROP TABLE stargates |
 
 ## Services à déployer (au premier déploiement)
 

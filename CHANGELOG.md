@@ -4,6 +4,21 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Stargates v1 (chunk AK)** : le raccourci SÛR du réseau (GB §6).
+  Chantier au stargate_yard ACTIF (coût 250 cells + 400 steelH + 100
+  cristal du climat [TUNE], 48 h de jeu [TUNE-v1], 1 chantier concurrent
+  par niveau, paire unique) — v1 : les DEUX endpoints appartiennent au
+  bâtisseur (le partage 50/50 avec consentement inter-joueurs, canon,
+  arrive avec son flux dédié — annoncé). Traversée INSTANTANÉE, zéro
+  carburant : péage « hard gate » depuis la SOUTE pour les
+  non-propriétaires (encaissé au stock du monde d'entrée [interp]),
+  capacité 1 vaisseau/tick/direction [TUNE], sortie DISPERSÉE U(0–15) pc
+  par hash seedé (shipId, tick — déterministe, anti-camping). Le gate
+  MEURT avec l'un ou l'autre endpoint (cascade + purge à l'annihilation
+  par supernova). Le vaisseau personnel ne traverse que vers SES mondes
+  (GB §21). Migration 019. UI : section Stargates du panneau yard
+  (build, liste, péage), bouton bleu « Traverse gate » sur le panneau
+  vaisseau, gates visibles sous scope (/galaxy).
 - **Claim rig & salvage (chunk AJ)** : les épaves du survival-out
   (owner NULL, « no honor » — GB §6) sont désormais RÉCLAMABLES. Le
   claim rig (atelier L2, 25 steelL + 5 gold [TUNE]) permet, immobile à
