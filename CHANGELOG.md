@@ -2,6 +2,24 @@
 
 ## [Non publié]
 
+### Player Codex — tranche 1 implémentée (P2.codex, shell + 3 chapitres)
+
+- **Manuel joueur in-game (commit 2a4990e)** : bouton « Codex » sur le rail de
+  navigation (accessible depuis chaque écran) ouvrant un overlay dialog
+  (`useDialogFocus` — piège de focus, Échap, retour de focus) deep-linké sur le
+  chapitre correspondant à l'écran courant. Trois chapitres spoiler-free :
+  gisements & minage de trace (avec l'asymétrie « à sec = 0 pour toujours » ≠
+  « jamais eu = trace pour toujours »), population (trois âges, natalité,
+  rations, oxygène hostile, horloges de mort, sur-capacité), efficacité & emploi
+  (courbe E(u), optimum qui dérive, le chômage tue, frein de stockage). Tous les
+  chiffres et courbes rendus EN DIRECT depuis `@atg/shared` (`facts.ts`,
+  `EfficiencyCurve` réutilisé, pyramide via `stableSplit`) — un test unitaire
+  (`facts.test.ts`, 7/7) lie chaque valeur à sa constante source. Textes dans un
+  namespace `codex/strings.ts` dédié (déviation de concurrence documentée : le
+  `i18n/en.ts` partagé était sous édition parallèle). Vérifs : typecheck + vite
+  build OK, vitest 11/11, 5 captures observées (§16). E2E dédié écrit
+  (`e2e/tests/codex.spec.ts`) mais non exécuté ici (stack complète requise).
+
 ### Player Codex — plan persisté (P2.codex, avant tout code — CLAUDE.md §5)
 
 - **Spec du manuel joueur in-game (`docs/MANUAL_PLAN.md`)** : décision du

@@ -140,13 +140,13 @@
 > that changes a player-visible mechanic updates its Codex section in the same
 > commit.
 
-- [~] Codex spec persisted (MANUAL_PLAN.md + DAT component + DESIGN_SYSTEM entry + this backlog) → CLAUDE.md §5 — plan committed before code
-- [ ] Codex delivery shell: rail entry (reachable every screen) + `useDialogFocus` dialog overlay + contextual deep-link from `view.kind` + layered "Exact rule" disclosure → DESIGN_SYSTEM §5; CLAUDE.md §7/§22
-- [ ] Single-source number binding: constants imported from `@atg/shared`, unit test asserts each documented value renders its live constant (no hardcode) → CLAUDE.md §5 anti-drift
-- [ ] Section: Deposits & mining (finite deposits, dry = 0 forever, trace floor, dry≠trace asymmetry, crystals need a deposit) → GB §3/§8/§24; DG §8
-- [ ] Section: Population (three ages, natality, rations, oxygen, death clocks, over-capacity) → GB §10; DG §3.2-v2
-- [ ] Section: Efficiency & employment (E(u) curve, drifting optimum, unemployment kills, storage brake) → GB §10; DG §3.4
-- [ ] Codex E2E (opens from Galaxy/Planet/Market, contextual default section, sections render, disclosure toggles) + visual captures → CLAUDE.md §15/§16
+- [x] Codex spec persisted (MANUAL_PLAN.md + DAT component + DESIGN_SYSTEM entry + this backlog) → CLAUDE.md §5 — plan committed before code (8dcbbdf)
+- [~] Codex delivery shell: rail entry (reachable every screen) + `useDialogFocus` dialog overlay + contextual deep-link from `view.kind` + layered "Exact rule" disclosure → DESIGN_SYSTEM §5; CLAUDE.md §7/§22 — implémenté (commit 2a4990e), typecheck + vite build OK, **vérifié visuellement** (5 captures observées : chapitres, callouts, diagrammes, disclosure, tablette responsive) ; reste l'exécution E2E stack complète
+- [x] Single-source number binding: constants imported from `@atg/shared`, unit test asserts each documented value renders its live constant (no hardcode) → CLAUDE.md §5 anti-drift — `facts.ts` + `facts.test.ts` 7/7 verts ; captures confirment les valeurs live (trace 2 T/day, pyramide 18/55/27 % via `stableSplit`, sweet spot u=0,7)
+- [~] Section: Deposits & mining (finite deposits, dry = 0 forever, trace floor, dry≠trace asymmetry, crystals need a deposit) → GB §3/§8/§24; DG §8 — rédigée + diagramme depletion vs trace, vérifiée visuellement ; E2E à exécuter
+- [~] Section: Population (three ages, natality, rations, oxygen, death clocks, over-capacity) → GB §10; DG §3.2-v2 — rédigée + pyramide live, vérifiée visuellement ; E2E à exécuter
+- [~] Section: Efficiency & employment (E(u) curve, drifting optimum, unemployment kills, storage brake) → GB §10; DG §3.4 — rédigée + `EfficiencyCurve` réutilisé (courbe live), vérifiée visuellement ; E2E à exécuter
+- [~] Codex E2E (opens from Galaxy/Planet/Market, contextual default section, sections render, disclosure toggles) → CLAUDE.md §15/§16 — **spec écrite** (`e2e/tests/codex.spec.ts`, nouveau fichier, zéro collision) mais **non exécutée ici** : nécessite la stack complète (Postgres + API + tick worker ×7200) dont le démarrage entraverait le workstream parallèle ; à lancer en session/CI dédiée
 - [ ] Doc-integrity: canonical rules file is `GAME_BOOK.md` but CLAUDE.md/JOURNAL/commits reference `GAMEBOOK.md` — reconcile the name (audit 2026-07-20)
 
 ## P3 — Galaxie & mouvement
