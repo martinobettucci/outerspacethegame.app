@@ -193,3 +193,12 @@ Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,
 re-seed). Once staging/production exist, each migration must ship its
 documented down-path or an explicit "irreversible" statement
 (`PROD_MIGRATIONS.md`).
+
+## 015_harvest.sql (chunk AF)
+
+- `ships.harvest_rig boolean NOT NULL DEFAULT false` — accessoire monté.
+- `ships.harvesting_star_id uuid REFERENCES bodies(id)` — récolte en cours
+  (index partiel `ships_harvesting`).
+- `bodies.star_fuel_rate_u_per_day / star_fuel_as_of` — stock d'étoile
+  PARESSEUX (Σ rendements des récolteurs).
+- `bodies.star_fuel_initial` — stock initial CACHÉ (seuil du flare 5 %).

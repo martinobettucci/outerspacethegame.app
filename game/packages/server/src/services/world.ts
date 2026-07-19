@@ -10,9 +10,11 @@ import {
   intelTierFromSources,
   planetTechAvailability,
   projectPlanetIntel,
+  starIsFlaring,
   type IntelTier,
   type PlanetIntel,
 } from '@atg/shared';
+import { evalStarFuel } from './harvest.js';
 import type pg from 'pg';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { CommandError, governingArchetypes } from './planets.js';
@@ -38,6 +40,10 @@ export interface VisibleBody {
   starClass: string | null;
   starFuelType: string | null;
   owned: boolean;
+  /** Étoile en flare (≤ 5 % du stock initial — GB §22). */
+  flaring: boolean;
+  /** Monde annihilé par supernova (cendre — jamais recolonisable). */
+  annihilated: boolean;
 }
 
 /**
@@ -71,7 +77,10 @@ export async function visibleBodies(
     SELECT DISTINCT ON (b.id)
            b.id, b.body_type, b.name, b.x, b.y, b.size, b.climate, b.quality,
            b.owner_id, p.display_name AS owner_name, b.is_starter,
-           b.star_class, b.star_fuel_type
+           b.star_class, b.star_fuel_type,
+           b.star_fuel_stock, b.star_fuel_rate_u_per_day, b.star_fuel_as_of,
+           b.star_fuel_initial,
+           (b.config->>'annihilated') IS NOT NULL AS annihilated
     FROM bodies b
     LEFT JOIN players p ON p.id = b.owner_id
     WHERE b.owner_id = $1
@@ -100,6 +109,16 @@ export async function visibleBodies(
     isStarter: r.is_starter,
     starClass: r.star_class,
     starFuelType: r.star_fuel_type,
+    // Flare (GB §22) : la SEULE jauge que l'univers donne — un booléen,
+    // jamais le stock. Visible dès que l'étoile l'est (scope/vision).
+    flaring:
+      r.body_type === 'star'
+        ? starIsFlaring(
+            evalStarFuel(r, Date.now()),
+            Number(r.star_fuel_initial ?? 0),
+          )
+        : false,
+    annihilated: !!r.annihilated,
     owned: r.owner_id === playerId,
   }));
 }

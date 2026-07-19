@@ -201,6 +201,15 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Star harvest (implemented, chunk AF)** — docked hulls on an owned
+  workshop world get a neutral `Fit harvest rig` button (Sun icon);
+  idle rigged hulls within 8 pc of a star show a success-green
+  `Harvest <star> (+N u/day)` button with the live net-yield preview,
+  swapped for a neutral `Stop harvest` while linked. The fuel section
+  shows the positive rate in success-green mono (`+91.7 u/day ·
+  harvesting starlight`). Star panels add a danger chip `FLARING — the
+  star is nearly spent. Evacuate.` when the 5% warning burns, and
+  annihilated worlds a muted "Annihilated — ash of a supernova." line.
 - **Provisioning (implemented, chunk AE)** — crewed non-personal hulls
   docked/hovering/stranded on an owned world get a neutral `Provision`
   button (Soup icon) beside `Refuel`; success notice "Provisions loaded

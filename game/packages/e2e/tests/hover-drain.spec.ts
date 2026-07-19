@@ -100,11 +100,13 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   const lb = (await label.boundingBox())!;
   const bodyPx = { x: lb.x + lb.width / 2, y: lb.y - 26 };
 
-  // First hauler = éventail idx 1 (personal d'abord) : angle 2,4 rad ≈
-  // (−24, −22) px du centre du corps (9 pc × 3,56 px/pc, y écran inversé).
+  // Sélection ROBUSTE par l'index de contacts (l'éventail pixel dérive
+  // dès que le panneau ou la flotte change — leçon chunk AF).
   const haulerPanel = page.getByRole('complementary', { name: 'First hauler' });
   await expect(async () => {
-    await page.mouse.click(bodyPx.x - 24, bodyPx.y - 22);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${haulerId}`);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 40_000 });
   await haulerPanel.getByRole('button', { name: 'Undock' }).click();
@@ -260,7 +262,9 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
 
   // 6. La coque échouée : chip danger, aucun départ possible.
   await expect(async () => {
-    await page.mouse.click(voidPx!.x + 32, voidPx!.y);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${haulerId}`);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 40_000 });
   await expect(haulerPanel.getByText('Stranded — out of fuel')).toBeVisible();
@@ -278,7 +282,9 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
   ).ships.find((s) => s.name === tenderName)!.id;
   const tenderPanel = page.getByRole('complementary', { name: tenderName });
   await expect(async () => {
-    await page.mouse.click(bodyPx.x - 24, bodyPx.y - 22);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${tenderId}`);
     await expect(tenderPanel).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 20_000 });
   await tenderPanel.getByRole('button', { name: 'Send ship' }).click();
@@ -319,7 +325,9 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
 
   // 8. Retour au monde, atterrissage, PLEIN au spaceport (bouton Refuel).
   await expect(async () => {
-    await page.mouse.click(voidPx!.x + 32, voidPx!.y);
+    await page
+      .getByLabel('Galaxy contact index')
+      .selectOption(`ship:${haulerId}`);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 40_000 });
   await haulerPanel.getByRole('button', { name: 'Send ship' }).click();

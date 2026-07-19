@@ -63,6 +63,10 @@ export interface GalaxyBody {
   isStarter: boolean;
   starClass: string | null;
   starFuelType: string | null;
+  /** Étoile en flare (≤ 5 % du stock initial — la seule jauge, GB §22). */
+  flaring: boolean;
+  /** Monde annihilé par supernova (cendre). */
+  annihilated: boolean;
   owned: boolean;
 }
 
@@ -222,6 +226,8 @@ export interface ShipView {
   establishesAt: string | null;
   /** Redéploiement warehouse→quai en cours (ISO), sinon null. */
   retrievesAt: string | null;
+  harvestRig: boolean;
+  harvestingStarId: string | null;
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -499,6 +505,19 @@ export const api = {
       perDay: number;
       census: { takenAt: string; totals: Record<string, number> } | null;
     }>('GET', '/census/latest'),
+  fitHarvestRig: (shipId: string) =>
+    call<{ cost: Record<string, number> }>(
+      'POST',
+      `/ships/${shipId}/harvest-rig`,
+    ),
+  startHarvest: (shipId: string, starId: string) =>
+    call<{ netPerDay: number; yieldPerDay: number; distancePc: number }>(
+      'POST',
+      `/ships/${shipId}/harvest`,
+      { starId },
+    ),
+  stopHarvest: (shipId: string) =>
+    call<{ ok: boolean }>('POST', `/ships/${shipId}/harvest/stop`),
   provision: (shipId: string) =>
     call<{
       loadedFood: number;

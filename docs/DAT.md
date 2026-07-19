@@ -288,6 +288,21 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    `vehicles {capacity, stored}`. Item balances (50/level) and factory
    blocking stay dormant until unit factories exist; allied parking P4.
 
+17. **Star harvest & Starfall (implemented, chunk AF):** stars carry a
+   HIDDEN lazy fuel ledger (amount/rate/as_of + initial, never exposed —
+   canon: no gauge). A workshop-fitted harvest rig (20 steelL +
+   5 crystal + 5 gold [TUNE]) lets an IDLE hull within 8 pc of a
+   same-fuel-type star harvest at R_max × (1 − d/d_max)² net of idle
+   upkeep — ship tank rate goes POSITIVE, star rate −Σ yields.
+   Edges: `harvest_full` (tank cap → rig retracts), `star_supernova`
+   (stock 0 → STRICT annihilation < R_nova: ships deleted with
+   host-fate crews, planets wiped to ash `config.annihilated`, L-class
+   leaves a black hole, S/M vanish; residual-rounding reschedules the
+   event rather than dropping it). Starters are generated AT R_nova
+   exactly and stay safe (strict bound). Flare ≤ 5% of initial stock is
+   a public boolean on visible stars. Departure auto-stops harvest.
+   Hull damage inside d_safe awaits the hull-wear chunk (announced).
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

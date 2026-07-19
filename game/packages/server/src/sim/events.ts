@@ -23,6 +23,8 @@ export type EventKind =
   | 'ship_retrieved'
   | 'survival_low'
   | 'survival_out'
+  | 'harvest_full'
+  | 'star_supernova'
   | 'noop';
 
 export interface GameEvent {

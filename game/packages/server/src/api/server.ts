@@ -19,6 +19,12 @@ import {
 import { verifyPassword } from '../services/passwords.js';
 import { bodyIntel, visibleBodies } from '../services/world.js';
 import {
+  fitHarvestRig,
+  setStarStockForTest,
+  startHarvest,
+  stopHarvest,
+} from '../services/harvest.js';
+import {
   assignCrew,
   buildShip,
   fleet,
@@ -769,6 +775,21 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
 
+    app.post('/test/star-stock', async (req, reply) => {
+      await requirePlayer(req);
+      const parsed = z
+        .object({
+          starId: z.string().uuid(),
+          stockU: z.number().min(0).max(1e9),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        await setStarStockForTest(deps.pool, parsed.data.starId, parsed.data.stockU);
+        return { ok: true };
+      });
+    });
+
     app.post('/test/ship-survival', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z
@@ -815,6 +836,32 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
       return { ok: true };
     });
+  });
+
+  app.post('/ships/:id/harvest-rig', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => fitHarvestRig(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/harvest', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ starId: z.string().uuid() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      startHarvest(deps.pool, player.id, id, parsed.data.starId),
+    );
+  });
+
+  app.post('/ships/:id/harvest/stop', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () =>
+      stopHarvest(deps.pool, player.id, id).then(() => ({ ok: true })),
+    );
   });
 
   app.post('/ships/:id/provision', async (req, reply) => {

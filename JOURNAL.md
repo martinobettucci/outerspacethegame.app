@@ -2589,3 +2589,66 @@ remplissait les réservoirs de survie (spawn et §15 seulement).
   AE (exempt SI SERVI — stocks granted + relocate avec recompute §15) ;
   suites complètes rejouées après synchro : intégration **213/213**,
   **E2E 27/27 (10,2 min)**.
+
+## 2026-07-19 — Chunk AF : récolte stellaire & Starfall (GB §22, DG §2.1/§8.8)
+
+**Problème.** Backlog ligne 104 : l'ADN des étoiles existait (classe,
+type, stock, R_nova, garantie starter hors rayon — spawn) mais rien de
+DYNAMIQUE : pas de rig, pas de récolte, pas de flare, pas de supernova.
+La tragédie des communs autour des étoiles riches est un pilier canon.
+
+### Canon appliqué
+
+- **Rig d'atelier** (DG §8.8) : 20 steelL + 5 crystal + 5 gold [TUNE],
+  monté à quai sur SON monde avec workshop ACTIF (L1 [TUNE interp — le
+  guide n'exige L2 que pour le terraform core]).
+- **Gradient** : rendement = 120 × (1 − d/8)² u/j [TUNE], NET de
+  l'entretien idle (net ≤ 0 ⇒ refus explicite — le gréement ne couvre
+  pas sa propre consommation) ; récolte IMMOBILE (statut idle [interp :
+  l'image canon est un gréement déployé dans le vide]) ; type de
+  carburant apparié (mono-réservoir v1).
+- **Deux ledgers paresseux face à face** : réservoir de coque à taux
+  POSITIF (bord harvest_full au plein → le gréement se replie,
+  annoncé) ; stock CACHÉ de l'étoile à −Σ rendements (bord
+  star_supernova à 0). Aucune jauge n'est JAMAIS exposée (canon) — le
+  refus « le gréement ne remonte rien ici » est neutre.
+- **Flare ≤ 5 %** du stock initial (colonne cachée star_fuel_initial,
+  ajoutée plutôt que de recomposer rollStar — un forceClass sautait le
+  tirage de classe, la recomposition aurait divergé sur les étoiles
+  naturelles futures) : booléen public sur toute étoile VISIBLE.
+- **Supernova** : annihilation STRICTE < R_nova — le starter, généré À
+  R_nova exactement (40 pc), est SAUF (canon « guaranteed safe ») ;
+  coques détruites (équipages host-fate ; junk au chunk salvage,
+  annoncé) ; mondes réduits en CENDRE (config.annihilated, tiles 0,
+  owner NULL — jamais recolonisables) ; classe L → trou noir ; S/M →
+  plus rien. Transits évalués à leur position INTERPOLÉE.
+
+### Défaut débusqué par le test (et sa leçon)
+
+Le bord star_supernova tombait à ~94 ms du start dans la fixture ; la
+troncature du due_at laissait un résidu de ~4e-8 u > garde 1e-9 → le
+handler « périmait » l'événement DÉFINITIVEMENT (aucune replanification)
+— une vraie supernova ne tirait jamais après une course serrée.
+Correctif : sur résidu positif, REPLANIFIER au whenReaches suivant
+(jamais périmer en silence un bord de mort). Boucle de Starfall dans le
+test d'intégration (jusqu'à 6 passes).
+
+### Vérifications
+
+- Shared 132/132 (stars.test.ts : gradient, dégâts préview, flare).
+- Intégration harvest.test.ts **14/14** : fit (coût, §10, personnel),
+  gardes (quai/distance/type/net), double ledger exact (91.875/91.675),
+  stop, harvest_full replie, départ = arrêt auto, flare 4 %/50 %,
+  supernova S (victime + récolteur détruits, npc host-fate, starter
+  SAUF, étoile disparue), supernova L (trou noir + monde en cendre).
+- E2E harvest.spec.ts : parcours complet (rig payé, vol réel ×7200,
+  récolte +91.7 u/j affiché, flare chip, Starfall — étoile disparue de
+  la galaxie, récolteur annihilé, starter intact) ; captures hv-01…03.
+- Réparation collatérale : hover-drain.spec échouait (solo ET suite) —
+  ses sélections par CLIC PIXEL sur l'éventail dérivaient dès que le
+  panneau vaisseau s'allonge (les boutons des chunks AD–AF) ; migré vers
+  l'idiome robuste « Galaxy contact index » (4 sélections), reste pixel
+  uniquement le choix d'un point de VIDE (validé par API). Solo 1,6 min
+  vert.
+- Suites complètes après synchro : shared 132, unit 32, intégration
+  **227/227**, **E2E 28/28 (10,8 min)**.

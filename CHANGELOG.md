@@ -4,6 +4,21 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Récolte stellaire & Starfall (chunk AF)** : le harvest rig
+  (accessoire d'atelier, 20 steelL + 5 crystal + 5 gold [TUNE]) se monte
+  à quai ; une coque IMMOBILE à ≤ 8 pc d'une étoile du même type de
+  carburant récolte au gradient canon R_max × (1 − d/d_max)² (120 u/j,
+  d_max 8 pc [TUNE]), net de l'entretien idle — deux ledgers paresseux
+  (réservoir ↑, stock CACHÉ de l'étoile ↓, jamais exposé). Réservoir
+  plein → le gréement se replie (bord harvest_full) ; départ = arrêt
+  automatique. FLARE ≤ 5 % du stock initial : la seule jauge de
+  l'univers, chip danger visible sous scope. SUPERNOVA à stock nul :
+  annihilation STRICTE dans R_nova (coques détruites avec équipages
+  host-fate ; mondes réduits en cendre — annihilated, jamais
+  recolonisables ; le starter généré À R_nova exactement reste SAUF,
+  canon), classe L → trou noir, S/M → plus rien. Migration 015.
+  Restent (annoncés) : dégâts de coque sous d_safe (chunk usure/climate
+  shields), junk d'épaves (chunk salvage), attribution télescope L3.
 - **Avitaillement de survie & survol nourri par le monde (chunk AE)** :
   en survol de SON monde, le stock planétaire nourrit l'équipage (canon
   GB §7) — familles food (food_1→3) et water consommées APRÈS la survie

@@ -173,8 +173,8 @@ export async function spawnStarterSystem(
   const starY = center.y + POCKET_STAR_MAX_PC * Math.sin(starTheta);
   const { rows: starRows } = await client.query<{ id: string }>(
     `INSERT INTO bodies (body_type, name, x, y, seed, star_class,
-        star_fuel_type, star_fuel_stock, r_nova)
-     VALUES ('star', $1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        star_fuel_type, star_fuel_stock, star_fuel_initial, r_nova)
+     VALUES ('star', $1, $2, $3, $4, $5, $6, $7, $7, $8) RETURNING id`,
     [
       rollName(starSeed, 'star'),
       starX,

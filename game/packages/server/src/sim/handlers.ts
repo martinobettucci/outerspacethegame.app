@@ -17,7 +17,10 @@ import {
 import type pg from 'pg';
 import { aggregateCensus } from './census.js';
 import { enqueue, type EventHandler } from './events.js';
+import { whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
+import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
+import { shipPosition } from '../services/ships.js';
 import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
 
 /**
@@ -666,6 +669,138 @@ export const shipRetrieved: EventHandler = async (client, event) => {
   if (!rows[0]) return;
 };
 
+/**
+ * harvest_full { shipId } — le réservoir touche sa capacité : la récolte
+ * S'ARRÊTE (annoncé — le gréement n'a nulle part où pomper), la coque
+ * repasse au drain idle et l'étoile récupère ce rendement. Idempotent :
+ * un arrêt/départ entre-temps a déjà détaché la coque (no-op).
+ */
+export const harvestFull: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND harvesting_star_id IS NOT NULL
+     FOR UPDATE`,
+    [shipId],
+  );
+  if (!rows[0]) return;
+  await releaseHarvest(client, rows[0], event.dueAt.getTime());
+};
+
+/**
+ * star_supernova { bodyId } — le stock caché touche zéro : Starfall
+ * (GB §22). Annihilation dans R_nova : coques (équipages host-fate,
+ * épaves supprimées — le junk arrive avec le chunk salvage, annoncé),
+ * mondes (annihilated : possession/population/bâtiments/stocks effacés,
+ * le corps reste visible comme cendre). Classe L → trou noir ; S/M → plus
+ * rien. Les starters sont HORS rayon par génération (canon garanti).
+ * Idempotence : ne tire que si le stock évalué est bien ≤ 0.
+ */
+export const starSupernova: EventHandler = async (client, event) => {
+  const bodyId = String(event.payload.bodyId ?? '');
+  if (!bodyId) return;
+  const nowMs = event.dueAt.getTime();
+  const { rows: stars } = await client.query(
+    `SELECT * FROM bodies WHERE id = $1 AND body_type = 'star' FOR UPDATE`,
+    [bodyId],
+  );
+  const star = stars[0];
+  if (!star) return;
+  const remaining = evalStarFuel(star, nowMs);
+  if (remaining > 1e-9) {
+    // Pas encore à sec (course replanifiée, ou résidu d'arrondi du due_at
+    // — un bord à quelques ms près laisse ~1e-8 u) : REPLANIFIER, jamais
+    // périmer en silence — une supernova n'est pas annulable par un
+    // arrondi. Taux nul (récolte arrêtée entre-temps) ⇒ plus de bord.
+    const rate = Number(star.star_fuel_rate_u_per_day ?? 0);
+    if (rate < 0) {
+      const at = whenReaches(
+        { amount: remaining, ratePerDay: rate, asOfMs: nowMs },
+        0,
+      );
+      if (at !== null) {
+        await enqueue(client, 'star_supernova', new Date(Math.ceil(at) + 2), {
+          bodyId,
+        });
+      }
+    }
+    return;
+  }
+  const rNova = Number(star.r_nova ?? 0);
+
+  // 1. Coques dans le rayon — position INTERPOLÉE pour les transits.
+  const { rows: ships } = await client.query(
+    `SELECT * FROM ships
+     WHERE status <> 'warehoused'
+       AND (sqrt(power(x - $1, 2) + power(y - $2, 2)) < $3
+        OR (status = 'transit' AND (
+          sqrt(power(origin_x - $1, 2) + power(origin_y - $2, 2)) < $3 OR
+          sqrt(power(dest_x - $1, 2) + power(dest_y - $2, 2)) < $3)))
+     FOR UPDATE`,
+    [star.x, star.y, rNova],
+  );
+  for (const ship of ships) {
+    const pos = shipPosition(ship, nowMs);
+    if (Math.hypot(pos.x - star.x, pos.y - star.y) >= rNova - 1e-9) continue;
+    if (ship.status === 'warehoused') continue; // à l'abri sous terre [interp]
+    await client.query(
+      `DELETE FROM npcs WHERE bound_host_type = 'ship' AND bound_host_id = $1`,
+      [ship.id],
+    );
+    await client.query(
+      `DELETE FROM events WHERE processed_at IS NULL
+         AND payload->>'shipId' = $1`,
+      [ship.id],
+    );
+    await client.query(`DELETE FROM ships WHERE id = $1`, [ship.id]);
+  }
+
+  // 2. Mondes dans le rayon : annihilés (cendre — jamais recolonisable).
+  const { rows: worlds } = await client.query(
+    `SELECT id FROM bodies
+     WHERE body_type = 'planet'
+       AND sqrt(power(x - $1, 2) + power(y - $2, 2)) < $3 - 1e-9
+     FOR UPDATE`,
+    [star.x, star.y, rNova],
+  );
+  for (const w of worlds) {
+    await client.query(`DELETE FROM buildings WHERE body_id = $1`, [w.id]);
+    await client.query(`DELETE FROM planet_stock WHERE body_id = $1`, [w.id]);
+    await client.query(`DELETE FROM deposits WHERE body_id = $1`, [w.id]);
+    await client.query(
+      `DELETE FROM npcs WHERE bound_host_type = 'planet' AND bound_host_id = $1`,
+      [w.id],
+    );
+    await client.query(
+      `DELETE FROM events WHERE processed_at IS NULL AND payload->>'bodyId' = $1`,
+      [w.id],
+    );
+    await client.query(
+      `UPDATE bodies SET owner_id = NULL, population = 0, tiles = 0,
+          is_starter = false,
+          config = coalesce(config, '{}'::jsonb) || '{"annihilated": true}'::jsonb
+       WHERE id = $1`,
+      [w.id],
+    );
+  }
+
+  // 3. L'étoile elle-même : L → trou noir ; S/M → plus rien (canon).
+  await client.query(
+    `UPDATE ships SET harvesting_star_id = NULL WHERE harvesting_star_id = $1`,
+    [bodyId],
+  );
+  if (star.star_class === 'l') {
+    await client.query(
+      `UPDATE bodies SET body_type = 'black_hole', star_fuel_stock = 0,
+          star_fuel_rate_u_per_day = 0
+       WHERE id = $1`,
+      [bodyId],
+    );
+  } else {
+    await client.query(`DELETE FROM bodies WHERE id = $1`, [bodyId]);
+  }
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -684,6 +819,8 @@ export function baseHandlers(): Record<string, EventHandler> {
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;
     // par défaut (tests d'intégration sans flee) un timeScale de 1.
     survival_low: survivalLow(1),
+    harvest_full: harvestFull,
+    star_supernova: starSupernova,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

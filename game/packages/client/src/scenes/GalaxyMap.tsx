@@ -29,6 +29,9 @@ import {
   COLONY_MIN_SETTLERS,
   containersUsed,
   FUEL_TRANSFER_RADIUS_PC,
+  HARVEST_D_MAX_PC,
+  harvestYieldPerDay,
+  hoverIdleFuelUPerDay,
 } from '@atg/shared';
 import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
@@ -1165,7 +1168,11 @@ export function GalaxyMap() {
                   }}
                 />
               </div>
-              {selectedShip.fuelRatePerDay < 0 ? (
+              {selectedShip.fuelRatePerDay > 0 ? (
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-500, #238C33)' }}>
+                  +{selectedShip.fuelRatePerDay.toFixed(1)} {t.galaxy.fuelPerDay} · {t.galaxy.harvesting}
+                </span>
+              ) : selectedShip.fuelRatePerDay < 0 ? (
                 <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning-400, #D9CF4A)' }}>
                   {selectedShip.fuelRatePerDay.toFixed(1)} {t.galaxy.fuelPerDay}
                 </span>
@@ -2432,6 +2439,127 @@ export function GalaxyMap() {
                 </button>
               );
             })()}
+          {selectedShip.status === 'docked' &&
+            !selectedShip.harvestRig &&
+            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
+            selectedShip.dockedBodyId &&
+            bodies.some(
+              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+            ) && (
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .fitHarvestRig(selectedShip.id)
+                    .then(() => {
+                      setNotice(t.galaxy.rigFitted);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.rigRefused} — ${err.message ?? err.error}`,
+                      ),
+                    )
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Sun size={14} aria-hidden /> {t.galaxy.fitHarvestRig}
+              </button>
+            )}
+          {selectedShip.status === 'idle' &&
+            selectedShip.harvestRig &&
+            !selectedShip.harvestingStarId &&
+            (() => {
+              const near = bodies
+                .filter((b) => b.bodyType === 'star')
+                .map((b) => ({
+                  b,
+                  d: Math.hypot(b.x - selectedShip.x, b.y - selectedShip.y),
+                }))
+                .filter(({ d }) => d < HARVEST_D_MAX_PC)
+                .sort((a, z) => a.d - z.d)[0];
+              if (!near) return null;
+              const preview =
+                harvestYieldPerDay(near.d) -
+                hoverIdleFuelUPerDay(
+                  selectedShip.hullCategory,
+                  selectedShip.hullSize,
+                );
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .startHarvest(selectedShip.id, near.b.id)
+                      .then(() => {
+                        setNotice(t.galaxy.harvestStarted);
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.harvestRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    background: 'var(--success-500)',
+                    color: '#0D0D0D',
+                    border: 'none',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Sun size={14} aria-hidden /> {t.galaxy.harvest} {near.b.name} (
+                  {preview > 0 ? `+${preview.toFixed(1)}` : '—'} u/day)
+                </button>
+              );
+            })()}
+          {selectedShip.harvestingStarId && (
+            <button
+              type="button"
+              onClick={() =>
+                api
+                  .stopHarvest(selectedShip.id)
+                  .then(() => {
+                    setNotice(t.galaxy.harvestStopped);
+                    void refreshShips();
+                  })
+                  .catch((err: ApiError) =>
+                    setNotice(`${t.errors.generic} ${err.message ?? ''}`),
+                  )
+              }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                background: 'var(--bg-overlay)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              <Sun size={14} aria-hidden /> {t.galaxy.harvestStop}
+            </button>
+          )}
           {selectedShip.tankU > 0 &&
             ['docked', 'hovering', 'idle', 'stranded'].includes(
               selectedShip.status,
@@ -2644,6 +2772,25 @@ export function GalaxyMap() {
           {selected.bodyType === 'star' && (
             <p style={{ margin: 0, fontSize: 12, color: 'var(--warning-500)' }}>
               {t.galaxy.starWarning}
+            </p>
+          )}
+          {selected.bodyType === 'star' && selected.flaring && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                color: '#ffd7d7',
+                background: 'var(--danger-700, #7f1d1d)',
+                borderRadius: 'var(--radius-chip)',
+                padding: '4px 10px',
+              }}
+            >
+              {t.galaxy.flaring}
+            </p>
+          )}
+          {selected.bodyType === 'planet' && selected.annihilated && (
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
+              {t.galaxy.annihilatedWorld}
             </p>
           )}
           {intel?.kind === 'loading' && (

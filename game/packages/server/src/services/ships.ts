@@ -42,6 +42,7 @@ import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
+import { releaseHarvest } from './harvest.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -62,6 +63,10 @@ export interface ShipView {
   establishesAt: string | null;
   /** Redéploiement warehouse→quai en cours : ISO de fin, sinon null. */
   retrievesAt: string | null;
+  /** Harvest rig monté (GB §22, DG §8.8). */
+  harvestRig: boolean;
+  /** Étoile en cours de récolte (id), sinon null. */
+  harvestingStarId: string | null;
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -178,6 +183,8 @@ export async function fleet(
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
       retrievesAt: retrievesBy.get(r.id) ?? null,
+      harvestRig: !!r.harvest_rig,
+      harvestingStarId: r.harvesting_star_id ?? null,
       survival: (() => {
         const sv = evalShipSurvival(r, nowMs);
         return {
@@ -269,6 +276,12 @@ export async function moveShip(
     }
     if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
       throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    // Départ = fin de récolte (le gréement se replie — GB §22) : réservoir
+    // matérialisé, l'étoile récupère ce rendement.
+    if (ship.harvesting_star_id) {
+      await releaseHarvest(client, ship, nowMs);
+      ship.harvesting_star_id = null;
     }
 
     // Résolution de la destination.
