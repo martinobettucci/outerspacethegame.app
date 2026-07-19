@@ -1,0 +1,264 @@
+/**
+ * Player Codex overlay (DESIGN_SYSTEM §5). Groovy-dark tokens only; no
+ * hardcoded palette. Self-contained so it never collides with panel styles.
+ */
+
+.ls-codex-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vh, 32px);
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(35, 70, 140, 0.22), transparent 60%),
+    rgba(6, 8, 16, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.ls-codex-shell {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: min(88vh, 760px);
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--stroke-strong);
+  border-radius: var(--radius-card);
+  box-shadow: var(--elevation-floating);
+}
+
+/* ---- header ---------------------------------------------------------- */
+.ls-codex-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--stroke-subtle);
+  background: var(--surface-glass);
+}
+.ls-codex-sigil {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-chip);
+  color: var(--accent-400);
+  background: var(--surface-glass-soft);
+  border: 1px solid var(--stroke-subtle);
+}
+.ls-codex-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ls-codex-heading h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--text-primary);
+}
+.ls-codex-heading p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  max-width: 52ch;
+}
+.ls-codex-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--stroke-subtle);
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-command),
+    border-color var(--duration-fast) var(--ease-command);
+}
+.ls-codex-close:hover {
+  color: var(--text-primary);
+  border-color: var(--stroke-strong);
+}
+
+/* ---- body: nav + content -------------------------------------------- */
+.ls-codex-body {
+  display: grid;
+  grid-template-columns: 208px 1fr;
+  min-height: 0;
+  flex: 1;
+}
+.ls-codex-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border-right: 1px solid var(--stroke-subtle);
+  background: var(--bg-raised);
+  overflow-y: auto;
+}
+.ls-codex-nav__heading {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.ls-codex-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  text-align: left;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-command),
+    background var(--duration-fast) var(--ease-command);
+}
+.ls-codex-nav__item:hover {
+  color: var(--text-primary);
+  background: var(--surface-glass-soft);
+}
+.ls-codex-nav__item.is-active {
+  color: var(--text-primary);
+  background: var(--surface-glass);
+  border-color: var(--stroke-subtle);
+}
+.ls-codex-nav__icon {
+  display: grid;
+  place-items: center;
+  color: var(--accent-400);
+}
+
+.ls-codex-content {
+  padding: var(--space-5) var(--space-6);
+  overflow-y: auto;
+}
+.ls-codex-content__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.ls-codex-content p {
+  margin: 0 0 var(--space-3);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 64ch;
+}
+.ls-codex-warn {
+  padding: var(--space-3);
+  border-left: 2px solid var(--warning-400);
+  background: rgba(217, 207, 74, 0.06);
+  border-radius: 0 var(--radius-button) var(--radius-button) 0;
+  color: var(--text-primary) !important;
+}
+.ls-codex-caption {
+  font-size: 11.5px !important;
+  color: var(--text-tertiary) !important;
+  font-style: italic;
+}
+
+/* ---- diagrams -------------------------------------------------------- */
+.ls-codex-fig {
+  margin: var(--space-3) 0 var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-void);
+  border: 1px solid var(--stroke-subtle);
+  border-radius: var(--radius-card);
+  display: grid;
+  place-items: center;
+}
+
+/* ---- exact-rule disclosure ------------------------------------------ */
+.ls-codex-exact {
+  margin-top: var(--space-4);
+  border: 1px solid var(--stroke-subtle);
+  border-radius: var(--radius-card);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+.ls-codex-exact > summary {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-400);
+  cursor: pointer;
+  user-select: none;
+}
+.ls-codex-exact[open] > summary {
+  border-bottom: 1px solid var(--stroke-subtle);
+}
+.ls-codex-exact__body {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.ls-codex-exact__body p {
+  font-size: 12.5px !important;
+  color: var(--text-secondary) !important;
+}
+.ls-codex-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ls-codex-fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px dashed var(--stroke-faint);
+}
+.ls-codex-fact span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ls-codex-fact strong {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ---- rail entry button ---------------------------------------------- */
+.ls-rail-button__icon .ls-codex-badge {
+  color: var(--accent-400);
+}
+
+/* ---- responsive: stack nav above content on tablets ----------------- */
+@media (max-width: 720px) {
+  .ls-codex-body {
+    grid-template-columns: 1fr;
+  }
+  .ls-codex-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--stroke-subtle);
+  }
+  .ls-codex-nav__heading {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-codex-close,
+  .ls-codex-nav__item {
+    transition: none;
+  }
+}

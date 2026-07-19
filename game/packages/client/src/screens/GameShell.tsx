@@ -15,12 +15,16 @@ import {
   Flag,
   LogOut,
   Satellite,
+  BookOpen,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import { GalaxyMap } from '../scenes/GalaxyMap.tsx';
 import { PlanetView } from '../scenes/PlanetView.tsx';
+import { Codex } from '../codex/Codex.tsx';
+import { type CodexSectionId, defaultSectionFor } from '../codex/sections.tsx';
+import { codexEn } from '../codex/strings.ts';
 import { CommsScreen } from './CommsScreen.tsx';
 import { MarketScreen } from './MarketScreen.tsx';
 
@@ -62,6 +66,7 @@ function RailButton({
 
 export function GameShell() {
   const { me, view, setView, logout } = useAppState();
+  const [codexSection, setCodexSection] = useState<CodexSectionId | null>(null);
   if (!me) return null;
 
   const currentPlanet =
@@ -170,6 +175,15 @@ export function GameShell() {
           />
         </div>
 
+        <div className="ls-command-rail__group ls-command-rail__group--codex">
+          <RailButton
+            icon={<BookOpen size={18} />}
+            label={codexEn.open}
+            active={codexSection !== null}
+            onClick={() => setCodexSection(defaultSectionFor(view.kind))}
+          />
+        </div>
+
         <div className="ls-command-rail__footer" aria-hidden="true">
           <span />
           <p>DEEP LINK / STABLE</p>
@@ -187,6 +201,13 @@ export function GameShell() {
           <PlanetView planetId={view.planetId} />
         )}
       </main>
+
+      {codexSection !== null ? (
+        <Codex
+          initialSection={codexSection}
+          onClose={() => setCodexSection(null)}
+        />
+      ) : null}
     </div>
   );
 }
