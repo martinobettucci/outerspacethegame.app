@@ -80,10 +80,18 @@
 - [~] Starter spawn: Fermi pocket, guarantees (star ≤40 pc, 2 uninhabited ≤60 pc, neighbor 150–240 pc), starter planet (≥10 tiles, deposits garanties, stock, pop 1200, fuel 150 u, pilot, Cargo-S), supernova-safe → GB §19/§22; DG §2.2 — toutes les garanties implémentées et testées en intégration ; **anti-softlock livré (chunk AN, décision responsable 2026-07-19)** : savoir de départ T0 pré-débloqué (telescope/probe_pad/depot/mine — pose payante), dotation relevée somme 280 [TUNE] avec plafond TESTÉ (roll max + fuel ≤ frein 0,7 × cap S − 40 T, invariants unit), bandeau « First steps », description colony program ; restent : E2E visuel (chunk D) + cas « univers saturé »
 - [~] Isometric planet view: tile grid, climate variants, GIF sprites + overlays, bump/light WebGL pass, light propagation → GB §17/§26; ASSET_PIPELINE §2–3 — grille iso, sprites GIF ANIMÉS, overlays climat, passe de lumière v1 (halos additifs = propagation aux tuiles/sprites voisins ; filtre WebGL bump + 4 sources locales + ambiante) LIVRÉS et observés ; restent : réglage fin sur art réel (les stubs ont des bump plats), lumières inter-sprites au-delà des halos
 - [x] Card hand UI: construction cards, unlock/place phases, demolish 50 %, costs chips → GB §9/§18; DG §5/§6 — main EXHAUSTIVE (28 cartes), phases unlock/place, chips de coûts, états avec raison, démolition 50 % (confirmation 2 temps, remboursement crédité, tuile/gisement libérés) — unit+intégration+E2E+captures observées ; tooltip d'effets par carte ajouté (chunk AN)
-- [ ] **Card hand v2 (directive responsable 2026-07-19, chunk AO)** : main FILTRÉE (seulement posables + unlockables — la liste complète vit dans l'arbre techno), éventail semi-replié (tranche visible), carte dépliée et passée devant au survol → GB §17; DESIGN_SYSTEM §5
-- [ ] **Télescope = bâtiment sur tuile (directive responsable 2026-07-19)** : changement de canon (DG §5.1 le déclarait « no tile ») — pose sur tuile, stubs d'assets à générer, panneau bâtiment standard ; **sort du probe pad à trancher par le responsable** (reste hors tuile ou suit ?) → GB §9; ASSET_PIPELINE
-- [ ] **Stats planète : production NETTE par ressource/jour** (+ et −, directive responsable 2026-07-19) — compléter la page stats agrégée → GB §10; DG §3.4
-- [ ] **Recruitment : expliquer le refus « compte < 45 j » dans l'onglet** (directive responsable 2026-07-19 — l'onglet existe mais refuse en silence un compte neuf) → GB §19; DG §11.4
+> **⏸ FILE SUSPENDUE (directives responsable 2026-07-19).** Les quatre
+> unités ci-dessous ont été mises en attente pour prioriser la mécanique
+> centrale **P2.pop** (population v2). Elles ne sont ni abandonnées ni
+> absorbées : **à reprendre après le chunk BD** (cf. [`POP_V2_PLAN.md`](POP_V2_PLAN.md)),
+> dans l'ordre où le responsable voudra. Persistées ici comme une file
+> nommée pour que le report survive à la suppression de la conversation
+> (CLAUDE.md §5).
+
+- [ ] ⏸ **Card hand v2 (directive responsable 2026-07-19, chunk AO)** : main FILTRÉE (seulement posables + unlockables — la liste complète vit dans l'arbre techno), éventail semi-replié (tranche visible), carte dépliée et passée devant au survol → GB §17; DESIGN_SYSTEM §5
+- [ ] ⏸ **Télescope = bâtiment sur tuile (directive responsable 2026-07-19)** : changement de canon (DG §5.1 le déclarait « no tile ») — pose sur tuile, stubs d'assets à générer, panneau bâtiment standard ; **sort du probe pad à trancher par le responsable** (reste hors tuile ou suit ?) → GB §9; ASSET_PIPELINE
+- [ ] ⏸ **Stats planète : production NETTE par ressource/jour** (+ et −, directive responsable 2026-07-19) — compléter la page stats agrégée ; **partiellement adressé par le chunk BC** (page stats v2), à confirmer contre cette directive → GB §10; DG §3.4
+- [ ] ⏸ **Recruitment : expliquer le refus « compte < 45 j » dans l'onglet** (directive responsable 2026-07-19 — l'onglet existe mais refuse en silence un compte neuf) → GB §19; DG §11.4
 ### P2.pop — Population/emploi/exode v2 : MÉCANIQUE CENTRALE (brainstorm responsable 2026-07-19, JOURNAL du même jour — deux tours de Q/R actés)
 
 > **Plan d'implémentation persisté : [`docs/POP_V2_PLAN.md`](POP_V2_PLAN.md)** — découpage chunks BA→BD (scope, statut, ordre), tenu à jour à chaque chunk.

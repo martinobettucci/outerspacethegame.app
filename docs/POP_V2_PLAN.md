@@ -123,15 +123,18 @@ DG §3.2-v2 j/k + GB §10 observability clause.
   exposure with §10 direct refusals), E2E (embark-by-category UI;
   extinction→recolonize; intel read).
 
-## Not part of this plan (separate owner directives, tracked in BACKLOG)
+## Not part of this plan — the SUSPENDED QUEUE (resume after BD)
 
-These 2026-07-19 directives are **independent** of pop v2 and live as
-their own backlog items — listed here only so they are not forgotten:
+Four 2026-07-19 owner directives were **suspended** to prioritise pop v2.
+They are neither dropped nor absorbed — **resume after chunk BD**. The
+authoritative, persisted list is the « ⏸ FILE SUSPENDUE » block in
+`docs/BACKLOG.md` (P2 section); mirrored here so the plan is
+self-contained:
 
 - **Chunk AO** — card-hand v2 (filtered hand + folded fan, hover-to-front).
 - **Telescope = building on a tile** (canon change; probe-pad fate to be
   decided by the owner) + asset stubs.
+- **Net production per resource/day** on the stats page — raised
+  standalone; **BC's stats page addresses it**, to be confirmed against
+  the directive when BC lands.
 - **Recruitment** — explain the « account < 45 days » refusal in the UI.
-
-*(The « net production per resource/day » directive is absorbed into
-BC's stats page, above.)*
