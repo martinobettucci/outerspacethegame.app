@@ -669,3 +669,61 @@ survival list (no fuel); pricing = fixed-rate + house cut.
 Sanctuary = **earned status**: full-diplo governors **+ diplomatic_district
 L3 built**. Closes the one-Rare-diplomat-unconquerable-mining-world hole and
 re-closes R5-5. Round 8 fully closed; monitors M1–M12.
+
+## Round 9 — Population & Employment v2 (2026-07-19) — **PATCHED → guide v0.10**
+
+First round with a **numerical simulator** (`tools/balance/pop_v2_sim.py`,
+dt = 0.1 day) instead of closed-form arithmetic: v2 is dynamic (waves,
+momentum, spirals) and had to be integrated through time under scripted
+management policies. Economy (build costs/pace) abstracted per Rounds 1–8;
+governance/brake/runPct orthogonal (= 1).
+
+### Findings → patches (all applied to DG §3.2-v2)
+
+1. **F1 — natality 0.020 froze the arc.** Net growth ≈ +0.2 %/day (births
+   barely beat senior deaths): exodus pressure would arrive ≈ J+500 vs the
+   J+35 anchor. Sweep (n × child-epoch) showed the child epoch is LOCKED
+   by the pyramid anchor (18/55/27 IS the stationary pyramid of 20/60/30) —
+   the only lever is natality. **PATCH: n = 0.12/0.18/0.24** (+~4 %/day
+   boom; exodus J+37–39).
+2. **F2 — popScale floor 0.5 inverted the opening.** Small worlds' jobs
+   shrank so far the starter was job-saturated from day 3 (target J+20).
+   **PATCH: floor 1.0** — the shifting optimum bites beyond pop_ref only;
+   saturation lands J+21.1.
+3. **F3 — starter pop 650 was born over capacity.** The managed arc needs
+   the starter BELOW early job capacity. **PATCH: starter ≈ 350** at the
+   stable pyramid (~15 % early losses through grace — "the settler's
+   life" — then boom).
+4. **F4 — naïve death clocks never finished.** `P/horizon per day` on a
+   shrinking P decays exponentially; canon says *everyone* dies.
+   **PATCH: linear to a FIXED deadline** set at stock-out, cleared on
+   recovery. Measured exact: water +3 d, food +10 d, oxygen instant.
+5. **F5 — over-cap parabola 15× too weak.** At 0.015 the boom outran it
+   (worlds settled at 2.3 × cap). **PATCH: 0.25** → equilibrium ≈ 1.31 ×
+   cap (peak 1.48), clinics still shift it upward.
+
+### Verified behaviours (no patch needed)
+
+- **The over-staffing trap works as designed**: pinning τ at tolerance by
+  cramming everyone into buildings floors Ē at 0.12 and divides production
+  by 8 — visibly the wrong play. Rational loop = staff at optimum, export
+  cohorts ≥ 200 (the colonization minimum): Ē ≈ 1.0 held for 70 days,
+  deaths ÷ 2.5, 1 339 settlers exported (the planet becomes an expansion
+  engine — the owner's thesis, demonstrated).
+- **No-export worlds drown** by ≈ J+55 (τ pinned, Ē 0.12) — exodus or ruin.
+- Neglect 10 d fully recoverable; 30 d only by amputation (≈ ⅓ of people).
+- Colony 200 stabilizes (min 195 → 1 406 by J+60) under the 14-day grace.
+- Comptoir under siege (30-day stocks, imports cut): extinct J+38 —
+  the siege→extinction→recolonization path is REAL; flagged to P5 (it is a
+  slow, plunder-free conquest — watch, maybe price it).
+- No-residential worlds halve every ≈ 45 days (slow senescence) —
+  residential is "practically mandatory" without being a cliff.
+
+### Verdict
+
+**ALL SIX owner anchors GREEN** with the patched values: saturation
+J+21.1 (target ≈ 20) · exodus J+39.1 (target ≈ 35) · neglect 10/30 d
+recoverable/irreversible · clocks 3/10/instant exact · stationary pyramid
+18.2/54.5/27.3 · colony stabilizes · siege measured. Boom worlds skew
+young (up to ~55 % children) — accepted as identity ("nursery worlds").
+Implementation may start on guide v0.10.

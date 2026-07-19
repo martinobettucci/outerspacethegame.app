@@ -5,9 +5,11 @@
 > expected behaviors around them. It implements the decision canon in
 > `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
 >
-> **Version v0.9.2** — sanctuary = earned status (owner-approved F1d) + rounds 1–2 system patches + round-4 content patches +
-> the **build ≠ install** keystone (owner canon; supersedes 4b-F7b) — see
-> `BALANCE_LOG.md`.
+> **Version v0.10** — Population & Employment v2 (§3.2-v2, owner canon
+> 2026-07-19) simulated & patched by **Round 9** (numerical simulator,
+> all six anchors green) ; previously: sanctuary = earned status
+> (owner-approved F1d) + rounds 1–2 system patches + round-4 content
+> patches + the **build ≠ install** keystone — see `BALANCE_LOG.md`.
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
@@ -193,7 +195,12 @@ The planet stats page must show the pyramid explicitly.
 ```
 births/day = n(residential) × A × M_growth      → newborns enter C
 n = 0                      without an ACTIVE residential   (canon)
-n = 0.020 / 0.030 / 0.040  per active/day at L1 / L2 / L3  [TUNE]
+n = 0.12 / 0.18 / 0.24     per active/day at L1 / L2 / L3
+                           [TUNE — Round 9: raised from 0.020/0.030/
+                           0.040; the demography must BOOM (+~4 %/day)
+                           for exodus pressure to reach the J+35-40
+                           anchor — at 0.020, net growth ≈ +0.2 %/day
+                           and exodus never came (J+500)]
 ```
 No residential ⇒ **zero natality**: the planet ages out unless population
 is imported (Civil transports; deliberately no mechanized population
@@ -218,7 +225,12 @@ modulated):
 jobsOptimal(building) = baseJobs(type) × levelMult × popScale
 levelMult = 1 / 2.4 / 5        (L1/L2/L3 — higher levels absorb more
                                 AND out-produce at equal staff) [TUNE]
-popScale  = clamp( (P / 2 000)^0.5 , 0.5 , 2.0 )               [TUNE]
+popScale  = clamp( (P / 2 000)^0.5 , 1.0 , 2.0 )
+            [TUNE — Round 9: floor raised 0.5 → 1.0. With a 0.5 floor,
+            small worlds' jobs shrank so far that the starter was
+            job-saturated from day 3 (target: J+20); with floor 1.0 the
+            shifting optimum bites beyond pop_ref only, and the managed
+            starter saturates at J+21.1]
 ```
 `popScale` is THE shifting-optimum mechanic: as `P` grows, every
 building's optimum drifts up; unattended staff slides LEFT on the bell →
@@ -272,7 +284,11 @@ inert** so the opening is build-up, not triage.
 `P > popCap` is permitted. With `o = P/popCap − 1`:
 ```
 illness pressure += 1.2 × o²  per day        [TUNE]
-extra deaths/day += 0.015 × o² × P           [TUNE]   (parabolic, owner)
+extra deaths/day += 0.25 × o² × P
+    [TUNE — Round 9: raised from 0.015; at 0.015 the boom (+4 %/day)
+    outran the parabola and worlds settled at 2.3 × cap. At 0.25 the
+    equilibrium is P/cap ≈ 1.31 (peak 1.48) — uncomfortable, usable,
+    and clinics still shift it upward]   (parabolic, owner)
 ```
 **Clinic (NEW 29th building)**: illness index reduction −0.10/−0.20/−0.35
 by level [TUNE], floor 0; tier 2, politics-free [TUNE]; card, tech node,
@@ -281,9 +297,13 @@ costs and **asset stubs** to produce (ASSET_PIPELINE). Illness deaths:
 
 #### i) Planet death clocks (survival stocks)
 When a survival stock hits **zero** and local net flow is negative:
-- **water = 0 → the whole population dies in 3 days** (P/3 per day);
-- **food = 0 → dies in 10 days** (P/10 per day);
+- **water = 0 → the whole population dies in 3 days**;
+- **food = 0 → dies in 10 days**;
 - **oxygen = 0 (where consumed) → instant total death.**
+Deaths are **linear to a FIXED deadline** set when the stock empties
+(`deaths/day = P / daysLeft`) — Round 9: a naïve `P/horizon` rate decays
+exponentially and never finishes; the canon says *everyone* dies. The
+deadline clears if the stock recovers before it strikes.
 Projected dry dates + loud alarms are mandatory UI (inverse of the
 deposit projected-dry-date pattern). Oxygen being binary, its alarm must
 fire far in advance.
@@ -306,10 +326,11 @@ recolonization is a slow, plunder-free conquest path.
 
 #### l) Spawn demographics
 Starters (and colony landings by default) arrive at the stable pyramid
-(≈ 18/55/27). Starter population ≈ **650** [TUNE] — sized by JOB
-scarcity (replaces the retired `u₀` debate; converges with the owner's
-0.35 instinct): a competent opening should reach `τ ≤ 7 %` right around
-the end of the 14-day grace.
+(≈ 18/55/27). Starter population ≈ **350** [TUNE — Round 9: lowered
+from 650; the starter must be born BELOW its early job capacity so the
+managed arc saturates jobs ≈ J+21, not day 3. At 350 a competent
+opening rides τ ≈ 5-7 % through grace end with ~15 % early losses —
+"the settler's life" — then booms].
 
 #### m) Balance anchors (owner-validated 2026-07-19)
 The Balance Round must tune every [TUNE] above so that:
@@ -324,6 +345,25 @@ The Balance Round must tune every [TUNE] above so that:
    (losses tolerated, extinction must not be the default outcome);
 6. (added) the siege-to-extinction path is measured and reported, not
    silently discovered by players.
+
+**Round 9 verdict (2026-07-19, `tools/balance/pop_v2_sim.py`) — ALL SIX
+GREEN with the patched values above:**
+1. saturation **J+21.1**, first real exodus cohort **J+39.1** (export
+   fires at the 200-head colonization minimum);
+2. neglect 10 d → full recovery; neglect 30 d → recovery only by
+   **amputation** (≈ ⅓ of the people exported/dead) — irreversible in
+   trajectory terms;
+3. clocks measured exact: water cut → extinct in stock+3 d; food →
+   stock+10 d; oxygen → instant at stock-out;
+4. stationary pyramid ≈ 18.2/54.5/27.3 (structural, from 20/60/30);
+   boom worlds skew young (up to ~55 % children) — accepted identity;
+5. colony 200 → min 195, then 1 406 by J+60;
+6. comptoir under siege with 30-day stocks → **extinct J+38**.
+Strategic findings: pinning τ at tolerance by over-staffing is a TRAP
+(Ē floors at 0.12, production ÷8) — the rational loop is optimal
+staffing + cohort exports; a no-export world drowns by ≈ J+55; a
+no-residential world halves every ≈ 45 days (slow senescence,
+recoverable by building one or importing people).
 
 ### 3.3 Deposits & depletion
 Each planet rolls 3–7 deposits [TUNE] from its seed (starter minimums: §2.2):

@@ -3148,3 +3148,27 @@ réécrit en canon v2 ; §3.2 et E_planet de §3.4 marqués SUPERSEDED
 
 Prochaine étape (séquence responsable) : campagnes simulées
 d'équilibrage sur les 6 ancres — en attente du GO sur la spec.
+
+## 2026-07-19 — Round 9 : la mécanique population v2 simulée — 6 ancres VERTES
+
+Premier round d'équilibrage au **simulateur numérique**
+(tools/balance/pop_v2_sim.py — la v2 est dynamique : vagues, momentum,
+spirales ; l'arithmétique fermée des rounds 1–8 ne suffisait pas).
+Cinq patchs majeurs (détail BALANCE_LOG Round 9, guide → v0.10) :
+natalité ×6 (0,12/0,18/0,24 — sans boom, l'exode arrivait à J+500),
+plancher popScale 0,5 → 1,0 (sinon saturation à J+3), starter 650 → 350
+(naître SOUS la capacité d'emploi), horloges de mort LINÉAIRES à
+échéance fixe (le P/3 naïf est exponentiel et ne finit jamais),
+parabole de sur-cap 0,015 → 0,25 (sinon équilibre à 2,3 × cap).
+
+Comportements démontrés sans patch : le piège du sur-staffing (épingler
+τ à 7 % écrase Ē à 0,12, production ÷8 — la boucle rationnelle est
+optimum + exports de cohortes ≥ 200), le monde sans exode se noie à
+J+55, la négligence 30 j ne se rattrape que par amputation, le monde
+sans residential s'éteint lentement (÷2 tous les 45 j), le siège d'un
+comptoir (stocks 30 j) éteint à J+38 — signalé P5.
+
+Verdict : saturation J+21,1 / exode J+39,1 / horloges exactes /
+pyramide stationnaire 18,2/54,5/27,3 / colonie stabilisée / siège
+mesuré. Les mondes en boom penchent jeunes (55 % d'enfants) — identité
+« monde-pouponnière » assumée. **Prêt pour l'implémentation (v0.10).**
