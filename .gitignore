@@ -1,3 +1,8 @@
 *.bak
 tmp
 /projects
+
+# Secrets locaux — ne jamais commiter
+.env
+.env.*
+!.env.example
