@@ -181,6 +181,37 @@ La documentation fait partie du produit.
 
 Une tâche n'est pas terminée si le code et la documentation ne décrivent plus le même fonctionnement.
 
+Persistance immédiate des décisions (règle non négociable du responsable)
+
+Dès qu'une spécification, une décision de conception ou un résultat de
+brainstorm est validé par le responsable, TOUS les artefacts documentaires
+correspondants doivent être écrits ET committés IMMÉDIATEMENT, AVANT
+d'écrire la moindre ligne de code.
+
+Cela concerne notamment, sans s'y limiter :
+
+- la spécification validée (guide de conception, canon, sections chiffrées) ;
+- le journal d'exploration et de décision ("JOURNAL.md" ou équivalent) ;
+- les schémas de données et d'architecture ("docs/SCHEMA.md", "docs/DAT.md") ;
+- le backlog ("docs/BACKLOG.md") ;
+- le changelog, le contrat de déploiement, et tout document impacté.
+
+Motif : une décision ou un brainstorm du responsable ne doit JAMAIS
+n'exister que dans la mémoire de contexte de l'agent. Cette conversation
+peut être supprimée à tout instant ; une décision non persistée est une
+décision perdue. Laisser une spécification validée ou un journal
+uniquement en mémoire de contexte constitue une faute grave.
+
+Règles d'application :
+
+- committer les documents AVANT de commencer l'implémentation, dans un
+  commit dédié si le code n'est pas encore prêt ;
+- ne jamais reporter la persistance documentaire « à la fin du chunk » ;
+- lorsqu'un découpage en étapes/chunks est décidé, le plan de découpage
+  lui-même est un artefact documentaire à persister, pas seulement une
+  narration de conversation ;
+- pousser le commit immédiatement après sa création (cf. §13).
+
 README
 
 Le "README.md" doit documenter au minimum :
