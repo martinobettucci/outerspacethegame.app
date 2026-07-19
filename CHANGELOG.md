@@ -2,11 +2,43 @@
 
 ## [Non publié]
 
+### Player Codex — plan persisté (P2.codex, avant tout code — CLAUDE.md §5)
+
+- **Spec du manuel joueur in-game (`docs/MANUAL_PLAN.md`)** : décision du
+  responsable actée (2026-07-20) de doter le jeu d'un Codex accessible depuis
+  chaque écran, distinct du canon développeur (aucune référence interne),
+  **spoiler-free** (on explique les *systèmes*, jamais le contenu à découvrir),
+  *reference before strategy* (guides de stratégie différés tant que
+  l'équilibrage bouge). Contrainte architecturale centrale : **anti-dérive** —
+  le Codex ne possède aucun chiffre, toutes les valeurs sont rendues en direct
+  depuis les constantes `@atg/shared` que la simulation elle-même utilise
+  (`TRACE_MINING_T_PER_DAY`, `EFFICIENCY_*`, `UNEMP_*`, épochs `popv2`…), textes
+  clés i18n `t.codex.*`, courbes tracées depuis les vraies fonctions partagées ;
+  un test unitaire liera chaque valeur documentée à sa constante vivante.
+  Première tranche validée : coquille de livraison + 3 mécaniques
+  (gisements/minage de trace, population v2, efficacité/emploi). Documents
+  impactés committés avant code : MANUAL_PLAN.md, BACKLOG (§P2.codex + garde-fou
+  DoD permanent), DAT (composant Codex), DESIGN_SYSTEM (§5). Défaut d'intégrité
+  documentaire relevé au passage et logué : le fichier de canon s'appelle
+  `GAME_BOOK.md` alors que CLAUDE.md/JOURNAL/commits citent `GAMEBOOK.md`.
+
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Population v2 — clinique, ledger démographique et alarmes de survie
+  (chunk BC — DG §3.2-v2 h/i, GB §10)** : la clinique devient le 29e
+  bâtiment (carte, nœud T2 politics-free, coûts [TUNE-v1], stubs complets
+  L1–L3 base/hot/cold) et réduit l'indice de maladie de 10/20/35 %. La page
+  stats est désormais alimentée par un calcul serveur unique partagé avec le
+  tick démographique : pyramide C/A/S, part consommatrice inactive, emploi,
+  chômage, Ē, maladie brute/effective, facteurs de natalité, flux NETS signés
+  par ressource et emplois/optimum/u/E de chaque bâtiment. Les stocks de
+  survie exposent une projection stable/à-sec/compte à rebours avec date de
+  perte totale ; l'oxygène hostile annonce sa mort instantanée longtemps à
+  l'avance. Le générateur d'assets couvre maintenant 597 entrées ×3, y
+  compris la ressource `junk` auparavant absente de son manifeste.
 - **Population v2 — emploi universel & le chômage tue (chunk BB — DG
   §3.2-v2 e/f/g, Round 9)** : TOUS les bâtiments emploient (table
-  BASE_JOBS exhaustive, 28 types + clinique) sur un optimum qui DÉRIVE
+  BASE_JOBS exhaustive, 29 types) sur un optimum qui DÉRIVE
   avec la population — jobsOptimal = base × [1/2,4/5] ×
   clamp(√(P/2000), 1, 2) : négligence = érosion (« point qui shifte »).
   **E_planet est SUPPRIMÉ** (planetMultiplier = G ; planetEfficiency
@@ -774,7 +806,7 @@
 - Enregistrement de `CLAUDE.md` (conventions de travail + spécificités projet).
 - Mise en conformité documentaire : `README.md`, `CHANGELOG.md`, `docs/DAT.md`,
   `docs/BACKLOG.md`, `docs/DESIGN_SYSTEM.md`.
-- Corpus de conception complet : `GAMEBOOK.md` (canon des règles),
+- Corpus de conception complet : `GAME_BOOK.md` (canon des règles),
   `GAME_BIBLE.md` (lore), `DESIGN_GUIDE.md` v0.3 (spécification mécanique
   chiffrée), `BALANCE_LOG.md` (boucle d'équilibrage par simulation, 3 tours,
   55 correctifs), `JOURNAL.md` (journal des décisions).

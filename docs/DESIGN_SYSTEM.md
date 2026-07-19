@@ -99,8 +99,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
 - **Efficiency curve widget** — the signature component (GAMEBOOK §10): the
   tilted bell rendered with the live position dot; green zone at sweet spot,
   red past it; used per-unit and on the planet stats page.
-- **Planet stats page** — object-first architecture (the planet is the
-  first-class citizen): every unit listed with `u`, `E`, limiting factor.
+- **Planet stats page (implemented, chunk BC)** — object-first command
+  ledger: loud water/food/oxygen forecast cards (stock-out + total-loss
+  dates), C/A/S pyramid and consuming-idle share, employment/unemployment,
+  raw/effective illness with clinic reduction, Ē/M_life/natality, signed net
+  resource flows per day, then every active unit with jobs/optimum, `u`, `E`,
+  output and limiting factor. Survival states are double-encoded by icon/text
+  and tone; the modal scrolls at desktop/tablet widths and remains keyboard
+  closable/focus-contained.
 - **Governance preview** — candidate governor set → resulting allow/deny mask
   matrix, diff-styled, with the permanence warning pattern (irreversible
   action = typed confirmation, never a simple OK).
@@ -371,6 +377,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
 - **Empty/loading/error states** — explicitly designed for every screen
   (CLAUDE.md §4); loading = starfield shimmer, empty = lore-flavored line +
   primary action, error = diagnostic without infrastructure detail.
+- **Codex (player manual, planned — P2.codex)** — a dialog overlay reachable
+  from the left rail on every screen (`useDialogFocus`: focus trap, Escape,
+  focus return). Two-pane: section nav + scrolling content; opens deep-linked
+  to the section matching the current screen. Layered depth: plain-language
+  lead + an expandable "Exact rule & formula" disclosure (numbers/curves).
+  Tokens & Lucide icons per this system; **no emoji-as-icon** (§9). Concept
+  diagrams are inline SVG plotted from the real `@atg/shared` functions (never
+  drift). Spec: `docs/MANUAL_PLAN.md`.
 
 ## 6. Interactive states
 

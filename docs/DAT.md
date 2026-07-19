@@ -3,7 +3,7 @@
 > Target architecture for ATG (Across The Galaxies). **Preproduction:** this
 > dossier describes the *designed* system; no application code exists yet.
 > Mechanics and numbers live in `DESIGN_GUIDE.md`; rules canon in
-> `GAMEBOOK.md`. This document covers the technical shape.
+> `GAME_BOOK.md`. This document covers the technical shape.
 
 ## 1. System overview
 
@@ -41,6 +41,18 @@
   Design system: `docs/DESIGN_SYSTEM.md`; DOM contract:
   `docs/design/props/index.html`. Client is **never authoritative**; it
   renders lazily-evaluated server state and interpolates.
+- **Player Codex (in-app manual, planned — P2.codex)** — client-only,
+  player-facing help reachable from every screen (left-rail entry →
+  `useDialogFocus` dialog overlay, contextual deep-link by `view.kind`). Spec:
+  `docs/MANUAL_PLAN.md`. **Architecturally the key rule is anti-drift:** the
+  Codex owns *no* numbers of its own — every value renders live from the same
+  `@atg/shared` constants the simulation runs on (`TRACE_MINING_T_PER_DAY`,
+  `EFFICIENCY_*`/`efficiency()`, `UNEMP_*`, `popv2` epochs…), text is i18n-keyed
+  (`t.codex.*`), curves are plotted from the real shared functions. A unit test
+  asserts each documented value equals its live constant, so a balance change
+  can never leave the manual stale. Distinct from the developer canon
+  (`GAME_BOOK.md`/`DESIGN_GUIDE.md`): zero internal references, spoiler-free
+  (systems only, never enumerating discoverable content).
 - **Game API** — stateless service; auth, commands (place card, set policy,
   launch mission, trade, ping), reads. Every authorization rule is enforced
   here or in the database (CLAUDE.md §10) — UI gating is never sufficient.
@@ -384,7 +396,7 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    (arrival, undock, §15 relocate). AMM slots stay out of scope v1
    (announced).
 
-### Population v2 — demographics core (implemented, chunk BA; DG §3.2-v2)
+### Population v2 — demographics, jobs and observability (implemented, chunks BA–BC; DG §3.2-v2)
 
 Population is three ages (`bodies.population` = TOTAL; `pop_children` /
 `pop_seniors` columns; actives derived), materialized daily by the v2
@@ -398,11 +410,19 @@ linear daily deaths in between; oxygen (breathed from stock on hostile
 climates only, temperate = ambient) is an INSTANT total death, checked
 at the exact `stock_edge` zero-crossing AND daily. Per-category
 death/exodus counters persist in `bodies.demo_counters` (read by intel,
-chunk BD). Colony kits carry 20 T oxygen. Ordering constraint
-(documented in JOURNAL): universal employment + popScale + E_planet
-removal + unemployment mortality ship TOGETHER in chunk BB; clinic
-building + stats/alarm UI in BC; per-category embarkation + extinction
-ownership-strip + intel exposure in BD.
+chunk BD). Colony kits carry 20 T oxygen.
+
+Chunk BB made `BASE_JOBS` exhaustive over all 29 buildings, scaled each
+optimum by population and level, removed `E_planet`, and added the 7 %
+unemployment clock. Chunk BC centralizes owner observability in
+`populationIndicators` / `survivalForecasts`: the same server values feed
+the daily simulation and the planet ledger (C/A/S pyramid, consuming-idle
+share, employment, illness after clinic reduction, natality factors, signed
+net flows and per-building jobs). Water/food forecast their fixed-deadline
+loss; hostile-climate oxygen forecasts an instant loss at its projected
+stock edge. The clinic is catalog/tech building 29 (T2, politics-free
+`[TUNE-v1]`, −0.10/−0.20/−0.35 illness). Per-category embarkation,
+extinction ownership-strip and intel exposure remain chunk BD.
 
 ### Intel tiers (implemented, chunk Q)
 
