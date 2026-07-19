@@ -86,6 +86,8 @@
 - [ ] **Recruitment : expliquer le refus « compte < 45 j » dans l'onglet** (directive responsable 2026-07-19 — l'onglet existe mais refuse en silence un compte neuf) → GB §19; DG §11.4
 ### P2.pop — Population/emploi/exode v2 : MÉCANIQUE CENTRALE (brainstorm responsable 2026-07-19, JOURNAL du même jour — deux tours de Q/R actés)
 
+> **Plan d'implémentation persisté : [`docs/POP_V2_PLAN.md`](POP_V2_PLAN.md)** — découpage chunks BA→BD (scope, statut, ordre), tenu à jour à chaque chunk.
+
 > **Séquence imposée par le responsable : spec chiffrée → simulations
 > d'équilibrage (exception sous-agents) → code.** Remplace le couple
 > « croissance logistique + E_planet global » actuel. Chaque sous-item
