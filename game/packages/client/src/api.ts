@@ -252,6 +252,7 @@ export interface ShipView {
   establishesAt: string | null;
   /** Redéploiement warehouse→quai en cours (ISO), sinon null. */
   retrievesAt: string | null;
+  autoTrade: { resource: string; belowT: number; buyT: number }[];
   harvestRig: boolean;
   harvestingStarId: string | null;
   /** Coque (GB §27) : HP évalués, max, usure/jour (péage, plancher 1). */
@@ -544,6 +545,10 @@ export const api = {
       perDay: number;
       census: { takenAt: string; totals: Record<string, number> } | null;
     }>('GET', '/census/latest'),
+  setAutoTrade: (
+    shipId: string,
+    rules: { resource: string; belowT: number; buyT: number }[],
+  ) => call<{ ok: boolean }>('POST', `/ships/${shipId}/auto-trade`, { rules }),
   dump: (shipId: string, resource: string, tons: number) =>
     call<{ dumped: number; sunk: boolean }>('POST', `/ships/${shipId}/dump`, {
       resource,

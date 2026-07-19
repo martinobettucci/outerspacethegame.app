@@ -23,6 +23,7 @@ import { whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
 import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
+import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { shipPosition } from '../services/ships.js';
 import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
 
@@ -251,6 +252,13 @@ export const shipArrival: EventHandler = async (client, event) => {
   }
   if (landed.status === 'hovering' || landed.status === 'idle') {
     await rebaseShipDrain(client, landed, nowMs, 'tank');
+    // Survol étranger : l'auto-trade s'arme (GB §7) — check immédiat si
+    // un seuil est déjà franchi, sinon au whenReaches.
+    const { rows: armed } = await client.query(
+      `SELECT * FROM ships WHERE id = $1`,
+      [shipId],
+    );
+    if (armed[0]) await scheduleAutoTradeCheck(client, armed[0], nowMs);
   }
 };
 
@@ -935,6 +943,30 @@ export const stargateBuilt: EventHandler = async (client, event) => {
   );
 };
 
+/**
+ * auto_trade_check { shipId } — un réservoir d'une coque en survol
+ * ÉTRANGER franchit un seuil d'auto-trade (GB §7) : exécuter les achats
+ * best-effort puis REPLANIFIER (le drain continue). Idempotent — la
+ * coque partie/posée/échouée ne fait rien.
+ */
+export const autoTradeCheck: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND status = 'hovering' FOR UPDATE`,
+    [shipId],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  const nowMs = event.dueAt.getTime();
+  await runAutoTrade(client, ship, nowMs);
+  const { rows: fresh } = await client.query(
+    `SELECT * FROM ships WHERE id = $1`,
+    [shipId],
+  );
+  if (fresh[0]) await scheduleAutoTradeCheck(client, fresh[0], nowMs);
+};
+
 export function baseHandlers(): Record<string, EventHandler> {
   return {
     construction_complete: constructionComplete,
@@ -958,6 +990,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     hull_repaired: hullRepaired,
     salvage_claimed: salvageClaimed,
     stargate_built: stargateBuilt,
+    auto_trade_check: autoTradeCheck,
     noop: async (_client: pg.PoolClient) => undefined,
   };
 }

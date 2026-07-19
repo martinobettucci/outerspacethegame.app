@@ -369,6 +369,21 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    climate-resolved crystal) and starts the build. Both endpoint owners
    are toll-EXEMPT (co-payers [interp]).
 
+22. **Hover auto-trade (implemented, chunk AM):** the canonical
+   "if food < 20, buy 200 best effort". Up to 3 per-ship rules
+   ({resource, belowT, buyT} [TUNE-v1]); hovering a FOREIGN world, when
+   the destination reserve (tank for the embarked fuel type, survival
+   stores for food/water families, hold otherwise) drops below the
+   threshold, the ship buys at the FIRST active fixed slot the world
+   SELLS the resource on — counterpart paid from the HOLD into the
+   world's stock, price bound ≤ 3 T per received T [TUNE-v1 interp of
+   "3× census median" — census price medians don't exist yet], physical
+   caps respected, trade journaled (slot −3). LAZY triggering:
+   auto_trade_check scheduled at whenReaches of the nearest threshold
+   (immediate when already below), armed on real hover entries
+   (arrival, undock, §15 relocate). AMM slots stay out of scope v1
+   (announced).
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

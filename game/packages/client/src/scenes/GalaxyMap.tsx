@@ -1222,6 +1222,128 @@ export function GalaxyMap() {
               ) : null}
             </section>
           )}
+          {!['personal', 'probe'].includes(selectedShip.hullCategory) && (
+            <details
+              style={{
+                background: 'var(--bg-overlay)',
+                borderRadius: 'var(--radius-card-sm, 10px)',
+                padding: '8px 10px',
+                fontSize: 12,
+              }}
+            >
+              <summary style={{ cursor: 'pointer', color: 'var(--text-primary)' }}>
+                {t.galaxy.autoTradeTitle}
+              </summary>
+              <p style={{ margin: '6px 0', color: 'var(--text-secondary)' }}>
+                {t.galaxy.autoTradeHint}
+              </p>
+              <form
+                style={{ display: 'grid', gap: 6 }}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const data = new FormData(event.currentTarget);
+                  const rules: { resource: string; belowT: number; buyT: number }[] = [];
+                  for (let i = 0; i < 3; i++) {
+                    const res = String(data.get(`atRes${i}`) ?? '');
+                    const below = Number(data.get(`atBelow${i}`) ?? 0);
+                    const buy = Number(data.get(`atBuy${i}`) ?? 0);
+                    if (res && buy > 0) rules.push({ resource: res, belowT: below, buyT: buy });
+                  }
+                  api
+                    .setAutoTrade(selectedShip.id, rules)
+                    .then(() => {
+                      setNotice(t.galaxy.autoTradeApplied);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.autoTradeRefused} — ${err.message ?? err.error}`,
+                      ),
+                    );
+                }}
+              >
+                {[0, 1, 2].map((i) => {
+                  const rule = selectedShip.autoTrade[i];
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <select
+                        aria-label={`Auto-trade resource ${i + 1}`}
+                        name={`atRes${i}`}
+                        defaultValue={rule?.resource ?? ''}
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 6px',
+                          fontSize: 12,
+                          maxWidth: 110,
+                        }}
+                      >
+                        <option value="">—</option>
+                        {ALL_RESOURCE_IDS.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        aria-label={`Auto-trade below ${i + 1}`}
+                        name={`atBelow${i}`}
+                        type="number"
+                        min={0}
+                        step="any"
+                        defaultValue={rule?.belowT ?? ''}
+                        placeholder="below T"
+                        style={{
+                          width: 70,
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 6px',
+                          fontSize: 12,
+                        }}
+                      />
+                      <input
+                        aria-label={`Auto-trade buy ${i + 1}`}
+                        name={`atBuy${i}`}
+                        type="number"
+                        min={0}
+                        step="any"
+                        defaultValue={rule?.buyT ?? ''}
+                        placeholder="buy T"
+                        style={{
+                          width: 70,
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 6px',
+                          fontSize: 12,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+                <button
+                  type="submit"
+                  style={{
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    justifySelf: 'start',
+                  }}
+                >
+                  {t.galaxy.autoTradeApply}
+                </button>
+              </form>
+            </details>
+          )}
           {selectedShip.hull.maxHp > 0 && (
             <section
               aria-label={t.galaxy.hullTitle}

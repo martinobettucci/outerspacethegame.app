@@ -238,3 +238,9 @@ documented down-path or an explicit "irreversible" statement
   épinglée (open/accepted/declined/cancelled/expired), TTL 48 h réelles
   balayé paresseusement ; l'acceptation paie les deux moitiés et crée le
   gate (table stargates).
+
+## 021_auto_trade.sql (chunk AM)
+
+- `ships.auto_trade (jsonb)` — règles d'auto-trade du survol étranger
+  ({resource, belowT, buyT} × 3 max [TUNE-v1]) ; évaluation paresseuse
+  par l'événement auto_trade_check.

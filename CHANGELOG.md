@@ -4,6 +4,21 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Auto-trade du survol étranger (chunk AM)** : le canon « if food <
+  20, buy 200 food best effort » est jouable. Jusqu'à 3 règles par coque
+  ({ressource, seuil, quantité} [TUNE-v1]) ; en survol d'un monde
+  d'AUTRUI, quand le réservoir de destination (tank pour le carburant du
+  type embarqué, provisions pour les familles food/water, soute sinon)
+  passe sous le seuil, la coque rachète au PREMIER slot fixe actif dont
+  le monde VEND la ressource — contrepartie payée depuis la SOUTE,
+  encaissée au stock du monde, borne de prix ≤ 3 T par tonne reçue
+  [TUNE-v1 interp du « 3× census median » — la médiane de prix census
+  n'existe pas encore], caps physiques respectés, trade journalisé
+  (slot −3). Déclenchement PARESSEUX : auto_trade_check posé au
+  whenReaches du seuil le plus proche (check immédiat si déjà dessous),
+  armé aux vraies entrées en survol (arrivée, undock, relocate §15).
+  Migration 021. UI : section « Auto-trade (foreign hover) » repliable
+  du panneau vaisseau (3 lignes règle + Apply).
 - **Consentement 50/50 des stargates (chunk AL)** : le flux canon
   inter-joueurs (« the price is split between the two owners — both
   consent »). Une PROPOSITION s'épingle depuis un monde à yard ACTIF

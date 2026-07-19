@@ -44,6 +44,7 @@ import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
 import { releaseHarvest } from './harvest.js';
 import { releaseClaim } from './junk.js';
+import { armAutoTradeOnHover } from './hoverTrade.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -64,6 +65,8 @@ export interface ShipView {
   establishesAt: string | null;
   /** Redéploiement warehouse→quai en cours : ISO de fin, sinon null. */
   retrievesAt: string | null;
+  /** Règles d'auto-trade du survol (GB §7). */
+  autoTrade: { resource: string; belowT: number; buyT: number }[];
   /** Harvest rig monté (GB §22, DG §8.8). */
   harvestRig: boolean;
   /** Étoile en cours de récolte (id), sinon null. */
@@ -199,6 +202,11 @@ export async function fleet(
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
       retrievesAt: retrievesBy.get(r.id) ?? null,
+      autoTrade: (r.auto_trade ?? []) as {
+        resource: string;
+        belowT: number;
+        buyT: number;
+      }[],
       harvestRig: !!r.harvest_rig,
       harvestingStarId: r.harvesting_star_id ?? null,
       hull: (() => {
@@ -798,6 +806,8 @@ export async function undockShip(
         nowMs,
         'tank',
       );
+      // Survol (étranger inclus) : l'auto-trade s'arme (GB §7).
+      await armAutoTradeOnHover(client, shipId, nowMs);
     }
     await client.query('COMMIT');
     return { bodyId: ship.docked_body_id };
@@ -1515,6 +1525,8 @@ export async function relocateShipForTest(
     if (over[0]?.owner_id === ship.owner_id) {
       await recomputePlanetRates(client, bodyId, nowMs);
     }
+    // Survol étranger : l'auto-trade s'arme comme aux vraies entrées.
+    await armAutoTradeOnHover(client, shipId, nowMs);
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);

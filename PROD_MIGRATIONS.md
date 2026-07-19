@@ -34,6 +34,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 18 | `game/packages/server/migrations/018_claim.sql` | Claim rig (GB §6, DG §8.8) : rig + lien de réclamation sur ships | 001 | DROP des 2 colonnes |
 | 19 | `game/packages/server/migrations/019_stargates.sql` | Stargates v1 (GB §6, DG §9.3) : table stargates | 001 | DROP TABLE stargates |
 | 20 | `game/packages/server/migrations/020_stargate_proposals.sql` | Consentement 50/50 des stargates (GB §6) : table stargate_proposals | 019 | DROP TABLE stargate_proposals |
+| 21 | `game/packages/server/migrations/021_auto_trade.sql` | Auto-trade du survol (GB §7) : règles jsonb sur ships | 001 | DROP de la colonne |
 
 ## Services à déployer (au premier déploiement)
 

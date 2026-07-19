@@ -2931,3 +2931,48 @@ franchir les frontières politiques.
   intel).
 - Suites après synchro : shared 147, unit 32, intégration **276/276**,
   E2E **34/34 (16,0 min)**.
+
+## 2026-07-19 — Chunk AM : auto-trade du survol étranger (GB §7, DG §3.5)
+
+**Problème.** Dernière mécanique de survol restante (ligne 103) : le
+canon donne aux coques en orbite étrangère le droit de se ravitailler
+TOUTES SEULES au marché local — sans elle, tout séjour prolongé chez
+autrui est une horloge de mort sans recours.
+
+### Canon appliqué & interprétations (annoncées)
+
+- Règles par coque (max 3 [TUNE-v1]) : {ressource, seuil, quantité}.
+  Destination par ressource : carburant du type embarqué → TANK,
+  familles food/water → PROVISIONS (1:1 [TUNE-v1]), sinon SOUTE.
+- « Best effort » : PREMIER slot fixe actif dont le monde VEND (give)
+  la ressource ; la coque paie la contrepartie (get) depuis sa SOUTE ;
+  encaissement au stock du monde ; caps physiques (tank, capacité de
+  survie, conteneurs) ; journal des trades (slot −3). Les slots AMM
+  restent hors périmètre v1 (annoncé).
+- Borne de prix ≤ 3 T par tonne reçue [TUNE-v1 interp : le canon borne à
+  « 3× la médiane census » mais le census ne publie pas de prix — la
+  re-borne arrive avec le pricing des pods, listée au backlog].
+- Déclenchement PARESSEUX (patron stock_edge appliqué à la coque) :
+  auto_trade_check posé au whenReaches du seuil le plus proche, check
+  immédiat si déjà dessous, armé aux vraies entrées en survol (arrivée
+  de transit, undock, relocate §15) et à chaque exécution.
+
+### Leçons de la fournée
+
+- La fixture s'échouait AVANT le check (réservoir vide → ship_fuel_out
+  → stranded → garde hovering) : sondes de debug aux points de skip,
+  cause trouvée en deux itérations — avitailler d'abord.
+- `step=0.1` sur un input number BLOQUE silencieusement la soumission
+  d'un 0.05 (validation HTML) : `step="any"` sur les champs de règle.
+
+### Vérifications
+
+- Shared 151/151 (destinations, validation, borne).
+- Intégration auto-trade.test.ts **6/6** : §10 + 4 règles refusées,
+  rachat complet (provisions 0,02→0,12, soute −0,1, stock du monde ±,
+  journal), borne 3:1 (aucun achat), soute vide (skip), monde possédé
+  (no-op), planification au whenReaches (échéance future posée).
+- E2E auto-trade.spec.ts (22,8 s, 2 comptes) : épicerie de Bob par
+  l'API (le parcours UI marché est couvert par market.spec), règle
+  configurée DANS l'UI d'Alice, survol étranger → rachat AUTOMATIQUE
+  par le worker (0,12 food / soute 2,9) ; captures at-01/02 observées.

@@ -1,3 +1,4 @@
+import { setAutoTrade } from '../services/hoverTrade.js';
 import {
   buildStargate,
   cancelStargateProposal,
@@ -904,6 +905,33 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
       return { ok: true };
     });
+  });
+
+  app.post('/ships/:id/auto-trade', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({
+        rules: z
+          .array(
+            z.object({
+              resource: z.string().min(1).max(64),
+              belowT: z.number().min(0),
+              buyT: z.number().positive(),
+            }),
+          )
+          .max(3),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () =>
+      setAutoTrade(
+        deps.pool,
+        player.id,
+        id,
+        parsed.data.rules as Parameters<typeof setAutoTrade>[3],
+      ).then(() => ({ ok: true })),
+    );
   });
 
   app.post('/ships/:id/dump', async (req, reply) => {

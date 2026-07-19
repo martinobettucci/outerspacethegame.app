@@ -201,6 +201,12 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Hover auto-trade (implemented, chunk AM)** — ship panels (non
+  personal/probe) carry a collapsible "Auto-trade (foreign hover)"
+  details card: three rule rows (resource select + `below T` + `buy T`
+  number inputs, `step=any`) and an `Apply rules` button; the hint
+  spells the guardrail ("refuses rates worse than 3:1"). Notice:
+  "Auto-trade rules applied."
 - **Stargate consent (implemented, chunk AL)** — the yard's Stargates
   section gains a second form, `Propose to a foreign world (50/50
   split)` (select of visible foreign-owned worlds, `owner — name`

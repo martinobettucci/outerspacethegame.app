@@ -28,6 +28,7 @@ export type EventKind =
   | 'hull_repaired'
   | 'salvage_claimed'
   | 'stargate_built'
+  | 'auto_trade_check'
   | 'noop';
 
 export interface GameEvent {

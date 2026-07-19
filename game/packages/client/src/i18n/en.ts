@@ -169,6 +169,12 @@ export const t = {
     claiming: 'Claiming',
     wrecks: 'Wrecks',
     wreck: 'Ownerless wreck',
+    autoTradeTitle: 'Auto-trade (foreign hover)',
+    autoTradeHint:
+      'If a reserve drops below the threshold, buy best-effort at the local market — refuses rates worse than 3:1.',
+    autoTradeApplied: 'Auto-trade rules applied.',
+    autoTradeRefused: 'Auto-trade refused',
+    autoTradeApply: 'Apply rules',
     traverse: 'Traverse gate',
     traversed: 'Gate crossed — scattered off the fixed point.',
     traverseRefused: 'Traversal refused',

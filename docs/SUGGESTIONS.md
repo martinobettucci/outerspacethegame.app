@@ -24,7 +24,8 @@ Statuts : `proposé` · `retenu (chunk X)` · `livré (chunk X)` · `décliné`.
 | 2026-07-19 | Claim rig & salvage des derelicts (25 steelL + 5 gold, 2 h de proximité — GB §6, DG §8.8) : rendre les épaves de survival-out réclamables | livré (chunk AJ — restent : remorquage/re-crew de proximité P4) |
 | 2026-07-19 | Stargates (GB §6 — construction bi-propriétaire, péages hard gates, exits void de gates mortes) — grosse brique P1 de navigation restante | livré (chunk AK, v1 même propriétaire — restent : consentement 50/50, whitelist, endpoints mobiles) |
 | 2026-07-19 | Consentement inter-joueurs 50/50 des stargates (canon GB §6) — réutiliser le patron des offres manuelles (proposition épinglée, accepter/décliner) | livré (chunk AL) |
-| 2026-07-19 | Auto-trade policies du survol (GB §7 « if food < 20, buy 200 best effort », bornes 3× census — DG §3.5) — dernière mécanique de survol restante | proposé |
+| 2026-07-19 | Auto-trade policies du survol (GB §7 « if food < 20, buy 200 best effort », bornes 3× census — DG §3.5) — dernière mécanique de survol restante | livré (chunk AM — re-borne census et slots AMM restent) |
+| 2026-07-19 | Intel des VAISSEAUX L1/L2/L3 (heading/destination/manifest + attributions junk/harvest — DG §9.2, ligne 99) — dernier gros morceau d'intel P1 | proposé |
 | 2026-07-19 | Panneau vaisseau : regrouper les fittings (rig + 3 boucliers, bientôt scanner/claim) dans une section « Fittings » repliable — la pile de boutons dépasse l'écran sur les coques à quai | proposé |
 | 2026-07-19 | Texturation UI (panneaux/cartes/rail/voile) via gpt-image-2 | livré (chunk AA) |
 | 2026-07-19 | Textures de sol générées (OPENAI_KEY fournie par le responsable dans .env local) intégrées à la dalle organique du chunk X | livré (chunk Z — genSoil.mjs, 4 climats §16) |

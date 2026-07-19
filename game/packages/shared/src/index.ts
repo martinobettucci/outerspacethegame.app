@@ -20,3 +20,4 @@ export * from './stars.js';
 export * from './wear.js';
 export * from './junk.js';
 export * from './stargates.js';
+export * from './autoTrade.js';
