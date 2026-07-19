@@ -38,8 +38,12 @@ test('census : totaux globaux publiés, rafraîchis, jamais ventilés', async ({
   await expect(
     page.getByText('Global totals only — per-planet breakdowns are never published.'),
   ).toBeVisible();
-  const rowCount = await page.locator('tbody tr').count();
-  expect(rowCount).toBe(ALL_RESOURCE_IDS.length);
+  // Un instantané ANTÉRIEUR à un élargissement du catalogue peut être
+  // encore « latest » au chargement : on attend celui du catalogue
+  // COURANT (le worker en produit un toutes les ~3 s en dev).
+  await expect
+    .poll(async () => page.locator('tbody tr').count(), { timeout: 20_000 })
+    .toBe(ALL_RESOURCE_IDS.length);
 
   // 3. Effet backend déterministe : +500 T de GOLD, puis un PROCHAIN
   // snapshot doit le refléter — l'API publie la vérité. Gold et pas ore :

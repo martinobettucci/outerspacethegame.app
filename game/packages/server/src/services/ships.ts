@@ -70,6 +70,7 @@ export interface ShipView {
   /** Coque : HP évalués, max, usure/jour (GB §27 — péage, plancher 1). */
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
+  junkCollector: boolean;
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -201,6 +202,7 @@ export async function fleet(
         cold: !!r.shield_cold,
         radio: !!r.shield_radio,
       },
+      junkCollector: !!r.junk_collector,
       survival: (() => {
         const sv = evalShipSurvival(r, nowMs);
         return {

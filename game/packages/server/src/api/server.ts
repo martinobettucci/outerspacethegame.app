@@ -1,3 +1,9 @@
+import {
+  collectJunk,
+  dumpCargo,
+  fitJunkCollector,
+  visibleJunkFields,
+} from '../services/junk.js';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -17,7 +23,14 @@ import {
   type SessionPlayer,
 } from '../services/sessions.js';
 import { verifyPassword } from '../services/passwords.js';
-import { bodyIntel, visibleBodies } from '../services/world.js';
+import {
+  BASE_SKY_PC,
+  bodyIntel,
+  PROBE_SCAN_PC,
+  SHIP_SCAN_PC,
+  TELESCOPE_SCOPE_PC_PER_LEVEL,
+  visibleBodies,
+} from '../services/world.js';
 import {
   fitHarvestRig,
   fitShield,
@@ -384,7 +397,15 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
 
   app.get('/galaxy', async (req) => {
     const player = await requirePlayer(req);
-    return { bodies: await visibleBodies(deps.pool, player.id) };
+    return {
+      bodies: await visibleBodies(deps.pool, player.id),
+      junkFields: await visibleJunkFields(deps.pool, player.id, {
+        baseSkyPc: BASE_SKY_PC,
+        telescopePcPerLevel: TELESCOPE_SCOPE_PC_PER_LEVEL,
+        probePc: PROBE_SCAN_PC,
+        shipPc: SHIP_SCAN_PC,
+      }),
+    };
   });
 
   app.get('/planets/:id', async (req, reply) => {
@@ -858,6 +879,32 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       await setFleePolicy(deps.pool, player.id, id, parsed.data.armed);
       return { ok: true };
     });
+  });
+
+  app.post('/ships/:id/dump', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ resource: z.string().min(1).max(64), tons: z.number().positive() })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    return wrap(reply, () => dumpCargo(deps.pool, player.id, id, parsed.data));
+  });
+
+  app.post('/ships/:id/junk-collector', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => fitJunkCollector(deps.pool, player.id, id));
+  });
+
+  app.post('/ships/:id/collect-junk', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () =>
+      collectJunk(deps.pool, player.id, id, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   app.post('/ships/:id/shield', async (req, reply) => {

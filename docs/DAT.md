@@ -323,6 +323,22 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    the `hull_repaired` edge stops billing at full; wear and repair NET
    on hostile worlds; foreign worlds never serve (whom-to-serve P4).
 
+19. **Junk fields (implemented, chunk AI):** dumping cargo in the void
+   (hover/idle/stranded, 5/real-day/ship [TUNE], forbidden within 50 pc
+   of ANY starter) deposits junk into a 0.5 pc CELL — one field per
+   cell, contributions merge, exponential 10%/day decay evaluated at
+   read (no linear rate, no edge event). Within 5 pc of a black hole
+   the cargo vanishes (clean sink, canon). Loitering in a junk cell
+   wears the hull (15 HP/day per 30 T [TUNE-v1 interp]; no shield
+   mitigates; transit crossing waits for interception P5). Supernova
+   wrecks drop carcass junk (10/20/40 T by size [TUNE-v1]) plus spilled
+   cargo. Collection: workshop-L2 junk collector, ONE 30 T scoop per
+   24 game-hours [TUNE-v1 discretization], bounded by free containers;
+   junk is a RESOURCE (new `salvage` tier, 31st catalog entry) bound
+   for the recycler economy. Fields are visible under the same vision
+   scopes as bodies. Migration 017 (dump_day stored as TEXT — a date
+   column re-read through local TZ drifts a day).
+
 ### Intel tiers (implemented, chunk Q)
 
 Planetary intel is computed SERVER-SIDE per request (no persistence —

@@ -8,6 +8,9 @@
  * sur une ligne `ships` déjà verrouillée FOR UPDATE.
  */
 import {
+  evalJunkAmount,
+  junkCellOf,
+  junkHazardHpPerDay,
   harvestHullDamagePerDay,
   HAZARD_RADIUS_PC,
   HULL_WEAR_FLOOR_HP,
@@ -319,6 +322,25 @@ export async function rebaseShipHull(
           hazardZoneUnshielded = true;
           break;
         }
+      }
+    }
+    // Champ de junk dans la cellule (DG §10.4) : dégâts de présence —
+    // aucun bouclier n'atténue (cinétique) [TUNE-v1]. Taux gelé entre
+    // rebases (la décroissance affine au prochain point d'état, annoncé).
+    {
+      const { rows: junk } = await client.query(
+        `SELECT amount_t, as_of FROM junk_fields
+         WHERE cell_x = $1 AND cell_y = $2`,
+        [junkCellOf(Number(ship.x)), junkCellOf(Number(ship.y))],
+      );
+      if (junk[0]) {
+        harvestDamagePerDay += junkHazardHpPerDay(
+          evalJunkAmount(
+            Number(junk[0].amount_t),
+            new Date(junk[0].as_of).getTime(),
+            nowMs,
+          ),
+        );
       }
     }
     if (ship.harvesting_star_id) {

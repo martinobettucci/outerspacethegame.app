@@ -1,13 +1,14 @@
 /**
  * Liste maîtresse des ressources fongibles — GAMEBOOK §24, GAME_BIBLE §6.
- * COMPLÈTE (30 entrées) et alignée sur les clés d'assets `res_{id}.gif`.
+ * COMPLÈTE : les 30 fongibles canon (alignés sur les assets `res_{id}.gif`)
+ * + le tier « salvage » (junk, GB §22 — matière d'épave haulable, chunk AI).
  *
  * Les items dérivés (beam laser, rigs, cores…) sont des ENTITÉS non
  * fongibles — voir items.ts — jamais listés ici (GB §8).
  */
 import type { Climate } from './types.js';
 
-export type ResourceTier = 'basic' | 'crystal' | 'refined' | 'propulsion';
+export type ResourceTier = 'basic' | 'crystal' | 'refined' | 'propulsion' | 'salvage';
 
 export interface ResourceDef {
   id: ResourceId;
@@ -61,15 +62,21 @@ export const PROPULSION_RESOURCES = [
   'fuel_gas',
 ] as const;
 
+/** Matière de récupération (GB §22) — jamais minable : épaves et rejets,
+ * collectée au junk collector, nourrit l'économie du recycleur (§6). */
+export const SALVAGE_RESOURCES = ['junk'] as const;
+
 export type BasicResource = (typeof BASIC_RESOURCES)[number];
 export type CrystalResource = (typeof CRYSTAL_RESOURCES)[number];
 export type RefinedResource = (typeof REFINED_RESOURCES)[number];
 export type PropulsionResource = (typeof PROPULSION_RESOURCES)[number];
+export type SalvageResource = (typeof SALVAGE_RESOURCES)[number];
 export type ResourceId =
   | BasicResource
   | CrystalResource
   | RefinedResource
-  | PropulsionResource;
+  | PropulsionResource
+  | SalvageResource;
 
 /** Cristal concentré par chaque climat (GAME_BIBLE §6). */
 export const CLIMATE_CRYSTAL: Record<Climate, CrystalResource> = {
@@ -130,6 +137,7 @@ export const RESOURCES: Record<ResourceId, ResourceDef> = {
   fuel_cold: { id: 'fuel_cold', tier: 'propulsion', name: 'Cold star-fuel' },
   fuel_hot: { id: 'fuel_hot', tier: 'propulsion', name: 'Hot star-fuel' },
   fuel_gas: { id: 'fuel_gas', tier: 'propulsion', name: 'Gas star-fuel' },
+  junk: { id: 'junk', tier: 'salvage', name: 'Space junk' },
 };
 
 export const ALL_RESOURCE_IDS = Object.keys(RESOURCES) as ResourceId[];

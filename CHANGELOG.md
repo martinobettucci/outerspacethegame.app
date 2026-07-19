@@ -4,6 +4,22 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Champs de junk (chunk AI)** : larguer du fret dans le vide (survol/
+  idle/échoué, 5 fois par jour réel et par coque [TUNE]) dépose un champ
+  de junk dans une CELLULE de 0,5 pc — un champ max par cellule, les
+  apports fusionnent, décroissance exponentielle 10 %/jour évaluée à la
+  lecture. INTERDIT à moins de 50 pc de tout starter (anti-grief canon) ;
+  à ≤ 5 pc d'un trou noir le fret disparaît sans trace (puits canon).
+  S'attarder dans une cellule à junk use la coque (15 HP/j par 30 T
+  [TUNE-v1 interp], aucun bouclier n'atténue — la traversée de transit
+  arrive avec l'interception P5). Les épaves de supernova deviennent du
+  junk (carcasse 10/20/40 T [TUNE-v1] + fret répandu). Collecte : junk
+  collector d'atelier L2 (15 steelL + 5 silicon [TUNE]), UN scoop de
+  30 T par 24 h-jeu [TUNE-v1, discrétisation annoncée du 30 T/day] dans
+  la limite des conteneurs — le junk est une RESSOURCE (nouveau tier
+  « salvage », 31e entrée du catalogue) destinée au recycleur.
+  Migration 017. UI : formulaire Dump, ligne de champ + hasard, boutons
+  collecteur/Collect ; champs visibles sous scope dans /galaxy.
 - **Réparation d'atelier (chunk AH)** : à quai de SON monde à workshop
   ACTIF, une coque endommagée regagne 5 % de ses HP max par heure ×
   mult(1/2/4 selon le niveau — le MEILLEUR atelier sert [TUNE-v1]),

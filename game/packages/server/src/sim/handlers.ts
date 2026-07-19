@@ -3,12 +3,13 @@
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
  */
 import {
-  HULLS,
-  isAmmSlot,
   BUILDINGS,
   COLONY_SEED_STOCK,
   habitability,
+  HULLS,
   illnessDelta,
+  isAmmSlot,
+  JUNK_CARCASS_T,
   popCap,
   populationDelta,
   settlerLosses,
@@ -20,6 +21,7 @@ import { enqueue, type EventHandler } from './events.js';
 import { whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
 import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
+import { depositJunkAt } from '../services/junk.js';
 import { shipPosition } from '../services/ships.js';
 import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
 
@@ -771,6 +773,19 @@ export const starSupernova: EventHandler = async (client, event) => {
       [ship.id],
     );
     await client.query(`DELETE FROM ships WHERE id = $1`, [ship.id]);
+    // « Destroyed ships become space junk » (GB §22) : carcasse [TUNE-v1]
+    // + fret répandu, fusionnés dans la cellule de la position réelle.
+    const cargoT = Object.values(
+      (ship.cargo ?? {}) as Record<string, number>,
+    ).reduce((t, v) => t + Number(v ?? 0), 0);
+    await depositJunkAt(
+      client,
+      pos.x,
+      pos.y,
+      (JUNK_CARCASS_T[ship.hull_size as string] ?? 10) + cargoT,
+      nowMs,
+      ship.owner_id ?? null,
+    );
   }
 
   // 2. Mondes dans le rayon : annihilés (cendre — jamais recolonisable).

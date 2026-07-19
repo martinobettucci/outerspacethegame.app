@@ -201,6 +201,14 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   cargo/combat hulls now expose `Assign pilot` (was civil-only).
   Derelicts simply vanish from the fleet and contact index — absence is
   the statement.
+- **Junk fields (implemented, chunk AI)** — ships in space with cargo
+  get a Jettison row in the hold section (resource select scoped to the
+  hold + tons + neutral `Dump` button); standing in a junk cell shows an
+  amber field card `Junk field here — X T · hazard −Y HP/day` with a
+  success-green `Collect junk` button when the collector is fitted.
+  `Fit junk collector` (Package icon) joins the fitting buttons at dock.
+  Notices distinguish the black-hole sink ("fed to the black hole") from
+  a spreading field.
 - **Workshop repair (implemented, chunk AH)** — while a docked hull is
   regaining HP the hull card swaps the amber wear line for a
   success-green mono `+96.0 HP/day · under repair — the workshop bills

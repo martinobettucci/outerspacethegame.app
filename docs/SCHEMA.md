@@ -208,3 +208,13 @@ documented down-path or an explicit "irreversible" statement
 - `ships.hull_hp / hull_wear_hp_per_day / hull_as_of` — HP de coque
   PARESSEUX (NULL = coque neuve ; plancher 1 HP, aucun bord).
 - `ships.shield_hot / shield_cold / shield_radio` — boucliers d'atelier.
+
+## 017_junk.sql (chunk AI)
+
+- `junk_fields` — un champ par CELLULE de 0,5 pc (UNIQUE cell_x, cell_y),
+  tonnage à décroissance exponentielle 10 %/j (amount_t + as_of, évalué à
+  la lecture), created_by (attribution L3 future).
+- `ships.junk_collector` — accessoire d'atelier L2.
+- `ships.dump_day (text) / dump_count` — quota 5 largages/jour réel
+  (jour UTC en TEXTE : une colonne date re-lue dérive selon la TZ).
+- `ships.last_junk_scoop` — cooldown du scoop (24 h-jeu).

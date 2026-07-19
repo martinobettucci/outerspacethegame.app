@@ -49,6 +49,13 @@ export interface Me {
   planets: { id: string; name: string }[];
 }
 
+export interface JunkFieldView {
+  id: string;
+  x: number;
+  y: number;
+  amountT: number;
+}
+
 export interface GalaxyBody {
   id: string;
   bodyType: 'planet' | 'star' | 'black_hole';
@@ -231,6 +238,7 @@ export interface ShipView {
   /** Coque (GB §27) : HP évalués, max, usure/jour (péage, plancher 1). */
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
+  junkCollector: boolean;
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
@@ -267,7 +275,11 @@ export const api = {
     call<{ playerId: string }>('POST', '/auth/login', input),
   logout: () => call<{ ok: true }>('POST', '/auth/logout'),
   me: () => call<Me>('GET', '/me'),
-  galaxy: () => call<{ bodies: GalaxyBody[] }>('GET', '/galaxy'),
+  galaxy: () =>
+    call<{ bodies: GalaxyBody[]; junkFields: JunkFieldView[] }>(
+      'GET',
+      '/galaxy',
+    ),
   planet: (id: string) => call<PlanetDetail>('GET', `/planets/${id}`),
   unlock: (planetId: string, node: TechNodeKey) =>
     call<{ ok: true }>('POST', `/planets/${planetId}/unlock`, { node }),
@@ -508,6 +520,21 @@ export const api = {
       perDay: number;
       census: { takenAt: string; totals: Record<string, number> } | null;
     }>('GET', '/census/latest'),
+  dump: (shipId: string, resource: string, tons: number) =>
+    call<{ dumped: number; sunk: boolean }>('POST', `/ships/${shipId}/dump`, {
+      resource,
+      tons,
+    }),
+  fitJunkCollector: (shipId: string) =>
+    call<{ cost: Record<string, number> }>(
+      'POST',
+      `/ships/${shipId}/junk-collector`,
+    ),
+  collectJunk: (shipId: string) =>
+    call<{ collected: number; fieldLeftT: number }>(
+      'POST',
+      `/ships/${shipId}/collect-junk`,
+    ),
   fitShield: (shipId: string, kind: 'hot' | 'cold' | 'radio') =>
     call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/shield`, {
       kind,

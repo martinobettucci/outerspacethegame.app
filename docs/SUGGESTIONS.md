@@ -20,7 +20,8 @@ Statuts : `proposé` · `retenu (chunk X)` · `livré (chunk X)` · `décliné`.
 | 2026-07-19 | Étoiles & récolte (harvest) — prochaine grosse brique P1 du backlog (GB §22, DG §2.1/§8.8) | livré (chunk AF — restent : dégâts d_safe avec l'usure de coque, junk, attribution L3) |
 | 2026-07-19 | Usure de coque & climate shields (ligne 107 — débloque les dégâts d_safe de la récolte et le poison-harvest) | livré (chunk AG — restent : poison-harvest dormant, réparation d'atelier, destruction 0 HP en P5) |
 | 2026-07-19 | Réparation d'atelier (« repair 5 %/h ×1/2/4 » — effet workshop déjà écrit dans le catalogue) : rendre l'usure réversible à quai | livré (chunk AH) |
-| 2026-07-19 | Junk & salvage (GB §22/§6 — junk collector 30 T/j, claim rig, épaves de supernova/combat, trous noirs comme puits) | proposé |
+| 2026-07-19 | Junk & salvage (GB §22/§6 — junk collector 30 T/j, claim rig, épaves de supernova/combat, trous noirs comme puits) | livré partiellement (chunk AI — champs/collecte/puits/épaves ; claim rig = chunk AJ proposé) |
+| 2026-07-19 | Claim rig & salvage des derelicts (25 steelL + 5 gold, 2 h de proximité — GB §6, DG §8.8) : rendre les épaves de survival-out réclamables | proposé |
 | 2026-07-19 | Panneau vaisseau : regrouper les fittings (rig + 3 boucliers, bientôt scanner/claim) dans une section « Fittings » repliable — la pile de boutons dépasse l'écran sur les coques à quai | proposé |
 | 2026-07-19 | Texturation UI (panneaux/cartes/rail/voile) via gpt-image-2 | livré (chunk AA) |
 | 2026-07-19 | Textures de sol générées (OPENAI_KEY fournie par le responsable dans .env local) intégrées à la dalle organique du chunk X | livré (chunk Z — genSoil.mjs, 4 climats §16) |

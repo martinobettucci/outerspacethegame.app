@@ -2734,3 +2734,56 @@ n'avait pas de mécanique.
   détail planète) ; capture rp-01 observée.
 - Suites complètes après synchro : shared 139, unit 32, intégration
   **242/242**, **E2E 30/30 (12,4 min)**.
+
+## 2026-07-19 — Chunk AI : champs de junk (GB §22, DG §10.4)
+
+**Problème.** Lignes 105–106 : le junk n'existait pas — ni comme arme de
+déni de zone, ni comme matière de récupération ; les trous noirs
+n'avaient pas leur rôle canon de puits, et les épaves de supernova
+disparaissaient sans trace (annoncé au chunk AF).
+
+### Canon appliqué
+
+- CELLULE de 0,5 pc, un champ max, fusion des apports, décroissance
+  EXPONENTIELLE 10 %/j (0,9^jours évalué à la lecture — pas de taux
+  linéaire, pas de bord : le champ se dissipe seul).
+- Largage : 5/jour RÉEL/coque [TUNE], interdit à < 50 pc de TOUT starter
+  (anti-grief), trou noir ≤ 5 pc = puits sans conséquence.
+- Dégâts de présence 15 HP/j par 30 T [TUNE-v1 interp du « hazard 15 HP
+  per 30 T » — appliqué en taux à qui S'ATTARDE ; la traversée de
+  transit attend l'interception P5, annoncé] — aucun bouclier n'atténue.
+- Épaves de supernova → junk : carcasse 10/20/40 T par taille [TUNE-v1]
+  + fret répandu, fusionnés dans la cellule de la position interpolée.
+- Collecte : junk collector (atelier L2, 15 steelL + 5 silicon), UN
+  scoop de 30 T par 24 h-jeu [TUNE-v1 — discrétisation annoncée du
+  « 30 T/day »], borné par les conteneurs libres.
+- Le junk est une RESSOURCE : nouveau tier « salvage » (31e entrée du
+  catalogue — les 30 fongibles canon restent intacts), destinée au
+  recycleur (recette P4).
+
+### Leçon de la fournée : les colonnes date et la TZ
+
+Le quota journalier stockait le jour dans une colonne `date` ; node-pg
+la relit en Date à minuit LOCAL → toISOString() dérive d'un jour selon
+la TZ du process (Paris été : J−1) → le compteur se réinitialisait à
+CHAQUE largage. Correctif : jour UTC en TEXTE. Verrouillé par le test de
+quota.
+
+### Vérifications
+
+- Shared 143/143 (junk.test.ts : cellule, décroissance, hasard, quotas).
+- Intégration junk.test.ts **12/12** : zone starter refusée, naissance/
+  fusion matérialisée (3×0,9+2=4,7), quota 5 puis refus, §10, puits du
+  trou noir, usure de présence −tonnage×0,5, collector L2+coût, scoop
+  min(30, champ, conteneurs)=3 + cooldown + soute pleine, épave de
+  supernova 15 T (carcasse+fret), visibilité par poche.
+- E2E junk.spec.ts : atelier L2 réel, collecteur, largage UI (champ
+  2,0 T + hasard −1,0 HP/j + usure affichés), collecte (junk 2,0 T en
+  soute, champ dissipé, usure éteinte, /galaxy propre).
+- Complétude découverte PAR la suite : le tableau census n'itérait que
+  4 tiers — la 31e ressource (salvage) n'était jamais rendue ; TIER_ORDER
+  complété + le spec census polle désormais l'instantané du catalogue
+  COURANT (l'ancien « latest » d'avant restart a 30 clés).
+- Suites après synchro : shared 143, unit 32, intégration **254/254**,
+  E2E **31 specs verts** (30/31 au run complet de 13,1 min — census
+  réparé puis validé solo avec junk ; les 29 autres inchangés).

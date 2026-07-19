@@ -22,7 +22,7 @@ import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import '../styles/operations.css';
 
-const TIER_ORDER: ResourceTier[] = ['basic', 'crystal', 'refined', 'propulsion'];
+const TIER_ORDER: ResourceTier[] = ['basic', 'crystal', 'refined', 'propulsion', 'salvage'];
 
 type CensusState =
   | { kind: 'loading' }

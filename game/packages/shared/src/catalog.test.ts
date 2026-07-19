@@ -29,12 +29,12 @@ import { ALL_UNIT_KEYS } from './units.js';
 import { ARCHETYPES } from './types.js';
 
 describe('complétude des catalogues (GB §24/§25, DG §5.1/§8.1/§10.1)', () => {
-  it('30 ressources : 12 basiques + 4 cristaux + 11 raffinées + 3 propulsions', () => {
+  it('31 ressources : 12 basiques + 4 cristaux + 11 raffinées + 3 propulsions + 1 salvage', () => {
     expect(BASIC_RESOURCES).toHaveLength(12);
     expect(CRYSTAL_RESOURCES).toHaveLength(4);
     expect(REFINED_RESOURCES).toHaveLength(11);
     expect(PROPULSION_RESOURCES).toHaveLength(3);
-    expect(ALL_RESOURCE_IDS).toHaveLength(30);
+    expect(ALL_RESOURCE_IDS).toHaveLength(31);
   });
 
   it('28 bâtiments, tous avec coûts, niveaux et effets', () => {

@@ -34,7 +34,7 @@ import {
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
 } from '@atg/shared';
-import { api, type ApiError, type GalaxyBody, type ShipView } from '../api.js';
+import { api, type ApiError, type GalaxyBody, type JunkFieldView, type ShipView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
@@ -129,6 +129,9 @@ export function GalaxyMap() {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
+  const [junkFields, setJunkFields] = useState<JunkFieldView[]>([]);
+  const [dumpRes, setDumpRes] = useState('');
+  const [dumpTons, setDumpTons] = useState('1');
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<GalaxyBody | null>(null);
   const [ships, setShips] = useState<ShipView[]>([]);
@@ -331,6 +334,11 @@ export function GalaxyMap() {
             current && JSON.stringify(current) === JSON.stringify(r.bodies)
               ? current
               : r.bodies,
+          );
+          setJunkFields((current) =>
+            JSON.stringify(current) === JSON.stringify(r.junkFields ?? [])
+              ? current
+              : (r.junkFields ?? []),
           );
         })
         .catch(() => !cancelled && setError(true));
@@ -1387,6 +1395,79 @@ export function GalaxyMap() {
                   </span>
                 ))
               )}
+              {['hovering', 'idle', 'stranded'].includes(selectedShip.status) &&
+                Object.keys(selectedShip.cargo).length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select
+                      aria-label="Dump resource"
+                      value={dumpRes}
+                      onChange={(e) => setDumpRes(e.target.value)}
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                        maxWidth: 110,
+                      }}
+                    >
+                      {Object.keys(selectedShip.cargo).map((r) => (
+                        <option key={r} value={r}>
+                          {r.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      aria-label="Dump tons"
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      value={dumpTons}
+                      onChange={(e) => setDumpTons(e.target.value)}
+                      style={{
+                        width: 58,
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        api
+                          .dump(
+                            selectedShip.id,
+                            dumpRes || Object.keys(selectedShip.cargo)[0]!,
+                            Number(dumpTons),
+                          )
+                          .then((r) => {
+                            setNotice(r.sunk ? t.galaxy.dumpedSunk : t.galaxy.dumped);
+                            void refreshShips();
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.dumpRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.galaxy.dump}
+                    </button>
+                  </div>
+                )}
               {selectedShip.status === 'docked' &&
                 selectedShip.dockedBodyId &&
                 bodies.some(
@@ -2295,6 +2376,63 @@ export function GalaxyMap() {
               <ArrowDownToLine size={14} aria-hidden /> {t.galaxy.land}
             </button>
           )}
+          {(() => {
+            const cellOf = (v: number) => Math.floor(v / 0.5);
+            const field = junkFields.find(
+              (f) =>
+                cellOf(f.x) === cellOf(selectedShip.x) &&
+                cellOf(f.y) === cellOf(selectedShip.y),
+            );
+            if (!field || !['hovering', 'idle', 'stranded'].includes(selectedShip.status))
+              return null;
+            return (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 6,
+                  background: 'var(--bg-overlay)',
+                  borderRadius: 'var(--radius-card-sm, 10px)',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                }}
+              >
+                <span style={{ color: 'var(--warning-400, #D9CF4A)' }}>
+                  {t.galaxy.junkFieldHere} — {field.amountT.toFixed(1)} T ·{' '}
+                  {t.galaxy.junkHazard} −{(field.amountT * 0.5).toFixed(1)} HP/day
+                </span>
+                {selectedShip.junkCollector && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      api
+                        .collectJunk(selectedShip.id)
+                        .then(() => {
+                          setNotice(t.galaxy.junkCollected);
+                          void refreshShips();
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(
+                            `${t.galaxy.collectRefused} — ${err.message ?? err.error}`,
+                          ),
+                        )
+                    }
+                    style={{
+                      background: 'var(--success-500)',
+                      color: '#0D0D0D',
+                      border: 'none',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      justifySelf: 'start',
+                    }}
+                  >
+                    {t.galaxy.collectJunk}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
           {selectedShip.status === 'docked' && (
             <button
               type="button"
@@ -2587,6 +2725,44 @@ export function GalaxyMap() {
                   <ShieldIcon size={14} aria-hidden /> {label}
                 </button>
               ))}
+          {selectedShip.status === 'docked' &&
+            !selectedShip.junkCollector &&
+            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
+            selectedShip.dockedBodyId &&
+            bodies.some(
+              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+            ) && (
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .fitJunkCollector(selectedShip.id)
+                    .then(() => {
+                      setNotice(t.galaxy.collectorFitted);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.collectorRefused} — ${err.message ?? err.error}`,
+                      ),
+                    )
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Package size={14} aria-hidden /> {t.galaxy.fitJunkCollector}
+              </button>
+            )}
           {selectedShip.status === 'idle' &&
             selectedShip.harvestRig &&
             !selectedShip.harvestingStarId &&
