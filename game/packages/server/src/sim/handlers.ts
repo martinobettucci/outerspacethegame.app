@@ -18,12 +18,17 @@ import {
   illnessDeathsPerDay,
   illnessDeltaV2,
   isAmmSlot,
+  jobsOptimal,
   JUNK_CARCASS_T,
   NATALITY_BY_RESIDENTIAL,
   overcapDeathsPerDay,
   popCap,
   settlerLosses,
   settlerTripRisk,
+  UNEMP_GRACE_DAYS,
+  UNEMP_TOLERANCE,
+  unemploymentDeathsPerDay,
+  unemploymentRate,
   type Pyramid,
 } from '@atg/shared';
 import type pg from 'pg';
@@ -244,15 +249,16 @@ export const popDaily: EventHandler = async (client, event) => {
       .filter((b) => (b.key as string) === 'clinic' && b.status === 'active')
       .map((b) => b.level),
   );
+  // Ē v2 (chunk BB) : TOUS les bâtiments actifs emploient — moyenne
+  // pondérée par le staff sur l'optimum dérivant (jobsOptimal).
   let staffSum = 0;
   let effSum = 0;
-  for (const ind of snap.rates.industries) {
-    const st = snap.industries.find((i) => i.buildingId === ind.buildingId);
-    const staff = st?.workforce ?? 0;
-    if (staff > 0) {
-      staffSum += staff;
-      effSum += efficiency(ind.workforceU) * staff;
-    }
+  for (const b of snap.buildings) {
+    if (b.status !== 'active' || b.workforce <= 0) continue;
+    const opt = jobsOptimal(b.key, b.level, snap.population);
+    if (opt <= 0) continue;
+    staffSum += b.workforce;
+    effSum += efficiency(b.workforce / opt) * b.workforce;
   }
   const meanEff = staffSum > 0 ? effSum / staffSum : 0.7;
   const rateOf = snap.rates.stockRates as Record<string, number | undefined>;
@@ -283,6 +289,29 @@ export const popDaily: EventHandler = async (client, event) => {
     pyr.actives *
     growthModulator(meanEff, rhos);
   pyr.children += births;
+
+  // 2b. Le chômage tue (chunk BB, DG §3.2-v2 g) : τ sur les ACTIFS,
+  // tolérance 7 %, grâce de 3 jours CONSÉCUTIFS — inerte pendant la
+  // grâce de colonie de 14 j (starter compris, colonized_at) ; puis
+  // morts γ(τ−7 %)×P frappant toute la pyramide (le staff est décrémenté
+  // en fin de journée avec TOUTES les morts — vagues et momentum).
+  const tau = unemploymentRate(staffSum, pyr.actives);
+  const inColonyGrace =
+    snap.colonizedAtMs !== null &&
+    nowMs < snap.colonizedAtMs + 14 * 86_400_000;
+  let unempOverDays = snap.unempOverDays;
+  let unempDeaths = 0;
+  if (!inColonyGrace && tau > UNEMP_TOLERANCE) {
+    unempOverDays += 1;
+    if (unempOverDays >= UNEMP_GRACE_DAYS) {
+      const popHere = pyr.children + pyr.actives + pyr.seniors;
+      unempDeaths = unemploymentDeathsPerDay(tau, popHere);
+      addProportionalDeaths(counters, pyr, unempDeaths);
+      pyr = applyDeaths(pyr, unempDeaths);
+    }
+  } else if (tau <= UNEMP_TOLERANCE) {
+    unempOverDays = 0;
+  }
 
   // 3. Maladie v2 (parabole de sur-cap, clinique) + morts.
   const popNow = pyr.children + pyr.actives + pyr.seniors;
@@ -357,7 +386,7 @@ export const popDaily: EventHandler = async (client, event) => {
   await client.query(
     `UPDATE bodies SET population = $2, pop_children = $3, pop_seniors = $4,
             illness = $5, clock_deadlines = $6, demo_counters = $7,
-            pop_as_of = to_timestamp($8 / 1000.0)
+            unemp_over_days = $8, pop_as_of = to_timestamp($9 / 1000.0)
      WHERE id = $1`,
     [
       bodyId,
@@ -367,9 +396,21 @@ export const popDaily: EventHandler = async (client, event) => {
       newIllness,
       JSON.stringify(clocks),
       JSON.stringify(counters),
+      unempOverDays,
       nowMs,
     ],
   );
+  // Les morts frappent AUSSI les employés (canon) : le staff de chaque
+  // bâtiment suit la proportion d'actifs disparus dans la journée.
+  const activesBefore = snap.pyramid.actives + 1e-9;
+  const activesFrac = Math.min(1, Math.max(0, pyr.actives / activesBefore));
+  if (activesFrac < 1) {
+    await client.query(
+      `UPDATE buildings SET workforce = floor(workforce * $2::float8)::int
+       WHERE body_id = $1 AND workforce > 0`,
+      [bodyId, activesFrac],
+    );
+  }
   // La population a changé ⇒ E_planet et la consommation aussi : rebase.
   await recomputePlanetRates(client, bodyId, nowMs);
   // pop_daily suivant (recomputePlanetRates ne le crée que s'il manque —

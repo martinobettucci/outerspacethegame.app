@@ -342,6 +342,57 @@ describe('boucle colonie', () => {
     ).toBeGreaterThan(800);
   });
 
+  it('chômage v2 (chunk BB) : grâce épuisée → morts γ(τ−7 %)×P et staff décrémenté', async () => {
+    const t0 = Date.now();
+    // Monde HORS grâce de colonie (colonisé il y a 20 j), grâce de
+    // chômage déjà consommée (unemp_over_days = 3), un seul emploi :
+    // mine L1 staffée 50 → τ = 1 − 50/655 ≈ 0,924.
+    const { rows: b } = await pool.query<{ id: string }>(
+      `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+          quality, tiles, owner_id, population, pop_children, pop_seniors,
+          unemp_over_days, colonized_at, pop_as_of)
+       SELECT 'planet', 'Idleworld', 900400, 900400, $1, 's', 'temperate',
+              'F', 8, p.id, 1200, 218, 327, 3,
+              to_timestamp(($2::bigint - 20 * 86400000::bigint) / 1000.0),
+              to_timestamp($2 / 1000.0)
+       FROM players p LIMIT 1 RETURNING id`,
+      [`idle-${run}`, t0],
+    );
+    const id = b[0]!.id;
+    await pool.query(
+      `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+       VALUES ($1, 'mine', 1, 0, 'active', 50)`,
+      [id],
+    );
+    for (const [res, qty] of [
+      ['food_1', 200],
+      ['water', 200],
+    ] as const) {
+      await pool.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+        [id, res, qty, t0],
+      );
+    }
+    await enqueue(pool, 'pop_daily', new Date(t0 + DAY), { bodyId: id });
+    await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
+
+    const { rows: after } = await pool.query(
+      `SELECT population, unemp_over_days, demo_counters,
+              (SELECT workforce FROM buildings WHERE body_id = $1 LIMIT 1) AS wf
+       FROM bodies WHERE id = $1`,
+      [id],
+    );
+    // Morts séniles naturelles (S/30 ≈ 10,9, pas de natalité) + morts de
+    // chômage γ(τ−0,07) × P ≈ 20,4 → total ≈ −31,3.
+    expect(Number(after[0].population)).toBeLessThan(1200 - 25);
+    expect(Number(after[0].population)).toBeGreaterThan(1200 - 40);
+    expect(Number(after[0].unemp_over_days)).toBeGreaterThanOrEqual(4);
+    // Les morts frappent AUSSI les employés : le staff a été décrémenté.
+    expect(Number(after[0].wf)).toBeLessThan(50);
+    expect(Number(after[0].demo_counters.deaths.actives)).toBeGreaterThan(5);
+  });
+
   it("oxygène v2 : climat hostile à sec = mort instantanée ; temperate = ambiant", async () => {
     const t0 = Date.now();
     const mk = async (name: string, climate: string) => {

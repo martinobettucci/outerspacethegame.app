@@ -18,13 +18,13 @@
 import {
   efficiency,
   FOOD_RESOURCES,
+  jobsOptimal,
   MEDICINE_RESOURCES,
   OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   RECIPES,
   storageBrake,
   TRACE_MINING_T_PER_DAY,
-  WORKFORCE_OPTIMAL_BY_LEVEL,
   type RecipeId,
   type ResourceId,
 } from '@atg/shared';
@@ -138,8 +138,10 @@ export function computeRates(input: RatesInput): RatesResult {
   // 1. Potentiel de chaque industrie.
   const flows: Flow[] = [];
   for (const ind of input.industries) {
-    const optimal = WORKFORCE_OPTIMAL_BY_LEVEL[ind.level - 1]!;
-    const workforceU = ind.workforce / optimal;
+    // v2 (chunk BB) : l'optimum dérive avec la population totale
+    // (DG §3.2-v2 e — le « point qui shifte »).
+    const optimal = jobsOptimal(ind.key, ind.level, input.population);
+    const workforceU = optimal > 0 ? ind.workforce / optimal : 0;
     const eWork = efficiency(workforceU);
     const runFrac = Math.min(100, Math.max(0, ind.runPct)) / 100;
 

@@ -1,3 +1,4 @@
+import { STABLE_PYRAMID } from '@atg/shared';
 import { setAutoTrade } from '../services/hoverTrade.js';
 import {
   buildStargate,
@@ -734,6 +735,33 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   // Instrumentation de TEST (§15) — grants de ressources, propriétaire
   // seulement, et UNIQUEMENT si ATG_TEST_ENDPOINTS=1 (jamais en prod).
   if (deps.config.ATG_TEST_ENDPOINTS) {
+    // §15 v2 : mûrir la population d'un monde possédé (la natalité réelle
+    // prendrait ~J+40 — chemin déterministe de test, jamais en prod).
+    app.post('/test/grant-population', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({
+          planetId: z.string().uuid(),
+          total: z.number().positive().max(100_000),
+        })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      const { planetId, total } = parsed.data;
+      const { rows } = await deps.pool.query(
+        `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
+        [planetId, player.id],
+      );
+      if (!rows[0]) return reply.status(403).send({ error: 'forbidden' });
+      const children = Math.round(total * STABLE_PYRAMID.children);
+      const seniors = Math.round(total * STABLE_PYRAMID.seniors);
+      await deps.pool.query(
+        `UPDATE bodies SET population = $2, pop_children = $3,
+            pop_seniors = $4, pop_as_of = now() WHERE id = $1`,
+        [planetId, total, children, seniors],
+      );
+      return { ok: true };
+    });
+
     app.post('/test/grant', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z

@@ -77,6 +77,15 @@ beforeAll(async () => {
   owner = a.playerId;
   starter = a.spawn.starterPlanetId;
   intruder = b.playerId;
+  // v2 : le starter naît à 350 (sous sa capacité d'emploi) — la fixture
+  // le mûrit à 1 200 (pyramide stationnaire) pour pouvoir embarquer des
+  // cohortes de 300 (chemin déterministe §15 ; dans le vrai jeu, la
+  // natalité fait ce travail en ~J+40).
+  await pool.query(
+    `UPDATE bodies SET population = 1200, pop_children = 218,
+        pop_seniors = 327 WHERE id = $1`,
+    [starter],
+  );
   // Cible sauvage DÉTERMINISTE : un wild de la poche, climat forcé non-
   // poison et tuiles garanties (le roll climatique par run rendrait le
   // test aléatoire ; l'éligibilité poison est testée séparément).

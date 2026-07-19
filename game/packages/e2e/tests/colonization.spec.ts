@@ -76,6 +76,12 @@ test('colonisation : de la première colonie à la deuxième planète', async ({
     });
     expect(g.ok()).toBe(true);
   }
+  // v2 : le starter naît à 350 (191 actifs) — embarquer 300 settlers
+  // exige un monde mûri (§15 ; la natalité réelle y arrive vers J+40).
+  const gp = await page.request.post('/api/test/grant-population', {
+    data: { planetId, total: 1200 },
+  });
+  expect(gp.ok()).toBe(true);
 
   // 3. Chaîne d'infrastructures : depot→spaceport→shipyard→workshop (L2).
   const rail = page.getByRole('navigation', { name: 'Main' });

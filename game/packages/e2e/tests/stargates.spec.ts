@@ -132,6 +132,14 @@ test('stargate : chantier au yard, traversée instantanée dispersée', async ({
     data: { role: 'pilot', rarity: 'rare' },
   });
   expect(gn.ok()).toBe(true);
+  // v2 : mûrir le starter (350 → 1 200) pour embarquer 300 settlers (§15).
+  expect(
+    (
+      await api.post('/api/test/grant-population', {
+        data: { planetId, total: 1200 },
+      })
+    ).ok(),
+  ).toBe(true);
   const npcs = (await api.get('/api/npcs').then((r) => r.json())) as {
     npcs: { id: string; role: string; boundHostId: string | null }[];
   };

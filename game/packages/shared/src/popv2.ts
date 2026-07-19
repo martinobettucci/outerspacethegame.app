@@ -199,3 +199,98 @@ export function applyDeaths(pyr: Pyramid, deaths: number): Pyramid {
     seniors: pyr.seniors * (1 - frac),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* §e — Emploi universel (chunk BB)                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Postes de base par type de bâtiment — TOUS les bâtiments emploient
+ * (canon GB §10 v2). Table EXHAUSTIVE (règle de complétude) : 28 types
+ * du catalogue + la clinique (chunk BC). [TUNE] DG §3.2-v2 e.
+ */
+export const BASE_JOBS: Record<string, number> = {
+  telescope: 10,
+  probe_pad: 15,
+  depot: 10,
+  warehouse: 20,
+  mine: 50,
+  farm: 50,
+  waterworks: 50,
+  smelter: 50,
+  crystal_extractor: 50,
+  refinery: 50,
+  fuelcell_plant: 50,
+  spaceport: 30,
+  workshop: 40,
+  market: 30,
+  residential: 15,
+  lab: 40,
+  obs_station: 30,
+  shipyard: 60,
+  military_district: 60,
+  weapon_foundry: 60,
+  research_center: 50,
+  diplomatic_district: 40,
+  casino: 50,
+  commerce_district: 50,
+  faction_hq: 40,
+  stargate_yard: 80,
+  terraformer: 60,
+  artificial_planet_yard: 100,
+  clinic: 30,
+};
+
+/** Multiplicateur de postes par niveau (absorber plus ET mieux). [TUNE] */
+export const JOBS_LEVEL_MULT = [1, 2.4, 5] as const;
+
+/**
+ * popScale : l'optimum de CHAQUE bâtiment dérive avec la population
+ * totale — le cœur du « point qui shifte » (érosion par négligence).
+ * [TUNE — Round 9 : plancher 1,0, sinon les petits mondes saturaient à
+ * J+3 au lieu de J+21.]
+ */
+export const POP_SCALE_REF = 2_000;
+export function popScale(totalPop: number): number {
+  const raw = Math.sqrt(Math.max(totalPop, 1) / POP_SCALE_REF);
+  return Math.min(2, Math.max(1, raw));
+}
+
+/** Postes optimaux d'un bâtiment (type × niveau × population). */
+export function jobsOptimal(
+  buildingKey: string,
+  level: 1 | 2 | 3,
+  totalPop: number,
+): number {
+  const base = BASE_JOBS[buildingKey] ?? 0;
+  return base * (JOBS_LEVEL_MULT[level - 1] ?? 1) * popScale(totalPop);
+}
+
+/* ------------------------------------------------------------------ */
+/* §g — Le chômage tue (chunk BB)                                      */
+/* ------------------------------------------------------------------ */
+
+/** Tolérance de chômage sans effet (canon responsable : 7 %). */
+export const UNEMP_TOLERANCE = 0.07;
+/** Grâce : jours CONSÉCUTIFS au-dessus de la tolérance avant morts. [TUNE] */
+export const UNEMP_GRACE_DAYS = 3;
+/** γ de mortalité : morts/j = γ × (τ − tolérance) × P. [TUNE] */
+export const UNEMP_GAMMA = 0.02;
+
+/** Taux de chômage sur les ACTIFS seuls. */
+export function unemploymentRate(staffed: number, actives: number): number {
+  if (actives <= 0) return 0;
+  return Math.max(0, 1 - staffed / actives);
+}
+
+/** Morts quotidiennes de chômage une fois la grâce épuisée. */
+export function unemploymentDeathsPerDay(tau: number, pop: number): number {
+  return UNEMP_GAMMA * Math.max(0, tau - UNEMP_TOLERANCE) * pop;
+}
+
+/**
+ * Population de départ du starter. [TUNE — Round 9 : 650 → 350, le
+ * starter doit naître SOUS sa capacité d'emploi précoce (saturation
+ * J+21, ~15 % de pertes de grâce — « la vie du colonisateur »).]
+ */
+export const STARTER_POP = 350;

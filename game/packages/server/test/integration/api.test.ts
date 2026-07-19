@@ -133,7 +133,9 @@ describe('planète : lecture et autorisations (CLAUDE.md §10)', () => {
     // Vaisseau personnel docké ⇒ la politique du joueur gouverne.
     expect(p.tech.governingArchetypes).toContain('industrialist');
     expect(p.storageCapT).toBeGreaterThanOrEqual(800);
-    expect(p.planetEfficiency).toBeGreaterThan(0.9);
+    // v2 : planetEfficiency = Ē staff-pondéré (neutre 0,7 sans emploi).
+    expect(p.planetEfficiency).toBeCloseTo(0.7, 6);
+    expect(p.pyramid.actives).toBeGreaterThan(0);
   });
 
   it("un AUTRE joueur reçoit 403 par requête directe (contournement d'UI)", async () => {

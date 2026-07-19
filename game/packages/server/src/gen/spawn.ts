@@ -24,6 +24,7 @@ import {
   popCap,
   SeededStream,
   STABLE_PYRAMID,
+  STARTER_POP,
   STARTER_PRE_UNLOCKED,
   type People,
   type ResourceBundle,
@@ -45,7 +46,7 @@ export const STARTER_ACCOUNT_BIND_DAYS = 45;
  * exactement 0,6 × cap d'une small-F ; généralisé aux starters medium
  * [TUNE interp, JOURNAL session 30].
  */
-export const STARTER_POP_UTILIZATION = 0.6;
+export const STARTER_POP_UTILIZATION = 0.6; // v1 — remplacé par STARTER_POP (v2)
 export const STARTER_FUEL_U = 150;
 
 /**
@@ -204,9 +205,9 @@ export async function spawnStarterSystem(
   // 2. Le starter au centre de la poche.
   const starterSeed = `${opts.universeSeed}:starter:${opts.playerKey}`;
   const starter = rollStarterPlanet(starterSeed);
-  const starterPop = Math.round(
-    STARTER_POP_UTILIZATION * popCap(starter.size, starter.quality),
-  );
+  // v2 (chunk BB, DG §3.2-v2 l — Round 9) : le starter naît SOUS sa
+  // capacité d'emploi précoce, à la pyramide stationnaire.
+  const starterPop = STARTER_POP;
   const boundUntil = new Date(
     now + STARTER_ACCOUNT_BIND_DAYS * GAME_DAY_SECONDS * 1000,
   );

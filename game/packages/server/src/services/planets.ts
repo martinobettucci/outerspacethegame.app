@@ -47,8 +47,8 @@ import {
   TECH_NODES,
   type TechNodeKey,
   vehicleCapacity,
-  WORKFORCE_ASSIGNABLE_SHARE,
-  WORKFORCE_OPTIMAL_BY_LEVEL,
+  GROWTH_EFF_NEUTRAL,
+  jobsOptimal,
 } from '@atg/shared';
 import type pg from 'pg';
 import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
@@ -406,14 +406,13 @@ export async function planetDetail(
       clockDeadlines: snap.clockDeadlines,
       popCap: cap,
       illness: snap.illness,
-      planetEfficiency: efficiency(snap.population / cap),
+      // v2 : Ē staff-pondéré des bâtiments actifs (E_planet supprimé).
+      planetEfficiency: meanBuildingEfficiency(snap),
       storageUsedT: Math.round(storageUsed * 100) / 100,
       storageCapT: snap.storageCapT,
       storageU: Math.round(snap.rates.storageU * 1000) / 1000,
       workforceAssigned,
-      workforceAssignable: Math.floor(
-        snap.population * WORKFORCE_ASSIGNABLE_SHARE,
-      ),
+      workforceAssignable: Math.floor(snap.pyramid.actives),
       colonizedAt: body.colonized_at
         ? new Date(body.colonized_at).toISOString()
         : null,
@@ -702,6 +701,26 @@ async function validateRecipe(
 }
 
 /** Place un bâtiment (GB §18 phase 2) : coût + tuile + chantier + événement. */
+/**
+ * Ē v2 : efficacité moyenne pondérée par le staff des bâtiments ACTIFS
+ * (DG §3.2-v2 d/f) — neutre 0,7 quand personne n'emploie.
+ */
+function meanBuildingEfficiency(snap: {
+  population: number;
+  buildings: { key: string; level: 1 | 2 | 3; status: string; workforce: number }[];
+}): number {
+  let staff = 0;
+  let acc = 0;
+  for (const b of snap.buildings) {
+    if (b.status !== 'active' || b.workforce <= 0) continue;
+    const opt = jobsOptimal(b.key, b.level, snap.population);
+    if (opt <= 0) continue;
+    acc += efficiency(b.workforce / opt) * b.workforce;
+    staff += b.workforce;
+  }
+  return staff > 0 ? acc / staff : GROWTH_EFF_NEUTRAL;
+}
+
 export async function placeBuilding(
   pool: pg.Pool,
   playerId: string,
@@ -771,14 +790,25 @@ export async function placeBuilding(
         'SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings WHERE body_id = $1',
         [bodyId],
       );
-      const assignable = Math.floor(
-        (planet.population ?? 0) * WORKFORCE_ASSIGNABLE_SHARE,
+      // v2 (chunk BB) : assignable = les ACTIFS ; défaut = 0,7 × optimum
+      // du bâtiment à la population courante (DG §3.2-v2 e).
+      const { rows: pyrRow } = await client.query(
+        `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
+        [bodyId],
+      );
+      const actives = Math.max(
+        0,
+        Number(pyrRow[0]?.population ?? 0) -
+          Number(pyrRow[0]?.pop_children ?? 0) -
+          Number(pyrRow[0]?.pop_seniors ?? 0),
       );
       workforce = Math.max(
         0,
         Math.min(
-          Math.round(0.7 * WORKFORCE_OPTIMAL_BY_LEVEL[0]),
-          assignable - wf[0].assigned,
+          Math.round(
+            0.7 * jobsOptimal(buildingKey, 1, Number(pyrRow[0]?.population ?? 0)),
+          ),
+          Math.floor(actives) - wf[0].assigned,
         ),
       );
     }
@@ -1031,13 +1061,23 @@ export async function setBuildingSettings(
        WHERE body_id = $1 AND id <> $2`,
       [bodyId, buildingId],
     );
+    // v2 (chunk BB) : la main-d'œuvre assignable = les ACTIFS seuls.
+    const { rows: pyrRow } = await client.query(
+      `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
+      [bodyId],
+    );
     const assignable = Math.floor(
-      (planet.population ?? 0) * WORKFORCE_ASSIGNABLE_SHARE,
+      Math.max(
+        0,
+        Number(pyrRow[0]?.population ?? 0) -
+          Number(pyrRow[0]?.pop_children ?? 0) -
+          Number(pyrRow[0]?.pop_seniors ?? 0),
+      ),
     );
     if (wf[0].assigned + workforce > assignable) {
       throw new CommandError(
         'workforce_invalid',
-        `Workforce assignable dépassée (${wf[0].assigned + workforce}/${assignable} — max 60 % de la population)`,
+        `Workforce assignable dépassée (${wf[0].assigned + workforce}/${assignable} — actifs seulement)`,
       );
     }
     await client.query(

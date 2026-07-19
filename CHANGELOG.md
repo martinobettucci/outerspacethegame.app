@@ -4,6 +4,22 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Population v2 — emploi universel & le chômage tue (chunk BB — DG
+  §3.2-v2 e/f/g, Round 9)** : TOUS les bâtiments emploient (table
+  BASE_JOBS exhaustive, 28 types + clinique) sur un optimum qui DÉRIVE
+  avec la population — jobsOptimal = base × [1/2,4/5] ×
+  clamp(√(P/2000), 1, 2) : négligence = érosion (« point qui shifte »).
+  **E_planet est SUPPRIMÉ** (planetMultiplier = G ; planetEfficiency
+  des vues = Ē staff-pondéré) ; la main-d'œuvre assignable = les ACTIFS
+  (fin du 60 % × pop). Starter à 350 habitants (pyramide stationnaire —
+  naître SOUS sa capacité d'emploi, Round 9). Mortalité de chômage :
+  tolérance 7 %, grâce 3 j consécutifs (migration 023), inerte pendant
+  la grâce de colonie 14 j ; puis morts γ(τ−7 %)×P frappant toute la
+  pyramide ET décrémentant le staff de chaque bâtiment (vagues,
+  momentum). Embarquer des settlers prélève des actifs. Interp annoncée
+  [TUNE-v1] : la FONCTION des bâtiments non-industriels reste binaire
+  (active/inactive) — le gating fonctionnel par staffing viendra.
+  Instrumentation §15 : /test/grant-population (mûrir un monde).
 - **Population v2 — cœur démographique (chunk BA — DG §3.2-v2, GB §10
   v2, Round 9 / guide v0.10)** : la population devient TROIS ÂGES
   (enfants —20 j→ actifs —60 j→ seniors —~30 j→ †, pyramide stationnaire

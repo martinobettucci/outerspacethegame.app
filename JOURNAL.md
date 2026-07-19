@@ -3217,3 +3217,41 @@ emploi + E_planet† + starter 350 + chômage d'un bloc.
   reste impossible à l'échelle réelle — 1 jour = 1 jour — précédent
   documenté ligne pop sim du backlog ; la preuve UI arrive avec la
   pyramide/alarmes du chunk BC).
+
+## 2026-07-19 — Chunk BB : emploi universel, E_planet supprimé, le chômage tue
+
+Le bloc indissociable identifié au chunk BA, livré d'une pièce :
+
+- **Emploi universel** : table BASE_JOBS EXHAUSTIVE (28 bâtiments +
+  clinique), jobsOptimal = base × [1/2,4/5] × popScale(P) avec
+  popScale = clamp(√(P/2000), 1, 2) — le « point qui shifte ». Les
+  industries produisent sur CET optimum (le 50/120/250 historique est
+  préservé à popScale = 1) ; les autres bâtiments emploient pour
+  l'économie démographique (postes, Ē, natalité) mais leur FONCTION
+  reste binaire active/inactive [TUNE-v1 interp — le gating fonctionnel
+  par staffing est un raffinement futur, annoncé].
+- **E_planet SUPPRIMÉ** : planetMultiplier = G seul ;
+  planetEfficiency (vues) = Ē staff-pondéré (neutre 0,7) ;
+  workforceAssignable = les ACTIFS (l'ancien 60 % × pop est retiré,
+  remplacé par la démographie réelle ≈ 55 %).
+- **Starter 350** à la pyramide stationnaire (Round 9) ; les fixtures
+  de test qui embarquaient 300 settlers « mûrissent » leurs mondes via
+  /test/grant-population (§15 — la natalité réelle y arrive vers J+40).
+- **Le chômage tue** : τ sur les actifs, tolérance 7 %, grâce 3 j
+  consécutifs (colonne unemp_over_days, migration 023), INERTE pendant
+  la grâce de colonie 14 j (starter compris) ; morts γ(τ−7 %)×P
+  frappant toute la pyramide ET décrémentant le staff de chaque
+  bâtiment (la vague ampute l'outil de production — momentum).
+- Embarquement de settlers : prélève des ACTIFS, garde « les actifs
+  restants couvrent la workforce assignée ».
+
+Leçons : paramètre SQL dans une multiplication d'entier → cast ::float8
+explicite (le floor(workforce × $2) inférait $2 en integer) ; les morts
+séniles naturelles s'additionnent aux morts de chômage dans les bornes
+de test (−10,9 − 20,4).
+
+Vérifications : shared 171/171 (+4 : BASE_JOBS exhaustif vs catalogue,
+popScale planchers, jobsOptimal dérivant, γ), intégration 286/286
+(+ chômage v2 : grâce épuisée → −31,3 têtes, staff 50 → < 50, compteurs
+actifs ; spawn 350 + pyramide ; colonisation sur fixtures mûries),
+E2E complet en cours.

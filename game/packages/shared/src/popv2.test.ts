@@ -123,3 +123,36 @@ describe('horloges de mort (§i)', () => {
     expect(wiped.children + wiped.actives + wiped.seniors).toBe(0);
   });
 });
+
+describe('emploi universel (§e, chunk BB)', () => {
+  it('BASE_JOBS est EXHAUSTIF : les 28 bâtiments du catalogue + la clinique', async () => {
+    const { ALL_BUILDING_KEYS } = await import('./buildings.js');
+    const { BASE_JOBS } = await import('./popv2.js');
+    for (const key of ALL_BUILDING_KEYS) {
+      expect(BASE_JOBS[key], key).toBeGreaterThan(0);
+    }
+    expect(BASE_JOBS.clinic).toBeGreaterThan(0);
+  });
+
+  it('popScale : plancher 1 (Round 9), √ au-delà de la référence, plafond 2', async () => {
+    const { popScale } = await import('./popv2.js');
+    expect(popScale(350)).toBe(1);
+    expect(popScale(2000)).toBe(1);
+    expect(popScale(8000)).toBeCloseTo(2, 9);
+    expect(popScale(60000)).toBe(2);
+  });
+
+  it("jobsOptimal : l'optimum dérive avec la population (le point qui shifte)", async () => {
+    const { jobsOptimal } = await import('./popv2.js');
+    expect(jobsOptimal('mine', 1, 350)).toBe(50); // historique préservé
+    expect(jobsOptimal('mine', 2, 2000)).toBeCloseTo(120, 9);
+    expect(jobsOptimal('mine', 1, 4500)).toBeCloseTo(50 * Math.sqrt(2.25), 6);
+  });
+
+  it('chômage : tolérance 7 %, morts γ(τ−7 %)×P', async () => {
+    const { unemploymentRate, unemploymentDeathsPerDay } = await import('./popv2.js');
+    expect(unemploymentRate(93, 100)).toBeCloseTo(0.07, 9);
+    expect(unemploymentDeathsPerDay(0.07, 1000)).toBe(0);
+    expect(unemploymentDeathsPerDay(0.57, 1000)).toBeCloseTo(0.02 * 0.5 * 1000, 9);
+  });
+});

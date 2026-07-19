@@ -66,6 +66,10 @@ export interface ProductionSnapshot {
   clockDeadlines: Partial<Record<'water' | 'food', string>>;
   /** Compteurs cumulés morts/exodés par catégorie (intel, BD). */
   demoCounters: unknown;
+  /** Jours consécutifs au-dessus de la tolérance de chômage (§g). */
+  unempOverDays: number;
+  /** Date de colonisation (grâce 14 j — chômage inerte). */
+  colonizedAtMs: number | null;
   illness: number;
   popAsOfMs: number | null;
   storageCapT: number;
@@ -110,7 +114,7 @@ export async function loadProductionSnapshot(
   const { rows: bodyRows } = await client.query(
     `SELECT id, owner_id, size, quality, climate, tiles, population,
             pop_children, pop_seniors, illness, pop_as_of, clock_deadlines,
-            demo_counters
+            demo_counters, unemp_over_days, colonized_at
      FROM bodies WHERE id = $1 AND body_type = 'planet'${lock}`,
     [bodyId],
   );
@@ -306,7 +310,10 @@ export async function loadProductionSnapshot(
       personalShipParked: parked.length > 0,
     });
   }
-  const planetMultiplier = efficiency(population / cap) * governance.g;
+  // v2 (chunk BB, DG §3.2-v2 f) : E_planet est SUPPRIMÉ — son rôle
+  // d'échelle vit dans popScale (optimums par bâtiment), son rôle
+  // anti-surpeuplement dans la parabole du pop_daily. Reste G.
+  const planetMultiplier = governance.g;
 
   const rates = computeRates({
     planetMultiplier,
@@ -337,6 +344,8 @@ export async function loadProductionSnapshot(
       Record<'water' | 'food', string>
     >,
     demoCounters: body.demo_counters ?? {},
+    unempOverDays: Number(body.unemp_over_days ?? 0),
+    colonizedAtMs: body.colonized_at ? toMs(body.colonized_at) : null,
     illness: body.illness ?? 0,
     popAsOfMs: body.pop_as_of ? toMs(body.pop_as_of) : null,
     storageCapT,

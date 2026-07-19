@@ -23,7 +23,6 @@ import {
   COLONY_SEED_STOCK,
   HULLS,
   ITEMS,
-  WORKFORCE_ASSIGNABLE_SHARE,
   type CostBundle,
   type HullCategory,
   type HullSize,
@@ -209,16 +208,20 @@ export async function transferSettlers(
           'Des settlers d\'un autre monde sont déjà à bord (une route à la fois)',
         );
       }
+      // v2 (chunk BB) : les settlers embarqués sont des ACTIFS (le choix
+      // par catégorie arrive au chunk BD) — les actifs restants doivent
+      // couvrir la workforce assignée.
+      const remainingActives = snap.pyramid.actives - count;
       const remaining = snap.population - count;
       const { rows: wf } = await client.query(
         `SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings
          WHERE body_id = $1`,
         [world.id],
       );
-      if (remaining < 0 || wf[0].assigned > remaining * WORKFORCE_ASSIGNABLE_SHARE) {
+      if (remaining < 0 || remainingActives < 0 || wf[0].assigned > remainingActives) {
         throw new CommandError(
           'workforce_invalid',
-          'La population restante ne couvrirait plus la workforce assignée (max 60 %)',
+          'Les actifs restants ne couvriraient plus la workforce assignée',
         );
       }
       await client.query(

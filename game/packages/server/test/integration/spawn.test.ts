@@ -17,9 +17,12 @@ import {
   POCKET_NEIGHBOR_MAX_PC,
   POCKET_STAR_MAX_PC,
   POCKET_WILD_MAX_PC,
-  STARTER_POP_UTILIZATION,
 } from '../../src/gen/spawn.js';
-import { efficiency, popCap, STARTER_PRE_UNLOCKED } from '@atg/shared';
+import {
+  STABLE_PYRAMID,
+  STARTER_POP,
+  STARTER_PRE_UNLOCKED,
+} from '@atg/shared';
 import { unlockNode } from '../../src/services/planets.js';
 
 let pool: pg.Pool;
@@ -72,12 +75,15 @@ describe('spawn starter — garanties DG §2.2', () => {
         86_400_000;
       expect(bindDays).toBeGreaterThan(44);
       expect(bindDays).toBeLessThanOrEqual(45.01);
-      // Pop de départ = 0,6 × cap ⇒ colonie « saine » (E ≈ 0,95, DG §2.2).
-      const cap = popCap(starter.size, starter.quality);
-      expect(Number(starter.population)).toBe(
-        Math.round(STARTER_POP_UTILIZATION * cap),
+      // v2 (DG §3.2-v2 l, Round 9) : pop FIXE 350 à la pyramide
+      // stationnaire — le starter naît SOUS sa capacité d'emploi.
+      expect(Number(starter.population)).toBe(STARTER_POP);
+      expect(Number(starter.pop_children)).toBe(
+        Math.round(STARTER_POP * STABLE_PYRAMID.children),
       );
-      expect(efficiency(Number(starter.population) / cap)).toBeGreaterThan(0.9);
+      expect(Number(starter.pop_seniors)).toBe(
+        Math.round(STARTER_POP * STABLE_PYRAMID.seniors),
+      );
     }
   });
 
