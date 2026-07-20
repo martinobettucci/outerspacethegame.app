@@ -4,9 +4,8 @@
  *
  * Chunk BA : démographie 3 âges, natalité, rations (oxygène compris),
  * modulateur de croissance, parabole de sur-capacité, horloges de mort.
- * L'emploi universel + popScale + suppression d'E_planet arrivent au
- * chunk BB (dépendance d'ordre : sans emploi universel, la mortalité de
- * chômage tuerait tous les mondes existants).
+ * Chunk BB : emploi universel, popScale, suppression d'E_planet et
+ * mortalité du chômage (livrés dans cet ordre pour préserver les mondes).
  */
 import type { Climate } from './types.js';
 
@@ -30,6 +29,43 @@ export interface Pyramid {
   children: number;
   actives: number;
   seniors: number;
+}
+
+/** Historique cumulatif observable de la démographie (GB §10, chunk BD). */
+export interface DemographicCounters {
+  deaths: Pyramid;
+  exodus: Pyramid;
+}
+
+const finiteNonNegative = (value: unknown): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+};
+
+/**
+ * Normalise le JSON DB ancien/incomplet en schéma C/A/S strict. Une seule
+ * fonction sert à la simulation ET à l'intel : aucun champ absent/null.
+ */
+export function normalizeDemographicCounters(raw: unknown): DemographicCounters {
+  const source =
+    raw && typeof raw === 'object'
+      ? (raw as {
+          deaths?: Partial<Pyramid>;
+          exodus?: Partial<Pyramid>;
+        })
+      : {};
+  return {
+    deaths: {
+      children: finiteNonNegative(source.deaths?.children),
+      actives: finiteNonNegative(source.deaths?.actives),
+      seniors: finiteNonNegative(source.deaths?.seniors),
+    },
+    exodus: {
+      children: finiteNonNegative(source.exodus?.children),
+      actives: finiteNonNegative(source.exodus?.actives),
+      seniors: finiteNonNegative(source.exodus?.seniors),
+    },
+  };
 }
 
 /** Répartit un total sur la pyramide stationnaire (spawn, défauts). */

@@ -149,7 +149,12 @@ test('stargate : chantier au yard, traversée instantanée dispersée', async ({
   expect(
     (
       await api.post(`/api/ships/${arkId}/settlers`, {
-        data: { count: 300, direction: 'embark' },
+        data: {
+          children: 60,
+          actives: 180,
+          seniors: 60,
+          direction: 'embark',
+        },
       })
     ).ok(),
   ).toBe(true);

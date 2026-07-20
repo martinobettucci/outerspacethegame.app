@@ -59,7 +59,7 @@ export interface IndustryRate {
 }
 
 export interface RatesInput {
-  /** E_planet × G (gouvernance) — multiplicateur global. */
+  /** Gouvernance G ; 0 est le verrou explicite d'un monde sauvage. */
   planetMultiplier: number;
   /** Population (consommation de survie). */
   population: number;
@@ -166,9 +166,10 @@ export function computeRates(input: RatesInput): RatesResult {
         });
         continue;
       }
-      // Minage de trace : 2 T/jour, EXEMPT d'efficacité (DG §3.3).
+      // Minage de trace : 2 T/jour, EXEMPT d'efficacité (DG §3.3), mais
+      // jamais d'activité sur un monde sauvage (planetMultiplier = 0).
       const rate = isTrace
-        ? TRACE_MINING_T_PER_DAY * runFrac * brake
+        ? TRACE_MINING_T_PER_DAY * runFrac * brake * (input.planetMultiplier > 0 ? 1 : 0)
         : ind.baseBatchesPerDay * eWork * runFrac * input.planetMultiplier * brake;
       flows.push({
         buildingId: ind.buildingId,

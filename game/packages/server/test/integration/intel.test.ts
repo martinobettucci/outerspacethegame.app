@@ -99,6 +99,16 @@ describe('intel par paliers (GB §20)', () => {
        WHERE id = $1`,
       [targetStarter],
     );
+    await pool.query(
+      `UPDATE bodies SET demo_counters = $2 WHERE id = $1`,
+      [
+        targetStarter,
+        JSON.stringify({
+          deaths: { children: 3, actives: 5, seniors: 7 },
+          exodus: { children: 11, actives: 13, seniors: 17 },
+        }),
+      ],
+    );
     const intel = await bodyIntel(pool, observer, targetStarter, Date.now());
     expect(intel.tier).toBe(2);
     expect(intel.tilesUsed).toBe(1);
@@ -108,6 +118,7 @@ describe('intel par paliers (GB §20)', () => {
     expect(JSON.stringify(intel)).not.toContain('keepFloor');
     // Les clefs des paliers supérieurs sont ABSENTES.
     expect('buildings' in intel).toBe(false);
+    expect('demographicHistory' in intel).toBe(false);
     expect('quality' in intel).toBe(false);
   });
 
@@ -120,6 +131,10 @@ describe('intel par paliers (GB §20)', () => {
     ]);
     expect(intel.defenseCount).toBe(0);
     expect(intel.depositsPresent!.length).toBeGreaterThan(0);
+    expect(intel.demographicHistory).toEqual({
+      deaths: { children: 3, actives: 5, seniors: 7 },
+      exodus: { children: 11, actives: 13, seniors: 17 },
+    });
     expect('deposits' in intel).toBe(false);
     expect('techDna' in intel).toBe(false);
   });

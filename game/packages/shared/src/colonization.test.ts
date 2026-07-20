@@ -5,11 +5,13 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  allocateSettlerDeaths,
   canColonizeBody,
   canFitColonyKit,
   colonyGraceUntilMs,
   isInColonyGrace,
   SETTLER_TRIP_RISK_BASE,
+  settlerManifestTotal,
   settlerLosses,
   settlerTripRisk,
 } from './colonization.js';
@@ -44,6 +46,26 @@ describe('settlerLosses — « no free sub-20 cohorts » (accumulateur par route
   });
 });
 
+describe('allocateSettlerDeaths — manifeste C/A/S déterministe (BD)', () => {
+  it('ventile au plus fort reste avec départage C→A→S', () => {
+    const deaths = allocateSettlerDeaths(
+      { children: 60, actives: 180, seniors: 60 },
+      9,
+    );
+    expect(deaths).toEqual({ children: 2, actives: 5, seniors: 2 });
+    expect(settlerManifestTotal(deaths)).toBe(9);
+  });
+
+  it('conserve les bornes pour zéro et un péage supérieur au total', () => {
+    expect(allocateSettlerDeaths({ children: 0, actives: 0, seniors: 0 }, 4))
+      .toEqual({ children: 0, actives: 0, seniors: 0 });
+    expect(allocateSettlerDeaths({ children: 1, actives: 2, seniors: 0 }, 99))
+      .toEqual({ children: 1, actives: 2, seniors: 0 });
+    expect(allocateSettlerDeaths({ children: 1, actives: 1, seniors: 1 }, 1))
+      .toEqual({ children: 1, actives: 0, seniors: 0 });
+  });
+});
+
 describe('grâce colonie (DG §10.3)', () => {
   it('14 jours après colonized_at, puis expire', () => {
     const t0 = 1_000_000;
@@ -58,6 +80,14 @@ describe('éligibilités pures', () => {
     expect(canColonizeBody({ bodyType: 'planet', ownerId: null, climate: 'cold' }).ok).toBe(true);
     expect(canColonizeBody({ bodyType: 'star', ownerId: null, climate: null }).ok).toBe(false);
     expect(canColonizeBody({ bodyType: 'planet', ownerId: 'x', climate: 'cold' }).reason).toBe('owned');
+    expect(
+      canColonizeBody({
+        bodyType: 'planet',
+        ownerId: null,
+        climate: 'cold',
+        annihilated: true,
+      }).reason,
+    ).toBe('annihilated');
     expect(canColonizeBody({ bodyType: 'planet', ownerId: null, climate: 'poison' }).reason).toBe(
       'poison_unbuildable',
     );

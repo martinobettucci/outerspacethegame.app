@@ -64,6 +64,11 @@ describe('computeRates — extraction (DG §3.3)', () => {
     expect(r.stockRates.ore).toBeCloseTo(TRACE_MINING_T_PER_DAY, 6);
   });
 
+  it('monde sauvage : même le minage de trace reste à zéro', () => {
+    const r = computeRates(base({ planetMultiplier: 0, industries: [mine(0)] }));
+    expect(r.stockRates.ore ?? 0).toBe(0);
+  });
+
   it('runPct throttle délibéré (canon GB §9)', () => {
     const throttled = { ...mine(), runPct: 40 };
     const r = computeRates(

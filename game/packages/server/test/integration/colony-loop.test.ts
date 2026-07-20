@@ -67,7 +67,8 @@ describe('boucle colonie', () => {
     expect(res.processed).toBeGreaterThanOrEqual(1);
 
     const after = await stockRow(planetId, 'ore');
-    // Workforce par défaut 35 ⇒ E = 1 ; E_planet ≈ 0.95 ⇒ ~9,5 T/jour.
+    // Workforce par défaut 35 ⇒ optimum d'efficacité ; G gouverné = 1,
+    // donc le débit approche les 10 T/jour de base.
     expect(after.rate_t_per_day).toBeGreaterThan(8);
     expect(after.rate_t_per_day).toBeLessThanOrEqual(10);
     const { rows: dep } = await pool.query(
@@ -94,7 +95,7 @@ describe('boucle colonie', () => {
     await setBuildingSettings(pool, playerId, planetId, buildingId, { runPct: 100 });
   });
 
-  it('workforce > 60 % de la population : refus explicite', async () => {
+  it('workforce > actifs disponibles : refus explicite', async () => {
     const t0 = Date.now();
     const { playerId, spawn } = await registerPlayer(pool, {
       email: `loop-b-${run}@test.local`,
@@ -154,9 +155,11 @@ describe('boucle colonie', () => {
     const seed = `dry-${run}`;
     const { rows: b } = await pool.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
-          tiles, population, pop_as_of)
-       VALUES ('planet', 'Dryworld', 900001, 900001, $1, 's', 'temperate', 'F',
-          8, 1200, to_timestamp($2 / 1000.0)) RETURNING id`,
+          tiles, owner_id, population, pop_as_of)
+       SELECT 'planet', 'Dryworld', 900001, 900001, $1, 's', 'temperate', 'F',
+              8, p.id, 1200, to_timestamp($2 / 1000.0)
+         FROM players p ORDER BY p.created_at LIMIT 1
+       RETURNING id`,
       [seed, t0],
     );
     const bodyId = b[0]!.id;
@@ -398,9 +401,10 @@ describe('boucle colonie', () => {
     // À l'échéance : mort TOTALE (l'événement re-vérifie la famine).
     await processDueEvents(pool, baseHandlers(), { nowMs: deadline + 1000 });
     const { rows: after } = await pool.query(
-      `SELECT population, demo_counters FROM bodies WHERE id = $1`,
+      `SELECT owner_id, population, demo_counters FROM bodies WHERE id = $1`,
       [id],
     );
+    expect(after[0].owner_id).toBeNull();
     expect(Number(after[0].population)).toBe(0);
     expect(
       Number(after[0].demo_counters.deaths.children) +

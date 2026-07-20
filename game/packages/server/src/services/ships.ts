@@ -60,6 +60,7 @@ export interface ShipView {
   cargo: Record<string, number>;
   containers: number;
   settlers: number;
+  settlerManifest: { children: number; actives: number; seniors: number };
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
@@ -196,6 +197,11 @@ export async function fleet(
       cargo: r.cargo ?? {},
       containers: hullContainers(r.hull_category, r.hull_size),
       settlers: r.settlers ?? 0,
+      settlerManifest: {
+        children: r.settlers_children ?? 0,
+        actives: r.settlers_actives ?? r.settlers ?? 0,
+        seniors: r.settlers_seniors ?? 0,
+      },
       settlersPax:
         HULLS[`${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`]
           ?.pax ?? 0,

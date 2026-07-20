@@ -9,6 +9,7 @@
  * « no free sub-20 cohorts », DG §3.2). Les colonies fraîches portent une
  * grâce de 14 jours (pas de conquête ni d'a2g — DG §10.3).
  */
+import type { Pyramid } from './popv2.js';
 import type { HullCategory, HullSize } from './types.js';
 
 /** Risque de trajet de base : 5 % [TUNE, DG §3.2]. */
@@ -53,6 +54,61 @@ export function settlerLosses(
   return { deaths, carryOut: Math.max(0, expected - deaths) };
 }
 
+/** Manifeste entier C/A/S porté par une coque Civil (chunk BD). */
+export type SettlerManifest = Pyramid;
+
+export function settlerManifestTotal(manifest: SettlerManifest): number {
+  return manifest.children + manifest.actives + manifest.seniors;
+}
+
+/**
+ * Ventile le péage entier d'une route proportionnellement sur C/A/S par
+ * méthode du plus fort reste. Le départage stable C→A→S rend le résultat
+ * totalement déterministe et conserve exactement le nombre de morts.
+ * [TUNE-v1 interp, POP_V2_PLAN chunk BD]
+ */
+export function allocateSettlerDeaths(
+  manifest: SettlerManifest,
+  deaths: number,
+): SettlerManifest {
+  const keys = ['children', 'actives', 'seniors'] as const;
+  const clean: SettlerManifest = {
+    children: Math.max(0, Math.floor(manifest.children)),
+    actives: Math.max(0, Math.floor(manifest.actives)),
+    seniors: Math.max(0, Math.floor(manifest.seniors)),
+  };
+  const total = settlerManifestTotal(clean);
+  const target = Math.min(total, Math.max(0, Math.floor(deaths)));
+  if (target === 0 || total === 0) {
+    return { children: 0, actives: 0, seniors: 0 };
+  }
+
+  const shares = keys.map((key, index) => {
+    const exact = (clean[key] * target) / total;
+    return {
+      key,
+      index,
+      deaths: Math.floor(exact),
+      remainder: exact - Math.floor(exact),
+    };
+  });
+  let left = target - shares.reduce((sum, share) => sum + share.deaths, 0);
+  for (const share of shares
+    .slice()
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index)) {
+    if (left > 0 && share.deaths < clean[share.key]) {
+      share.deaths += 1;
+      left -= 1;
+    }
+  }
+
+  return {
+    children: shares.find((share) => share.key === 'children')!.deaths,
+    actives: shares.find((share) => share.key === 'actives')!.deaths,
+    seniors: shares.find((share) => share.key === 'seniors')!.deaths,
+  };
+}
+
 export function colonyGraceUntilMs(colonizedAtMs: number): number {
   return colonizedAtMs + COLONY_GRACE_DAYS * 24 * 3600 * 1000;
 }
@@ -61,14 +117,19 @@ export function isInColonyGrace(colonizedAtMs: number, nowMs: number): boolean {
   return nowMs < colonyGraceUntilMs(colonizedAtMs);
 }
 
-/** Un corps est-il colonisable ? (GB §3 : poison = unbuildable, jamais.) */
+/**
+ * Un corps est-il colonisable ? Poison et cendre de supernova sont
+ * inconstructibles à jamais (GB §3/§22).
+ */
 export function canColonizeBody(body: {
   bodyType: string;
   ownerId: string | null;
   climate: string | null;
+  annihilated?: boolean;
 }): { ok: boolean; reason?: string } {
   if (body.bodyType !== 'planet') return { ok: false, reason: 'not_planet' };
   if (body.ownerId) return { ok: false, reason: 'owned' };
+  if (body.annihilated) return { ok: false, reason: 'annihilated' };
   if (body.climate === 'poison') return { ok: false, reason: 'poison_unbuildable' };
   return { ok: true };
 }

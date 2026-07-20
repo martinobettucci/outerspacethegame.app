@@ -313,7 +313,10 @@ export async function loadProductionSnapshot(
   // v2 (chunk BB, DG §3.2-v2 f) : E_planet est SUPPRIMÉ — son rôle
   // d'échelle vit dans popScale (optimums par bâtiment), son rôle
   // anti-surpeuplement dans la parabole du pop_daily. Reste G.
-  const planetMultiplier = governance.g;
+  // Un monde sauvage ne produit jamais, même s'il conserve bâtiments et
+  // données industrielles après extinction (BD). La propriété est le verrou
+  // physique ; G ne vaut que pour un monde habité/administré.
+  const planetMultiplier = body.owner_id ? governance.g : 0;
 
   const rates = computeRates({
     planetMultiplier,
@@ -326,7 +329,10 @@ export async function loadProductionSnapshot(
     stocks,
     pooledT,
     deposits,
-    industries,
+    // Les ruines conservent leurs bâtiments mais n'exécutent AUCUNE
+    // industrie. C'est nécessaire aussi pour le minage de trace, exempté
+    // d'efficacité et qui contournerait donc un simple multiplicateur G=0.
+    industries: body.owner_id ? industries : [],
     hoverFuelNeeds,
     hoverSurvivalNeeds,
     repairSteelNeeds,

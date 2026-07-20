@@ -14,6 +14,7 @@ import { createPool } from './pool.js';
 import { runMigrations } from './migrate.js';
 import { registerPlayer } from '../services/players.js';
 import { setInnateOffers } from '../services/market.js';
+import { planetDetail } from '../services/planets.js';
 
 export const DEMO_ACCOUNTS = [
   {
@@ -30,17 +31,52 @@ export const DEMO_ACCOUNTS = [
   },
 ] as const;
 
+async function logDemoPyramid(
+  pool: ReturnType<typeof createPool>,
+  playerId: string,
+  starterId: string,
+  fresh: boolean,
+): Promise<void> {
+  const detail = await planetDetail(pool, playerId, starterId);
+  const { children, actives, seniors } = detail.pyramid;
+  const sum = children + actives + seniors;
+  if (Math.abs(sum - detail.population) > 1e-6) {
+    throw new Error(
+      `Seed incohérent : pyramide ${sum} != population ${detail.population} (${starterId})`,
+    );
+  }
+  if (fresh && (children !== 64 || actives !== 191 || seniors !== 95)) {
+    throw new Error(
+      `Seed incohérent : starter frais attendu C/A/S 64/191/95, reçu ${children}/${actives}/${seniors}`,
+    );
+  }
+  console.log(
+    `Seed : pyramide réelle ${starterId} — C/A/S ${children}/${actives}/${seniors} (P=${detail.population}).`,
+  );
+}
+
 export async function seed(databaseUrl?: string): Promise<void> {
   const pool = createPool(databaseUrl);
   try {
     await runMigrations(pool);
     for (const account of DEMO_ACCOUNTS) {
-      const { rowCount } = await pool.query(
-        'SELECT 1 FROM players WHERE email = $1',
+      const { rows: existing } = await pool.query(
+        `SELECT p.id AS player_id, b.id AS starter_id
+           FROM players p
+           LEFT JOIN bodies b ON b.owner_id = p.id AND b.is_starter = true
+          WHERE p.email = $1`,
         [account.email],
       );
-      if (rowCount) {
+      if (existing[0]) {
         console.log(`Seed : ${account.email} existe déjà — inchangé.`);
+        if (existing[0].starter_id) {
+          await logDemoPyramid(
+            pool,
+            existing[0].player_id,
+            existing[0].starter_id,
+            false,
+          );
+        }
         continue;
       }
       const result = await registerPlayer(pool, {
@@ -50,6 +86,12 @@ export async function seed(databaseUrl?: string): Promise<void> {
       console.log(
         `Seed : ${account.email} créé — starter ${result.spawn.starterPlanetId} ` +
           `@ (${result.spawn.pocketCenter.x.toFixed(0)}, ${result.spawn.pocketCenter.y.toFixed(0)})`,
+      );
+      await logDemoPyramid(
+        pool,
+        result.playerId,
+        result.spawn.starterPlanetId,
+        true,
       );
       // Le monde marchand de démonstration publie son hospitalité (GB §9)
       // via la VRAIE commande — le seed démontre chaque fonctionnalité (§8).

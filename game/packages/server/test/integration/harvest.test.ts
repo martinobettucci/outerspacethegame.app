@@ -324,8 +324,9 @@ describe('supernova : annihilation stricte, host-fate, cendre', () => {
     // boucle de Starfall ci-dessus (exploded).
   });
 
-  it('L-class : trou noir + monde dans le rayon réduit en cendre', async () => {
-    // Étoile L artificielle et monde sauvage à 2 pc, loin de tout.
+  it('L-class : trou noir + monde habité dans le rayon nettoyé en cendre', async () => {
+    // Étoile L artificielle et monde habité à 2 pc, loin de tout. Les
+    // champs population v2 servent de garde contre une cendre encore vive.
     const fx = 90_000 + Math.random() * 1000;
     const { rows: lRows } = await pool.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, star_class,
@@ -339,10 +340,16 @@ describe('supernova : annihilation stricte, host-fate, cendre', () => {
     const lStar = lRows[0]!.id;
     const { rows: wildRows } = await pool.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
-          quality, tiles, population)
-       VALUES ('planet', $1, $2, $3, $4, 's', 'temperate', 'F', 6, 0)
+          quality, tiles, owner_id, population, pop_children, pop_seniors,
+          illness, unemp_over_days, colonized_at, account_bound_until,
+          clock_deadlines, config)
+       VALUES ('planet', $1, $2, $3, $4, 's', 'temperate', 'F', 6, $5,
+          10, 2, 3, 0.4, 2, now(), now() + interval '10 days',
+          '{"water":"2099-01-01T00:00:00.000Z"}',
+          '{"innateOffers":[{"sell":"water","want":"ore","price":2}],
+            "kept":"cinder"}')
        RETURNING id`,
-      [`hv-wild-${run}`, fx + 2, 0, `hv-wild-${run}`],
+      [`hv-world-${run}`, fx + 2, 0, `hv-world-${run}`, owner],
     );
     const wild = wildRows[0]!.id;
     const client = await pool.connect();
@@ -357,10 +364,24 @@ describe('supernova : annihilation stricte, host-fate, cendre', () => {
     const bh = await star(lStar);
     expect(bh.body_type).toBe('black_hole'); // canon : L laisse un trou noir
     const { rows: wildAfter } = await pool.query(
-      `SELECT tiles, (config->>'annihilated') AS ann FROM bodies WHERE id = $1`,
+      `SELECT owner_id, is_starter, account_bound_until, colonized_at,
+              population, pop_children, pop_seniors, illness,
+              unemp_over_days, clock_deadlines, tiles, config
+         FROM bodies WHERE id = $1`,
       [wild],
     );
-    expect(wildAfter[0].ann).toBe('true');
-    expect(Number(wildAfter[0].tiles)).toBe(0);
+    const cinder = wildAfter[0];
+    expect(cinder.owner_id).toBeNull();
+    expect(cinder.is_starter).toBe(false);
+    expect(cinder.account_bound_until).toBeNull();
+    expect(cinder.colonized_at).toBeNull();
+    expect(Number(cinder.population)).toBe(0);
+    expect(Number(cinder.pop_children)).toBe(0);
+    expect(Number(cinder.pop_seniors)).toBe(0);
+    expect(Number(cinder.illness)).toBe(0);
+    expect(Number(cinder.unemp_over_days)).toBe(0);
+    expect(cinder.clock_deadlines).toEqual({});
+    expect(Number(cinder.tiles)).toBe(0);
+    expect(cinder.config).toEqual({ annihilated: true, kept: 'cinder' });
   });
 });

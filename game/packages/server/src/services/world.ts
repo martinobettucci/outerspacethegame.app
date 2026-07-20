@@ -8,6 +8,7 @@
  */
 import {
   intelTierFromSources,
+  normalizeDemographicCounters,
   planetTechAvailability,
   projectPlanetIntel,
   starIsFlaring,
@@ -290,6 +291,7 @@ export async function bodyIntel(
       level: Number(b.level),
       status: b.status,
     })),
+    demographicHistory: normalizeDemographicCounters(body.demo_counters),
     quality: body.quality,
     deposits,
     techDna: {

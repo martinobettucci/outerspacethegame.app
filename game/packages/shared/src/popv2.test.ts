@@ -11,6 +11,7 @@ import {
   growthModulator,
   lifeModulator,
   NATALITY_BY_RESIDENTIAL,
+  normalizeDemographicCounters,
   overcapDeathsPerDay,
   illnessDeltaV2,
   illnessDeathsPerDay,
@@ -19,6 +20,24 @@ import {
   stableSplit,
   weightedHeads,
 } from './popv2.js';
+
+describe('compteurs démographiques observables (BD)', () => {
+  it('normalise les JSON anciens, incomplets ou invalides sans valeur négative', () => {
+    expect(
+      normalizeDemographicCounters({
+        deaths: { children: 3, actives: -2 },
+        exodus: { seniors: '7' },
+      }),
+    ).toEqual({
+      deaths: { children: 3, actives: 0, seniors: 0 },
+      exodus: { children: 0, actives: 0, seniors: 7 },
+    });
+    expect(normalizeDemographicCounters(null)).toEqual({
+      deaths: { children: 0, actives: 0, seniors: 0 },
+      exodus: { children: 0, actives: 0, seniors: 0 },
+    });
+  });
+});
 
 describe('démographie v2 — pyramide & vieillissement (§a)', () => {
   it('la pyramide stationnaire découle des époques 20/60/30 (ancre 4)', () => {

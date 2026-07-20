@@ -153,6 +153,8 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
   });
   await expect(wildPanel.getByText('Strategic', { exact: true })).toBeVisible();
   await expect(wildPanel.getByText(/Deposits present :/)).toBeVisible();
+  await expect(wildPanel.getByText(/Deaths C\/A\/S : 0\/0\/0/)).toBeVisible();
+  await expect(wildPanel.getByText(/Departures C\/A\/S : 0\/0\/0/)).toBeVisible();
   await shot(page, 'int-03-strategic');
 
   // 5. Level up L3 → deep sight (L4) : qualité + gisements + ADN tech.

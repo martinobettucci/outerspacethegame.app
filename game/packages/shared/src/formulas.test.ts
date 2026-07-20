@@ -55,8 +55,8 @@ describe('Population (DG §3.2)', () => {
     expect(popCap('l', 'A')).toBe(240_000);
   });
 
-  it('le spawn starter (1 200 sur small-F) donne E_planet ≈ 0.95', () => {
-    const u = 1_200 / popCap('s', 'F');
+  it('la cloche historique vaut ≈ 0,95 à u = 0,6', () => {
+    const u = 0.6;
     expect(efficiency(u)).toBeGreaterThan(0.93);
     expect(efficiency(u)).toBeLessThan(0.97);
   });

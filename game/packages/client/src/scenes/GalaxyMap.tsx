@@ -151,7 +151,9 @@ export function GalaxyMap() {
     Awaited<ReturnType<typeof api.markets>>['markets']
   >([]);
   const [tradeT, setTradeT] = useState('1');
-  const [settlersN, setSettlersN] = useState('200');
+  const [settlerChildren, setSettlerChildren] = useState('40');
+  const [settlerActives, setSettlerActives] = useState('120');
+  const [settlerSeniors, setSettlerSeniors] = useState('40');
   const [transferTo, setTransferTo] = useState('');
   const [transferUnits, setTransferUnits] = useState('10');
   const [intel, setIntel] = useState<
@@ -1476,6 +1478,8 @@ export function GalaxyMap() {
                   : t.galaxy.survivalIdle}
               </span>
               <span
+                role="group"
+                aria-label={`${t.galaxy.settlersManifest}: C ${selectedShip.settlerManifest.children}, A ${selectedShip.settlerManifest.actives}, S ${selectedShip.settlerManifest.seniors}`}
                 style={{
                   color: selectedShip.fleeArmed
                     ? 'var(--success-500, #238C33)'
@@ -2055,6 +2059,22 @@ export function GalaxyMap() {
                   </span>
                 )}
               </strong>
+              <span
+                style={{
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  whiteSpace: 'nowrap',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto auto auto',
+                  gap: 5,
+                }}
+              >
+                <span>{t.galaxy.settlersManifest}</span>
+                <span>· C {selectedShip.settlerManifest.children}</span>
+                <span>· A {selectedShip.settlerManifest.actives}</span>
+                <span>· S {selectedShip.settlerManifest.seniors}</span>
+              </span>
               {selectedShip.status === 'colonizing' && selectedShip.establishesAt && (
                 <span style={{ color: 'var(--warning-500)', fontFamily: 'var(--font-mono)' }}>
                   {t.galaxy.colonizing} —{' '}
@@ -2065,24 +2085,57 @@ export function GalaxyMap() {
                 selectedShip.dockedBodyId &&
                 bodies.some((b) => b.id === selectedShip.dockedBodyId && b.owned) && (
                   <>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <input
-                        aria-label={t.galaxy.settlersLabel}
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={settlersN}
-                        onChange={(e) => setSettlersN(e.target.value)}
-                        style={{
-                          width: 66,
-                          background: 'var(--bg-raised)',
-                          color: 'var(--text-primary)',
-                          border: '1px solid var(--stroke-subtle)',
-                          borderRadius: 'var(--radius-button)',
-                          padding: '4px 6px',
-                          fontSize: 12,
-                        }}
-                      />
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {[
+                          {
+                            key: 'children',
+                            short: 'C',
+                            label: t.planet.statsChildren,
+                            value: settlerChildren,
+                            set: setSettlerChildren,
+                          },
+                          {
+                            key: 'actives',
+                            short: 'A',
+                            label: t.planet.statsActives,
+                            value: settlerActives,
+                            set: setSettlerActives,
+                          },
+                          {
+                            key: 'seniors',
+                            short: 'S',
+                            label: t.planet.statsSeniors,
+                            value: settlerSeniors,
+                            set: setSettlerSeniors,
+                          },
+                        ].map((cohort) => (
+                          <label
+                            key={cohort.key}
+                            style={{ display: 'grid', gap: 2, fontSize: 10 }}
+                          >
+                            <span>{cohort.short} · {cohort.label}</span>
+                            <input
+                              aria-label={`${t.galaxy.settlersLabel} — ${cohort.label}`}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={cohort.value}
+                              onChange={(e) => cohort.set(e.target.value)}
+                              style={{
+                                width: 72,
+                                background: 'var(--bg-raised)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--stroke-subtle)',
+                                borderRadius: 'var(--radius-button)',
+                                padding: '4px 6px',
+                                fontSize: 12,
+                              }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {(['embark', 'disembark'] as const).map((direction) => (
                         <button
                           key={direction}
@@ -2090,7 +2143,9 @@ export function GalaxyMap() {
                           onClick={() =>
                             api
                               .transferSettlers(selectedShip.id, {
-                                count: Number(settlersN),
+                                children: Number(settlerChildren),
+                                actives: Number(settlerActives),
+                                seniors: Number(settlerSeniors),
                                 direction,
                               })
                               .then(() => {
@@ -2117,6 +2172,7 @@ export function GalaxyMap() {
                           {direction === 'embark' ? t.galaxy.embark : t.galaxy.disembark}
                         </button>
                       ))}
+                      </div>
                     </div>
                     {canFitColonyKit({
                       category: selectedShip.hullCategory,
@@ -3475,6 +3531,18 @@ export function GalaxyMap() {
                     {(intel.data.depositsPresent?.length ?? 0) === 0
                       ? '—'
                       : intel.data.depositsPresent!.join(', ')}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>
+                    {t.galaxy.intelDeaths} :{' '}
+                    {Math.round(intel.data.demographicHistory?.deaths.children ?? 0)}/
+                    {Math.round(intel.data.demographicHistory?.deaths.actives ?? 0)}/
+                    {Math.round(intel.data.demographicHistory?.deaths.seniors ?? 0)}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>
+                    {t.galaxy.intelExodus} :{' '}
+                    {Math.round(intel.data.demographicHistory?.exodus.children ?? 0)}/
+                    {Math.round(intel.data.demographicHistory?.exodus.actives ?? 0)}/
+                    {Math.round(intel.data.demographicHistory?.exodus.seniors ?? 0)}
                   </span>
                 </div>
               ) : (

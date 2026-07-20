@@ -1,7 +1,7 @@
 /**
  * Intégration : colonisation (GB §19/§14/§12, DG §12/§3.2/§10.3) sur
  * vraie base — fitting (prérequis + coût provisionné), settlers
- * (spaceport, pax, garde workforce), équipage (liaison permanente),
+ * (spaceport, pax, manifeste C/A/S sans garde morale), équipage (liaison permanente),
  * péage de route déterministe à l'arrivée, établissement 72 h (transfert
  * de propriété, conversion de coque, gouverneur), grâce 14 j exposée,
  * refus d'autorisation par requêtes directes (CLAUDE.md §10).
@@ -190,18 +190,35 @@ describe('fitting colonie (DG §12.1)', () => {
 });
 
 describe('settlers & équipage (DG §3.2, GB §12)', () => {
-  it('embarque 300 settlers : population décrémentée, pax et workforce gardés', async () => {
+  it('embarque 300 settlers C/A/S : population, manifeste et exode concordent', async () => {
     const popBefore = (await planetDetail(pool, owner, starter)).population;
-    const { settlers } = await transferSettlers(pool, owner, colonyShip, {
-      count: 300,
+    const { settlers, manifest } = await transferSettlers(pool, owner, colonyShip, {
+      children: 60,
+      actives: 180,
+      seniors: 60,
       direction: 'embark',
     });
     expect(settlers).toBe(300);
+    expect(manifest).toEqual({ children: 60, actives: 180, seniors: 60 });
     const popAfter = (await planetDetail(pool, owner, starter)).population;
     expect(popBefore - popAfter).toBeCloseTo(300, 0);
-    // Pax civil_m = 800 : embarquer 600 de plus dépasse.
+    const { rows: history } = await pool.query(
+      `SELECT demo_counters FROM bodies WHERE id = $1`,
+      [starter],
+    );
+    expect(history[0].demo_counters.exodus).toEqual({
+      children: 60,
+      actives: 180,
+      seniors: 60,
+    });
+    // Pax civil_m = 800 : 300 + 501 dépasse (cohortes restantes suffisantes).
     await expect(
-      transferSettlers(pool, owner, colonyShip, { count: 600, direction: 'embark' }),
+      transferSettlers(pool, owner, colonyShip, {
+        children: 158,
+        actives: 343,
+        seniors: 0,
+        direction: 'embark',
+      }),
     ).rejects.toMatchObject({ code: 'not_available' });
   });
 
@@ -221,7 +238,12 @@ describe('settlers & équipage (DG §3.2, GB §12)', () => {
       code: 'forbidden',
     });
     await expect(
-      transferSettlers(pool, intruder, colonyShip, { count: 10, direction: 'embark' }),
+      transferSettlers(pool, intruder, colonyShip, {
+        children: 0,
+        actives: 10,
+        seniors: 0,
+        direction: 'embark',
+      }),
     ).rejects.toMatchObject({ code: 'forbidden' });
     await expect(colonizeShip(pool, intruder, colonyShip, FAST)).rejects.toMatchObject({
       code: 'forbidden',
@@ -236,6 +258,11 @@ describe('péage de route déterministe (DG §3.2)', () => {
     const s = await ship(colonyShip);
     // risque = 0,05 − 0,02 = 0,03 → 300 × 0,03 = 9 morts exactement.
     expect(s.settlers).toBe(291);
+    expect({
+      children: s.settlers_children,
+      actives: s.settlers_actives,
+      seniors: s.settlers_seniors,
+    }).toEqual({ children: 58, actives: 175, seniors: 58 });
     expect(s.status).toBe('hovering');
     const { rows: route } = await pool.query(
       `SELECT loss_carry FROM settler_routes
@@ -243,6 +270,15 @@ describe('péage de route déterministe (DG §3.2)', () => {
       [starter, wildId],
     );
     expect(Number(route[0].loss_carry)).toBeCloseTo(0, 9);
+    const { rows: history } = await pool.query(
+      `SELECT demo_counters FROM bodies WHERE id = $1`,
+      [starter],
+    );
+    expect(history[0].demo_counters.deaths).toEqual({
+      children: 2,
+      actives: 5,
+      seniors: 2,
+    });
   });
 
   it('settlers à bord ⇒ pas de destination dans le vide (garde v1)', async () => {
@@ -253,7 +289,20 @@ describe('péage de route déterministe (DG §3.2)', () => {
 });
 
 describe('établissement (DG §12.3, GB §19)', () => {
-  it('poison inconstructible, monde possédé refusé', async () => {
+  it('poison/cendre inconstructibles, monde possédé refusé', async () => {
+    await pool.query(
+      `UPDATE bodies SET config = COALESCE(config, '{}'::jsonb)
+                                  || '{"annihilated":true}'::jsonb
+       WHERE id = $1`,
+      [wildId],
+    );
+    await expect(colonizeShip(pool, owner, colonyShip, FAST)).rejects.toMatchObject({
+      code: 'unbuildable',
+    });
+    await pool.query(`UPDATE bodies SET config = config - 'annihilated' WHERE id = $1`, [
+      wildId,
+    ]);
+
     const { rows: poison } = await pool.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
           tiles, population)
@@ -287,8 +336,11 @@ describe('établissement (DG §12.3, GB §19)', () => {
     // Anti-course : une seconde coque ne peut pas viser le même monde.
     const { rows: rival } = await pool.query<{ id: string }>(
       `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y, status,
-                          hover_body_id, colony_kit, settlers, settlers_origin_body_id)
-       SELECT $1, 'civil', 'm', 'Rivale', x, y, 'hovering', id, true, 250, $2
+                          hover_body_id, colony_kit, settlers,
+                          settlers_children, settlers_actives, settlers_seniors,
+                          settlers_origin_body_id)
+       SELECT $1, 'civil', 'm', 'Rivale', x, y, 'hovering', id, true,
+              250, 50, 150, 50, $2
        FROM bodies WHERE id = $3 RETURNING id`,
       [owner, starter, wildId],
     );
@@ -301,6 +353,7 @@ describe('établissement (DG §12.3, GB §19)', () => {
     // Propriété, population = settlers livrés, grâce 14 j exposée.
     const detail = await planetDetail(pool, owner, wildId);
     expect(detail.population).toBe(291);
+    expect(detail.pyramid).toEqual({ children: 58, actives: 175, seniors: 58 });
     expect(detail.colonizedAt).toBeTruthy();
     expect(detail.graceUntil).toBeTruthy();
     // Conversion de coque : depot + spaceport L1 ACTIFS, tuiles 0 et 1.

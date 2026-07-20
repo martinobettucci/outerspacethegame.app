@@ -19,6 +19,7 @@
  * Autres [TUNE-GAP] : indice = niveau du MEILLEUR instrument couvrant
  * (pas la somme) ; estimation de population à 2 chiffres significatifs.
  */
+import type { DemographicCounters } from './popv2.js';
 import type { IntelTier } from './types.js';
 
 export const INTEL_TIER_NONE = 0 as const;
@@ -91,6 +92,7 @@ export interface PlanetIntelFull {
   marketPairs: { give: string; get: string }[];
   innateOffers: { sell: string; want: string; price: number }[];
   buildings: { key: string; level: number; status: string }[];
+  demographicHistory: DemographicCounters;
   quality: string | null;
   deposits: {
     resource: string;
@@ -124,6 +126,7 @@ export interface PlanetIntel {
   buildings?: { key: string; level: number; status: string }[];
   defenseCount?: number;
   depositsPresent?: string[];
+  demographicHistory?: DemographicCounters;
   // = 4
   quality?: string | null;
   deposits?: {
@@ -169,6 +172,7 @@ export function projectPlanetIntel(tier: IntelTier, full: PlanetIntelFull): Plan
       DEFENSE_BUILDING_KEYS.includes(b.key),
     ).length;
     out.depositsPresent = full.deposits.map((d) => d.resource);
+    out.demographicHistory = full.demographicHistory;
   }
   if (tier >= INTEL_TIER_DEEP_SIGHT) {
     out.quality = full.quality;

@@ -27,6 +27,8 @@ import { z } from 'zod';
 import { ARCHETYPES, ALL_BUILDING_KEYS, ALL_TECH_KEYS } from '@atg/shared';
 import type { Archetype, BuildingKey, TechNodeKey } from '@atg/shared';
 import type { Config } from '../config.js';
+import { extinguishPlanet } from '../sim/extinction.js';
+import { recomputePlanetRates } from '../sim/rebase.js';
 import {
   registerPlayer,
   RegistrationError,
@@ -254,10 +256,14 @@ const buildShipSchema = z.object({
   size: z.enum(['s', 'm', 'l']),
   name: z.string().min(2).max(40),
 });
-const settlersSchema = z.object({
-  count: z.number().int().positive(),
-  direction: z.enum(['embark', 'disembark']),
-});
+const settlersSchema = z
+  .object({
+    children: z.number().int().min(0),
+    actives: z.number().int().min(0),
+    seniors: z.number().int().min(0),
+    direction: z.enum(['embark', 'disembark']),
+  })
+  .refine((value) => value.children + value.actives + value.seniors > 0);
 const crewSchema = z.object({ npcId: z.string().uuid() });
 const refuelSchema = z.object({ units: z.number().positive().optional() });
 const podOpenSchema = z.object({
@@ -742,24 +748,47 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       const parsed = z
         .object({
           planetId: z.string().uuid(),
-          total: z.number().positive().max(100_000),
+          total: z.number().min(0).max(100_000),
         })
         .safeParse(req.body);
       if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
       const { planetId, total } = parsed.data;
-      const { rows } = await deps.pool.query(
-        `SELECT 1 FROM bodies WHERE id = $1 AND owner_id = $2`,
-        [planetId, player.id],
-      );
-      if (!rows[0]) return reply.status(403).send({ error: 'forbidden' });
-      const children = Math.round(total * STABLE_PYRAMID.children);
-      const seniors = Math.round(total * STABLE_PYRAMID.seniors);
-      await deps.pool.query(
-        `UPDATE bodies SET population = $2, pop_children = $3,
-            pop_seniors = $4, pop_as_of = now() WHERE id = $1`,
-        [planetId, total, children, seniors],
-      );
-      return { ok: true };
+      return wrap(reply, async () => {
+        const client = await deps.pool.connect();
+        try {
+          await client.query('BEGIN');
+          const nowMs = Date.now();
+          const { rows: owned } = await client.query(
+            `SELECT owner_id FROM bodies
+             WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
+            [planetId],
+          );
+          if (!owned[0] || owned[0].owner_id !== player.id) {
+            throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
+          }
+          const snap = await recomputePlanetRates(client, planetId, nowMs);
+          if (!snap) throw new CommandError('not_found', 'Planète inconnue');
+          if (total === 0) {
+            await extinguishPlanet(client, snap, nowMs);
+          } else {
+            const children = Math.round(total * STABLE_PYRAMID.children);
+            const seniors = Math.round(total * STABLE_PYRAMID.seniors);
+            await client.query(
+              `UPDATE bodies SET population = $2, pop_children = $3,
+                  pop_seniors = $4, pop_as_of = now() WHERE id = $1`,
+              [planetId, total, children, seniors],
+            );
+            await recomputePlanetRates(client, planetId, nowMs);
+          }
+          await client.query('COMMIT');
+          return { ok: true };
+        } catch (err) {
+          await client.query('ROLLBACK').catch(() => undefined);
+          throw err;
+        } finally {
+          client.release();
+        }
+      });
     });
 
     app.post('/test/grant', async (req, reply) => {

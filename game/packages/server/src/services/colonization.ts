@@ -23,12 +23,16 @@ import {
   COLONY_SEED_STOCK,
   HULLS,
   ITEMS,
+  normalizeDemographicCounters,
+  settlerManifestTotal,
   type CostBundle,
   type HullCategory,
   type HullSize,
+  type SettlerManifest,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { extinguishPlanet } from '../sim/extinction.js';
 import { recomputePlanetRates } from '../sim/rebase.js';
 import { rebaseShipDrain } from '../sim/shipDrain.js';
 import { CommandError, payCost } from './planets.js';
@@ -148,23 +152,33 @@ export async function fitColonyKit(
 }
 
 /**
- * Embarque/débarque des settlers — la population ne voyage QUE par coque
- * Civil, et sa manutention exige un spaceport actif sur le monde habité
- * (DG §3.2). Garde v1 [TUNE interp] : la population restante doit couvrir
- * la workforce assignée (part assignable 60 %).
+ * Embarque/débarque explicitement les trois catégories de settlers — la
+ * population ne voyage QUE par coque Civil, et sa manutention exige un
+ * spaceport actif sur le monde habité (DG §3.2-v2 j). AUCUNE garde morale :
+ * retirer les actifs réduit simplement le staff dans la même proportion.
  */
 export async function transferSettlers(
   pool: pg.Pool,
   playerId: string,
   shipId: string,
-  input: { count: number; direction: 'embark' | 'disembark' },
+  input: SettlerManifest & { direction: 'embark' | 'disembark' },
   opts: { nowMs?: number } = {},
-): Promise<{ settlers: number }> {
+): Promise<{ settlers: number; manifest: SettlerManifest }> {
   const nowMs = opts.nowMs ?? Date.now();
-  const count = Math.floor(input.count);
-  if (!Number.isFinite(count) || count <= 0) {
+  const manifest: SettlerManifest = {
+    children: Number(input.children),
+    actives: Number(input.actives),
+    seniors: Number(input.seniors),
+  };
+  if (
+    Object.values(manifest).some(
+      (count) => !Number.isFinite(count) || !Number.isInteger(count) || count < 0,
+    )
+  ) {
     throw new CommandError('not_available', 'Effectif invalide');
   }
+  const count = settlerManifestTotal(manifest);
+  if (count <= 0) throw new CommandError('not_available', 'Effectif invalide');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -208,58 +222,129 @@ export async function transferSettlers(
           'Des settlers d\'un autre monde sont déjà à bord (une route à la fois)',
         );
       }
-      // v2 (chunk BB) : les settlers embarqués sont des ACTIFS (le choix
-      // par catégorie arrive au chunk BD) — les actifs restants doivent
-      // couvrir la workforce assignée.
-      const remainingActives = snap.pyramid.actives - count;
-      const remaining = snap.population - count;
-      const { rows: wf } = await client.query(
-        `SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings
-         WHERE body_id = $1`,
-        [world.id],
-      );
-      if (remaining < 0 || remainingActives < 0 || wf[0].assigned > remainingActives) {
+      if (
+        manifest.children > snap.pyramid.children + 1e-9 ||
+        manifest.actives > snap.pyramid.actives + 1e-9 ||
+        manifest.seniors > snap.pyramid.seniors + 1e-9
+      ) {
         throw new CommandError(
-          'workforce_invalid',
-          'Les actifs restants ne couvriraient plus la workforce assignée',
+          'not_available',
+          'Cohorte insuffisante sur le monde (enfants, actifs ou seniors)',
         );
       }
+      const remainingPyramid = {
+        children: snap.pyramid.children - manifest.children,
+        actives: snap.pyramid.actives - manifest.actives,
+        seniors: snap.pyramid.seniors - manifest.seniors,
+      };
+      const remaining =
+        remainingPyramid.children + remainingPyramid.actives + remainingPyramid.seniors;
+      const counters = normalizeDemographicCounters(snap.demoCounters);
+      counters.exodus.children += manifest.children;
+      counters.exodus.actives += manifest.actives;
+      counters.exodus.seniors += manifest.seniors;
       await client.query(
-        `UPDATE bodies SET population = $2, pop_as_of = to_timestamp($3 / 1000.0)
+        `UPDATE bodies SET population = $2, pop_children = $3, pop_seniors = $4,
+             demo_counters = $5, pop_as_of = to_timestamp($6 / 1000.0)
          WHERE id = $1`,
-        [world.id, remaining, nowMs],
+        [
+          world.id,
+          remaining,
+          remainingPyramid.children,
+          remainingPyramid.seniors,
+          JSON.stringify(counters),
+          nowMs,
+        ],
       );
       await client.query(
-        `UPDATE ships SET settlers = settlers + $2, settlers_origin_body_id = $3
+        `UPDATE ships SET settlers = settlers + $2,
+             settlers_children = settlers_children + $3,
+             settlers_actives = settlers_actives + $4,
+             settlers_seniors = settlers_seniors + $5,
+             settlers_origin_body_id = $6
          WHERE id = $1`,
-        [shipId, count, world.id],
+        [
+          shipId,
+          count,
+          manifest.children,
+          manifest.actives,
+          manifest.seniors,
+          world.id,
+        ],
       );
+
+      if (manifest.actives > 0 && snap.pyramid.actives > 0) {
+        const activeFraction = Math.max(
+          0,
+          Math.min(1, remainingPyramid.actives / snap.pyramid.actives),
+        );
+        await client.query(
+          `UPDATE buildings
+              SET workforce = floor(workforce * $2::float8)::int
+            WHERE body_id = $1 AND workforce > 0`,
+          [world.id, activeFraction],
+        );
+      }
+      if (remaining <= 1e-9) {
+        await extinguishPlanet(
+          client,
+          { bodyId: world.id, pyramid: remainingPyramid, demoCounters: counters },
+          nowMs,
+          { countRemainingAsDeaths: false },
+        );
+      } else {
+        await recomputePlanetRates(client, world.id, nowMs);
+      }
     } else {
-      if (ship.settlers < count) {
-        throw new CommandError('not_available', 'Pas assez de settlers à bord');
+      if (
+        Number(ship.settlers_children ?? 0) < manifest.children ||
+        Number(ship.settlers_actives ?? 0) < manifest.actives ||
+        Number(ship.settlers_seniors ?? 0) < manifest.seniors
+      ) {
+        throw new CommandError(
+          'not_available',
+          'Pas assez de settlers dans une des cohortes à bord',
+        );
       }
       // Débordement de popCap permis : la cloche (§3.4) punit, pas nous.
       await client.query(
-        `UPDATE bodies SET population = population + $2,
-           pop_as_of = to_timestamp($3 / 1000.0)
+        `UPDATE bodies SET population = $2, pop_children = $3, pop_seniors = $4,
+           pop_as_of = to_timestamp($5 / 1000.0)
          WHERE id = $1`,
-        [world.id, count, nowMs],
+        [
+          world.id,
+          snap.population + count,
+          snap.pyramid.children + manifest.children,
+          snap.pyramid.seniors + manifest.seniors,
+          nowMs,
+        ],
       );
       await client.query(
         `UPDATE ships SET settlers = settlers - $2,
+           settlers_children = settlers_children - $3,
+           settlers_actives = settlers_actives - $4,
+           settlers_seniors = settlers_seniors - $5,
            settlers_origin_body_id = CASE WHEN settlers - $2 = 0 THEN NULL
                                           ELSE settlers_origin_body_id END
          WHERE id = $1`,
-        [shipId, count],
+        [shipId, count, manifest.children, manifest.actives, manifest.seniors],
       );
+      await recomputePlanetRates(client, world.id, nowMs);
     }
-    await recomputePlanetRates(client, world.id, nowMs);
     const { rows: after } = await client.query(
-      `SELECT settlers FROM ships WHERE id = $1`,
+      `SELECT settlers, settlers_children, settlers_actives, settlers_seniors
+       FROM ships WHERE id = $1`,
       [shipId],
     );
     await client.query('COMMIT');
-    return { settlers: after[0].settlers };
+    return {
+      settlers: after[0].settlers,
+      manifest: {
+        children: after[0].settlers_children,
+        actives: after[0].settlers_actives,
+        seniors: after[0].settlers_seniors,
+      },
+    };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;
@@ -312,12 +397,18 @@ export async function colonizeShip(
       bodyType: body.body_type,
       ownerId: body.owner_id,
       climate: body.climate,
+      annihilated: Boolean(body.config?.annihilated),
     });
     if (!eligible.ok) {
+      const unbuildable = ['poison_unbuildable', 'annihilated'].includes(
+        eligible.reason ?? '',
+      );
       throw new CommandError(
-        eligible.reason === 'poison_unbuildable' ? 'unbuildable' : 'not_available',
-        eligible.reason === 'poison_unbuildable'
-          ? 'Les mondes poison sont inconstructibles (GB §3)'
+        unbuildable ? 'unbuildable' : 'not_available',
+        eligible.reason === 'annihilated'
+          ? 'Ce monde a été annihilé et ne peut jamais être recolonisé (GB §22)'
+          : eligible.reason === 'poison_unbuildable'
+            ? 'Les mondes poison sont inconstructibles (GB §3)'
           : 'Ce monde ne se colonise pas (déjà possédé ou pas une planète)',
       );
     }

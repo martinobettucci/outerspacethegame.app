@@ -34,6 +34,10 @@ const FULL: PlanetIntelFull = {
     { key: 'depot', level: 1, status: 'active' },
     { key: 'turret', level: 2, status: 'active' },
   ],
+  demographicHistory: {
+    deaths: { children: 3, actives: 5, seniors: 7 },
+    exodus: { children: 11, actives: 13, seniors: 17 },
+  },
   quality: 'good',
   deposits: [
     { resource: 'ore', remainingT: 1500, initialT: 2000, dryAt: null },
@@ -49,7 +53,13 @@ const L2_KEYS = [...L1_KEYS,
   'innateOffers', 'marketPairs', 'populationEstimate', 'spaceportOpen',
   'tiles', 'tilesUsed',
 ];
-const L3_KEYS = [...L2_KEYS, 'buildings', 'defenseCount', 'depositsPresent'];
+const L3_KEYS = [
+  ...L2_KEYS,
+  'buildings',
+  'defenseCount',
+  'demographicHistory',
+  'depositsPresent',
+];
 const L4_KEYS = [...L3_KEYS, 'deposits', 'quality', 'techDna'];
 
 describe('intelTierFromSources (DG §4.1)', () => {
@@ -122,8 +132,17 @@ describe('projectPlanetIntel — listes blanches EXACTES par palier', () => {
     expect(out.populationEstimate).toBe(8_400);
     expect(out.defenseCount).toBe(1);
     expect(out.depositsPresent).toEqual(['ore']);
+    expect(out.demographicHistory).toEqual(FULL.demographicHistory);
     // Présence SANS tonnage (DG §11.3) : pas de deposits détaillés à L3.
     expect('deposits' in out).toBe(false);
+  });
+
+  it('morts/exodés absents sous L3, présents et complets à partir de L3', () => {
+    expect('demographicHistory' in projectPlanetIntel(2, FULL)).toBe(false);
+    expect(projectPlanetIntel(3, FULL).demographicHistory).toEqual({
+      deaths: { children: 3, actives: 5, seniors: 7 },
+      exodus: { children: 11, actives: 13, seniors: 17 },
+    });
   });
 
   it('estimatePopulation : bornes', () => {

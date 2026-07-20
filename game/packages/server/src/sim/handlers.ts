@@ -3,6 +3,7 @@
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
  */
 import {
+  allocateSettlerDeaths,
   agingFlows,
   applyDeaths,
   breathesFromStock,
@@ -17,15 +18,19 @@ import {
   illnessDeltaV2,
   isAmmSlot,
   JUNK_CARCASS_T,
+  normalizeDemographicCounters,
   overcapDeathsPerDay,
   popCap,
   settlerLosses,
+  settlerManifestTotal,
   settlerTripRisk,
   UNEMP_GRACE_DAYS,
   UNEMP_TOLERANCE,
   unemploymentDeathsPerDay,
   unemploymentRate,
+  type DemographicCounters,
   type Pyramid,
+  type SettlerManifest,
 } from '@atg/shared';
 import type pg from 'pg';
 import { aggregateCensus } from './census.js';
@@ -33,6 +38,7 @@ import { enqueue, type EventHandler } from './events.js';
 import { whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
 import { populationIndicators } from './population.js';
+import { extinguishPlanet } from './extinction.js';
 import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
@@ -106,7 +112,7 @@ export const stockEdge: EventHandler = async (client, event) => {
     snap.rates.popConsumption.oxygen < snap.rates.popNeeds.oxygen - 1e-9 &&
     (snap.stocks.oxygen ?? 0) <= 1e-6
   ) {
-    await wipePopulation(client, snap, nowMs);
+    await extinguishPlanet(client, snap, nowMs);
   }
 };
 
@@ -128,66 +134,9 @@ export const depositDry: EventHandler = async (client, event) => {
 
 type ResourceIdLike = Parameters<typeof String>[0] & string;
 
-/**
- * Mort totale de la population (horloge échue, oxygène à sec) : compteurs
- * imputés, pyramide à zéro, horloges levées, rebase. La PERTE DE
- * PROPRIÉTÉ de l'extinction (GB §10 v2) arrive au chunk BD — d'ici là la
- * planète reste possédée mais vide (annoncé).
- */
-async function wipePopulation(
-  client: pg.PoolClient,
-  snap: {
-    bodyId: string;
-    pyramid: Pyramid;
-    demoCounters?: unknown;
-  },
-  nowMs: number,
-): Promise<void> {
-  const counters = readCounters(snap);
-  counters.deaths.children += snap.pyramid.children;
-  counters.deaths.actives += snap.pyramid.actives;
-  counters.deaths.seniors += snap.pyramid.seniors;
-  await client.query(
-    `UPDATE bodies SET population = 0, pop_children = 0, pop_seniors = 0,
-            clock_deadlines = '{}'::jsonb, demo_counters = $2,
-            pop_as_of = to_timestamp($3 / 1000.0)
-     WHERE id = $1`,
-    [snap.bodyId, JSON.stringify(counters), nowMs],
-  );
-  await client.query(
-    `DELETE FROM events WHERE processed_at IS NULL AND kind = 'pop_clock'
-       AND payload->>'bodyId' = $1`,
-    [snap.bodyId],
-  );
-  await recomputePlanetRates(client, snap.bodyId, nowMs);
-}
-
-interface DemoCounters {
-  deaths: { children: number; actives: number; seniors: number };
-  exodus: { children: number; actives: number; seniors: number };
-}
-
-function readCounters(snap: {
-  demoCounters?: unknown;
-}): DemoCounters {
-  const raw = (snap as { demoCounters?: Partial<DemoCounters> }).demoCounters;
-  return {
-    deaths: {
-      children: raw?.deaths?.children ?? 0,
-      actives: raw?.deaths?.actives ?? 0,
-      seniors: raw?.deaths?.seniors ?? 0,
-    },
-    exodus: {
-      children: raw?.exodus?.children ?? 0,
-      actives: raw?.exodus?.actives ?? 0,
-      seniors: raw?.exodus?.seniors ?? 0,
-    },
-  };
-}
-
 /** Impute `deaths` proportionnellement aux catégories dans les compteurs. */
 function addProportionalDeaths(
-  counters: DemoCounters,
+  counters: DemographicCounters,
   pyr: Pyramid,
   deaths: number,
 ): void {
@@ -228,7 +177,7 @@ export const popDaily: EventHandler = async (client, event) => {
     actives: pyr.actives + flows.toActives - flows.toSeniors,
     seniors: pyr.seniors + flows.toSeniors - flows.seniorDeaths,
   };
-  const counters = readCounters(snap);
+  const counters = normalizeDemographicCounters(snap.demoCounters);
   counters.deaths.seniors += flows.seniorDeaths;
 
   // 2. Natalité : facteurs calculés dans l'unique projection partagée
@@ -338,6 +287,16 @@ export const popDaily: EventHandler = async (client, event) => {
 
   const round3 = (v: number) => Math.max(0, Math.round(v * 1000) / 1000);
   const newPop = round3(pyr.children) + round3(pyr.actives) + round3(pyr.seniors);
+  if (newPop <= 0) {
+    // Oxygène, famine/maladie exacte ou reliquat sous le millième : une
+    // seule transition retire la propriété et ne replannifie pas demain.
+    await extinguishPlanet(
+      client,
+      { bodyId, pyramid: pyr, demoCounters: counters },
+      nowMs,
+    );
+    return;
+  }
   await client.query(
     `UPDATE bodies SET population = $2, pop_children = $3, pop_seniors = $4,
             illness = $5, clock_deadlines = $6, demo_counters = $7,
@@ -366,7 +325,7 @@ export const popDaily: EventHandler = async (client, event) => {
       [bodyId, activesFrac],
     );
   }
-  // La population a changé ⇒ E_planet et la consommation aussi : rebase.
+  // La population a changé ⇒ consommation et optimums d'emploi aussi : rebase.
   await recomputePlanetRates(client, bodyId, nowMs);
   // pop_daily suivant (recomputePlanetRates ne le crée que s'il manque —
   // l'événement courant est déjà réclamé mais pas encore marqué traité,
@@ -409,7 +368,7 @@ export const popClock: EventHandler = async (client, event) => {
     0,
   );
   if (need > 1e-9 && served < need - 1e-9 && stock <= 1e-6) {
-    await wipePopulation(client, snap, nowMs);
+    await extinguishPlanet(client, snap, nowMs);
   } else {
     // Famine résolue : lever l'horloge persistée.
     await client.query(
@@ -469,10 +428,41 @@ export const shipArrival: EventHandler = async (client, event) => {
         Number(routes[0].loss_carry),
       );
       if (deaths > 0) {
-        await client.query(`UPDATE ships SET settlers = settlers - $2 WHERE id = $1`, [
-          shipId,
-          deaths,
-        ]);
+        const manifest: SettlerManifest = {
+          children: Number(ship.settlers_children ?? 0),
+          actives: Number(ship.settlers_actives ?? ship.settlers),
+          seniors: Number(ship.settlers_seniors ?? 0),
+        };
+        const lost = allocateSettlerDeaths(manifest, deaths);
+        if (settlerManifestTotal(lost) !== deaths) {
+          throw new Error('Invariant BD : ventilation du péage settlers incohérente');
+        }
+        await client.query(
+          `UPDATE ships
+              SET settlers = settlers - $2,
+                  settlers_children = settlers_children - $3,
+                  settlers_actives = settlers_actives - $4,
+                  settlers_seniors = settlers_seniors - $5
+            WHERE id = $1`,
+          [shipId, deaths, lost.children, lost.actives, lost.seniors],
+        );
+
+        // Les morts de voyage racontent la responsabilité du monde qui a
+        // envoyé la cohorte, même si ce monde est devenu sauvage depuis.
+        const { rows: origins } = await client.query(
+          `SELECT demo_counters FROM bodies WHERE id = $1 FOR UPDATE`,
+          [ship.settlers_origin_body_id],
+        );
+        if (origins[0]) {
+          const counters = normalizeDemographicCounters(origins[0].demo_counters);
+          counters.deaths.children += lost.children;
+          counters.deaths.actives += lost.actives;
+          counters.deaths.seniors += lost.seniors;
+          await client.query(`UPDATE bodies SET demo_counters = $2 WHERE id = $1`, [
+            ship.settlers_origin_body_id,
+            JSON.stringify(counters),
+          ]);
+        }
       }
       await client.query(
         `UPDATE settler_routes SET loss_carry = $3, updated_at = now()
@@ -599,15 +589,22 @@ export const colonyEstablished: EventHandler = async (client, event) => {
     return;
   }
 
-  // v2 (chunk BA) : les settlers débarqués sont tous ACTIFS — la
-  // pyramide se construira par la natalité (le choix par catégorie à
-  // l'embarquement arrive au chunk BD).
+  // BD : la colonie naît de l'exact manifeste C/A/S livré. L'historique
+  // de l'ancien souverain est remis à zéro ; la grâce repart maintenant.
   await client.query(
     `UPDATE bodies SET owner_id = $2, colonized_at = to_timestamp($3 / 1000.0),
-       population = $4, pop_children = 0, pop_seniors = 0, illness = 0,
-       clock_deadlines = '{}'::jsonb, pop_as_of = to_timestamp($3 / 1000.0)
+       population = $4, pop_children = $5, pop_seniors = $6, illness = 0,
+       unemp_over_days = 0, clock_deadlines = '{}'::jsonb,
+       demo_counters = '{}'::jsonb, pop_as_of = to_timestamp($3 / 1000.0)
      WHERE id = $1`,
-    [bodyId, ship.owner_id, nowMs, ship.settlers],
+    [
+      bodyId,
+      ship.owner_id,
+      nowMs,
+      ship.settlers,
+      ship.settlers_children,
+      ship.settlers_seniors,
+    ],
   );
 
   // Conversion de coque : depot + spaceport L1 actifs — « the ship is
@@ -1087,11 +1084,23 @@ export const starSupernova: EventHandler = async (client, event) => {
       [w.id],
     );
     await client.query(
-      `UPDATE bodies SET owner_id = NULL, population = 0, tiles = 0,
-          is_starter = false,
-          config = coalesce(config, '{}'::jsonb) || '{"annihilated": true}'::jsonb
-       WHERE id = $1`,
-      [w.id],
+      `UPDATE bodies
+          SET owner_id = NULL,
+              is_starter = false,
+              account_bound_until = NULL,
+              colonized_at = NULL,
+              population = 0,
+              pop_children = 0,
+              pop_seniors = 0,
+              illness = 0,
+              unemp_over_days = 0,
+              clock_deadlines = '{}'::jsonb,
+              pop_as_of = to_timestamp($2 / 1000.0),
+              tiles = 0,
+              config = (coalesce(config, '{}'::jsonb) - 'innateOffers')
+                       || '{"annihilated": true}'::jsonb
+        WHERE id = $1`,
+      [w.id, nowMs],
     );
   }
 

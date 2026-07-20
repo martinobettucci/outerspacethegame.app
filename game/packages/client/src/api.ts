@@ -278,6 +278,7 @@ export interface ShipView {
   cargo: Record<string, number>;
   containers: number;
   settlers: number;
+  settlerManifest: { children: number; actives: number; seniors: number };
   settlersPax: number;
   colonyKit: boolean;
   establishesAt: string | null;
@@ -544,9 +545,17 @@ export const api = {
     call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/colony-kit`),
   transferSettlers: (
     shipId: string,
-    input: { count: number; direction: 'embark' | 'disembark' },
+    input: {
+      children: number;
+      actives: number;
+      seniors: number;
+      direction: 'embark' | 'disembark';
+    },
   ) =>
-    call<{ settlers: number }>('POST', `/ships/${shipId}/settlers`, input),
+    call<{
+      settlers: number;
+      manifest: { children: number; actives: number; seniors: number };
+    }>('POST', `/ships/${shipId}/settlers`, input),
   colonize: (shipId: string) =>
     call<{ completesAt: string; bodyId: string }>(
       'POST',

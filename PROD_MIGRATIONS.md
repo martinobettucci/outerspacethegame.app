@@ -37,6 +37,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 21 | `game/packages/server/migrations/021_auto_trade.sql` | Auto-trade du survol (GB §7) : règles jsonb sur ships | 001 | DROP de la colonne |
 | 22 | `game/packages/server/migrations/022_pop_v2.sql` | Population v2 chunk BA (DG §3.2-v2) : pyramide (`pop_children`/`pop_seniors`, backfill 18,2/27,3 %), `clock_deadlines`, `demo_counters` | 001 | DROP des colonnes |
 | 23 | `game/packages/server/migrations/023_pop_v2_unemployment.sql` | Population v2 chunk BB : `unemp_over_days` (grâce de chômage §3.2-v2 g) | 022 | DROP de la colonne |
+| 24 | `game/packages/server/migrations/024_pop_v2_settler_categories.sql` | Population v2 chunk BD : manifeste C/A/S sur les coques, backfill fidèle des settlers historiques en actifs, contrainte total = somme des cohortes | 007, 022 | DROP contrainte puis DROP des trois colonnes |
 
 ## Services à déployer (au premier déploiement)
 

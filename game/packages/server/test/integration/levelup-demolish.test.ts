@@ -112,7 +112,7 @@ describe('montée de niveau (GB §18, DG §5.1)', () => {
     // L2 : workforce optimale = 120 ; on ré-assigne 84 (u = 0,7).
     await setBuildingSettings(pool, playerId, planetId, mineId, { workforce: 84 });
     const rateL2 = await oreRate();
-    expect(rateL2).toBeGreaterThan(17); // 20 × E(0,7)=1 × E_planet ≈ 0,95
+    expect(rateL2).toBeGreaterThan(17); // 20 × E(0,7)=1 × gouvernance G.
     expect(rateL2).toBeGreaterThan(rateL1 * 1.7);
   });
 
