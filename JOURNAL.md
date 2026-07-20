@@ -3484,3 +3484,47 @@ figés avant code :
   projette l'éligibilité du joueur, le seuil et la date de déverrouillage ; le
   panneau montre ce verrou AVANT interaction et désactive l'ouverture. Le POST
   verrouille/revérifie toujours le joueur à l'instant de la commande.
+
+## 2026-07-20 — Directives responsable : halo télescope, cercles d'autonomie, sprites de stock, GO file en attente
+
+Persisté AVANT code (CLAUDE.md §5). Le télescope-sur-tuile + politique
+d'instances sont EN COURS D'IMPLÉMENTATION PAR LE RESPONSABLE lui-même
+(migration 025 + buildings.ts dans son arbre) — l'agent n'y touche pas.
+
+### Halo de portée télescope à la sélection (carte galaxie) [DÉCIDÉ]
+- En sélectionnant une planète QUI A un télescope : halo « subtil mais
+  visible » de la portée + animation de scanner ROTATIF.
+- Seulement pour la planète actuellement sélectionnée, seulement si elle
+  a un télescope. PUREMENT COSMÉTIQUE : le brouillard réel reste l'union
+  de tous les télescopes accessibles (aucun changement fonctionnel).
+- Rayon dessiné = ciel de CE monde : BASE_SKY_PC (60) + 200 × niveau du
+  télescope (source : world.ts ; lecture client via planetDetail du
+  monde possédé sélectionné).
+
+### Cercles d'autonomie à la sélection d'un vaisseau (carte) [DÉCIDÉ]
+- Cercle « lignes tratteggiate » (POINTILLÉS) ROUGE : distance maximale
+  avant panne sèche, avec tolérance 5 % → rayon = 0,95 × autonomie.
+- Cercle pointillé VERT : distance maximale aller-RETOUR → rayon =
+  0,45 × autonomie (95 %/2, même tolérance).
+- Autonomie = fuel embarqué / burnUPerPc de la coque (le poids/loadFrac
+  reste hors périmètre v1 — déjà annoncé au backlog vol libre).
+
+### Sprites de ressources : DEUX emplacements, DEUX tailles [DÉCIDÉ]
+- Ledger stats : LIVRÉ (commit 1630d61, 18 px).
+- Panneau de stock du HUD (PlanetView) : à câbler avec une taille PLUS
+  PETITE adaptée à la densité de cet écran. PlanetView est dans l'arbre
+  du responsable → implémentation à la détente de l'arbre (annoncé).
+
+### GO d'implémentation parallèle (avec spec-first) [DÉCIDÉ]
+Le responsable autorise l'agent à implémenter la file en attente pendant
+qu'il travaille en parallèle, staging chirurgical obligatoire. Périmètre
+agent (recadré pour éviter ses chantiers) :
+1. Halo télescope + cercles d'autonomie (GalaxyMap/scenes.css propres).
+2. Refonte sondes : build → HOVER au monde d'origine → « envoyer » =
+   première sonde disponible ; aucune limite de flotte de sondes ;
+   vitesse 120 pc/j déjà commitée (e31151d).
+3. Codex : descriptions par TYPE de bâtiment (single/multiple + rôle),
+   affichées contextuellement dès que le type est DISPONIBLE sur la
+   planète ouverte (fichiers codex/ propres).
+HORS périmètre agent (chantiers du responsable) : télescope-sur-tuile,
+caps d'instances dans buildings.ts, panneau de stock HUD.
