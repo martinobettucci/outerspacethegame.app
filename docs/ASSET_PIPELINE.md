@@ -79,25 +79,26 @@ no code/HTML change needed, ever.
 assets/game/            # non-card files are .gif (animated)
 ├── planets/    planet_{climate}_{s|m|l}.gif          climate ∈ hot|cold|temperate|poison
 │               planet_{climate}_{size}.ov.{cond}.png cond ∈ smog|ice|burn|poison|radio
-├── stars/      star_{cold|hot|gas}.png · blackhole.png            (2048)
-├── buildings/  building_{key}_l{1|2|3}.png           key ∈ mine|refinery|spaceport|market|workshop|turret …
-│               building_{key}_l{n}.ov.{hot|cold|temperate}.png
-├── ships/      ship_{combat|cargo|civil}_{s|m|l}.png
-│               ship_{cat}_{size}.ov.{upgrade}.png — PER-HULL set, slot rules
+├── stars/      star_{cold|hot|gas}.gif · blackhole.gif            (2048)
+├── buildings/  building_{key}_l{1|2|3}.gif           key ∈ mine|refinery|spaceport|market|workshop|clinic|turret …
+│               building_{key}_l{n}.ov.{hot|cold}.gif
+├── ships/      ship_{combat|cargo|civil}_{s|m|l}.gif
+│               ship_{cat}_{size}.ov.{upgrade}.gif — PER-HULL set, slot rules
 │               enforced (weapons: Combat only; cargo: Cargo only; OBS: M/L
 │               Combat; colony_fitting: Civil M/L); upgrades ×2 levels
 │               (engine_1/2, armor_1/2, fuel_1/2, obs_1/2, weapon_a2a_1/2,
 │               weapon_a2g_1/2, cargo_1/2) + accessories (harvest,
 │               junk_collector, claim_rig, scanner, shield_hot/cold/radio)
-│               + ship_personal.png, ship_probe.png
+│               + ship_personal.gif, ship_probe.gif
 ├── units/      unit_{key}_l{n}.gif  (512×256, placed like buildings)
-├── portraits/  portrait_{human|forged|vess}_{role}_{nn}.png
+├── portraits/  portrait_{human|forged|vess}_{role}_{nn}.gif
 ├── cards/      card_{building|npc|item}_{key}.png     (512×512 art only)
-├── resources/  res_{key}.png
+├── resources/  res_{key}.gif
 └── fx/         (junk fields, explosions, gate effects — later)
 ```
 
-- Companions always: `{name}.bump.png`, `{name}.light.png` — same folder.
+- Companions always: `{name}.bump.{gif|png}`, `{name}.light.{gif|png}` —
+  same folder and the same extension as the base file.
 - Names are lowercase snake_case; keys match `DESIGN_GUIDE.md` identifiers.
 - `docs/design/props/manifest.json` lists every expected file with a human
   description of what the art must depict (kept in sync with stubs).
@@ -116,10 +117,11 @@ All files under `assets/game/` are **programmatically generated placeholders**
 
 Regenerate anytime: `python3 docs/design/props/generate_stubs.py`.
 
-**Current coverage: 586 assets (×3 files = 1 758)** — full v0 catalog: 28
-buildings (warehouse included) ×3 levels ×(base+hot+cold), 11 ships with per-hull overlay sets,
-15 ground units, 18 portraits (full 3-peoples × 6-roles matrix — any people,
-any role), 42 cards, 30 resources, 12 planets + weather overlays on every
+**Current coverage: 597 assets (×3 files = 1 791)** — full v0 catalog: 29
+buildings (clinic and warehouse included) ×3 levels ×(base+hot+cold), 11 ships
+with per-hull overlay sets, 15 ground units, 18 portraits (full 3-peoples ×
+6-roles matrix — any people, any role), 44 cards, 31 resources, 12 planets +
+weather overlays on every
 climate×size, 4 giants. Browse: `docs/design/props/gallery.html`
 (auto-generated).
 

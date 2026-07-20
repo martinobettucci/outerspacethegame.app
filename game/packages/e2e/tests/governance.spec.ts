@@ -4,11 +4,11 @@
  * monde à G ×0.5 (avertissement visible) ; la préview canon-obligatoire
  * montre masque résultant, nœuds perdus et G ; l'installation exige la
  * confirmation TYPÉE (nom de la planète) et est permanente — le G tient
- * ensuite sans le vaisseau. Le starter est s|m (roll) : on registre
- * jusqu'à obtenir un moyen (état vérifié par l'API, ≤ 5 tentatives).
+ * ensuite sans le vaisseau. Le starter est s|m (roll) : son seed pur permet
+ * de sélectionner un moyen avant l'inscription (état vérifié par l'API).
  */
 import { expect, test } from '@playwright/test';
-import { pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { pickEmailByStarterSize, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -17,18 +17,13 @@ test('gouvernance : vaisseau-gouverneur, demi-efficacité, préview et installat
 }) => {
   test.setTimeout(420_000);
 
-  // 1. Un starter MOYEN (exigence 1) — vérifié par l'API, jamais deviné.
-  let planetId = '';
-  for (let nth = 0; nth < 5 && !planetId; nth++) {
-    const email = pickEmailByDna(`e2e-gov-${runId}`, () => true, nth);
-    const candidate = await registerSovereign(page, email, `Regent ${nth}`);
-    const d = (await page.request
-      .get(`/api/planets/${candidate}`)
-      .then((r) => r.json())) as { size: string };
-    if (d.size === 'm') planetId = candidate;
-    else await page.getByRole('button', { name: 'Log out' }).click();
-  }
-  expect(planetId, 'aucun starter moyen en 5 tirages (p = 1/32)').toBeTruthy();
+  // 1. Un starter MOYEN (exigence 1) — seed prédit puis résultat vérifié.
+  const email = pickEmailByStarterSize(`e2e-gov-${runId}`, 'm');
+  const planetId = await registerSovereign(page, email, 'Regent');
+  const starter = (await page.request
+    .get(`/api/planets/${planetId}`)
+    .then((r) => r.json())) as { size: string };
+  expect(starter.size).toBe('m');
 
   // 2. Parqué au spawn : 0/1 siège mais G ×1 (le vaisseau gouverne).
   const rail = page.getByRole('navigation', { name: 'Main' });

@@ -7,7 +7,14 @@
  * (≤ 1 pc), retour et plein au monde (bouton Refuel).
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, galaxyLabel, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import {
+  boardHelpers,
+  galaxyLabel,
+  pickEmailByDna,
+  registerSovereign,
+  selectFleetShip,
+  shot,
+} from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -304,11 +311,10 @@ test('drains de survol : la planète paie, le vide échoue, le tanker sauve', as
     )
     .toBe('idle');
 
-  // Deux coques au même point : Tender = éventail idx 1 (−24, −22).
-  await expect(async () => {
-    await page.mouse.click(voidPx!.x - 24, voidPx!.y - 22);
-    await expect(tenderPanel).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  // Deux coques au même point : l'index accessible identifie Tender sans
+  // dépendre de l'ordre de l'éventail graphique.
+  await selectFleetShip(page, (ship) => ship.id === tenderId);
+  await expect(tenderPanel).toBeVisible();
   const transfer = tenderPanel.getByRole('region', { name: 'Transfer fuel' });
   await transfer.getByLabel('To ship').selectOption({ label: 'First hauler' });
   await transfer.getByLabel('Units').fill('20');

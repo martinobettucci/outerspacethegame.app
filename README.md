@@ -83,7 +83,10 @@ Environment variables are documented in `game/.env.example` (copy to
 | `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor; publishes an innate hospitality offer (water @ 2 ore/T, floor 10 T) |
 
 The seed goes through the real registration flow (`registerPlayer` →
-starter spawn), is idempotent, and is recreated by `pnpm resetDb`.
+starter spawn), is idempotent, and is recreated by `pnpm resetDb`. Its
+deterministic tech DNA includes the waterworks → lab → clinic chain, so the
+demo account can exercise the Population v2 clinic, ledger and projected
+survival alarms through the real UI.
 
 ## Tests (game, from `game/`)
 

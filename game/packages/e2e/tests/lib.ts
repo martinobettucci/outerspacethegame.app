@@ -5,13 +5,20 @@
  * et poses vérifiées par l'ÉTAT de l'API — jamais par une notice.
  */
 import { expect, type Page } from '@playwright/test';
-import { planetTechAvailability } from '@atg/shared';
+import { planetTechAvailability, SeededStream } from '@atg/shared';
 import { mkdirSync } from 'node:fs';
 
 export const CAPTURES = new URL('../captures/', import.meta.url).pathname;
 mkdirSync(CAPTURES, { recursive: true });
 
 export const E2E_PASSWORD = 'motdepasse-e2e-solide';
+
+export interface FleetContact {
+  id: string;
+  name: string;
+  hullCategory: string;
+  status: string;
+}
 
 /**
  * Étiquette d'un corps sur la carte galaxie. Depuis la refonte UI (bouton
@@ -21,6 +28,36 @@ export const E2E_PASSWORD = 'motdepasse-e2e-solide';
  */
 export function galaxyLabel(page: Page, bodyName: string) {
   return page.getByRole('button', { name: `Inspect ${bodyName}` });
+}
+
+/**
+ * Sélectionne une coque par le vrai index de contacts de la carte. Les
+ * marqueurs Three.js sont volontairement déployés en éventail : leur pixel
+ * dépend de l'ordre de flotte et ne constitue donc pas un contrat E2E.
+ */
+export async function selectFleetShip(
+  page: Page,
+  predicate: (ship: FleetContact) => boolean,
+): Promise<FleetContact> {
+  let ship: FleetContact | undefined;
+  await expect
+    .poll(async () => {
+      const fleet = (await page.request
+        .get('/api/fleet')
+        .then((response) => response.json())) as { ships: FleetContact[] };
+      ship = fleet.ships.find(predicate);
+      return ship?.id ?? null;
+    })
+    .not.toBeNull();
+
+  const contactIndex = page.getByLabel('Galaxy contact index');
+  await expect(async () => {
+    await contactIndex.selectOption(`ship:${ship!.id}`);
+    await expect(
+      page.getByRole('complementary', { name: ship!.name }),
+    ).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 20_000 });
+  return ship!;
 }
 
 export const shot = (page: Page, name: string) =>
@@ -45,6 +82,24 @@ export function pickEmailByDna(
     }
   }
   throw new Error(`aucun e-mail candidat pour ${prefix}`);
+}
+
+/**
+ * Premier e-mail dont le roll de taille du starter satisfait la cible.
+ * Le serveur utilise exactement ce seed et ce stream (gen/rolls.ts) : le
+ * préchoix est donc déterministe et n'inscrit aucun compte jetable.
+ */
+export function pickEmailByStarterSize(
+  prefix: string,
+  target: 's' | 'm',
+): string {
+  for (let i = 0; i < 800; i++) {
+    const email = `${prefix}-${i}@test.local`;
+    const seed = `atg-dev-universe-0001:starter:${email}`;
+    const size = new SeededStream(seed, 'starter-roll').float() < 0.5 ? 's' : 'm';
+    if (size === target) return email;
+  }
+  throw new Error(`aucun starter ${target} pour ${prefix}`);
 }
 
 /** Inscription d'un Souverain neuf ; retourne l'id du monde starter. */

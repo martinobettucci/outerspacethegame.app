@@ -107,6 +107,7 @@ export interface PlanetBuilding {
   workforce: number;
   runPct: number;
   effBatchesPerDay: number | null;
+  workforceOptimal: number;
   workforceU: number | null;
   limiting: string | null;
   landing: 'self' | 'everyone' | null;
@@ -189,6 +190,34 @@ export interface PlanetDetail {
   clockDeadlines: Partial<Record<'water' | 'food', string>>;
   popCap: number;
   illness: number;
+  demographics: {
+    employedActives: number;
+    employmentRate: number;
+    unemploymentRate: number;
+    consumingIdleShare: number;
+    meanEfficiency: number;
+    residentialLevel: number;
+    clinicLevel: number;
+    clinicReduction: number;
+    effectiveIllness: number;
+    localRhos: { food: number; water: number; oxygen: number | null };
+    efficiencyModulator: number;
+    lifeModulator: number;
+    growthModulator: number;
+    birthsPerDay: number;
+  };
+  survivalForecasts: Record<
+    'water' | 'food' | 'oxygen',
+    {
+      family: 'water' | 'food' | 'oxygen';
+      amountT: number;
+      ratePerDay: number;
+      dryAt: string | null;
+      deathAt: string | null;
+      state: 'stable' | 'projected' | 'countdown';
+      instantDeath: boolean;
+    } | null
+  >;
   planetEfficiency: number;
   storageUsedT: number;
   storageCapT: number;

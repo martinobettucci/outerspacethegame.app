@@ -140,6 +140,7 @@ BUILDINGS = {  # key: description de l'art attendu
     "spaceport": "spaceport landing pads (dock size grows w/ level)",
     "workshop": "repair workshop, sparks and cranes", "market": "market hall with stalls",
     "residential": "residential habitat blocks", "lab": "medical/science lab",
+    "clinic": "public health clinic, treatment bays and triage lights",
     "obs_station": "ground OBS targeting dome", "shipyard": "shipyard gantry (hull size grows w/ level)",
     "military_district": "military district, barracks and banners",
     "weapon_foundry": "weapon foundry, beam-laser parts", "research_center": "research center, antennae",
@@ -250,6 +251,8 @@ RESOURCES = {
     # énergie
     "fuel_cells": "glowing yellow fuel cell",
     "fuel_cold": "cold propulsion fuel", "fuel_hot": "hot propulsion fuel", "fuel_gas": "gas propulsion fuel",
+    # salvage (catalogue partagé — chunk AI)
+    "junk": "salvageable compressed space junk",
 }
 for key, desc in RESOURCES.items():
     full(f"resources/res_{key}.png", 256, 256, f"RES {key}", desc)
@@ -268,7 +271,7 @@ html = ["<!doctype html><html><head><meta charset='utf-8'><title>ATG — Full as
         "border-radius:8px;padding:6px}figcaption{font-size:10px;color:#A9B4CE;max-width:260px}",
         "img{display:block;image-rendering:pixelated;background:#0D0D0D}</style></head><body>",
         "<h1>ATG — FULL ASSET GALLERY (auto-generated)</h1>",
-        f"<p>{len(manifest)} assets ×3 files (base + bump + light). Swap any stub at the same path; ",
+        f"<p>{len(manifest)} assets ×3 files (base + bump + light). Swap any stub at the same path; "
         "regenerate this page with generate_stubs.py. Preview capped at 256px — files are native size.</p>"]
 for g in sorted(groups):
     html.append(f"<h2>{g} ({len(groups[g])})</h2><div class='g'>")

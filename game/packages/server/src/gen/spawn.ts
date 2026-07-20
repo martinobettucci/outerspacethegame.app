@@ -11,7 +11,8 @@
  * 3. stock de départ ×U(1.0, 1.3) + 150 u de fuel du type de l'étoile,
  *    et savoir T0 pré-débloqué (telescope/probe_pad/depot/mine — GB §19
  *    « starter knowledge », la pose reste payante).
- * 4. pop 1 200, vaisseau personnel docké, Cargo-S, 1 pilote commun.
+ * 4. pop 350 à la pyramide stationnaire, vaisseau personnel docké,
+ *    Cargo-S, 1 pilote commun.
  * 5. anti-abus : starter lié au compte 45 j, is_starter (jamais mintable).
  *
  * Résolution de la bande dégénérée étoile S (R_nova = 40 pc exactement) :
@@ -40,13 +41,6 @@ export const POCKET_NEIGHBOR_MAX_PC = 240;
 export const POCKET_STAR_MAX_PC = 40;
 export const POCKET_WILD_MAX_PC = 60;
 export const STARTER_ACCOUNT_BIND_DAYS = 45;
-/**
- * Population de départ = 0,6 × popCap — u = 0.6 ⇒ E_planet ≈ 0.95, « les
- * nouvelles colonies naissent saines » (DG §2.2). Le « 1 200 » du guide est
- * exactement 0,6 × cap d'une small-F ; généralisé aux starters medium
- * [TUNE interp, JOURNAL session 30].
- */
-export const STARTER_POP_UTILIZATION = 0.6; // v1 — remplacé par STARTER_POP (v2)
 export const STARTER_FUEL_U = 150;
 
 /**

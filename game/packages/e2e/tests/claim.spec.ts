@@ -4,7 +4,7 @@
  * provisions quasi nulles → équipage mort, owner NULL — chaîne du chunk
  * AB), apparaît dans le radar « Wrecks » ; le claimer (rig monté à
  * l'atelier L2) vole à ≤ 1 pc, RÉCLAME (2 h de jeu ÷ 7200 ≈ 1 s),
- * et l'épave rejoint SA flotte en idle.
+ * et l'épave (réservoir résiduel non vide) rejoint SA flotte en idle.
  */
 import { expect, test } from '@playwright/test';
 import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
@@ -137,6 +137,13 @@ test('salvage : le cimetière est un marché — épave réclamée en 2 h', asyn
     data: { shipId: victimId, bodyId: wild.id },
   });
   expect(rel.ok()).toBe(true);
+  // Le salvage conserve le carburant de l'épave. Un réservoir non vide
+  // rend donc le contrat « récupérée idle » stable ; à zéro, la règle
+  // fuel-out canonique la ferait immédiatement passer `stranded`.
+  const victimFuel = await page.request.post('/api/test/ship-fuel', {
+    data: { shipId: victimId, units: 20 },
+  });
+  expect(victimFuel.ok()).toBe(true);
   const sv = await page.request.post('/api/test/ship-survival', {
     data: { shipId: victimId, foodT: 1e-8, waterT: 1e-8 },
   });

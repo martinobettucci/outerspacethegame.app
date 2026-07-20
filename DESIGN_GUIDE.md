@@ -103,9 +103,11 @@ for anyone with scope on it [TUNE]. (The only gauge the universe ever gives.)
    The starter planet also begins with the **T0 never-gated set pre-unlocked
    as knowledge** — telescope, probe pad, depot, mine — placement still paid
    (GB §19 « starter knowledge », owner decision 2026-07-19).
-4. Starting population: **1 200** [TUNE] (u = 0.6 on a small-F cap ⇒ E_planet
-   ≈ 0.95 — new colonies start *healthy*). Personal ship docked. 1 free small
-   Cargo hull (unupgraded) + **1 Common pilot NPC** [TUNE].
+4. Starting population: **350** [TUNE — Population v2 Round 9], distributed
+   on the stable pyramid (≈ 18/55/27). The starter is intentionally born
+   below its early job capacity; the 14-day colony grace protects the build-up
+   arc. Personal ship docked. 1 free small Cargo hull (unupgraded) +
+   **1 Common pilot NPC** [TUNE].
 
 **Purchased planets** spawn *as near as feasible* to the buyer's centroid with
 the same generator; distance draw `d ~ 50 × LogNormal(0, 0.6)` pc [TUNE] —
@@ -155,11 +157,11 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 
 ### 3.2-v2 Population, demographics & employment (v2 — THE central mechanic)
 
-> **Status: SPEC — decided with the owner on 2026-07-19 (two Q/A rounds,
-> JOURNAL same day; balance anchors validated). Sequence imposed by the
-> owner: this spec → simulated balance campaigns → code.** Supersedes
-> §3.2 (growth/illness) and the `E_planet` global multiplier of §3.4.
-> Every number is [TUNE] until the Balance Round confirms it.
+> **Status: CANON v2 — decided with the owner on 2026-07-19, balanced in
+> Round 9, implemented through chunks BA–BC; BD closes categorical settlers,
+> extinction and intel.** Supersedes §3.2 (growth/illness) and the
+> `E_planet` global multiplier of §3.4. Values explicitly labelled [TUNE]
+> remain balance knobs even after implementation.
 
 **Design intent (owner).** Planet productivity must scale with population
 *through employment*, never through a global multiplier. Growth follows
@@ -415,23 +417,22 @@ E(u) = max(0.12, exp( −(u−μ)² / (2σ(u)²) ))
 ```
 
 `u` is the **domain utilization** relevant to the unit:
-- Mines/industry: `u = workforceAssigned / workforceOptimal`;
-  workforceOptimal per level = 50/120/250 [TUNE]; assignable workforce ≤
-  population × 60% [TUNE].
+- Every building: `u = workforceAssigned / jobsOptimal`, with
+  `jobsOptimal = baseJobs[type] × levelMult(1/2.4/5) ×
+  clamp(√(P/2000), 1, 2)` [TUNE]. Assignable workforce is the ACTIVES cohort.
+  Industry keeps its historic 50/120/250 optimum at `popScale = 1`; all 29
+  building types participate in employment and Ē.
 - Storage-sensitive units (markets, depots): `u = stockHeld / stockCap`.
-- Planet-wide: `E_planet = E(P/popCap)` (starter pop 1 200 ⇒ ≈ 0.95).
-  **⚠ SUPERSEDED by §3.2-v2 (owner, 2026-07-19): `E_planet` is DELETED
-  once v2 ships — its scale role moves to `popScale`, its anti-crowding
-  role to the parabolic over-capacity rules. The per-building bell
-  STAYS, whole.**
-- **Effective efficiency = E_unit × E_planet × G** (G = governance §4);
-  industry additionally applies the player throttle `runPct`.
-  *(v2: `E_unit × G` only — see §3.2-v2 f.)*
+- There is **no planet-wide `E_planet` multiplier**. Effective production is
+  `E_unit × G`; industry additionally applies the player throttle `runPct`.
+  Population scale lives in `jobsOptimal`; crowding lives in the §3.2-v2
+  illness/mortality parabola.
 
-**Expected behavior/UI (canon):** every resource/unit view renders its curve
-with the live position marked; the per-planet stats page lists every unit,
-its `u`, `E`, and the dominant limiting factor ("overcrowded", "understaffed",
-"warehouse 97% full").
+**Expected behavior/UI (canon, implemented BC):** every resource/unit view
+renders its curve with the live position marked; the per-planet ledger lists
+every unit's jobs/optimum, `u`, `E`, output and dominant limiting factor, plus
+the demographic pyramid, employment, illness/natality factors, signed net
+flows and projected survival-loss alarms.
 
 ### 3.5 Hovering
 Ships in orbit burn upkeep: `idle fuel 0.2 u/day × sizeMult(1/2/4)`, survival
@@ -1131,8 +1132,9 @@ Per canon §5/§23. Concrete:
 
 ## 17. Player journeys (expected behavior)
 
-**First hour:** spawn (healthy 1 200-pop world, fuel in the tank, a pilot on
-the roster) → telescope (600 pc when maxed — the guaranteed neighbor shell is
+**First hour:** spawn (350 people on the stable pyramid, under early job
+capacity and protected by colony grace; fuel in the tank; a pilot on the
+roster) → telescope (600 pc when maxed — the guaranteed neighbor shell is
 visible) → probe the ≤60 pc uninhabited worlds → mine/farm → the efficiency
 lesson (UI: "mine at 34% — assign workforce"). Session-one takeaways: tilted
 bell + finite deposits + *someone is out there*.

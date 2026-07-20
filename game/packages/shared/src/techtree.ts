@@ -73,9 +73,10 @@ export const TECH_NODES: Record<TechNodeKey, TechNodeDef> = {
   crystal_extractor: b('crystal_extractor', ['mine']),
   refinery: b('refinery', ['crystal_extractor']),
   warehouse: b('warehouse', ['depot']),
-  // T2 — arêtes [TUNE-GAP] : lab←waterworks, obs_station←telescope,
-  // shipyard←spaceport.
+  // T2 — arêtes [TUNE-GAP] : lab←waterworks, clinic←lab,
+  // obs_station←telescope, shipyard←spaceport.
   lab: b('lab', ['waterworks']),
+  clinic: b('clinic', ['lab']),
   obs_station: b('obs_station', ['telescope']),
   shipyard: b('shipyard', ['spaceport']),
   fuelcell_plant: b('fuelcell_plant', ['refinery']),
@@ -226,6 +227,6 @@ export function effectiveMask(governorArchetypes: readonly Archetype[]): Set<Tec
 
 /** Écarts [TUNE-GAP] du contenu de l'arbre (règle de complétude). */
 export const TECH_TUNE_GAPS: readonly string[] = [
-  'Arêtes de prérequis proposées (non chiffrées par le guide) : warehouse←depot, lab←waterworks, obs_station←telescope, shipyard←spaceport, military_district←spaceport, weapon_foundry←military_district, research_center←lab, diplomatic_district←market, casino←market, commerce_district←market, faction_hq←diplomatic_district, tank_ground/tank_antiair←turret_light, turret_heavy/cannon/tank_combined←military_district, stargate_yard←shipyard, terraformer←lab, artificial_planet_yard←stargate_yard',
+  'Arêtes de prérequis proposées (non chiffrées par le guide) : warehouse←depot, lab←waterworks, clinic←lab, obs_station←telescope, shipyard←spaceport, military_district←spaceport, weapon_foundry←military_district, research_center←lab, diplomatic_district←market, casino←market, commerce_district←market, faction_hq←diplomatic_district, tank_ground/tank_antiair←turret_light, turret_heavy/cannon/tank_combined←military_district, stargate_yard←shipyard, terraformer←lab, artificial_planet_yard←stargate_yard',
   'Plafond de profondeur par branche : poids L1 20 % / L2 30 % / L3 50 % (DEPTH_CAP_WEIGHTS)',
 ];

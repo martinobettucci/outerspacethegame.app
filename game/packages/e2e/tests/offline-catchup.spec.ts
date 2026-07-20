@@ -16,7 +16,7 @@ const runId = Date.now().toString(36);
 test('hors-ligne : les travaux avancent, le stock lazy suit sans dérive', async ({
   page,
 }) => {
-  test.setTimeout(420_000);
+  test.setTimeout(480_000);
 
   const email = pickEmailByDna(
     `e2e-off-${runId}`,
@@ -113,10 +113,17 @@ test('hors-ligne : les travaux avancent, le stock lazy suit sans dérive', async
   await page.getByRole('button', { name: 'Log out' }).click();
   await expect(page.getByLabel('E-mail')).toBeVisible();
 
-  // 3. Absence RÉELLE (120 s ≈ 10 j-jeu pour les événements ; le stock
-  // lazy, lui, court en jours réels — GB §15 — soit ~0,013 T d'ore à
-  // ~9,6 T/j : JUSTE au-dessus de l'arrondi API à 2 décimales).
-  await page.waitForTimeout(120_000);
+  // 3. Absence RÉELLE. Les événements courent à ×7200 ; le stock lazy,
+  // lui, court en jours réels (GB §15). Le débit dépend du gisement et du
+  // frein de stockage : calculer une absence qui garantit > 0,01 T évite
+  // qu'un débit légitimement < 9,6 T/j reste invisible après l'arrondi API.
+  const observableDeltaT = 0.012;
+  const offlineMs = Math.max(
+    120_000,
+    Math.ceil((observableDeltaT / oreRate) * 86_400_000),
+  );
+  expect(offlineMs).toBeLessThan(300_000);
+  await page.waitForTimeout(offlineMs);
 
   // 4. Retour : tout a avancé sans nous.
   await page.getByLabel('E-mail').fill(email);

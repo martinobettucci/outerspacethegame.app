@@ -77,13 +77,13 @@ DG §3.2-v2 e/f/g. Migration `023`.
   E2E green (stargates/hover-drain fixtures matured via
   `/test/grant-population`).
 
-## Chunk BC — clinic building + stats/alarms UI — ⏳ PENDING
+## Chunk BC — clinic building + stats/alarms UI — ✅ DONE
 
 DG §3.2-v2 h + GB §10 UI clause. **No back-end ordering dependency.**
 
 - **Clinic = the 29th building**: catalog entry, construction card,
-  tech node (tier 2, politics-free [TUNE]), costs [TUNE], **asset stubs
-  to generate** (`generate_stubs.py` → `assets/game/buildings/`,
+  tech node (tier 2, politics-free [TUNE-v1]), costs [TUNE-v1], **asset
+  stubs generated** (`generate_stubs.py` → `assets/game/buildings/`,
   3 levels × base/bump/light × hot/cold overlays). Effect: illness
   index reduction −0.10/−0.20/−0.35 by level (hook already wired in BA).
 - **Planet stats page** (canon GB §10 required UI): demographic pyramid
@@ -95,10 +95,14 @@ DG §3.2-v2 h + GB §10 UI clause. **No back-end ordering dependency.**
 - **Death-clock alarms**: projected dates + loud UI when a survival
   stock trends to zero (inverse of the deposit projected-dry-date
   pattern); oxygen alarm fires far in advance (binary outcome).
-- Tests: shared/unit for clinic catalog + illness reduction;
-  integration for clinic effect on illness deaths; **E2E visual**
-  (pyramid, employment, net-production, alarm) with observed captures
-  (§16).
+- Verification: shared **172/172**, server unit **37/37**, client unit
+  **11/11**, integration on PostgreSQL **288/288**, typecheck and production
+  build green. Full Playwright sweep on a reset database: **38/38**, one
+  deterministic worker, no retry. The dedicated E2E constructs the real
+  waterworks → lab → clinic chain and observes pyramid, employment, signed
+  net production and projected alarms; capture
+  `game/packages/e2e/captures/pop-bc-clinic-stats-alarms.jpeg` inspected at
+  1440×900 (§16), with no clipping or overlap.
 
 ## Chunk BD — per-category settlers + extinction + intel — ⏳ PENDING
 

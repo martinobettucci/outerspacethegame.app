@@ -11,16 +11,12 @@ import {
   CLOCK_DAYS,
   clockDeathsPerDay,
   COLONY_SEED_STOCK,
-  efficiency,
   FOOD_RESOURCES,
-  growthModulator,
   HULLS,
   illnessDeathsPerDay,
   illnessDeltaV2,
   isAmmSlot,
-  jobsOptimal,
   JUNK_CARCASS_T,
-  NATALITY_BY_RESIDENTIAL,
   overcapDeathsPerDay,
   popCap,
   settlerLosses,
@@ -36,6 +32,7 @@ import { aggregateCensus } from './census.js';
 import { enqueue, type EventHandler } from './events.js';
 import { whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
+import { populationIndicators } from './population.js';
 import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
@@ -52,9 +49,9 @@ export const constructionComplete: EventHandler = async (client, event) => {
   const { rows } = await client.query(
     `UPDATE buildings
        SET status = 'active', completes_at = NULL
-     WHERE id = $1 AND status = 'constructing' AND completes_at <= now()
+     WHERE id = $1 AND status = 'constructing' AND completes_at <= $2
      RETURNING body_id`,
-    [buildingId],
+    [buildingId, event.dueAt],
   );
   if (rows[0]) {
     await recomputePlanetRates(client, rows[0].body_id, event.dueAt.getTime());
@@ -71,9 +68,9 @@ export const retoolComplete: EventHandler = async (client, event) => {
   const { rows } = await client.query(
     `UPDATE buildings
        SET status = 'active', completes_at = NULL
-     WHERE id = $1 AND status = 'retooling' AND completes_at <= now()
+     WHERE id = $1 AND status = 'retooling' AND completes_at <= $2
      RETURNING body_id`,
-    [buildingId],
+    [buildingId, event.dueAt],
   );
   if (rows[0]) {
     await recomputePlanetRates(client, rows[0].body_id, event.dueAt.getTime());
@@ -234,60 +231,18 @@ export const popDaily: EventHandler = async (client, event) => {
   const counters = readCounters(snap);
   counters.deaths.seniors += flows.seniorDeaths;
 
-  // 2. Natalité : residential ACTIF × M_growth (Ē staff-pondéré des
-  //    industries — l'emploi universel arrive au chunk BB — × flux de
-  //    vie LOCAL : les imports ne nourrissent jamais la croissance).
-  const resLevel = Math.max(
-    0,
-    ...snap.buildings
-      .filter((b) => b.key === 'residential' && b.status === 'active')
-      .map((b) => b.level),
-  );
-  const clinicLevel = Math.max(
-    0,
-    ...snap.buildings
-      .filter((b) => (b.key as string) === 'clinic' && b.status === 'active')
-      .map((b) => b.level),
-  );
-  // Ē v2 (chunk BB) : TOUS les bâtiments actifs emploient — moyenne
-  // pondérée par le staff sur l'optimum dérivant (jobsOptimal).
-  let staffSum = 0;
-  let effSum = 0;
-  for (const b of snap.buildings) {
-    if (b.status !== 'active' || b.workforce <= 0) continue;
-    const opt = jobsOptimal(b.key, b.level, snap.population);
-    if (opt <= 0) continue;
-    staffSum += b.workforce;
-    effSum += efficiency(b.workforce / opt) * b.workforce;
-  }
-  const meanEff = staffSum > 0 ? effSum / staffSum : 0.7;
-  const rateOf = snap.rates.stockRates as Record<string, number | undefined>;
-  const gross = (family: readonly string[], consumed: number) =>
-    family.reduce((s, r) => s + (rateOf[r] ?? 0), 0) + consumed;
-  const rhos = [
-    sat(
-      gross(FOOD_RESOURCES, snap.rates.popConsumption.food +
-        snap.rates.hoverSurvivalConsumption.food),
-      snap.rates.popNeeds.food,
-    ),
-    sat(
-      gross(['water'], snap.rates.popConsumption.water +
-        snap.rates.hoverSurvivalConsumption.water),
-      snap.rates.popNeeds.water,
-    ),
-    ...(snap.rates.popNeeds.oxygen > 1e-9
-      ? [
-          sat(
-            gross(['oxygen'], snap.rates.popConsumption.oxygen),
-            snap.rates.popNeeds.oxygen,
-          ),
-        ]
-      : []),
-  ];
+  // 2. Natalité : facteurs calculés dans l'unique projection partagée
+  // par le tick et la page stats (imports exclus de la croissance).
+  const indicators = populationIndicators(snap);
+  const clinicLevel = indicators.clinicLevel;
+  const staffSum = indicators.employedActives;
+  // Le vieillissement a déjà modifié les actifs depuis le snapshot : on
+  // applique son taux de natalité courant à cette cohorte post-flux.
   const births =
-    (NATALITY_BY_RESIDENTIAL[resLevel] ?? 0) *
-    pyr.actives *
-    growthModulator(meanEff, rhos);
+    indicators.birthsPerDay *
+    (snap.pyramid.actives > 1e-9
+      ? pyr.actives / snap.pyramid.actives
+      : 0);
   pyr.children += births;
 
   // 2b. Le chômage tue (chunk BB, DG §3.2-v2 g) : τ sur les ACTIFS,
@@ -476,8 +431,8 @@ export const shipArrival: EventHandler = async (client, event) => {
   // vaut garde de rejeu).
   const { rows: ships } = await client.query(
     `SELECT * FROM ships WHERE id = $1 AND status = 'transit'
-       AND arrives_at <= now() FOR UPDATE`,
-    [shipId],
+       AND arrives_at <= $2 FOR UPDATE`,
+    [shipId, event.dueAt],
   );
   const ship = ships[0];
   if (!ship) return;
@@ -534,8 +489,8 @@ export const shipArrival: EventHandler = async (client, event) => {
            hover_body_id = dest_body_id,
            origin_x = NULL, origin_y = NULL, dest_x = NULL, dest_y = NULL,
            departed_at = NULL, arrives_at = NULL, dest_body_id = NULL
-     WHERE id = $1 AND status = 'transit' AND arrives_at <= now()`,
-    [shipId],
+     WHERE id = $1 AND status = 'transit' AND arrives_at <= $2`,
+    [shipId, event.dueAt],
   );
 
   // Armement du drain de loitering (GB §7) : survol de SON monde ⇒ le
@@ -1252,8 +1207,8 @@ export const stargateBuilt: EventHandler = async (client, event) => {
   if (!gateId) return;
   await client.query(
     `UPDATE stargates SET status = 'active', completes_at = NULL
-     WHERE id = $1 AND status = 'building' AND completes_at <= now()`,
-    [gateId],
+     WHERE id = $1 AND status = 'building' AND completes_at <= $2`,
+    [gateId, event.dueAt],
   );
 };
 

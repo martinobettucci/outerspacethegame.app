@@ -14,6 +14,7 @@ import {
   overcapDeathsPerDay,
   illnessDeltaV2,
   illnessDeathsPerDay,
+  effectiveIllness,
   STABLE_PYRAMID,
   stableSplit,
   weightedHeads,
@@ -86,6 +87,8 @@ describe('sur-capacité & maladie (§h)', () => {
     const l3 = illnessDeathsPerDay(0.3, 3, 1000);
     expect(none).toBeCloseTo(0.03 * 0.3 * 1000, 9);
     expect(l3).toBe(0); // 0,3 − 0,35 → plancher 0
+    expect(effectiveIllness(0.3, 1)).toBeCloseTo(0.2, 9);
+    expect(effectiveIllness(0.3, 3)).toBe(0);
   });
 
   it('la pression de maladie est parabolique en o', () => {
@@ -125,13 +128,13 @@ describe('horloges de mort (§i)', () => {
 });
 
 describe('emploi universel (§e, chunk BB)', () => {
-  it('BASE_JOBS est EXHAUSTIF : les 28 bâtiments du catalogue + la clinique', async () => {
+  it('BASE_JOBS est EXHAUSTIF : les 29 bâtiments du catalogue', async () => {
     const { ALL_BUILDING_KEYS } = await import('./buildings.js');
     const { BASE_JOBS } = await import('./popv2.js');
     for (const key of ALL_BUILDING_KEYS) {
       expect(BASE_JOBS[key], key).toBeGreaterThan(0);
     }
-    expect(BASE_JOBS.clinic).toBeGreaterThan(0);
+    expect(Object.keys(BASE_JOBS).sort()).toEqual([...ALL_BUILDING_KEYS].sort());
   });
 
   it('popScale : plancher 1 (Round 9), √ au-delà de la référence, plafond 2', async () => {

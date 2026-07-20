@@ -295,6 +295,73 @@ describe('boucle colonie', () => {
     expect(next[0].n).toBe(2);
   });
 
+  it('clinique active : sa réduction diminue réellement les morts de maladie', async () => {
+    const t0 = Date.now();
+    const mk = async (name: string, clinicLevel: 0 | 1) => {
+      const { rows } = await pool.query<{ id: string }>(
+        `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+            quality, tiles, owner_id, population, pop_children, pop_seniors,
+            illness, colonized_at, pop_as_of)
+         SELECT 'planet', $1, 900150, 900150, $2, 's', 'temperate', 'F', 8,
+                p.id, 1000, 182, 273, 0.5,
+                to_timestamp($3 / 1000.0), to_timestamp($3 / 1000.0)
+         FROM players p LIMIT 1 RETURNING id`,
+        [name, `clinic-${name}-${run}`, t0],
+      );
+      if (clinicLevel > 0) {
+        await pool.query(
+          `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+           VALUES ($1, 'clinic', $2, 0, 'active', 0)`,
+          [rows[0]!.id, clinicLevel],
+        );
+      }
+      for (const [resource, tons] of [
+        ['food_1', 200],
+        ['water', 200],
+        ['med_1', 50],
+      ] as const) {
+        await pool.query(
+          `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+           VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+          [rows[0]!.id, resource, tons, t0],
+        );
+      }
+      await enqueue(pool, 'pop_daily', new Date(t0 + DAY), {
+        bodyId: rows[0]!.id,
+      });
+      return rows[0]!.id;
+    };
+    const untreated = await mk('Untreated', 0);
+    const treated = await mk('Treated', 1);
+
+    await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
+    const read = async (bodyId: string) =>
+      (
+        await pool.query(
+          `SELECT population, illness, demo_counters FROM bodies WHERE id = $1`,
+          [bodyId],
+        )
+      ).rows[0];
+    const withoutClinic = await read(untreated);
+    const withClinic = await read(treated);
+
+    // Même pression brute (I décroît de 5 %), mais L1 retire 0,10 avant
+    // le taux létal de 3 % : environ 3 morts évitées sur 1 000 têtes.
+    expect(Number(withClinic.illness)).toBeCloseTo(
+      Number(withoutClinic.illness),
+      9,
+    );
+    expect(Number(withClinic.population)).toBeGreaterThan(
+      Number(withoutClinic.population) + 2.5,
+    );
+    const deaths = (row: { demo_counters: { deaths: Record<string, number> } }) =>
+      Object.values(row.demo_counters.deaths).reduce(
+        (total, value) => total + Number(value),
+        0,
+      );
+    expect(deaths(withClinic)).toBeLessThan(deaths(withoutClinic) - 2.5);
+  });
+
   it('horloge de mort v2 : eau à sec → échéance 3 j posée → tout le monde meurt (canon)', async () => {
     const t0 = Date.now();
     const { rows: b } = await pool.query<{ id: string }>(

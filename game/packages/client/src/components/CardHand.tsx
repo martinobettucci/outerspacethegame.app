@@ -110,7 +110,7 @@ export function CardHand({
 }) {
   const cards = useMemo(() => computeCardStates(planet), [planet]);
   // Tri : plaçables, déverrouillables, bloquées — la main reste EXHAUSTIVE
-  // (28 cartes, règle de complétude) mais lisible.
+  // (29 cartes, règle de complétude) mais lisible.
   const order = { placeable: 0, unlockable: 1, blocked: 2 } as const;
   const sorted = [...cards].sort(
     (a, b) =>

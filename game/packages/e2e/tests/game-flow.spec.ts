@@ -7,7 +7,12 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
-import { boardHelpers, galaxyLabel } from './lib.js';
+import {
+  boardHelpers,
+  galaxyLabel,
+  pickEmailByDna,
+  selectFleetShip,
+} from './lib.js';
 
 const CAPTURES = new URL('../captures/', import.meta.url).pathname;
 mkdirSync(CAPTURES, { recursive: true });
@@ -87,9 +92,9 @@ test('vue planète : stats, courbe d\'efficacité, main de cartes exhaustive', a
   await expect(
     page.getByText('Efficiency — the tilted bell', { exact: false }),
   ).toBeVisible();
-  // Main exhaustive : 28 cartes (règle de complétude).
+  // Main exhaustive : 29 cartes (règle de complétude, clinique incluse).
   const hand = page.getByRole('region', { name: 'Construction cards' });
-  await expect(hand.getByRole('article')).toHaveCount(28);
+  await expect(hand.getByRole('article')).toHaveCount(29);
   await page.waitForTimeout(1200);
   await shot(page, '05-planet-view');
 });
@@ -274,7 +279,8 @@ test('niveaux & démolition : mine L1→L2, page stats, démolition remboursée'
   // Page stats : chaque unité avec u, E, facteur limitant (canon GB §10).
   await page.getByRole('button', { name: 'Planet stats' }).click();
   const stats = page.getByRole('dialog', { name: 'Planet stats' });
-  await expect(stats.getByText('Planet (population)')).toBeVisible();
+  await expect(stats.getByTestId('population-pyramid')).toBeVisible();
+  await expect(stats.getByTestId('employment-stats')).toBeVisible();
   await expect(stats.getByText(/mine · ore/)).toBeVisible();
   await expect(stats.getByText('L2')).toBeVisible();
   await shot(page, '14-planet-stats');
@@ -305,11 +311,9 @@ test('mouvement : envoi d\'un vaisseau depuis la carte galaxie', async ({
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1500); // sprites + flotte
 
-  // Le starter est centré ; les vaisseaux dockés sont déployés en éventail :
-  // index 1 (le cargo, créé après le personnel) à ~(−25, −23) px du centre.
   const canvas = page.getByTestId('galaxy-canvas');
   const box = (await canvas.boundingBox())!;
-  await page.mouse.click(box.x + box.width / 2 - 25, box.y + box.height / 2 - 23);
+  await selectFleetShip(page, (ship) => ship.hullCategory === 'cargo');
 
   // Panneau vaisseau (marqueur prioritaire) OU panneau planète.
   const sendBtn = page.getByRole('button', { name: 'Send ship' });
@@ -480,10 +484,9 @@ test('fret : charger à quai → décoller → se reposer → décharger (GB §1
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1500); // sprites + flotte
 
-  // Le cargo docké est déployé en éventail : idx 1 → ~(−25, −23) px.
-  const canvas = page.getByTestId('galaxy-canvas');
-  const box = (await canvas.boundingBox())!;
-  await page.mouse.click(box.x + box.width / 2 - 25, box.y + box.height / 2 - 23);
+  // Sélection accessible et déterministe : l'éventail Three.js n'est pas un
+  // contrat de pixels (son index dépend de l'ordre de flotte).
+  await selectFleetShip(page, (ship) => ship.hullCategory === 'cargo');
   const hold = page.getByRole('region', { name: 'Cargo hold' });
   await expect(hold).toBeVisible({ timeout: 5_000 });
   await expect(hold.getByText('Hold empty')).toBeVisible();
@@ -642,17 +645,9 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
   await rail.getByRole('button', { name: 'Galaxy' }).click();
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1500);
-  const gbox = (await page.getByTestId('galaxy-canvas').boundingBox())!;
-  // La scène se reconstruit au polling (5 s) : on re-clique le marqueur
-  // jusqu'à l'ouverture du panneau.
   const hold = page.getByRole('region', { name: 'Cargo hold' });
-  await expect(async () => {
-    await page.mouse.click(
-      gbox.x + gbox.width / 2 - 25,
-      gbox.y + gbox.height / 2 - 23,
-    );
-    await expect(hold).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  await selectFleetShip(page, (ship) => ship.hullCategory === 'cargo');
+  await expect(hold).toBeVisible();
 
   // Normalise la soute (reruns) : décharge l'eau et l'ore résiduels.
   for (const res of ['water', 'ore']) {
@@ -718,15 +713,9 @@ test('hospitalité du monde marchand : publier → acheter sur place (GB §9)', 
   await rail.getByRole('button', { name: 'Galaxy' }).click();
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1500);
-  const gbox = (await page.getByTestId('galaxy-canvas').boundingBox())!;
   const hold = page.getByRole('region', { name: 'Cargo hold' });
-  await expect(async () => {
-    await page.mouse.click(
-      gbox.x + gbox.width / 2 - 25,
-      gbox.y + gbox.height / 2 - 23,
-    );
-    await expect(hold).toBeVisible({ timeout: 1_500 });
-  }).toPass({ timeout: 20_000 });
+  await selectFleetShip(page, (ship) => ship.hullCategory === 'cargo');
+  await expect(hold).toBeVisible();
 
   // Normalise la soute (reruns) puis charge 2 T d'ore pour payer.
   for (const res of ['water', 'ore']) {
@@ -760,10 +749,16 @@ test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §1
   page,
 }) => {
   test.setTimeout(150_000);
-  // E-mail FIXE (ADN shipyard+spaceport garanti — seed = universe:starter:
-  // email) ; les coûts en steelL/cells absents du stock starter passent par
-  // l'endpoint de test /test/grant (instrumentation §15, jamais en prod).
-  const emailYard = 'e2e-shipyard@test.local';
+  // ADN recherché par la fonction pure : ajouter un nœud au catalogue peut
+  // légitimement déplacer le masque d'un e-mail fixe. Les coûts en
+  // steelL/cells absents du stock starter passent par /test/grant
+  // (instrumentation §15, jamais en prod).
+  const emailYard = pickEmailByDna(
+    'e2e-shipyard',
+    ({ available }) =>
+      available.has('spaceport') && available.has('shipyard'),
+    0,
+  );
   await page.goto('/');
   await page.getByLabel('E-mail').fill(emailYard);
   await page.getByLabel('Password').fill(password);

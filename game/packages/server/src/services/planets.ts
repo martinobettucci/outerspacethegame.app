@@ -24,7 +24,6 @@ import {
   DOCK_RESERVED_SELF_DEFAULT,
   DOCK_RESERVED_SELF_MAX,
   effectiveMask,
-  efficiency,
   FOOD_RESOURCES,
   INSTANT_RETOOL_WINDOW_HOURS,
   isAmmSlot,
@@ -47,7 +46,6 @@ import {
   TECH_NODES,
   type TechNodeKey,
   vehicleCapacity,
-  GROWTH_EFF_NEUTRAL,
   jobsOptimal,
 } from '@atg/shared';
 import type pg from 'pg';
@@ -61,6 +59,13 @@ import {
   loadProductionSnapshot,
   recomputePlanetRates,
 } from '../sim/rebase.js';
+import {
+  populationIndicators,
+  survivalForecasts,
+  type PopulationIndicators,
+  type SurvivalFamily,
+  type SurvivalForecast,
+} from '../sim/population.js';
 
 export class CommandError extends Error {
   constructor(
@@ -129,6 +134,10 @@ export interface PlanetDetail {
   clockDeadlines: Partial<Record<'water' | 'food', string>>;
   popCap: number;
   illness: number;
+  /** Facteurs démographiques calculés par le même code que pop_daily. */
+  demographics: PopulationIndicators;
+  /** Projections serveur des stocks de survie (oxygen null en tempéré). */
+  survivalForecasts: Record<SurvivalFamily, SurvivalForecast | null>;
   planetEfficiency: number;
   storageUsedT: number;
   storageCapT: number;
@@ -154,6 +163,7 @@ export interface PlanetDetail {
     workforce: number;
     runPct: number;
     effBatchesPerDay: number | null;
+    workforceOptimal: number;
     workforceU: number | null;
     limiting: string | null;
     landing: 'self' | 'everyone' | null;
@@ -231,6 +241,8 @@ export async function planetDetail(
 
     const snap = await loadProductionSnapshot(client, bodyId, nowMs);
     if (!snap) throw new CommandError('not_found', 'Planète inconnue');
+    const demographics = populationIndicators(snap);
+    const survival = survivalForecasts(snap, nowMs);
 
     const { rows: buildingRows } = await client.query(
       `SELECT id, key, level, tile_index, status, completes_at, recipe,
@@ -367,10 +379,7 @@ export async function planetDetail(
     const storageUsed =
       Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) +
       snap.pooledT;
-    const workforceAssigned = buildingRows.reduce(
-      (s, b) => s + (b.workforce ?? 0),
-      0,
-    );
+    const workforceAssigned = demographics.employedActives;
 
     const stock: PlanetDetail['stock'] = {};
     const allRes = new Set<string>([
@@ -406,8 +415,10 @@ export async function planetDetail(
       clockDeadlines: snap.clockDeadlines,
       popCap: cap,
       illness: snap.illness,
+      demographics,
+      survivalForecasts: survival,
       // v2 : Ē staff-pondéré des bâtiments actifs (E_planet supprimé).
-      planetEfficiency: meanBuildingEfficiency(snap),
+      planetEfficiency: demographics.meanEfficiency,
       storageUsedT: Math.round(storageUsed * 100) / 100,
       storageCapT: snap.storageCapT,
       storageU: Math.round(snap.rates.storageU * 1000) / 1000,
@@ -449,6 +460,15 @@ export async function planetDetail(
         .sort((a, b) => a.resource.localeCompare(b.resource)),
       buildings: buildingRows.map((b) => {
         const r = rateByBuilding.get(b.id);
+        const optimal = jobsOptimal(
+          b.key,
+          b.level as 1 | 2 | 3,
+          snap.population,
+        );
+        const workforceU =
+          b.status === 'active' && optimal > 0
+            ? Number(b.workforce ?? 0) / optimal
+            : null;
         return {
           id: b.id,
           key: b.key,
@@ -462,8 +482,18 @@ export async function planetDetail(
           workforce: b.workforce,
           runPct: b.run_pct,
           effBatchesPerDay: r ? Math.round(r.effBatchesPerDay * 100) / 100 : null,
-          workforceU: r ? Math.round(r.workforceU * 1000) / 1000 : null,
-          limiting: r ? r.limiting : null,
+          workforceOptimal: Math.round(optimal * 10) / 10,
+          workforceU:
+            workforceU === null
+              ? null
+              : Math.round(workforceU * 1000) / 1000,
+          limiting: r
+            ? r.limiting
+            : b.status === 'active'
+              ? workforceU !== null && workforceU < 0.35
+                ? 'understaffed'
+                : 'ok'
+              : null,
           landing:
             b.key === 'spaceport'
               ? b.config?.landing === 'everyone'
@@ -701,26 +731,6 @@ async function validateRecipe(
 }
 
 /** Place un bâtiment (GB §18 phase 2) : coût + tuile + chantier + événement. */
-/**
- * Ē v2 : efficacité moyenne pondérée par le staff des bâtiments ACTIFS
- * (DG §3.2-v2 d/f) — neutre 0,7 quand personne n'emploie.
- */
-function meanBuildingEfficiency(snap: {
-  population: number;
-  buildings: { key: string; level: 1 | 2 | 3; status: string; workforce: number }[];
-}): number {
-  let staff = 0;
-  let acc = 0;
-  for (const b of snap.buildings) {
-    if (b.status !== 'active' || b.workforce <= 0) continue;
-    const opt = jobsOptimal(b.key, b.level, snap.population);
-    if (opt <= 0) continue;
-    acc += efficiency(b.workforce / opt) * b.workforce;
-    staff += b.workforce;
-  }
-  return staff > 0 ? acc / staff : GROWTH_EFF_NEUTRAL;
-}
-
 export async function placeBuilding(
   pool: pg.Pool,
   playerId: string,
@@ -784,34 +794,31 @@ export async function placeBuilding(
 
     // Workforce par défaut : 0,7 × optimal si la population le permet
     // [TUNE — réglable ensuite ; le point idéal E(0,7) = 1].
-    let workforce = 0;
-    if (def.batchesPerDayByLevel) {
-      const { rows: wf } = await client.query(
-        'SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings WHERE body_id = $1',
-        [bodyId],
-      );
-      // v2 (chunk BB) : assignable = les ACTIFS ; défaut = 0,7 × optimum
-      // du bâtiment à la population courante (DG §3.2-v2 e).
-      const { rows: pyrRow } = await client.query(
-        `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
-        [bodyId],
-      );
-      const actives = Math.max(
-        0,
-        Number(pyrRow[0]?.population ?? 0) -
-          Number(pyrRow[0]?.pop_children ?? 0) -
-          Number(pyrRow[0]?.pop_seniors ?? 0),
-      );
-      workforce = Math.max(
-        0,
-        Math.min(
-          Math.round(
-            0.7 * jobsOptimal(buildingKey, 1, Number(pyrRow[0]?.population ?? 0)),
-          ),
-          Math.floor(actives) - wf[0].assigned,
+    // Emploi universel (BB) : toute nouvelle unité, industrie ou service,
+    // reçoit par défaut le point doux 0,7 si les actifs sont disponibles.
+    const { rows: wf } = await client.query(
+      'SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings WHERE body_id = $1',
+      [bodyId],
+    );
+    const { rows: pyrRow } = await client.query(
+      `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
+      [bodyId],
+    );
+    const actives = Math.max(
+      0,
+      Number(pyrRow[0]?.population ?? 0) -
+        Number(pyrRow[0]?.pop_children ?? 0) -
+        Number(pyrRow[0]?.pop_seniors ?? 0),
+    );
+    const workforce = Math.max(
+      0,
+      Math.min(
+        Math.round(
+          0.7 * jobsOptimal(buildingKey, 1, Number(pyrRow[0]?.population ?? 0)),
         ),
-      );
-    }
+        Math.floor(actives) - wf[0].assigned,
+      ),
+    );
 
     await payCost(client, bodyId, planet.climate, def.placementCost, nowMs);
     const buildMs =

@@ -38,8 +38,8 @@ describe('complétude des catalogues (GB §24/§25, DG §5.1/§8.1/§10.1)', () 
     expect(ALL_RESOURCE_IDS).toHaveLength(31);
   });
 
-  it('28 bâtiments, tous avec coûts, niveaux et effets', () => {
-    expect(ALL_BUILDING_KEYS).toHaveLength(28);
+  it('29 bâtiments, tous avec coûts, niveaux et effets', () => {
+    expect(ALL_BUILDING_KEYS).toHaveLength(29);
     for (const key of ALL_BUILDING_KEYS) {
       const def = BUILDINGS[key];
       expect(Object.keys(def.unlockCost).length, key).toBeGreaterThan(0);
@@ -98,8 +98,15 @@ describe('complétude des catalogues (GB §24/§25, DG §5.1/§8.1/§10.1)', () 
 });
 
 describe('arbre technologique (GB §18, DG §5)', () => {
-  it('35 nœuds : 28 bâtiments + 6 cartes-unités + colony_program', () => {
-    expect(ALL_TECH_KEYS).toHaveLength(35);
+  it('36 nœuds : 29 bâtiments + 6 cartes-unités + colony_program', () => {
+    expect(ALL_TECH_KEYS).toHaveLength(36);
+  });
+
+  it('la clinique est T2, apolitique, unique et dépend du lab', () => {
+    expect(BUILDINGS.clinic.tier).toBe(2);
+    expect(BUILDINGS.clinic.politics).toBeNull();
+    expect(BUILDINGS.clinic.maxInstances).toBe(1);
+    expect(TECH_NODES.clinic.prerequisites).toEqual(['lab']);
   });
 
   it('le DAG est acyclique et toutes les arêtes pointent vers des nœuds existants', () => {

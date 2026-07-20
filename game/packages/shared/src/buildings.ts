@@ -1,5 +1,5 @@
 /**
- * Catalogue des bâtiments — DESIGN_GUIDE §5/§5.1/§6 (v0.9.2), COMPLET (28).
+ * Catalogue des bâtiments — DESIGN_GUIDE §5/§5.1/§6 (v0.10), COMPLET (29).
  * Clés = contrat d'assets (`building_{key}_l{n}.gif`).
  *
  * Règles transverses (canon/§6) :
@@ -38,6 +38,7 @@ export type BuildingKey =
   | 'market'
   | 'residential'
   | 'lab'
+  | 'clinic'
   | 'obs_station'
   | 'shipyard'
   | 'military_district'
@@ -301,6 +302,20 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
     batchesPerDayByLevel: [10, 20, 40],
     effects: 'medicines 10/20/40 batches/day × E (one recipe per instance)',
   }),
+  clinic: def({
+    key: 'clinic',
+    tier: 2,
+    politics: null,
+    usesTile: true,
+    // [TUNE-v1] La clinique consomme la médecine produite par le lab ;
+    // placement = moitié arrondie comme le reste du catalogue.
+    unlockCost: { ore: 80, silicon: 30, med_1: 10 },
+    // Les réductions ne se cumulent pas : une seule clinique, dont le
+    // niveau porte l'effet planétaire complet (DG §3.2-v2 h).
+    maxInstances: 1,
+    effects:
+      'illness index reduction −0.10/−0.20/−0.35 by level (floor 0); one clinic per planet',
+  }),
   obs_station: def({
     key: 'obs_station',
     tier: 2,
@@ -423,4 +438,5 @@ export const TUNE_GAPS: readonly string[] = [
   'market L3 : 200 ore + 80 carbon + 50 cells (double du nœud L2 chiffré)',
   'shipyard L2 : règle générique (seul L3 est chiffré par le guide)',
   'residential L2 : règle générique (seul L3 est chiffré par le guide)',
+  'clinic : unlock 80 ore + 30 silicon + 10 med_1, max 1 instance ; placement et niveaux suivent les règles génériques',
 ];

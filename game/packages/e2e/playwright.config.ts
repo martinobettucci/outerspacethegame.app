@@ -15,11 +15,11 @@ export default defineConfig({
   testDir: './tests',
   globalSetup: './global-setup.ts',
   fullyParallel: false,
-  // 2 navigateurs max : au-delà, l'API + le tick worker (qui avance les
-  // récurrences de TOUT l'univers dev accumulé à ×7200) et les scènes
-  // three.js se disputent le CPU — les hit-tests de sprites et la cadence
-  // census deviennent flaky (observé après la refonte UI, session 36).
-  workers: 2,
+  // Un seul navigateur : l'API + le tick worker avancent les récurrences de
+  // TOUT l'univers dev accumulé à ×7200. Deux workers suffisaient avant la
+  // suite population/Codex, mais provoquent désormais une contention mesurée
+  // sur les échéances longues ; le DoD doit rester reproductible par défaut.
+  workers: 1,
   retries: 0,
   reporter: [['list']],
   // 120 s : la scène planète au sol organique (chunk X) est plus lourde —

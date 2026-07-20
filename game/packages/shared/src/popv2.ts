@@ -133,6 +133,14 @@ export const OVERCAP_DEATHS_COEF = 0.25;
 /** Réduction d'indice de maladie par niveau de clinique. [TUNE] */
 export const CLINIC_REDUCTION = [0, 0.1, 0.2, 0.35] as const;
 
+/** Indice de maladie réellement létal après la meilleure clinique active. */
+export function effectiveIllness(
+  illness: number,
+  clinicLevel: number,
+): number {
+  return Math.max(0, illness - (CLINIC_REDUCTION[clinicLevel] ?? 0));
+}
+
 /** dI/jour v2 : parabole de sur-cap − décroissance (×2 si med < 1). */
 export function illnessDeltaV2(
   overRatio: number,
@@ -150,8 +158,7 @@ export function illnessDeathsPerDay(
   clinicLevel: number,
   pop: number,
 ): number {
-  const eff = Math.max(0, illness - (CLINIC_REDUCTION[clinicLevel] ?? 0));
-  return 0.03 * eff * pop;
+  return 0.03 * effectiveIllness(illness, clinicLevel) * pop;
 }
 
 /** Morts paraboliques de sur-capacité par jour. */
@@ -206,8 +213,8 @@ export function applyDeaths(pyr: Pyramid, deaths: number): Pyramid {
 
 /**
  * Postes de base par type de bâtiment — TOUS les bâtiments emploient
- * (canon GB §10 v2). Table EXHAUSTIVE (règle de complétude) : 28 types
- * du catalogue + la clinique (chunk BC). [TUNE] DG §3.2-v2 e.
+ * (canon GB §10 v2). Table EXHAUSTIVE (règle de complétude) : les 29
+ * types du catalogue. [TUNE] DG §3.2-v2 e.
  */
 export const BASE_JOBS: Record<string, number> = {
   telescope: 10,

@@ -82,6 +82,29 @@ describe("file d'événements (DG §1)", () => {
     await pool.query('DELETE FROM events WHERE processed_at IS NULL');
   });
 
+  it("la garde métier utilise l'échéance réclamée, pas l'horloge SQL légèrement antérieure", async () => {
+    const { buildingId } = await makePlanetWithConstruction();
+    const dueAt = new Date(Date.now() + 60_000);
+    await pool.query(
+      `UPDATE buildings SET completes_at = $2 WHERE id = $1`,
+      [buildingId, dueAt],
+    );
+    await enqueue(pool, 'construction_complete', dueAt, { buildingId });
+
+    // Reproduit exactement le worker : son horloge Node a réclamé
+    // l'événement, alors que transaction_timestamp() de PostgreSQL peut
+    // précéder l'échéance de quelques microsecondes.
+    const result = await processDueEvents(pool, baseHandlers(), {
+      nowMs: dueAt.getTime(),
+    });
+    expect(result.processed).toBe(1);
+    const { rows } = await pool.query(
+      'SELECT status, completes_at FROM buildings WHERE id = $1',
+      [buildingId],
+    );
+    expect(rows[0]).toMatchObject({ status: 'active', completes_at: null });
+  });
+
   it('handler idempotent : rejouer construction_complete ne casse rien', async () => {
     const { buildingId } = await makePlanetWithConstruction();
     await enqueue(pool, 'construction_complete', new Date(Date.now() - 1000), {

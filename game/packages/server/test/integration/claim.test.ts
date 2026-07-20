@@ -37,7 +37,7 @@ async function newWreck(x: number, y: number): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
         status, fuel)
-     VALUES (NULL, 'cargo', 's', $1, $2, $3, 'derelict', '{"cold": 0}')
+     VALUES (NULL, 'cargo', 's', $1, $2, $3, 'derelict', '{"cold": 20}')
      RETURNING id`,
     [`cl-wreck-${run}-${Math.floor(x)}`, x, y],
   );
@@ -146,7 +146,7 @@ describe('gardes de réclamation', () => {
 });
 
 describe('réclamation complète et annulations', () => {
-  it('2 h de proximité tenues : l\'épave devient MA coque idle', async () => {
+  it('2 h de proximité tenues : l\'épave avec fuel devient MA coque idle', async () => {
     const wreck = await newWreck(farX, farY);
     await idleAt(cargo, farX + 0.5, farY);
     const { claimsAt } = await startClaim(pool, owner, cargo, wreck, {

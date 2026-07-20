@@ -3222,8 +3222,8 @@ emploi + E_planet† + starter 350 + chômage d'un bloc.
 
 Le bloc indissociable identifié au chunk BA, livré d'une pièce :
 
-- **Emploi universel** : table BASE_JOBS EXHAUSTIVE (28 bâtiments +
-  clinique), jobsOptimal = base × [1/2,4/5] × popScale(P) avec
+- **Emploi universel** : table BASE_JOBS EXHAUSTIVE (29 bâtiments),
+  jobsOptimal = base × [1/2,4/5] × popScale(P) avec
   popScale = clamp(√(P/2000), 1, 2) — le « point qui shifte ». Les
   industries produisent sur CET optimum (le 50/120/250 historique est
   préservé à popScale = 1) ; les autres bâtiments emploient pour
@@ -3255,3 +3255,31 @@ popScale planchers, jobsOptimal dérivant, γ), intégration 286/286
 (+ chômage v2 : grâce épuisée → −31,3 têtes, staff 50 → < 50, compteurs
 actifs ; spawn 350 + pyramide ; colonisation sur fixtures mûries),
 E2E complet en cours.
+
+## 2026-07-20 — Chunk BC : clinique, ledger population et alarmes projetées
+
+- **Clinique** : 29e bâtiment du catalogue, un exemplaire par monde,
+  nœud T2 politics-free [TUNE-v1] dépendant du laboratoire, coûts explicites
+  et emplois universels ; niveaux L1/L2/L3 réduisent l'indice de maladie de
+  10/20/35 %. Les 27 variantes bâtiment et les trois cartes ont été générées
+  par le pipeline canonique et observées. Le balayage exhaustif a aussi révélé
+  puis ajouté les trois variantes `junk` que le manifeste omettait.
+- **Projection autoritative unique** : `populationIndicators` alimente à la
+  fois `pop_daily` et la vue serveur. Le ledger montre pyramide C/A/S, part
+  consommatrice inactive, emploi/chômage, Ē staff-pondéré, maladie brute et
+  effective, facteurs de natalité, flux nets signés et emplois/optimum/u/E de
+  chaque bâtiment. Aucune courbe ni multiplicateur `E_planet` ne subsiste.
+- **Alarmes** : chaque famille de survie expose stock-out, échéance de perte
+  totale et état stable/à-sec ; l'oxygène hostile garde sa sémantique de mort
+  instantanée. La capture E2E 1440×900 a été inspectée sans clipping, overlap
+  ni texte illisible.
+- **Durcissement DoD adjacent** : le worker compare désormais les gardes
+  métier à l'échéance réclamée par l'événement, pas à l'horloge SQL de la
+  transaction (race sub-milliseconde reproduite en intégration). Les fixtures
+  E2E de taille de starter, ADN tech et sélection de coque sont déterministes ;
+  le run complet utilise un worker, zéro retry.
+
+Vérifications finales : typecheck ; shared 172/172 ; server unit 37/37 ;
+client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
+38/38 sur base recréée en 28,4 min. Capture dédiée :
+`game/packages/e2e/captures/pop-bc-clinic-stats-alarms.jpeg`.
