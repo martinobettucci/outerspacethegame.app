@@ -7,14 +7,20 @@
  * - demo@atg.local / demo-password-1 (politique : industrialist)
  * - neighbor@atg.local / demo-password-2 (politique : mercantile) —
  *   spawn APRÈS le premier : matérialise la garantie du voisin 150–240 pc.
+ * - lucky-N@atg.local / demo-password-3 (politique : civic) — N est
+ *   BALAYÉ déterministiquement (même flux de luck que la prod, §2.2b)
+ *   jusqu'au premier e-mail à ≥ 2 starters : le multi-starter est
+ *   démontré par le vrai flux, jamais fabriqué.
  * Idempotent : ne recrée pas les comptes existants.
  */
+import { SeededStream } from '@atg/shared';
 import { config } from '../config.js';
 import { createPool } from './pool.js';
 import { runMigrations } from './migrate.js';
 import { registerPlayer } from '../services/players.js';
 import { setInnateOffers } from '../services/market.js';
 import { planetDetail } from '../services/planets.js';
+import { rollPocketLuck } from '../gen/rolls.js';
 
 export const DEMO_ACCOUNTS = [
   {
@@ -30,6 +36,22 @@ export const DEMO_ACCOUNTS = [
     politics: 'mercantile',
   },
 ] as const;
+
+/**
+ * §2.2b : e-mail de démo « chanceux » — premier `lucky-N@atg.local` dont le
+ * flux de poche (identique à la prod) tire ≥ 2 starters. Déterministe pour
+ * un UNIVERSE_SEED donné : le seed reste un contrat reproductible (§8).
+ */
+export function findLuckyDemoEmail(universeSeed: string): string {
+  for (let i = 0; i < 200_000; i++) {
+    const email = `lucky-${i}@atg.local`;
+    const luck = rollPocketLuck(
+      new SeededStream(universeSeed, `pocket:${email}`),
+    );
+    if (luck.starters >= 2) return email;
+  }
+  throw new Error('Seed : aucun e-mail chanceux trouvé (balayage 200k)');
+}
 
 async function logDemoPyramid(
   pool: ReturnType<typeof createPool>,
@@ -59,7 +81,16 @@ export async function seed(databaseUrl?: string): Promise<void> {
   const pool = createPool(databaseUrl);
   try {
     await runMigrations(pool);
-    for (const account of DEMO_ACCOUNTS) {
+    const accounts = [
+      ...DEMO_ACCOUNTS,
+      {
+        email: findLuckyDemoEmail(config.UNIVERSE_SEED),
+        password: 'demo-password-3',
+        displayName: 'Sovereign Lucky',
+        politics: 'civic',
+      } as const,
+    ];
+    for (const account of accounts) {
       const { rows: existing } = await pool.query(
         `SELECT p.id AS player_id, b.id AS starter_id
            FROM players p
@@ -85,7 +116,11 @@ export async function seed(databaseUrl?: string): Promise<void> {
       });
       console.log(
         `Seed : ${account.email} créé — starter ${result.spawn.starterPlanetId} ` +
-          `@ (${result.spawn.pocketCenter.x.toFixed(0)}, ${result.spawn.pocketCenter.y.toFixed(0)})`,
+          `@ (${result.spawn.pocketCenter.x.toFixed(0)}, ${result.spawn.pocketCenter.y.toFixed(0)})` +
+          (result.spawn.starterPlanetIds.length > 1
+            ? ` — POCKET LUCK §2.2b : ${result.spawn.starterPlanetIds.length} starters`
+            : '') +
+          ` — ${result.spawn.bonusPlanetIds.length} monde(s) bonus latent(s)`,
       );
       await logDemoPyramid(
         pool,

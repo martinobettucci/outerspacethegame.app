@@ -1,5 +1,5 @@
 /**
- * Spawn nouveau joueur — la poche de Fermi (DESIGN_GUIDE §2.2).
+ * Spawn nouveau joueur — la poche de Fermi (DESIGN_GUIDE §2.2 + §2.2b).
  *
  * Garanties implémentées :
  * 1. région ≥ 150 pc de tout actif d'un autre joueur, hors R_nova de toute
@@ -14,6 +14,13 @@
  * 4. pop 350 à la pyramide stationnaire, vaisseau personnel docké,
  *    Cargo-S, 1 pilote commun.
  * 5. anti-abus : starter lié au compte 45 j, is_starter (jamais mintable).
+ * 6. §2.2b (directive responsable 2026-07-20) — pocket luck : 2 starters à
+ *    1 %, 3 à 0,1 % (chaque extra COLONISÉE + dotation complète propre) ;
+ *    wilds 3 à 1 %, 4 à 0,1 %. Frontière latente : 1–3 mondes bonus par
+ *    inscription à U(800–4000) pc, INVISIBLES de tout joueur existant au
+ *    moment du spawn (K = 8 tentatives puis skip silencieux — l'univers
+ *    encombré auto-étrangle le flux, attendu) ; richesse ρ_eff par distance
+ *    au centre, ruines héritées, stocks résiduels, étoile propre à 25 %.
  *
  * Résolution de la bande dégénérée étoile S (R_nova = 40 pc exactement) :
  * l'étoile de la poche est S et placée à 40 pc pile — signalé comme
@@ -32,7 +39,30 @@ import {
   type StarFuelType,
 } from '@atg/shared';
 import type pg from 'pg';
-import { rollName, rollStar, rollStarterPlanet, rollPlanet } from './rolls.js';
+import {
+  BONUS_COUNT_MAX,
+  BONUS_COUNT_MIN,
+  BONUS_MAX_PC,
+  BONUS_MIN_PC,
+  BONUS_PLACEMENT_ATTEMPTS,
+  BONUS_STAR_CHANCE,
+  BONUS_STAR_FUEL_RICH_FACTOR,
+  bonusRhoEff,
+  rollBonusPlanet,
+  rollLeftoverSupply,
+  rollName,
+  rollPlanet,
+  rollPocketLuck,
+  rollRuins,
+  rollStar,
+  rollStarterPlanet,
+} from './rolls.js';
+import {
+  BASE_SKY_PC,
+  PROBE_SCAN_PC,
+  SHIP_SCAN_PC,
+  TELESCOPE_SCOPE_PC_PER_LEVEL,
+} from '../services/world.js';
 import { recomputePlanetRates } from '../sim/rebase.js';
 
 /** Contraintes de la poche. [TUNE] DG §2.2 */
@@ -68,14 +98,102 @@ const BELT_MIN = 480_000;
 const BELT_MAX = 520_000;
 
 export interface SpawnResult {
+  /** Starter primaire (les vaisseaux/pilote y sont dockés). */
   starterPlanetId: string;
+  /** TOUS les starters, primaire inclus (§2.2b : 1 ; 2 à 1 % ; 3 à 0,1 %). */
+  starterPlanetIds: string[];
   starId: string;
   wildPlanetIds: string[];
+  /** Mondes bonus lointains réellement placés (skip silencieux possible). */
+  bonusPlanetIds: string[];
   pocketCenter: { x: number; y: number };
   starFuelType: StarFuelType;
   pilotNpcId: string;
   personalShipId: string;
   cargoShipId: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* §2.2b — invariant d'invisibilité des mondes bonus                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Un point est-il DANS la visibilité courante d'au moins un joueur ?
+ * Mêmes règles que visibleBodies (services/world.ts) : corps possédés
+ * (ciel 60 pc + 200 pc × niveau du télescope actif), sondes 60 pc,
+ * vaisseaux hors transit 20 pc — tous propriétaires confondus.
+ */
+export async function isPointVisibleToAnyPlayer(
+  client: pg.PoolClient,
+  x: number,
+  y: number,
+): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT 1 FROM (
+        SELECT b.x, b.y,
+               $3::float + COALESCE((
+                 SELECT max($4::float * t.level) FROM buildings t
+                 WHERE t.body_id = b.id AND t.key = 'telescope'
+                   AND t.status = 'active'
+               ), 0) AS radius
+        FROM bodies b WHERE b.owner_id IS NOT NULL
+        UNION ALL
+        SELECT s.x, s.y,
+               CASE WHEN s.hull_category = 'probe' THEN $5::float
+                    ELSE $6::float END AS radius
+        FROM ships s
+        WHERE s.status IN ('hovering', 'idle', 'docked', 'stranded')
+      ) scopes
+      WHERE (scopes.x - $1) * (scopes.x - $1)
+          + (scopes.y - $2) * (scopes.y - $2)
+          <= scopes.radius * scopes.radius
+      LIMIT 1`,
+    [x, y, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL, PROBE_SCAN_PC, SHIP_SCAN_PC],
+  );
+  return rows.length > 0;
+}
+
+export type VisibilityProbe = (x: number, y: number) => Promise<boolean>;
+
+/**
+ * Choisit une position de monde bonus (et de son étoile éventuelle) hors
+ * de toute visibilité — K tentatives puis null (skip silencieux, DG §2.2b).
+ * La sonde de visibilité est injectable : le chemin « univers saturé » est
+ * testable unitairement sans fabriquer une galaxie dense.
+ */
+export async function placeBonusCandidate(
+  stream: SeededStream,
+  center: { x: number; y: number },
+  isVisible: VisibilityProbe,
+  starNovaPc: number | null,
+): Promise<{
+  x: number;
+  y: number;
+  starX: number | null;
+  starY: number | null;
+} | null> {
+  for (let attempt = 0; attempt < BONUS_PLACEMENT_ATTEMPTS; attempt++) {
+    const r = stream.uniform(BONUS_MIN_PC, BONUS_MAX_PC);
+    const theta = stream.uniform(0, 2 * Math.PI);
+    const x = center.x + r * Math.cos(theta);
+    const y = center.y + r * Math.sin(theta);
+    let starX: number | null = null;
+    let starY: number | null = null;
+    if (starNovaPc !== null) {
+      // Géométrie de poche : l'étoile à distance sûre, la planète hors
+      // R_nova par construction.
+      const starDist = stream.uniform(starNovaPc + 5, starNovaPc + 30);
+      const starTheta = stream.uniform(0, 2 * Math.PI);
+      starX = x + starDist * Math.cos(starTheta);
+      starY = y + starDist * Math.sin(starTheta);
+    }
+    if (await isVisible(x, y)) continue;
+    if (starX !== null && starY !== null && (await isVisible(starX, starY))) {
+      continue;
+    }
+    return { x, y, starX, starY };
+  }
+  return null;
 }
 
 interface ActiveAsset {
@@ -171,6 +289,9 @@ export async function spawnStarterSystem(
     opts.universeSeed,
     `pocket:${opts.playerKey}`,
   );
+  // §2.2b : la luck se tire EN PREMIER sur le flux de poche (ordre figé,
+  // starters puis wilds) — reproductible hors base pour les tests/seed.
+  const luck = rollPocketLuck(stream);
   const center = await findPocketCenter(client, stream, opts.playerId);
 
   // 1. L'étoile de la poche : classe S (R_nova 40), à 40 pc pile du starter.
@@ -196,77 +317,104 @@ export async function spawnStarterSystem(
   );
   const starId = starRows[0]!.id;
 
-  // 2. Le starter au centre de la poche.
-  const starterSeed = `${opts.universeSeed}:starter:${opts.playerKey}`;
-  const starter = rollStarterPlanet(starterSeed);
-  // v2 (chunk BB, DG §3.2-v2 l — Round 9) : le starter naît SOUS sa
-  // capacité d'emploi précoce, à la pyramide stationnaire.
-  const starterPop = STARTER_POP;
+  // 2. Le(s) starter(s) — §2.2b pocket luck : chaque starter SUPPLÉMENTAIRE
+  // (1 % → 2, 0,1 % → 3) naît COLONISÉ + dotation complète propre (décision
+  // responsable 2026-07-20) ; le primaire reste au centre de la poche, les
+  // extras à 18–60 pc hors R_nova (même règle que les sauvages).
   const boundUntil = new Date(
     now + STARTER_ACCOUNT_BIND_DAYS * GAME_DAY_SECONDS * 1000,
   );
-  const { rows: pRows } = await client.query<{ id: string }>(
-    `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
-        tiles, owner_id, is_starter, account_bound_until, colonized_at,
-        population, pop_children, pop_seniors, pop_as_of)
-     VALUES ('planet', $1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10,
-        to_timestamp($11 / 1000.0), $12, $13, $14, to_timestamp($11 / 1000.0))
-     RETURNING id`,
-    [
-      rollName(starterSeed, 'planet'),
-      center.x,
-      center.y,
-      starterSeed,
-      starter.size,
-      starter.climate,
-      starter.quality,
-      starter.tiles,
-      opts.playerId,
-      boundUntil,
-      now,
-      starterPop,
-      // Pyramide stationnaire v2 (DG §3.2-v2 l) — population = TOTAL.
-      Math.round(starterPop * STABLE_PYRAMID.children),
-      Math.round(starterPop * STABLE_PYRAMID.seniors),
-    ],
-  );
-  const starterPlanetId = pRows[0]!.id;
-
-  // Gisements du starter.
-  for (const d of starter.deposits) {
-    await client.query(
-      `INSERT INTO deposits (body_id, resource, initial_t, amount_t, as_of)
-       VALUES ($1, $2, $3, $3, to_timestamp($4 / 1000.0))`,
-      [starterPlanetId, d.resource, d.initialT, now],
+  const starterPlanetIds: string[] = [];
+  for (let s = 0; s < luck.starters; s++) {
+    // Seed du primaire INCHANGÉ (comptes historiques reproductibles).
+    const starterSeed =
+      s === 0
+        ? `${opts.universeSeed}:starter:${opts.playerKey}`
+        : `${opts.universeSeed}:starter:${opts.playerKey}:${s}`;
+    const starter = rollStarterPlanet(starterSeed);
+    let sx = center.x;
+    let sy = center.y;
+    if (s > 0) {
+      for (let attempt = 0; ; attempt++) {
+        const r = stream.uniform(18, POCKET_WILD_MAX_PC);
+        const theta = stream.uniform(0, 2 * Math.PI);
+        sx = center.x + r * Math.cos(theta);
+        sy = center.y + r * Math.sin(theta);
+        if (dist(sx, sy, starX, starY) >= star.rNova) break;
+        if (attempt > 64) {
+          throw new Error('Spawn : placement starter bonus impossible');
+        }
+      }
+    }
+    // v2 (chunk BB, DG §3.2-v2 l — Round 9) : chaque starter naît SOUS sa
+    // capacité d'emploi précoce, à la pyramide stationnaire.
+    const starterPop = STARTER_POP;
+    const { rows: pRows } = await client.query<{ id: string }>(
+      `INSERT INTO bodies (body_type, name, x, y, seed, size, climate, quality,
+          tiles, owner_id, is_starter, account_bound_until, colonized_at,
+          population, pop_children, pop_seniors, pop_as_of)
+       VALUES ('planet', $1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10,
+          to_timestamp($11 / 1000.0), $12, $13, $14, to_timestamp($11 / 1000.0))
+       RETURNING id`,
+      [
+        rollName(starterSeed, 'planet'),
+        sx,
+        sy,
+        starterSeed,
+        starter.size,
+        starter.climate,
+        starter.quality,
+        starter.tiles,
+        opts.playerId,
+        boundUntil,
+        now,
+        starterPop,
+        // Pyramide stationnaire v2 (DG §3.2-v2 l) — population = TOTAL.
+        Math.round(starterPop * STABLE_PYRAMID.children),
+        Math.round(starterPop * STABLE_PYRAMID.seniors),
+      ],
     );
-  }
+    const starterId = pRows[0]!.id;
+    starterPlanetIds.push(starterId);
 
-  // Savoir de départ (GB §19 « starter knowledge ») : les T0
-  // jamais-masqués naissent débloqués — la pose reste payante.
-  for (const nodeKey of STARTER_PRE_UNLOCKED) {
-    await client.query(
-      `INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)`,
-      [starterPlanetId, nodeKey],
+    // Gisements du starter.
+    for (const d of starter.deposits) {
+      await client.query(
+        `INSERT INTO deposits (body_id, resource, initial_t, amount_t, as_of)
+         VALUES ($1, $2, $3, $3, to_timestamp($4 / 1000.0))`,
+        [starterId, d.resource, d.initialT, now],
+      );
+    }
+
+    // Savoir de départ (GB §19 « starter knowledge ») : les T0
+    // jamais-masqués naissent débloqués — la pose reste payante.
+    for (const nodeKey of STARTER_PRE_UNLOCKED) {
+      await client.query(
+        `INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)`,
+        [starterId, nodeKey],
+      );
+    }
+
+    // Stock de départ ×U(1.0, 1.3) PROPRE à chaque starter (§2.2b) + fuel
+    // de l'étoile voisine.
+    const grantMult = stream.uniform(1.0, 1.3);
+    const grants: [string, number][] = Object.entries(STARTER_STOCK).map(
+      ([r, t]) => [r, Math.round(t * grantMult)],
     );
+    grants.push([`fuel_${star.fuelType}`, STARTER_FUEL_U]);
+    for (const [resource, amount] of grants) {
+      await client.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+        [starterId, resource, amount, now],
+      );
+    }
   }
+  const starterPlanetId = starterPlanetIds[0]!;
 
-  // Stock de départ ×U(1.0, 1.3) + fuel de l'étoile voisine.
-  const grantMult = stream.uniform(1.0, 1.3);
-  const grants: [string, number][] = Object.entries(STARTER_STOCK).map(
-    ([r, t]) => [r, Math.round(t * grantMult)],
-  );
-  grants.push([`fuel_${star.fuelType}`, STARTER_FUEL_U]);
-  for (const [resource, amount] of grants) {
-    await client.query(
-      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
-       VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
-      [starterPlanetId, resource, amount, now],
-    );
-  }
-
-  // 3. Deux planètes sauvages ≤ 60 pc (colonisables plus tard).
+  // 3. Planètes sauvages ≤ 60 pc (§2.2b luck : 2 ; 3 à 1 % ; 4 à 0,1 %).
   const wildPlanetIds: string[] = [];
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < luck.wilds; i++) {
     const wSeed = `${opts.universeSeed}:wild:${opts.playerKey}:${i}`;
     const wild = rollPlanet(wSeed);
     let wx = 0;
@@ -339,14 +487,117 @@ export async function spawnStarterSystem(
     [opts.playerId, people, JSON.stringify({ settler_risk_reduction: statRoll })],
   );
 
+  // 6. §2.2b — la frontière latente : 1–3 mondes bonus lointains, hors de
+  // toute visibilité COURANTE (sinon skip silencieux). Flux dédiés par
+  // candidat : les tentatives de placement ne perturbent pas la poche.
+  const bonusPlanetIds: string[] = [];
+  const countStream = new SeededStream(
+    opts.universeSeed,
+    `bonus-count:${opts.playerKey}`,
+  );
+  const bonusCount = countStream.int(BONUS_COUNT_MIN, BONUS_COUNT_MAX);
+  for (let i = 0; i < bonusCount; i++) {
+    const bonusSeed = `${opts.universeSeed}:bonus:${opts.playerKey}:${i}`;
+    const bonusStarSeed = `${opts.universeSeed}:bonusstar:${opts.playerKey}:${i}`;
+    const place = new SeededStream(
+      opts.universeSeed,
+      `bonus-place:${opts.playerKey}:${i}`,
+    );
+    // Étoile propre à 25 % [TUNE] (décision responsable 2026-07-20) — la
+    // classe se roule d'abord : la géométrie dépend de R_nova.
+    const withStar = place.float() < BONUS_STAR_CHANCE;
+    const bonusStar = withStar ? rollStar(bonusStarSeed) : null;
+    const spot = await placeBonusCandidate(
+      place,
+      center,
+      (x, y) => isPointVisibleToAnyPlayer(client, x, y),
+      bonusStar ? bonusStar.rNova : null,
+    );
+    if (!spot) continue; // univers saturé ici : PAS de monde bonus (attendu)
+
+    const rho = bonusRhoEff(spot.x, spot.y);
+    const bonus = rollBonusPlanet(bonusSeed, rho);
+    const { rows: bRows } = await client.query<{ id: string }>(
+      `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+          quality, tiles, config)
+       VALUES ('planet', $1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+       RETURNING id`,
+      [
+        rollName(bonusSeed, 'planet'),
+        spot.x,
+        spot.y,
+        bonusSeed,
+        bonus.size,
+        bonus.climate,
+        bonus.quality,
+        bonus.tiles,
+        JSON.stringify({ bonus: { rhoEff: rho } }),
+      ],
+    );
+    const bonusId = bRows[0]!.id;
+    bonusPlanetIds.push(bonusId);
+
+    for (const d of bonus.deposits) {
+      await client.query(
+        `INSERT INTO deposits (body_id, resource, initial_t, amount_t, as_of)
+         VALUES ($1, $2, $3, $3, to_timestamp($4 / 1000.0))`,
+        [bonusId, d.resource, d.initialT, now],
+      );
+    }
+
+    // Ruines : actives, workforce 0, tuiles ≥ 2 (0/1 libres pour le kit de
+    // colonisation §12.3). Inertes tant que le monde est sans propriétaire
+    // (règle extinction) ; héritées par le colonisateur.
+    for (const ruin of rollRuins(bonusSeed, rho, bonus.tiles)) {
+      await client.query(
+        `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+         VALUES ($1, $2, $3, $4, 'active', 0)`,
+        [bonusId, ruin.key, ruin.level, ruin.tileIndex],
+      );
+    }
+
+    // Stocks résiduels (« higher supply ») — le frein de stockage §3.3b
+    // gouvernera tout excédent après l'atterrissage.
+    for (const supply of rollLeftoverSupply(bonusSeed, rho)) {
+      if (supply.amountT <= 0) continue;
+      await client.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+        [bonusId, supply.resource, supply.amountT, now],
+      );
+    }
+
+    if (bonusStar && spot.starX !== null && spot.starY !== null) {
+      await client.query(
+        `INSERT INTO bodies (body_type, name, x, y, seed, star_class,
+            star_fuel_type, star_fuel_stock, star_fuel_initial, r_nova)
+         VALUES ('star', $1, $2, $3, $4, $5, $6, $7, $7, $8)`,
+        [
+          rollName(bonusStarSeed, 'star'),
+          spot.starX,
+          spot.starY,
+          bonusStarSeed,
+          bonusStar.starClass,
+          bonusStar.fuelType,
+          bonusStar.fuelStock * (1 + BONUS_STAR_FUEL_RICH_FACTOR * rho),
+          bonusStar.rNova,
+        ],
+      );
+    }
+  }
+
   // Rebase initial : matérialise les taux (zéro) et planifie le premier
-  // pop_daily du monde habité.
-  await recomputePlanetRates(client, starterPlanetId, now);
+  // pop_daily de CHAQUE monde habité (starters bonus compris).
+  for (const id of starterPlanetIds) {
+    await recomputePlanetRates(client, id, now);
+  }
 
   return {
     starterPlanetId,
+    starterPlanetIds,
     starId,
     wildPlanetIds,
+    bonusPlanetIds,
     pocketCenter: center,
     starFuelType: star.fuelType,
     pilotNpcId: npcRows[0]!.id,

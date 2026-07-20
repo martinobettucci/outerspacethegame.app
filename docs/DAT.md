@@ -123,6 +123,24 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    → DB lock; burn observed → asset rematerializes (minter-only 60 d).
 5. **Purchase:** Stripe webhook → spawn generator (§2.2 DESIGN_GUIDE) →
    planet minted near buyer.
+5b. **Registration spawn (§2.2 + §2.2b DESIGN_GUIDE, owner directive
+   2026-07-20):** one transaction — pocket-luck draws first on the pocket
+   stream (starters 1/2/3 at 98.9%/1%/0.1%, wilds 2/3/4 likewise; every
+   extra starter is born colonized + fully granted, ships/pilot unique on
+   the primary), then the pocket (star, starter(s), wilds), then the
+   **latent frontier**: 1–3 far bonus worlds at U(800–4000) pc, each
+   accepted only if **outside the CURRENT visibility of every player**
+   (same scope rule as `visibleBodies`; K = 8 attempts then silent skip —
+   crowding self-throttles the flow). A bonus world stores its frozen
+   richness in `bodies.config.bonus.rhoEff` (spatial gradient from the
+   universe center, floor 0.25) which drives: rich rolls (quality/size
+   blend, upper-half tiles, 4–8 deposits ×(1+2ρ)), **abandoned buildings**
+   (catalogue-predicate pool, tiles ≥ 2, `active`/workforce 0 — inert while
+   unowned, inherited on colonization), leftover `planet_stock`, a 25%
+   chance of an own star (fuel ×(1+2ρ)), and the **enriched tech DNA**
+   served by `worldTechAvailability` (pure roll with `richness` +
+   force-union of standing building keys, cap ≥ inherited level). No new
+   tables: bodies/deposits/buildings/planet_stock/config only.
 6. **Colonization (implemented, chunks N + BD):** fit colony kit (Civil M/L,
    `colony_program` unlocked + workshop L2 active; cost = fitting +
    terraform core + provisions) → embark an explicit C/A/S manifest (active

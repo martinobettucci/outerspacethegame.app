@@ -144,6 +144,18 @@ export const SEED_KEEP_PROBABILITY: Record<number, number> = {
  */
 export const DEPTH_CAP_WEIGHTS = [0.2, 0.3, 0.5] as const;
 
+/**
+ * ADN enrichi des mondes bonus (DG §2.2b, directive responsable
+ * 2026-07-20). Uplift de la probabilité de conservation par palier :
+ * p → p + K·ρ·(1−p) ; uplift du plafond de profondeur : +1 (max 3) avec
+ * probabilité BASE + SLOPE·ρ, tiré d'un flux SÉPARÉ (`tech-dna-bonus`)
+ * consommé uniquement quand ρ > 0 — l'ADN des mondes standards reste
+ * identique octet pour octet. [TUNE]
+ */
+export const DNA_BONUS_KEEP_FACTOR = 0.6;
+export const DNA_BONUS_CAP_BASE = 0.3;
+export const DNA_BONUS_CAP_SLOPE = 0.5;
+
 export interface PlanetTechAvailability {
   /** Nœud présent dans l'ADN tech de la planète ? */
   available: Set<TechNodeKey>;
@@ -155,9 +167,20 @@ export interface PlanetTechAvailability {
  * Masque d'ADN tech d'une planète — fonction pure de (DAG, seed), jamais
  * stockée (canon GB §18). Un nœud dont un prérequis est masqué est
  * inatteignable même s'il est lui-même conservé (cohérence du DAG).
+ *
+ * `richness` (∈ [0, 1], DG §2.2b) : enrichissement d'ADN des mondes bonus.
+ * À 0 (défaut), le chemin est STRICTEMENT identique à l'historique — aucun
+ * tirage supplémentaire, mêmes seuils. À ρ > 0, les seuils de conservation
+ * montent (superset garanti pour un même seed) et les plafonds gagnent +1
+ * avec probabilité croissante via le flux séparé `tech-dna-bonus`.
  */
-export function planetTechAvailability(seed: string): PlanetTechAvailability {
+export function planetTechAvailability(
+  seed: string,
+  richness = 0,
+): PlanetTechAvailability {
   const stream = new SeededStream(seed, 'tech-dna');
+  const bonus =
+    richness > 0 ? new SeededStream(seed, 'tech-dna-bonus') : null;
   const kept = new Set<TechNodeKey>();
   const maxLevel = new Map<TechNodeKey, 1 | 2 | 3>();
   // Ordre stable = ordre de déclaration (déterministe).
@@ -165,11 +188,23 @@ export function planetTechAvailability(seed: string): PlanetTechAvailability {
     const node = TECH_NODES[key];
     const roll = stream.float(); // consommé pour CHAQUE nœud (stabilité)
     const capRoll = stream.weighted(DEPTH_CAP_WEIGHTS);
-    if (node.neverMasked || roll < (SEED_KEEP_PROBABILITY[node.tier] ?? 1)) {
+    // Flux bonus : UN tirage par nœud, conservé ou non (stabilité du flux
+    // indépendante du keep-set).
+    const capUplift =
+      bonus !== null &&
+      bonus.float() < DNA_BONUS_CAP_BASE + DNA_BONUS_CAP_SLOPE * richness;
+    const p0 = SEED_KEEP_PROBABILITY[node.tier] ?? 1;
+    const p =
+      bonus !== null ? p0 + DNA_BONUS_KEEP_FACTOR * richness * (1 - p0) : p0;
+    if (node.neverMasked || roll < p) {
       kept.add(key);
+      const base = node.neverMasked ? 3 : capRoll + 1;
       maxLevel.set(
         key,
-        node.neverMasked ? 3 : ((capRoll + 1) as 1 | 2 | 3),
+        Math.min(3, base + (capUplift && !node.neverMasked ? 1 : 0)) as
+          | 1
+          | 2
+          | 3,
       );
     }
   }

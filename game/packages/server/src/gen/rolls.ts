@@ -4,12 +4,15 @@
  * des colonnes matérialisées (déterminisme canon).
  */
 import {
+  BUILDINGS,
   CLIMATE_CRYSTAL,
   DEPOSIT_BASE_STOCK_T,
   DEPOSIT_SIZE_MULT,
   POP_QUALITY_MULT,
   SeededStream,
+  UNIVERSE_SIZE_PC,
   type BasicResource,
+  type BuildingKey,
   type Climate,
   type PlanetSize,
   type Quality,
@@ -75,10 +78,13 @@ function rollDeposits(
   climate: Climate,
   quality: Quality,
   guaranteed: readonly ResourceId[] = [],
+  // §2.2b : les mondes bonus tirent 4–8 gisements ×(1 + 2ρ_eff) ; les
+  // valeurs par défaut préservent EXACTEMENT l'ordre de tirage historique.
+  opts: { countLo?: number; countHi?: number; richMult?: number } = {},
 ): { resource: ResourceId; initialT: number }[] {
   // 3–7 gisements [TUNE] ; cristal climatique toujours possible ; poison
   // roule TOUJOURS un gisement Nox (canon §3.3).
-  const count = stream.int(3, 7);
+  const count = stream.int(opts.countLo ?? 3, opts.countHi ?? 7);
   const pool: ResourceId[] = [...BASIC_RESOURCES];
   const chosen = new Set<ResourceId>(guaranteed);
   if (climate === 'poison') chosen.add(CLIMATE_CRYSTAL.poison);
@@ -91,10 +97,12 @@ function rollDeposits(
   }
   const sizeMult = DEPOSIT_SIZE_MULT[size];
   const qMult = POP_QUALITY_MULT[quality];
+  const richMult = opts.richMult ?? 1;
   return [...chosen].map((resource) => ({
     resource,
     initialT: Math.round(
-      DEPOSIT_BASE_STOCK_T * sizeMult * qMult * stream.uniform(0.6, 1.4),
+      DEPOSIT_BASE_STOCK_T * sizeMult * qMult * stream.uniform(0.6, 1.4) *
+        richMult,
     ),
   }));
 }
@@ -183,4 +191,192 @@ export function rollName(seed: string, kind: 'planet' | 'star'): string {
     SYLLABLES_C[stream.int(0, SYLLABLES_C.length - 1)]!;
   if (kind === 'star') return `${name} ${['Alpha', 'Beta', 'Prime', 'Major', 'Minor'][stream.int(0, 4)]}`;
   return name;
+}
+
+/* ------------------------------------------------------------------ */
+/* §2.2b — Pocket luck & mondes bonus (directive responsable 2026-07-20) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Seuils LITTÉRAUX de la directive : +2 à 0,1 %, +1 à 1,0 % (P(≥+1) = 1,1 %).
+ * Fonction pure — la vérité des seuils est testable exactement. [TUNE]
+ */
+export function luckCount(u: number, base: number): number {
+  if (u < 0.001) return base + 2;
+  if (u < 0.011) return base + 1;
+  return base;
+}
+
+export interface PocketLuck {
+  /** Nombre de planètes starter (1 ; 2 à 1 % ; 3 à 0,1 %). */
+  starters: number;
+  /** Nombre de planètes inhabitées proches (2 ; 3 à 1 % ; 4 à 0,1 %). */
+  wilds: number;
+}
+
+/**
+ * Deux tirages indépendants, ordre FIGÉ (starters puis wilds — stabilité
+ * du flux, DG §2.2b). À consommer en tout premier sur le flux de poche.
+ */
+export function rollPocketLuck(stream: SeededStream): PocketLuck {
+  const starters = luckCount(stream.float(), 1);
+  const wilds = luckCount(stream.float(), 2);
+  return { starters, wilds };
+}
+
+/** Contraintes des mondes bonus. [TUNE] DG §2.2b */
+export const BONUS_COUNT_MIN = 1;
+export const BONUS_COUNT_MAX = 3;
+export const BONUS_MIN_PC = 800; // > 660 pc (scope max ancré au starter)
+export const BONUS_MAX_PC = 4_000;
+export const BONUS_PLACEMENT_ATTEMPTS = 8;
+export const BONUS_STAR_CHANCE = 0.25;
+export const BONUS_STAR_FUEL_RICH_FACTOR = 2; // stock ×(1 + f·ρ_eff)
+export const BONUS_RHO_FLOOR = 0.25;
+export const BONUS_RHO_R0_PC = 20_000;
+export const BONUS_RHO_SCALE_PC = 80_000;
+
+/**
+ * Richesse effective d'un monde bonus — gradient spatial depuis le centre
+ * de l'univers (500k, 500k) avec plancher : tout bonus est AU MOINS riche.
+ * ρ_eff = 0,25 + 0,75 × clamp((d_centre − 20 000) / 80 000, 0, 1). [TUNE]
+ */
+export function bonusRhoEff(x: number, y: number): number {
+  const cx = UNIVERSE_SIZE_PC / 2;
+  const d = Math.hypot(x - cx, y - cx);
+  const t = Math.min(
+    1,
+    Math.max(0, (d - BONUS_RHO_R0_PC) / BONUS_RHO_SCALE_PC),
+  );
+  return BONUS_RHO_FLOOR + (1 - BONUS_RHO_FLOOR) * t;
+}
+
+/** Profils « riches » vers lesquels les poids standards sont mélangés. [TUNE] */
+export const RICH_QUALITY_WEIGHTS: [Quality, number][] = [
+  ['F', 0.02],
+  ['E', 0.05],
+  ['D', 0.13],
+  ['C', 0.25],
+  ['B', 0.3],
+  ['A', 0.25],
+];
+export const RICH_SIZE_WEIGHTS: [PlanetSize, number][] = [
+  ['s', 0.2],
+  ['m', 0.4],
+  ['l', 0.4],
+];
+
+/** Mélange linéaire de deux tables de poids alignées par clé. */
+function blendWeights<T>(
+  base: [T, number][],
+  rich: [T, number][],
+  rho: number,
+): [T, number][] {
+  const richMap = new Map(rich);
+  return base.map(([k, w]) => [k, w * (1 - rho) + (richMap.get(k) ?? 0) * rho]);
+}
+
+/**
+ * Roll d'un monde bonus (DG §2.2b) : qualité/taille tirées vers le profil
+ * riche par ρ_eff, tuiles dans la MOITIÉ HAUTE de la classe, 4–8 gisements
+ * ×(1 + 2ρ_eff). Climat inchangé (poison lointain = jackpot Nox, 0 tuile).
+ */
+export function rollBonusPlanet(seed: string, rhoEff: number): PlanetRoll {
+  const stream = new SeededStream(seed, 'bonus-roll');
+  const size = pick(stream, blendWeights(SIZE_WEIGHTS, RICH_SIZE_WEIGHTS, rhoEff));
+  const climate = pick(stream, CLIMATE_WEIGHTS);
+  const quality = pick(
+    stream,
+    blendWeights(QUALITY_WEIGHTS, RICH_QUALITY_WEIGHTS, rhoEff),
+  );
+  const [lo, hi] = TILE_RANGES[size];
+  const tiles =
+    climate === 'poison' ? 0 : stream.int(Math.ceil((lo + hi) / 2), hi);
+  return {
+    size,
+    climate,
+    quality,
+    tiles,
+    deposits: rollDeposits(stream, size, climate, quality, [], {
+      countLo: 4,
+      countHi: 8,
+      richMult: 1 + 2 * rhoEff,
+    }),
+  };
+}
+
+/**
+ * Pool des ruines — PRÉDICAT de catalogue, jamais une liste en dur (règle
+ * de complétude) : sur tuile, apolitique à TOUS les niveaux, non-industrie.
+ * Dérivé de BUILDINGS à l'import : suit automatiquement le catalogue.
+ */
+export const RUIN_POOL: readonly BuildingKey[] = (
+  Object.keys(BUILDINGS) as BuildingKey[]
+).filter((k) => {
+  const d = BUILDINGS[k];
+  return (
+    d.usesTile &&
+    d.politics === null &&
+    !d.politicsFromLevel &&
+    !d.batchesPerDayByLevel
+  );
+});
+
+export interface RuinRoll {
+  key: BuildingKey;
+  level: 1 | 2 | 3;
+  tileIndex: number;
+}
+
+/**
+ * Bâtiments abandonnés d'un monde bonus (DG §2.2b) :
+ * count = round(ρ_eff × U(0,4)) plafonné à ⌊tuiles/2⌋ ET tuiles−2 (les
+ * tuiles 0/1 restent libres pour le kit de colonisation §12.3) ; niveaux
+ * L3 à P = 0,15 + 0,45·ρ_eff, L2 0,30, sinon L1 ; maxInstances respecté.
+ */
+export function rollRuins(
+  seed: string,
+  rhoEff: number,
+  tiles: number,
+): RuinRoll[] {
+  const stream = new SeededStream(seed, 'bonus-ruins');
+  const raw = Math.round(rhoEff * stream.uniform(0, 4));
+  const count = Math.max(
+    0,
+    Math.min(raw, Math.floor(tiles / 2), Math.max(0, tiles - 2)),
+  );
+  const ruins: RuinRoll[] = [];
+  const used = new Map<BuildingKey, number>();
+  for (let i = 0; i < count; i++) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const key = RUIN_POOL[stream.int(0, RUIN_POOL.length - 1)]!;
+      const max = BUILDINGS[key].maxInstances ?? Number.POSITIVE_INFINITY;
+      if ((used.get(key) ?? 0) >= max) continue;
+      used.set(key, (used.get(key) ?? 0) + 1);
+      const u = stream.float();
+      const pL3 = 0.15 + 0.45 * rhoEff;
+      const level: 1 | 2 | 3 = u < pL3 ? 3 : u < pL3 + 0.3 ? 2 : 1;
+      ruins.push({ key, level, tileIndex: 2 + i });
+      break;
+    }
+  }
+  return ruins;
+}
+
+/**
+ * Stocks résiduels d'un monde bonus : 2–5 ressources parmi les basiques +
+ * vivres, chacune ρ_eff × U(40, 200) T. [TUNE] DG §2.2b
+ */
+export function rollLeftoverSupply(
+  seed: string,
+  rhoEff: number,
+): { resource: string; amountT: number }[] {
+  const stream = new SeededStream(seed, 'bonus-supply');
+  const pool: string[] = [...BASIC_RESOURCES, 'food_1', 'water'];
+  const n = stream.int(2, 5);
+  const shuffled = stream.shuffle(pool);
+  return shuffled.slice(0, n).map((resource) => ({
+    resource,
+    amountT: Math.round(rhoEff * stream.uniform(40, 200)),
+  }));
 }

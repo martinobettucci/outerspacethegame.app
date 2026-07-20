@@ -2,6 +2,51 @@
 
 ## [Non publié]
 
+### Spawn §2.2b — pocket luck & frontière latente (directive responsable 2026-07-20)
+
+- **Pocket luck** : le spawn tire d'abord la luck sur le flux de poche
+  (ordre figé) — starters 1 / 2 (1 %) / 3 (0,1 %), sauvages proches
+  2 / 3 (1 %) / 4 (0,1 %), seuils littéraux (`luckCount`). Chaque starter
+  SUPPLÉMENTAIRE naît **colonisé + dotation complète propre** (pop 350 en
+  pyramide stable, stock ×U(1.0–1.3), 150 u de fuel, savoir T0, lié 45 j,
+  `is_starter`, taux rebasés) à 18–60 pc du centre hors R_nova ; vaisseaux
+  et pilote restent uniques, dockés au primaire.
+- **Frontière latente** : chaque inscription sème 1–3 mondes bonus à
+  U(800–4000) pc de la poche (plancher 800 > scope starter max 660),
+  acceptés UNIQUEMENT hors de la visibilité COURANTE de tous les joueurs
+  (`isPointVisibleToAnyPlayer`, même règle que /galaxy ; K = 8 tentatives
+  puis **skip silencieux** — l'encombrement auto-étrangle le flux, voulu).
+  Richesse spatiale ρ_eff = 0,25 + 0,75·clamp((d_centre−20k)/80k) figée
+  dans `bodies.config.bonus.rhoEff` : qualité/taille mélangées vers le
+  profil riche, tuiles moitié haute, 4–8 gisements ×(1+2ρ), **bâtiments
+  abandonnés** (pool par PRÉDICAT de catalogue — sur tuile, apolitique à
+  tous niveaux, non-industrie : clinic/depot/obs_station/spaceport/
+  stargate_yard/telescope/warehouse/workshop —, tuiles ≥ 2, `active` avec
+  workforce 0, inertes sans propriétaire, hérités à la colonisation),
+  stocks résiduels ρ·U(40–200) T, **étoile propre à 25 %** (stock
+  ×(1+2ρ), géométrie de poche, même invariant d'invisibilité).
+- **ADN enrichi** : `planetTechAvailability(seed, richness)` — seuils de
+  conservation relevés et plafonds +1 probabilistes via le flux SÉPARÉ
+  `tech-dna-bonus` ; les mondes standards restent identiques octet pour
+  octet (testé). Le serveur sert désormais l'ADN **effectif**
+  (`worldTechAvailability`) : richesse bonus (config) + union des clés de
+  bâtiments debout, plafond ≥ niveau hérité — une ruine L3 reste montable
+  L3 chez son colonisateur.
+- **Seed** : compte `lucky-N@atg.local` (N balayé déterministiquement —
+  N = 26 avec l'UNIVERSE_SEED par défaut) démontre le multi-starter par le
+  VRAI flux ; log du nombre de starters et de mondes bonus. Vérifié en
+  base dev : 2 starters + 1 monde bonus (« Umrux », poison Nox, ρ 0,25).
+- **Tests** : unit shared `techtree-bonus` (stabilité octet, superset par
+  seed, monotonie, bornes) ; unit serveur `bonus-rolls` (seuils exacts,
+  fréquences 30 k, ρ_eff, profils riches, prédicat + snapshot du pool,
+  caps maxInstances, stocks bornés) ; intégration `spawn-luck` (e-mail
+  chanceux scanné → 2 starters dotés, mondes bonus conformes AUX ROLLS
+  EXACTS, invariant d'invisibilité par requête directe, étoile 25 %,
+  saturation → skip via sonde injectable, ADN union servi par
+  planetDetail après prise de possession) ; `spawn.test` rendu luck-aware.
+  Suite intégration complète 302/302 verte ; E2E `latent-frontier` vert
+  (galaxie d'un compte neuf = poche seule, capture observée §16).
+
 ### Contrat de clôture — file AO reprise après BD (spec avant code)
 
 - Décision propriétaire synchronisée : un seul télescope par planète,

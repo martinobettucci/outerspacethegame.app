@@ -33,6 +33,7 @@ import {
   occupiesDock,
   type PlanetSize,
   planetTechAvailability,
+  type PlanetTechAvailability,
   popCap,
   type Quality,
   type RecipeId,
@@ -227,7 +228,7 @@ export async function planetDetail(
   try {
     const { rows } = await client.query(
       `SELECT id, name, x, y, seed, size, climate, quality, tiles, owner_id,
-              is_starter, population, illness, colonized_at
+              is_starter, population, illness, colonized_at, config
        FROM bodies WHERE id = $1 AND body_type = 'planet'`,
       [bodyId],
     );
@@ -254,7 +255,11 @@ export async function planetDetail(
       snap.rates.industries.map((i) => [i.buildingId, i]),
     );
 
-    const availability = planetTechAvailability(body.seed);
+    const availability = await worldTechAvailability(
+      client,
+      body,
+      buildingRows.map((b) => ({ key: b.key, level: b.level })),
+    );
     const { rows: unlockRows } = await client.query(
       'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
       [bodyId],
@@ -341,7 +346,7 @@ export async function planetDetail(
         `WITH scopes AS (
            SELECT b.x, b.y,
                   $2::float + COALESCE((
-                    SELECT sum($3::float * t.level) FROM buildings t
+                    SELECT max($3::float * t.level) FROM buildings t
                     WHERE t.body_id = b.id AND t.key = 'telescope'
                       AND t.status = 'active'
                   ), 0) AS radius
@@ -591,9 +596,11 @@ async function loadOwnedPlanet(
   size: PlanetSize;
   tiles: number;
   population: number;
+  config: unknown;
 }> {
   const { rows } = await client.query(
-    `SELECT seed, climate, size, tiles, owner_id, population FROM bodies
+    `SELECT seed, climate, size, tiles, owner_id, population, config
+     FROM bodies
      WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
     [bodyId],
   );
@@ -602,6 +609,53 @@ async function loadOwnedPlanet(
     throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
   }
   return rows[0];
+}
+
+/**
+ * Richesse d'ADN d'un monde bonus (§2.2b) — figée au spawn dans
+ * bodies.config.bonus.rhoEff ; 0 pour tout monde standard.
+ */
+function bonusDnaRho(config: unknown): number {
+  const rho = (config as { bonus?: { rhoEff?: number } } | null)?.bonus
+    ?.rhoEff;
+  return typeof rho === 'number' && rho > 0 ? Math.min(1, rho) : 0;
+}
+
+/**
+ * ADN tech EFFECTIF d'un monde (§2.2b) : le roll pur (seed + richesse
+ * bonus) UNION les clés des bâtiments déjà debout — une ruine héritée ou
+ * un bâtiment du kit de colonisation est un savoir de fait : il apparaît
+ * dans l'ADN et son plafond couvre au moins son niveau atteint.
+ */
+async function worldTechAvailability(
+  client: pg.PoolClient,
+  body: { id: string; seed: string; config?: unknown },
+  prefetched?: { key: string; level: number }[],
+): Promise<PlanetTechAvailability> {
+  const availability = planetTechAvailability(
+    body.seed,
+    bonusDnaRho(body.config),
+  );
+  const standing =
+    prefetched ??
+    (
+      await client.query<{ key: string; level: number }>(
+        `SELECT key, max(level)::int AS level FROM buildings
+         WHERE body_id = $1 GROUP BY key`,
+        [body.id],
+      )
+    ).rows;
+  for (const row of standing) {
+    const key = row.key as TechNodeKey;
+    if (!TECH_NODES[key]) continue;
+    availability.available.add(key);
+    const cap = availability.maxLevel.get(key) ?? 1;
+    availability.maxLevel.set(
+      key,
+      Math.max(cap, Math.min(3, Number(row.level))) as 1 | 2 | 3,
+    );
+  }
+  return availability;
 }
 
 /** Déverrouille un nœud tech (une fois par planète) — GB §18 phase 1. */
@@ -618,7 +672,11 @@ export async function unlockNode(
   try {
     await client.query('BEGIN');
     const planet = await loadOwnedPlanet(client, playerId, bodyId);
-    const availability = planetTechAvailability(planet.seed);
+    const availability = await worldTechAvailability(client, {
+      id: bodyId,
+      seed: planet.seed,
+      config: planet.config,
+    });
     if (!availability.available.has(nodeKey)) {
       throw new CommandError(
         'not_available',
@@ -1192,8 +1250,13 @@ export async function levelUpBuilding(
       throw new CommandError('max_level', 'Niveau maximal atteint (3)');
     }
     const targetLevel = level + 1;
-    // Plafond de profondeur roulé par le seed (GB §18).
-    const availability = planetTechAvailability(planet.seed);
+    // Plafond de profondeur roulé par le seed (GB §18) — §2.2b : richesse
+    // bonus + union des bâtiments debout (une ruine L3 reste montable L3).
+    const availability = await worldTechAvailability(client, {
+      id: bodyId,
+      seed: planet.seed,
+      config: planet.config,
+    });
     const cap = availability.maxLevel.get(key) ?? 3;
     if (targetLevel > cap) {
       throw new CommandError(

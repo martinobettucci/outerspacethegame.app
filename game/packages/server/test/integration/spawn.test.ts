@@ -18,7 +18,9 @@ import {
   POCKET_STAR_MAX_PC,
   POCKET_WILD_MAX_PC,
 } from '../../src/gen/spawn.js';
+import { rollPocketLuck } from '../../src/gen/rolls.js';
 import {
+  SeededStream,
   STABLE_PYRAMID,
   STARTER_POP,
   STARTER_PRE_UNLOCKED,
@@ -139,13 +141,20 @@ describe('spawn starter — garanties DG §2.2', () => {
     ).rejects.toMatchObject({ code: 'already_unlocked' });
   });
 
-  it('géométrie de la poche : étoile ≤ 40 pc et hors R_nova ; 2 sauvages ≤ 60 pc', async () => {
+  it('géométrie de la poche : étoile ≤ 40 pc et hors R_nova ; sauvages ≤ 60 pc (2 + luck §2.2b)', async () => {
     const starter = await body(first.spawn.starterPlanetId);
     const star = await body(first.spawn.starId);
     const d = dist(starter, star);
     expect(d).toBeLessThanOrEqual(POCKET_STAR_MAX_PC + 1e-6);
     expect(d).toBeGreaterThanOrEqual(Number(star.r_nova) - 1e-6);
-    expect(first.spawn.wildPlanetIds).toHaveLength(2);
+    // §2.2b : la luck (déterministe par e-mail) fixe le compte exact —
+    // 2 par défaut, 3 à 1 %, 4 à 0,1 %.
+    const luck = rollPocketLuck(
+      new SeededStream(universeSeed, `pocket:first-${run}@test.local`),
+    );
+    expect(first.spawn.wildPlanetIds).toHaveLength(luck.wilds);
+    expect(first.spawn.starterPlanetIds).toHaveLength(luck.starters);
+    // Les distances se mesurent au CENTRE de la poche (le starter primaire).
     for (const wid of first.spawn.wildPlanetIds) {
       const wild = await body(wid);
       expect(wild.owner_id).toBeNull();
