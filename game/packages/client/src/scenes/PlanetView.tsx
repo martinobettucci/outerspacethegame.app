@@ -880,6 +880,13 @@ export function PlanetView({ planetId }: { planetId: string }) {
             if (!b) return null;
             return (
               <BuildingPanel
+                // Remonte le panneau à CHAQUE bâtiment sélectionné : sans
+                // cette clé, l'instance est réutilisée et les états locaux
+                // (workforce, run %, slot marché, confirmation) initialisés
+                // par useState(building.*) restaient figés sur le bâtiment
+                // PRÉCÉDENT au changement de sélection. Le backend est bien
+                // par bâtiment ; c'était l'UI qui ne suivait pas.
+                key={b.id}
                 building={b}
                 docks={planet.docks}
                 vehicles={planet.vehicles}

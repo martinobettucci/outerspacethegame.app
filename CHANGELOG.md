@@ -2,6 +2,20 @@
 
 ## [Non publié]
 
+### Correctif UI — panneau de bâtiment figé au changement de sélection
+
+- **Bug** : en passant d'un bâtiment à un autre, le panneau affichait la
+  **workforce** et le **run %** du bâtiment PRÉCÉDENT. Le backend est bien
+  par bâtiment (colonnes `buildings.workforce`/`run_pct`, optimum par
+  bâtiment) ; c'était l'UI qui ne suivait pas : `BuildingPanel` initialise
+  ces valeurs via `useState(building.*)`, qui ne se relit qu'au montage, et
+  l'instance était réutilisée d'une sélection à l'autre.
+- **Correctif** : `key={b.id}` sur `<BuildingPanel>` (PlanetView) — le
+  panneau se remonte à chaque bâtiment sélectionné, ré-initialisant tous ses
+  états locaux (workforce, run %, slot marché, confirmation de démolition)
+  depuis le bâtiment courant. Vérifié : typecheck vert ; vérification E2E +
+  visuelle à rejouer port 8080 libre (dev server du responsable actif).
+
 ### Population v2 — contrat médicaments par âge figé avant code
 
 - **Décision responsable du 2026-07-20** : la médecine reste facultative et
