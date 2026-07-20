@@ -107,7 +107,9 @@ describe('chantier naval (DG §381)', () => {
     expect(mule!.status).toBe('docked');
     expect(mule!.dockedBodyId).toBe(starter);
     // Réservoir vide mais TYPÉ sur l'étoile natale (auto-chargement).
-    expect(Object.values(mule!.fuel)).toEqual([0]);
+    // Naissance à 25 % de plein (v3, 2026-07-20) : Cargo S 60 u × 0,25
+    // = 15 u puisées au stock du monde, type de l'étoile natale.
+    expect(Object.values(mule!.fuel)).toEqual([15]);
     expect(['cold', 'hot', 'gas']).toContain(Object.keys(mule!.fuel)[0]);
     expect(mule!.cargo).toEqual({});
     const after = Number(

@@ -198,7 +198,11 @@ export async function loadProductionSnapshot(
       : { rows: [] };
     const crewBy = new Map(crewRows.map((c) => [c.ship_id, Number(c.crew)]));
     for (const s of shipRows) {
-      const needPerDay = hoverIdleFuelUPerDay(s.hull_category, s.hull_size);
+      const needPerDay = hoverIdleFuelUPerDay(
+        s.hull_category,
+        s.hull_size,
+        Number(s.probe_level ?? 1),
+      );
       const crew = crewBy.get(s.id) ?? 0;
       // Besoin de survie du survol (GB §7 / DG §3.5) — calculé comme si la
       // planète ne servait PAS (c'est le besoin brut à servir).

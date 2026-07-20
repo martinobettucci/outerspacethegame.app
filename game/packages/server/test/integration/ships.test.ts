@@ -8,7 +8,7 @@ import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
 import { placeBuilding } from '../../src/services/planets.js';
-import { fleet, buildProbe, sendProbe, moveShip, shipPosition } from '../../src/services/ships.js';
+import { fleet, buildProbe, scoopProbeFuel, sendProbe, moveShip, shipPosition } from '../../src/services/ships.js';
 import { visibleBodies } from '../../src/services/world.js';
 import { createTestPool } from './helpers.js';
 
@@ -162,13 +162,24 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
     await new Promise((res) => setTimeout(res, 60));
     await processDueEvents(pool, baseHandlers());
 
-    // Build découplé : la sonde née SURVOLE le monde d'origine.
+    // Build découplé : la sonde née SURVOLE le monde d'origine, en L1
+    // (pad L1), avec 25 % de plein puisé au stock (v3, 2026-07-20).
     const built = await buildProbe(pool, playerId, starterId);
+    expect(built.level).toBe(1); // pad L1 → sonde L1
     const hovering = (await fleet(pool, playerId)).find(
       (s) => s.id === built.probeId,
     )!;
     expect(hovering.status).toBe('hovering');
     expect(hovering.hoverBodyId).toBe(starterId);
+    expect(hovering.probeLevel).toBe(1);
+    // 25 % du réservoir (70 u × 0,25 = 17,5) — le stock starter (150 u)
+    // couvre largement.
+    const units = Object.values(hovering.fuel)[0] ?? 0;
+    expect(units).toBeCloseTo(0.25 * 70, 1);
+    // L2 refusée tant que le pad n'est pas L2+.
+    await expect(
+      buildProbe(pool, playerId, starterId, { level: 2 }),
+    ).rejects.toMatchObject({ code: 'not_available' });
 
     // Cible : le starter du voisin (à 150–300 pc) — invisible sans scope.
     const { rows: foreign } = await pool.query(
@@ -196,8 +207,48 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
     expect(after.some((b) => b.id === foreign[0].id)).toBe(true);
   });
 
+
+  it('scoop stellaire : plein à 70 u contre 10 HP ; le 5e scoop détruit la sonde', async () => {
+    // Une sonde en survol du starter est à 40 pc de l'étoile (> 8 pc) :
+    // scoop refusé. On l'envoie SUR l'étoile puis on scoope à l'arrêt.
+    const { rows: star } = await pool.query(
+      `SELECT id, x, y FROM bodies WHERE body_type = 'star'
+         AND star_fuel_type IS NOT NULL
+       ORDER BY (x - (SELECT x FROM bodies WHERE id = $1))^2
+              + (y - (SELECT y FROM bodies WHERE id = $1))^2 LIMIT 1`,
+      [starterId],
+    );
+    const probeId = (await buildProbe(pool, playerId, starterId)).probeId;
+    await expect(
+      scoopProbeFuel(pool, playerId, probeId),
+    ).rejects.toMatchObject({ code: 'not_available' }); // trop loin (40 pc)
+    await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: Number(star[0].x), y: Number(star[0].y) },
+      FAST,
+    );
+    await waitArrived(probeId);
+    const first = await scoopProbeFuel(pool, playerId, probeId);
+    expect(first.destroyed).toBe(false);
+    expect(first.fuelUnits).toBe(70); // plein
+    expect(first.hp).toBe(50 - 10);
+    // 3 scoops de plus → 10 HP ; le 5e fait céder la coque : PERDUE.
+    for (let i = 0; i < 3; i++) await scoopProbeFuel(pool, playerId, probeId);
+    const last = await scoopProbeFuel(pool, playerId, probeId);
+    expect(last.destroyed).toBe(true);
+    const { rows: gone } = await pool.query(
+      `SELECT 1 FROM ships WHERE id = $1`,
+      [probeId],
+    );
+    expect(gone).toHaveLength(0);
+  });
+
   it('ordre FIFO du send, cap de production 5/j/pad, aucune limite de flotte', async () => {
-    // 4 sondes de plus aujourd'hui (1 déjà construite) → cap 5 atteint.
+    // Cap 5/j compté sur les sondes VIVANTES nées aujourd'hui [TUNE-v1
+    // annoncé : une sonde détruite « rembourse » son slot du jour]. Ici :
+    // 2 construites, 1 détruite au scoop → 4 de plus atteignent 5.
     const builtIds: string[] = [];
     for (let i = 0; i < 4; i++) {
       builtIds.push((await buildProbe(pool, playerId, starterId)).probeId);
@@ -210,14 +261,25 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
     for (const id of builtIds) {
       expect(flotte.find((s) => s.id === id)!.status).toBe('hovering');
     }
-    // Send = la PREMIÈRE construite disponible (FIFO par created_at).
+    // Send = la PREMIÈRE construite disponible (FIFO par created_at) —
+    // vers une cible DANS l'autonomie du plein de naissance (25 % de
+    // 70 u ÷ 0,05 u/pc = 350 pc ; on vise 200 pc).
+    const { rows: home } = await pool.query(
+      `SELECT x, y FROM bodies WHERE id = $1`,
+      [starterId],
+    );
     const sent = await sendProbe(
       pool,
       playerId,
       starterId,
-      { x: 500_300, y: 500_300 },
+      { x: Number(home[0].x) + 200, y: Number(home[0].y) },
       FAST,
     );
     expect(sent.probeId).toBe(builtIds[0]);
+    // Trajet réellement FACTURÉ : 200 pc × 0,05 = 10 u pré-brûlées.
+    const after = (await fleet(pool, playerId)).find(
+      (s) => s.id === sent.probeId,
+    )!;
+    expect(Object.values(after.fuel)[0] ?? 0).toBeCloseTo(17.5 - 10, 1);
   });
 });

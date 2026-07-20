@@ -285,6 +285,7 @@ export interface ShipView {
   /** Redéploiement warehouse→quai en cours (ISO), sinon null. */
   retrievesAt: string | null;
   autoTrade: { resource: string; belowT: number; buyT: number }[];
+  probeLevel: number;
   harvestRig: boolean;
   harvestingStarId: string | null;
   /** Coque (GB §27) : HP évalués, max, usure/jour (péage, plancher 1). */
@@ -371,6 +372,12 @@ export const api = {
   /** Construit une sonde — elle reste en SURVOL du monde (2026-07-20). */
   buildProbe: (planetId: string) =>
     call<{ probeId: string }>('POST', `/planets/${planetId}/probes`),
+  /** Scoop stellaire d'une sonde (plein contre 10 HP de coque). */
+  scoopProbe: (shipId: string) =>
+    call<{ destroyed: boolean; hp: number; fuelUnits: number }>(
+      'POST',
+      `/ships/${shipId}/scoop`,
+    ),
   /** Expédie la PREMIÈRE sonde disponible en survol de ce monde. */
   launchProbe: (planetId: string, dest: { x: number; y: number }) =>
     call<{ probeId: string; arrivesAt: string }>(

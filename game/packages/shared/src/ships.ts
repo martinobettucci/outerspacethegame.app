@@ -161,9 +161,35 @@ export const ALL_HULL_KEYS = Object.keys(HULLS) as (keyof typeof HULLS)[];
  */
 export const PROBE = {
   buildCost: { ore: 15, silicon: 10 } as CostBundle,
+  /** Surcoût du niveau 2 (télescope de bord). [TUNE-v1 interp] */
+  l2Surcost: { ore: 20, silicon: 10 } as CostBundle,
   speedPcPerDay: 120,
   buildCapPerDayPerPad: 5,
+  /**
+   * Sondes v3 (décisions responsable 2026-07-20) : carburant RÉEL.
+   * tank 70 u × 0,05 u/pc = 1 400 pc ≥ 1 386 exigés (aller-retour du
+   * plus grand télescope 660 pc + 5 %). [TUNE]
+   */
+  tankU: 70,
+  burnUPerPc: 0.05,
+  /** Survol : L1 0,06 u/j (≥ 3× plus sobre que la coque S 0,2) ;
+   *  L2 = MOITIÉ (espionnage). À sec : la sonde est PERDUE. [TUNE] */
+  hoverUPerDay: 0.06,
+  /** Points de coque — fragile, attaquable (combat P5). [TUNE] */
+  maxHp: 50,
+  /** Scoop stellaire : plein direct à ≤ 8 pc d'une étoile, au prix de
+   *  la coque (10 HP par scoop). [TUNE] */
+  scoopRangePc: 8,
+  scoopHullDamage: 10,
 } as const;
+
+/** Conso de survol d'une sonde selon son niveau (L2 = moitié). */
+export function probeHoverUPerDay(level: number): number {
+  return level >= 2 ? PROBE.hoverUPerDay / 2 : PROBE.hoverUPerDay;
+}
+
+/** Fraction de plein à la NAISSANCE de tout véhicule (2026-07-20). [TUNE] */
+export const BUILD_FUEL_FRACTION = 0.25;
 
 /** Équipage minimal par taille de coque. [TUNE] DG §8.5 */
 export const MIN_CREW: Record<HullSize, number> = { s: 1, m: 3, l: 8 };
@@ -341,8 +367,11 @@ export function survivalDrainTPerDay(
 export function hoverIdleFuelUPerDay(
   category: HullCategory | string,
   size: HullSize | string | null,
+  probeLevel?: number,
 ): number {
-  if (category === 'probe' || category === 'personal') return 0;
+  // Sondes v3 : elles consomment en survol (extrêmement sobres).
+  if (category === 'probe') return probeHoverUPerDay(probeLevel ?? 1);
+  if (category === 'personal') return 0;
   const mult = HOVER_SIZE_MULT[size as HullSize];
   if (!mult) return 0;
   return HOVER_IDLE_FUEL_U_PER_DAY * mult;

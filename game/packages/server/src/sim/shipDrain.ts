@@ -8,6 +8,7 @@
  * sur une ligne `ships` déjà verrouillée FOR UPDATE.
  */
 import {
+  PROBE,
   evalJunkAmount,
   junkCellOf,
   junkHazardHpPerDay,
@@ -80,7 +81,11 @@ export async function rebaseShipDrain(
 ): Promise<{ type: string; units: number; ratePerDay: number }> {
   const evaluated = evalShipFuel(ship, nowMs);
   const units = Math.max(0, opts.setUnits ?? evaluated.units);
-  const perDay = hoverIdleFuelUPerDay(ship.hull_category, ship.hull_size);
+  const perDay = hoverIdleFuelUPerDay(
+    ship.hull_category,
+    ship.hull_size,
+    Number(ship.probe_level ?? 1),
+  );
   const rate = target === 'tank' && perDay > 0 ? -perDay : 0;
 
   await client.query(
@@ -217,6 +222,9 @@ export async function rebaseShipSurvival(
 
 /** HP max de la coque (0 si inconnu — sondes : exemptes d'usure v1). */
 export function shipMaxHp(ship: ShipRow): number {
+  // Sondes v3 (2026-07-20) : la sonde a des points de coque — fragile,
+  // endommagée par le scoop stellaire, attaquable (combat P5).
+  if (ship.hull_category === 'probe') return PROBE.maxHp;
   return (
     HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS]
       ?.armorHp ?? 0

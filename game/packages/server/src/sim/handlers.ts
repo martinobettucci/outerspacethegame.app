@@ -7,6 +7,7 @@ import {
   agingFlows,
   applyDeaths,
   breathesFromStock,
+  BUILD_FUEL_FRACTION,
   BUILDINGS,
   CLAIM_RADIUS_PC,
   CLOCK_DAYS,
@@ -540,6 +541,12 @@ export const shipFuelOut: EventHandler = async (client, event) => {
   if (!ship) return;
   const { type, units } = evalShipFuel(ship, nowMs);
   if (units > 1e-9) return; // périmé : un refuel a replanifié le bord
+  if (ship.hull_category === 'probe') {
+    // Sondes v3 (2026-07-20) : à sec, la sonde est PERDUE — « gone »,
+    // pas d'échouage récupérable (annoncé).
+    await client.query(`DELETE FROM ships WHERE id = $1`, [shipId]);
+    return;
+  }
   await client.query(
     `UPDATE ships SET status = 'stranded', fuel = $2,
         fuel_rate_u_per_day = 0, fuel_as_of = to_timestamp($3 / 1000.0)
@@ -700,6 +707,32 @@ export const shipBuilt: EventHandler = async (client, event) => {
     [planet[0].x, planet[0].y],
   );
   const fuelType = star[0]?.star_fuel_type ?? 'cold';
+  // Naissance à 25 % de plein (décision responsable 2026-07-20) — puisé
+  // au stock du monde, PARTIEL si le stock est court (annoncé).
+  const hull =
+    HULLS[`${String(p.category)}_${String(p.size)}` as keyof typeof HULLS];
+  const birthTarget = (hull?.tankU ?? 0) * BUILD_FUEL_FRACTION;
+  let birthUnits = 0;
+  if (birthTarget > 0) {
+    const { rows: stockRows } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [planetId, `fuel_${fuelType}`],
+    );
+    if (stockRows[0]) {
+      const nowMs = event.dueAt.getTime();
+      const available = evalLazyStock(stockRows[0], nowMs);
+      birthUnits = Math.min(birthTarget, available);
+      if (birthUnits > 0) {
+        await client.query(
+          `UPDATE planet_stock SET amount_t = $3,
+              as_of = to_timestamp($4 / 1000.0)
+           WHERE body_id = $1 AND resource = $2`,
+          [planetId, `fuel_${fuelType}`, available - birthUnits, nowMs],
+        );
+      }
+    }
+  }
   await client.query(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
                         status, docked_body_id, docked_at, fuel, cargo)
@@ -715,10 +748,23 @@ export const shipBuilt: EventHandler = async (client, event) => {
       planet[0].x,
       planet[0].y,
       planetId,
-      JSON.stringify({ [fuelType]: 0 }),
+      JSON.stringify({ [fuelType]: birthUnits }),
     ],
   );
 };
+
+/** Évalue paresseusement une ligne de stock (helper local naissance). */
+function evalLazyStock(
+  row: { amount_t: unknown; rate_t_per_day: unknown; as_of: Date | string },
+  nowMs: number,
+): number {
+  return Math.max(
+    0,
+    Number(row.amount_t) +
+      (Number(row.rate_t_per_day) * (nowMs - new Date(row.as_of).getTime())) /
+        86_400_000,
+  );
+}
 
 /**
  * dock_eviction { shipId, bodyId, landedAtMs } — fin de séjour au sol d'un

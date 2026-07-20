@@ -61,6 +61,7 @@ import {
   fleet,
   landShip,
   buildProbe,
+  scoopProbeFuel,
   sendProbe,
   listNpcs,
   moveShip,
@@ -584,6 +585,23 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     try {
       const r = await buildProbe(deps.pool, player.id, id);
       return { probeId: r.probeId };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  // Scoop stellaire d'une sonde (2026-07-20) : plein direct à l'étoile,
+  // au prix de la coque — à 0 HP la sonde est détruite.
+  app.post('/ships/:id/scoop', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    try {
+      return await scoopProbeFuel(deps.pool, player.id, id);
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

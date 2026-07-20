@@ -13,6 +13,7 @@
  */
 import {
   ALL_RESOURCE_IDS,
+  BUILD_FUEL_FRACTION,
   buildableSizes,
   canAcceptLanding,
   canLand,
@@ -69,6 +70,7 @@ export interface ShipView {
   /** Règles d'auto-trade du survol (GB §7). */
   autoTrade: { resource: string; belowT: number; buyT: number }[];
   /** Harvest rig monté (GB §22, DG §8.8). */
+  probeLevel: number;
   harvestRig: boolean;
   /** Étoile en cours de récolte (id), sinon null. */
   harvestingStarId: string | null;
@@ -213,6 +215,7 @@ export async function fleet(
         belowT: number;
         buyT: number;
       }[],
+      probeLevel: Number(r.probe_level ?? 1),
       harvestRig: !!r.harvest_rig,
       harvestingStarId: r.harvesting_star_id ?? null,
       hull: (() => {
@@ -282,7 +285,12 @@ function hullStats(category: string, size: string | null): {
   tank: number;
 } {
   if (category === 'probe') {
-    return { speed: PROBE.speedPcPerDay, burnPerPc: 0, tank: 0 };
+    // Sondes v3 (2026-07-20) : carburant RÉEL — plus de scout infini.
+    return {
+      speed: PROBE.speedPcPerDay,
+      burnPerPc: PROBE.burnUPerPc,
+      tank: PROBE.tankU,
+    };
   }
   if (category === 'personal') {
     // Invulnérable, ne consomme rien (canon §21) ; vitesse d'un Civil-S.
@@ -509,8 +517,8 @@ export async function buildProbe(
   pool: pg.Pool,
   playerId: string,
   planetId: string,
-  opts: { nowMs?: number } = {},
-): Promise<{ probeId: string }> {
+  opts: { nowMs?: number; level?: 1 | 2 } = {},
+): Promise<{ probeId: string; level: 1 | 2 }> {
   const nowMs = opts.nowMs ?? Date.now();
   const client = await pool.connect();
   try {
@@ -525,12 +533,23 @@ export async function buildProbe(
       throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
     }
     const { rows: pads } = await client.query(
-      `SELECT count(*)::int AS n FROM buildings
+      `SELECT count(*)::int AS n, COALESCE(max(level), 0)::int AS max_level
+       FROM buildings
        WHERE body_id = $1 AND key = 'probe_pad' AND status = 'active'`,
       [planetId],
     );
     if (pads[0].n === 0) {
       throw new CommandError('not_available', 'Aucun probe_pad actif ici');
+    }
+    // Deux niveaux de sonde (2026-07-20) : le NIVEAU du pad gate le
+    // niveau constructible [TUNE-v1 interp]. Défaut = meilleur permis.
+    const level: 1 | 2 =
+      opts.level ?? (pads[0].max_level >= 2 ? 2 : 1);
+    if (level === 2 && pads[0].max_level < 2) {
+      throw new CommandError(
+        'not_available',
+        'Une sonde L2 (télescope de bord) exige un probe_pad L2+',
+      );
     }
     const { rows: today } = await client.query(
       `SELECT count(*)::int AS n FROM ships
@@ -542,7 +561,13 @@ export async function buildProbe(
       throw new CommandError('not_available', 'Cap de sondes du jour atteint');
     }
     // Coût payé sur le stock planétaire (mêmes règles que les bâtiments).
-    for (const [resource, amount] of Object.entries(PROBE.buildCost)) {
+    const totalCost: Record<string, number> = { ...PROBE.buildCost };
+    if (level === 2) {
+      for (const [res, qty] of Object.entries(PROBE.l2Surcost)) {
+        totalCost[res] = (totalCost[res] ?? 0) + (qty as number);
+      }
+    }
+    for (const [resource, amount] of Object.entries(totalCost)) {
       const { rows: stockRows } = await client.query(
         `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
          WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
@@ -571,15 +596,143 @@ export async function buildProbe(
         [planetId, resource, available - (amount as number), nowMs],
       );
     }
-    // La sonde née reste en SURVOL de son monde d'origine (exempte de
-    // tout drain — canon) jusqu'à un `sendProbe`.
-    const { rows: created } = await client.query<{ id: string }>(
-      `INSERT INTO ships (owner_id, hull_category, name, x, y, status, hover_body_id)
-       VALUES ($1, 'probe', 'Probe', $2, $3, 'hovering', $4) RETURNING id`,
-      [playerId, planet[0].x, planet[0].y, planetId],
+    // Naissance à 25 % de plein (2026-07-20), type de l'étoile natale
+    // (règle des coques), puisé au stock — PARTIEL si le stock est court.
+    const { rows: star } = await client.query(
+      `SELECT star_fuel_type FROM bodies
+       WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+       ORDER BY (x - $1)^2 + (y - $2)^2 LIMIT 1`,
+      [planet[0].x, planet[0].y],
     );
+    const fuelType = star[0]?.star_fuel_type ?? 'cold';
+    const birthTarget = PROBE.tankU * BUILD_FUEL_FRACTION;
+    let birthUnits = 0;
+    const { rows: fuelStock } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [planetId, `fuel_${fuelType}`],
+    );
+    if (fuelStock[0]) {
+      const available = evalLazy(
+        {
+          amount: fuelStock[0].amount_t,
+          ratePerDay: fuelStock[0].rate_t_per_day,
+          asOfMs: toMs(fuelStock[0].as_of),
+        },
+        nowMs,
+        { min: 0 },
+      );
+      birthUnits = Math.min(birthTarget, available);
+      if (birthUnits > 0) {
+        await client.query(
+          `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+           WHERE body_id = $1 AND resource = $2`,
+          [planetId, `fuel_${fuelType}`, available - birthUnits, nowMs],
+        );
+      }
+    }
+    // La sonde née SURVOLE son monde d'origine — et CONSOMME (v3) : le
+    // rebase planétaire arme son drain (monde possédé = le stock paie).
+    const { rows: created } = await client.query<{ id: string }>(
+      `INSERT INTO ships (owner_id, hull_category, name, x, y, status,
+                          hover_body_id, probe_level, fuel)
+       VALUES ($1, 'probe', 'Probe', $2, $3, 'hovering', $4, $5, $6)
+       RETURNING id`,
+      [
+        playerId,
+        planet[0].x,
+        planet[0].y,
+        planetId,
+        level,
+        JSON.stringify({ [fuelType]: birthUnits }),
+      ],
+    );
+    await recomputePlanetRates(client, planetId, nowMs);
     await client.query('COMMIT');
-    return { probeId: created[0]!.id };
+    return { probeId: created[0]!.id, level };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Scoop stellaire (décision responsable 2026-07-20) : une sonde à ≤ 8 pc
+ * d'une étoile refait le PLEIN directement — au prix de sa coque
+ * (10 HP par scoop [TUNE]). À 0 HP, la sonde est DÉTRUITE. Le réservoir
+ * prend le type de l'étoile scoopée.
+ */
+export async function scoopProbeFuel(
+  pool: pg.Pool,
+  playerId: string,
+  probeId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ destroyed: boolean; hp: number; fuelUnits: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [probeId],
+    );
+    const probe = rows[0];
+    if (!probe) throw new CommandError('not_found', 'Sonde inconnue');
+    if (probe.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette sonde ne vous obéit pas');
+    }
+    if (probe.hull_category !== 'probe') {
+      throw new CommandError('not_available', 'Seule une sonde peut scooper une étoile');
+    }
+    if (!['hovering', 'idle'].includes(probe.status)) {
+      throw new CommandError('not_available', 'La sonde doit être à l’arrêt (survol/idle)');
+    }
+    const pos = shipPosition(probe, nowMs);
+    const { rows: stars } = await client.query(
+      `SELECT id, star_fuel_type FROM bodies
+       WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+         AND (x - $1)^2 + (y - $2)^2 <= $3^2
+       ORDER BY (x - $1)^2 + (y - $2)^2 LIMIT 1`,
+      [pos.x, pos.y, PROBE.scoopRangePc],
+    );
+    if (!stars[0]) {
+      throw new CommandError(
+        'not_available',
+        `Aucune étoile à ${PROBE.scoopRangePc} pc — rien à scooper`,
+      );
+    }
+    const { hp } = evalShipHull(probe, nowMs);
+    const newHp = hp - PROBE.scoopHullDamage;
+    if (newHp <= 0) {
+      // Le scoop de trop : la coque cède, la sonde est perdue.
+      await client.query(`DELETE FROM ships WHERE id = $1`, [probeId]);
+      await client.query('COMMIT');
+      return { destroyed: true, hp: 0, fuelUnits: 0 };
+    }
+    await client.query(
+      `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
+          fuel_as_of = to_timestamp($3 / 1000.0),
+          hull_hp = $4, hull_as_of = to_timestamp($3 / 1000.0)
+       WHERE id = $1`,
+      [
+        probeId,
+        JSON.stringify({ [stars[0].star_fuel_type]: PROBE.tankU }),
+        nowMs,
+        newHp,
+      ],
+    );
+    // Replanifie le drain de survol sur le réservoir plein.
+    const { rows: fresh } = await client.query(
+      `SELECT * FROM ships WHERE id = $1`,
+      [probeId],
+    );
+    if (fresh[0] && fresh[0].status === 'hovering') {
+      await rebaseShipDrain(client, fresh[0], nowMs, 'tank');
+    }
+    await client.query('COMMIT');
+    return { destroyed: false, hp: newHp, fuelUnits: PROBE.tankU };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

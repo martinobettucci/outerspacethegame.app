@@ -1642,6 +1642,43 @@ export function GalaxyMap() {
                 </button>
               ) : null;
             })()}
+          {selectedShip.hullCategory === 'probe' &&
+            ['hovering', 'idle'].includes(selectedShip.status) && (
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .scoopProbe(selectedShip.id)
+                    .then((r) => {
+                      setNotice(
+                        r.destroyed
+                          ? t.galaxy.scoopDestroyed
+                          : `${t.galaxy.scooped} (${r.hp} HP)`,
+                      );
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.scoopRefused} — ${err.message ?? err.error}`,
+                      ),
+                    )
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Fuel size={14} aria-hidden /> {t.galaxy.scoopStar}
+              </button>
+            )}
           {selectedShip.crewCount > 0 && (
             <section
               aria-label={t.galaxy.survivalTitle}
