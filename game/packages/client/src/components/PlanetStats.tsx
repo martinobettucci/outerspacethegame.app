@@ -17,6 +17,7 @@ import { efficiency } from '@atg/shared';
 import { createPortal } from 'react-dom';
 import type { PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
+import { resourceArt, spriteUrl } from '../scenes/assets.ts';
 import { useDialogFocus } from './useDialogFocus.ts';
 import '../styles/planet-panels.css';
 
@@ -338,7 +339,28 @@ export function PlanetStats({
             <div className="ls-net-grid">
               {netRows.map(([resource, flow]) => (
                 <div className="ls-net-row" key={resource}>
-                  <span>{resource.replace(/_/g, ' ')}</span>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      minWidth: 0,
+                    }}
+                  >
+                    <img
+                      src={spriteUrl(resourceArt(resource))}
+                      alt=""
+                      width={18}
+                      height={18}
+                      loading="lazy"
+                      style={{
+                        flex: '0 0 auto',
+                        imageRendering: 'pixelated',
+                        borderRadius: 3,
+                      }}
+                    />
+                    {resource.replace(/_/g, ' ')}
+                  </span>
                   <span>{NUMBER.format(flow.amount)} T</span>
                   <strong data-tone={flow.ratePerDay < 0 ? 'danger' : 'success'}>
                     {signed(flow.ratePerDay)} {t.planet.perDay}

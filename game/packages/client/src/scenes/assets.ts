@@ -90,3 +90,12 @@ export function buildingClimateOverlay(
 export function cardArt(buildingKey: string): string {
   return `cards/card_building_${buildingKey}.png`;
 }
+
+/**
+ * Sprite d'une ressource (stub `res_<id>.gif`, contrat ASSET_PIPELINE).
+ * Les noms de fichiers correspondent 1:1 aux ResourceId. Échange d'art
+ * sans code : remplacer le fichier au même chemin.
+ */
+export function resourceArt(resource: string): string {
+  return `resources/res_${resource}.gif`;
+}
