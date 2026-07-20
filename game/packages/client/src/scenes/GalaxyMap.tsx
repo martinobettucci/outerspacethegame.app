@@ -1522,8 +1522,6 @@ export function GalaxyMap() {
                   : t.galaxy.survivalIdle}
               </span>
               <span
-                role="group"
-                aria-label={`${t.galaxy.settlersManifest}: C ${selectedShip.settlerManifest.children}, A ${selectedShip.settlerManifest.actives}, S ${selectedShip.settlerManifest.seniors}`}
                 style={{
                   color: selectedShip.fleeArmed
                     ? 'var(--success-500, #238C33)'
@@ -2104,6 +2102,8 @@ export function GalaxyMap() {
                 )}
               </strong>
               <span
+                role="group"
+                aria-label={`${t.galaxy.settlersManifest}: C ${selectedShip.settlerManifest.children}, A ${selectedShip.settlerManifest.actives}, S ${selectedShip.settlerManifest.seniors}`}
                 style={{
                   color: 'var(--text-secondary)',
                   fontFamily: 'var(--font-mono)',

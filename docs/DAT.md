@@ -41,7 +41,7 @@
   Design system: `docs/DESIGN_SYSTEM.md`; DOM contract:
   `docs/design/props/index.html`. Client is **never authoritative**; it
   renders lazily-evaluated server state and interpolates.
-- **Player Codex (in-app manual, planned — P2.codex)** — client-only,
+- **Player Codex (in-app manual, first slice implemented — P2.codex)** — client-only,
   player-facing help reachable from every screen (left-rail entry →
   `useDialogFocus` dialog overlay, contextual deep-link by `view.kind`). Spec:
   `docs/MANUAL_PLAN.md`. **Architecturally the key rule is anti-drift:** the
@@ -89,11 +89,13 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
 - `players` (account, politics archetype, personal ship), `factions`,
   `npcs` (people, role, rarity, binding host + account-bind timers).
 - `bodies` (planets/stars/black holes: type, position, seed, climate, quality,
-  tiles, owner), `deposits` (finite stock), `buildings` (type, level, recipe,
-  policy), `tech_unlocks` (per planet).
+  tiles, owner; population total + C/S materialized, actives derived,
+  demographic counters, death-clock deadlines), `deposits` (finite stock),
+  `buildings` (type, level, recipe, policy), `tech_unlocks` (per planet).
 - `ships` (hull category×size, slots/modules, tanks, crew, cargo, position or
-  mission), `missions`/`policies` (the instruction engine: declarative rulesets
-  evaluated by the tick worker).
+  mission; settlers aggregate + C/A/S manifest constrained by migration 024),
+  `missions`/`policies` (the instruction engine: declarative rulesets evaluated
+  by the tick worker).
 - `markets`, `amm_pools` (per market per pair, LP liens), `auctions` +
   system-held `escrow`, `trades`.
 - `pings`, `channels`, `shares`, `routes`/`stargates` (tolls).
@@ -119,20 +121,25 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    → DB lock; burn observed → asset rematerializes (minter-only 60 d).
 5. **Purchase:** Stripe webhook → spawn generator (§2.2 DESIGN_GUIDE) →
    planet minted near buyer.
-6. **Colonization (implemented, chunk N):** fit colony kit (Civil M/L,
+6. **Colonization (implemented, chunks N + BD):** fit colony kit (Civil M/L,
    `colony_program` unlocked + workshop L2 active; cost = fitting +
-   terraform core + provisions) → embark settlers (active spaceport, pax
-   caps, 60 % workforce guard) → fly to a hovered wild non-poison planet →
+   terraform core + provisions) → embark an explicit C/A/S manifest (active
+   spaceport, pax caps, available cohorts, no moral guard; assigned staff is
+   reduced pro rata when actives leave) → fly to a hovered wild non-poison planet →
    `colonize` (≥ 200 settlers, anti-race lock) → 72 h
-   `colony_established` event: ownership, population = delivered
-   settlers, hull converted to depot L1 + spaceport L1 (tiles 0/1),
+   `colony_established` event: ownership, population/pyramid = exact delivered
+   C/A/S manifest, hull converted to depot L1 + spaceport L1 (tiles 0/1),
    provisions + fuel unloaded, governor-grade crew (rarity ≥ rare) bound
    to the planet — commons return to the roster unhosted [amended, chunk
    W] — ship deleted.
    Arrival toll is deterministic (base 5 % − bound-pilot reductions,
-   `settler_routes` accumulator quantized 1e-9). Fresh colonies carry a
+   `settler_routes` accumulator quantized 1e-9); integer route deaths are split
+   by category via largest remainder. Fresh colonies carry a
    14-day grace (`colonized_at`; badge + API today, enforcement lands
-   with combat).
+   with combat). At population zero, the centralized extinction transition
+   strips ownership and kills hosted governors while preserving buildings,
+   unlocks, stocks and deposits; a later landing receives those assets and a
+   fresh grace period.
 7. **Loitering drains (implemented, chunk O):** hovering/idle hulls burn
    fuel continuously (0.2/0.4/0.8 u/day S/M/L [TUNE]; personal & probe
    exempt). Over your OWN world the planet's `fuel_<type>` stock pays
@@ -396,7 +403,7 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    (arrival, undock, §15 relocate). AMM slots stay out of scope v1
    (announced).
 
-### Population v2 — demographics, jobs and observability (implemented, chunks BA–BC; DG §3.2-v2)
+### Population v2 — demographics, jobs and observability (implemented, chunks BA–BD; DG §3.2-v2)
 
 Population is three ages (`bodies.population` = TOTAL; `pop_children` /
 `pop_seniors` columns; actives derived), materialized daily by the v2
@@ -409,8 +416,8 @@ death clocks. Death clocks are FIXED deadlines stored in
 linear daily deaths in between; oxygen (breathed from stock on hostile
 climates only, temperate = ambient) is an INSTANT total death, checked
 at the exact `stock_edge` zero-crossing AND daily. Per-category
-death/exodus counters persist in `bodies.demo_counters` (read by intel,
-chunk BD). Colony kits carry 20 T oxygen.
+death/exodus counters persist in `bodies.demo_counters` and are read through
+the strict tier-3 intel whitelist. Colony kits carry 20 T oxygen.
 
 Chunk BB made `BASE_JOBS` exhaustive over all 29 buildings, scaled each
 optimum by population and level, removed `E_planet`, and added the 7 %
@@ -421,8 +428,10 @@ share, employment, illness after clinic reduction, natality factors, signed
 net flows and per-building jobs). Water/food forecast their fixed-deadline
 loss; hostile-climate oxygen forecasts an instant loss at its projected
 stock edge. The clinic is catalog/tech building 29 (T2, politics-free
-`[TUNE-v1]`, −0.10/−0.20/−0.35 illness). Per-category embarkation,
-extinction ownership-strip and intel exposure remain chunk BD.
+`[TUNE-v1]`, −0.10/−0.20/−0.35 illness). Chunk BD adds the constrained
+C/A/S ship manifest, category-aware route history, centralized extinction,
+exact-manifest recolonization and tier-3 demographic history. Ownerless
+worlds always rebase with a zero production multiplier.
 
 ### Intel tiers (implemented, chunk Q)
 
@@ -432,7 +441,9 @@ combined scope covers the target (+1 once if a source world is
 scientifically governed, DG §4.1 hard-cap), probe within scan range ⇒
 deep sight, mere visibility ⇒ tier 1, otherwise 404 (same answer as a
 nonexistent id — no existence oracle). Projection is a strict shared
-WHITELIST per tier; `/galaxy` no longer leaks quality for foreign
+WHITELIST per tier. Tier 3 includes normalized C/A/S `demographicHistory`
+(deaths and departures); the field is absent below that tier, not merely
+redacted. `/galaxy` no longer leaks quality for foreign
 bodies; `/planets/:id` stays owner-only even at tier 4.
 
 ## 5. Authentication & authorization

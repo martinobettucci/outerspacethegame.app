@@ -21,7 +21,12 @@ test('premiers pas : mine posable sans unlock, bandeau guidant puis dissous', as
     .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
     .first()
     .click();
-  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+  // Un balayage E2E complet peut laisser le worker finir plusieurs rebases
+  // avant de servir le détail du starter. Attendre l'écran métier, sans
+  // confondre le délai de chargement avec une régression d'onboarding.
+  await expect(page.getByTestId('planet-canvas')).toBeVisible({
+    timeout: 30_000,
+  });
 
   // 1. Le bandeau « premiers pas » guide l'ouverture.
   const hint = page.getByTestId('first-steps-hint');

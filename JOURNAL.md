@@ -3335,3 +3335,58 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
   la production au-delà du burn s'accumule et reste vendable. L'addendum
   analytique du BALANCE_LOG confirme que les six ancres Round 9 ne bougent
   pas, la médecine restant hors horloges et hors facteur de natalité.
+
+## 2026-07-20 — Correctif majeur : cartes déverrouillées invisibles (bug probe)
+
+- **Problème.** Le responsable signale que certaines cartes deviennent
+  invisibles une fois déverrouillées, sans aucun moyen de les construire
+  (`probe_pad` cité en exemple).
+- **Cause.** Le filtre de la main introduit le 2026-07-19 (`CardHand`) ne
+  conservait que `placeable` + `unlockable` et écartait tout `blocked`. Le
+  statut `blocked` mélangeait deux natures : blocage PRÉ-unlock (hors-ADN,
+  masque, prérequis manquant, unlock trop cher — légitimement délégué à
+  l'arbre « Technology DNA ») et blocage POST-unlock (pas de tuile libre,
+  `maxInstances` atteint, placement trop cher). Un bâtiment déjà déverrouillé
+  mais momentanément non posable basculait en `blocked` et disparaissait de
+  la SEULE surface de construction : l'arbre tech ne fait que déverrouiller.
+  `probe_pad` illustre le cas — unlock `ore 15 + carbon 10` peut laisser le
+  stock sous le coût de pose `ore 8 + carbon 5`, rendant la carte invisible
+  juste après l'unlock.
+- **Décision / correctif.** `CardState` gagne un booléen `unlocked` qui
+  distingue les deux familles. Le filtre garde désormais `placeable`,
+  `unlockable` ET tout `blocked` déverrouillé ; la carte reste visible,
+  désaturée (`data-blocked`), sa raison AFFICHÉE (icône d'alerte + libellé,
+  jamais un grisé muet). Le catalogue pré-unlock reste exclusivement dans
+  l'arbre tech. La directive 2026-07-19 (« la main est filtrée ») est
+  préservée dans son intention et corrigée : une carte déverrouillée n'est
+  jamais masquée.
+- **Vérifications.** Test unitaire `CardHand.test.tsx` (4 cas, échoue avant
+  correctif via l'ancien filtre) ; typecheck + build client verts ; E2E
+  `game-flow` « vue planète » mis au nouveau contrat (action OU raison
+  visible sur chaque carte) ; scénario dédié au plafond `maxInstances` vert.
+  La capture `cardreg-telescope-maxed-visible.jpeg` a été observée à 1440×900 :
+  carte télescope toujours présente, état `blocked` et raison `max 3` lisibles.
+
+## 2026-07-20 — Chunk BD livré et clôturé sur le DoD complet
+
+- **Livraison.** Le manifeste C/A/S contraint, l'embarquement et le
+  débarquement par catégorie, les morts de route au plus fort reste,
+  l'extinction centralisée, la recolonisation exacte, l'historique intel
+  palier 3 et le seed 64/191/95 sont tous actifs. Le dernier re-balayage a
+  aussi verrouillé deux incohérences découvertes pendant la clôture : le
+  ledger d'extinction est lu après rebase autoritatif et le libellé accessible
+  du vaisseau annonce son vrai manifeste, pas un statut de fuite voisin.
+- **Preuve PostgreSQL.** Après reset local et migrations 001→024 : intégration
+  289/289. Les suites unitaires passent shared 176/176, server 38/38 et client
+  15/15 ; typecheck monorepo et build production sont verts.
+- **Preuve parcours.** Playwright complet 39/39 en 29,8 min, un worker
+  déterministe, zéro retry. Le premier balayage avait isolé un unique délai
+  implicite de 5 s sur l'écran de chargement onboarding ; l'attente explicite
+  de la planète est désormais bornée à 30 s et le second balayage est propre.
+  Les anciens workers orphelins des runs interrompus ont été arrêtés par leurs
+  groupes précis avant cette preuve afin de garantir l'isolation du serveur.
+- **Preuve visuelle.** `col-02-ark-ready.jpeg`,
+  `col-06-extinct-recolonization-ready.jpeg`,
+  `col-07-recolonized-windfall.jpeg`, `int-03-strategic.jpeg` et la capture de
+  non-régression de main ont été inspectées à 1440×900 : aucun clipping,
+  chevauchement bloquant ni texte illisible.

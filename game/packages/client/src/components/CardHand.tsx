@@ -5,7 +5,7 @@
  * L'UI n'est qu'une aide : chaque commande est re-vérifiée serveur.
  */
 import { useMemo } from 'react';
-import { Hammer, FlaskConical } from 'lucide-react';
+import { Hammer, FlaskConical, TriangleAlert } from 'lucide-react';
 import {
   BUILDINGS,
   TECH_NODES,
@@ -25,6 +25,14 @@ export type CardAction =
 export interface CardState {
   key: BuildingKey;
   status: 'placeable' | 'unlockable' | 'blocked';
+  /**
+   * Le nœud tech est-il déjà déverrouillé ? Distingue un blocage
+   * PRÉ-unlock (hors-ADN, masque, prérequis, unlock trop cher → vit dans
+   * l'arbre tech) d'un blocage POST-unlock (pas de tuile, max, placement
+   * trop cher → la carte DOIT rester dans la main, désactivée avec sa
+   * raison, sinon un bâtiment déverrouillé devient introuvable — bug probe).
+   */
+  unlocked: boolean;
   reason?: string;
   cost: CostBundle;
 }
@@ -59,10 +67,10 @@ export function computeCardStates(planet: PlanetDetail): CardState[] {
     const def = BUILDINGS[key];
     const node = TECH_NODES[key];
     if (!available.has(key)) {
-      return { key, status: 'blocked', reason: t.planet.notInDna, cost: def.unlockCost };
+      return { key, status: 'blocked', unlocked: false, reason: t.planet.notInDna, cost: def.unlockCost };
     }
     if (!mask.has(key)) {
-      return { key, status: 'blocked', reason: t.planet.maskDenied, cost: def.unlockCost };
+      return { key, status: 'blocked', unlocked: false, reason: t.planet.maskDenied, cost: def.unlockCost };
     }
     if (!unlocked.has(key)) {
       const missing = node.prerequisites.find((p) => !unlocked.has(p));
@@ -70,32 +78,35 @@ export function computeCardStates(planet: PlanetDetail): CardState[] {
         return {
           key,
           status: 'blocked',
+          unlocked: false,
           reason: `${t.planet.needPrereq} : ${missing}`,
           cost: def.unlockCost,
         };
       }
       if (!enough(def.unlockCost)) {
-        return { key, status: 'blocked', reason: t.planet.tooExpensive, cost: def.unlockCost };
+        return { key, status: 'blocked', unlocked: false, reason: t.planet.tooExpensive, cost: def.unlockCost };
       }
-      return { key, status: 'unlockable', cost: def.unlockCost };
+      return { key, status: 'unlockable', unlocked: false, cost: def.unlockCost };
     }
-    // Déverrouillée → plaçable ?
+    // Déverrouillée → plaçable ? Les blocages ci-dessous sont POST-unlock :
+    // la carte reste dans la main (unlocked: true), désactivée avec sa raison.
     if (def.usesTile && freeTiles <= 0) {
-      return { key, status: 'blocked', reason: t.planet.noFreeTile, cost: def.placementCost };
+      return { key, status: 'blocked', unlocked: true, reason: t.planet.noFreeTile, cost: def.placementCost };
     }
     const count = planet.buildings.filter((b) => b.key === key).length;
     if (def.maxInstances && count >= def.maxInstances) {
       return {
         key,
         status: 'blocked',
+        unlocked: true,
         reason: `max ${def.maxInstances}`,
         cost: def.placementCost,
       };
     }
     if (!enough(def.placementCost)) {
-      return { key, status: 'blocked', reason: t.planet.tooExpensive, cost: def.placementCost };
+      return { key, status: 'blocked', unlocked: true, reason: t.planet.tooExpensive, cost: def.placementCost };
     }
-    return { key, status: 'placeable', cost: def.placementCost };
+    return { key, status: 'placeable', unlocked: true, cost: def.placementCost };
   });
 }
 
@@ -109,15 +120,23 @@ export function CardHand({
   onAction: (a: CardAction) => void;
 }) {
   const cards = useMemo(() => computeCardStates(planet), [planet]);
-  // AO (directive responsable 2026-07-19) : la main est FILTRÉE — seules
-  // les cartes ACTIONNABLES ici (posables + déverrouillables) restent ;
-  // le catalogue complet (bloquées, hors-ADN, prérequis) vit dans l'arbre
-  // « Technology DNA ». Tri : posables d'abord, puis par tier.
+  // AO (directive responsable 2026-07-19) : la main est FILTRÉE — le
+  // catalogue PRÉ-unlock (hors-ADN, masque, prérequis, unlock trop cher)
+  // vit dans l'arbre « Technology DNA ». Mais toute carte DÉVERROUILLÉE
+  // reste dans la main, même momentanément bloquée (pas de tuile, max,
+  // placement trop cher) : sinon un bâtiment déverrouillé devient
+  // introuvable et impossible à construire (bug probe, 2026-07-20).
+  // Tri : posables, puis déverrouillables, puis déverrouillées-bloquées.
   const order = { placeable: 0, unlockable: 1, blocked: 2 } as const;
   const hand = useMemo(
     () =>
       cards
-        .filter((c) => c.status === 'placeable' || c.status === 'unlockable')
+        .filter(
+          (c) =>
+            c.status === 'placeable' ||
+            c.status === 'unlockable' ||
+            (c.status === 'blocked' && c.unlocked),
+        )
         .sort(
           (a, b) =>
             order[a.status] - order[b.status] ||
@@ -141,6 +160,7 @@ export function CardHand({
             className="ls-construction-card"
             style={{ '--card-i': i } as React.CSSProperties}
             data-selected={isSelected ? 'true' : 'false'}
+            data-blocked={card.status === 'blocked' ? 'true' : undefined}
           >
             <div className="ls-card-body">
               <strong className="ls-card-title">
@@ -190,6 +210,16 @@ export function CardHand({
                 >
                   <Hammer size={12} aria-hidden /> {t.planet.place}
                 </button>
+              )}
+              {card.status === 'blocked' && card.unlocked && (
+                // Déverrouillée mais temporairement impossible à poser (pas
+                // de tuile, max atteint, placement trop cher) : la carte RESTE
+                // dans la main, avec sa raison VISIBLE (jamais un grisé muet).
+                // Dès que la contrainte se lève, le bouton « Place » revient.
+                <p className="ls-card-blocked">
+                  <TriangleAlert size={12} aria-hidden />
+                  <span>{card.reason}</span>
+                </p>
               )}
             </div>
           </article>

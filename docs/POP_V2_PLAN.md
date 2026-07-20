@@ -104,7 +104,7 @@ DG §3.2-v2 h + GB §10 UI clause. **No back-end ordering dependency.**
   `game/packages/e2e/captures/pop-bc-clinic-stats-alarms.jpeg` inspected at
   1440×900 (§16), with no clipping or overlap.
 
-## Chunk BD — per-category settlers + extinction + intel — ⏳ PENDING
+## Chunk BD — per-category settlers + extinction + intel — ✅ DONE (implementation `db8b9c8`)
 
 DG §3.2-v2 j/k + GB §10 observability clause.
 
@@ -128,8 +128,8 @@ DG §3.2-v2 j/k + GB §10 observability clause.
 - **Extinction = ownership strip**: `population = 0` → planet reverts to
   wild **keeping its buildings and tech unlocks** (recolonizer's
   windfall), installed governors die (host-fate), colony grace applies
-  to the newcomer. (BA's `wipePopulation` currently leaves the planet
-  owned-but-empty — BD adds the strip.) Watch: siege→starvation→
+  to the newcomer. The centralized extinction transition replaces BA's
+  former owned-but-empty intermediate state. Watch: siege→starvation→
   extinction→recolonization is a plunder-free slow conquest — flag to
   P5. The transition is centralized and applies to every path reaching
   zero (death clock, daily simulation and test instrumentation): clear
@@ -147,30 +147,42 @@ DG §3.2-v2 j/k + GB §10 observability clause.
   starters expose the stable C/A/S pyramid and colonies the exact embarked
   mix; the dev seed validates/logs those real values rather than injecting
   fictitious demographic history.
-- **Medicine closure correction (owner, 2026-07-20)**: medicine is optional
+- **Medicine follow-up contract (owner, 2026-07-20; implementation next)**:
+  medicine is optional
   and physically burned at 0.1 T/1 000 weighted heads/day, but unlike the
   survival families its weights are A=1, C=1.25 and S=1.5 [TUNE-v1]. A
   deficit world keeps the illness mitigation only until its family stock
   reaches the exact zero edge; no resource may become negative. Full live
   supply also medicates, partial supply at zero does not. Surplus production
   remains in stock and is tradable; medicine never creates a death clock.
-- Tests: unit (deterministic route-death split, intel whitelist), integration
-  (ownership revert + buildings preserved + governor host-fate; intel
-  exposure with §10 direct refusals), E2E (embark-by-category UI;
-  extinction→recolonize; intel read).
+- Tests delivered: unit (deterministic route-death split, manifest helpers,
+  intel whitelist), integration on real PostgreSQL (ownership revert,
+  buildings/tech/stocks preserved, governor host-fate, every zero-population
+  path centralized, recolonization and tier-3 intel with direct refusals), and
+  E2E (embark-by-category UI, extinction→recolonize, intel read). The four
+  captures `col-02-ark-ready.jpeg`, `col-06-extinct-recolonization-ready.jpeg`,
+  `col-07-recolonized-windfall.jpeg` and `int-03-strategic.jpeg` were inspected
+  at 1440×900 without clipping, overlap or unreadable text.
+- Final DoD on a freshly reset local PostgreSQL database: shared **176/176**,
+  server unit **38/38**, client unit **15/15**, integration **289/289**,
+  typecheck and production build green; complete Playwright sweep **39/39**
+  in 29.8 min, one deterministic worker and zero retry. The sweep also locks
+  the adjacent post-unlock card-hand consistency fix.
 
-## Not part of this plan — the SUSPENDED QUEUE (resume after BD)
+## Not part of this plan — queue reopened after BD
 
 Four 2026-07-19 owner directives were **suspended** to prioritise pop v2.
-They are neither dropped nor absorbed — **resume after chunk BD**. The
+BD is now complete, so the queue is eligible again. Chunk AO's functional
+filter has already landed; the remaining order stays with the owner. The
 authoritative, persisted list is the « ⏸ FILE SUSPENDUE » block in
 `docs/BACKLOG.md` (P2 section); mirrored here so the plan is
 self-contained:
 
-- **Chunk AO** — card-hand v2 (filtered hand + folded fan, hover-to-front).
+- **Chunk AO** — card-hand v2: contextual filter delivered (pre-unlock
+  blockers stay in Technology DNA; unlocked cards remain visible with an
+  explicit temporary blocker); deeper visual folding remains an owner-directed
+  refinement.
 - **Telescope = building on a tile** (canon change; probe-pad fate to be
   decided by the owner) + asset stubs.
-- **Net production per resource/day** on the stats page — raised
-  standalone; **BC's stats page addresses it**, to be confirmed against
-  the directive when BC lands.
+- **Net production per resource/day** — delivered and verified in BC.
 - **Recruitment** — explain the « account < 45 days » refusal in the UI.

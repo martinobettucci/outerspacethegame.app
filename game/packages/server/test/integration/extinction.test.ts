@@ -12,6 +12,7 @@ import { planetDetail } from '../../src/services/planets.js';
 import { undockShip } from '../../src/services/ships.js';
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
+import { recomputePlanetRates } from '../../src/sim/rebase.js';
 import { createTestPool } from './helpers.js';
 
 let pool: pg.Pool;
@@ -87,6 +88,20 @@ describe('extinction → monde sauvage → recolonisation (GB §10)', () => {
       `UPDATE planet_stock SET amount_t = 0 WHERE body_id = $1`,
       [bodyId],
     );
+    // La comparaison doit partir d'un ledger autoritatif. Un rebase peut
+    // créer une ligne à zéro pour la sortie d'une industrie héritée ; le
+    // prendre après la photographie donnerait un faux « stock ajouté ».
+    const baselineClient = await pool.connect();
+    try {
+      await baselineClient.query('BEGIN');
+      await recomputePlanetRates(baselineClient, bodyId, Date.now());
+      await baselineClient.query('COMMIT');
+    } catch (error) {
+      await baselineClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      baselineClient.release();
+    }
     const { rows: stockIdsBefore } = await pool.query(
       `SELECT resource FROM planet_stock WHERE body_id = $1 ORDER BY resource`,
       [bodyId],

@@ -73,7 +73,7 @@ test('éveil d\'un Souverain : inscription → spawn → galaxie de la poche', a
   await shot(page, '04-galaxy');
 });
 
-test('vue planète : stats, courbe d\'efficacité, main de cartes exhaustive', async ({
+test('vue planète : stats, courbe d\'efficacité, main filtrée et blocages explicites', async ({
   page,
 }) => {
   await page.goto('/');
@@ -92,21 +92,24 @@ test('vue planète : stats, courbe d\'efficacité, main de cartes exhaustive', a
   await expect(
     page.getByText('Efficiency — the tilted bell', { exact: false }),
   ).toBeVisible();
-  // AO (directive responsable 2026-07-19) : la main est FILTRÉE — elle ne
-  // montre QUE des cartes actionnables (posables/déverrouillables), jamais
-  // une carte bloquée ; le catalogue complet vit dans « Technology DNA ».
+  // Contrat de la main (directive 2026-07-19, corrigée 2026-07-20) : la main
+  // est FILTRÉE — le catalogue PRÉ-unlock (hors-ADN, masque, prérequis,
+  // unlock trop cher) vit dans « Technology DNA » et n'apparaît JAMAIS ici.
+  // MAIS toute carte DÉVERROUILLÉE reste dans la main, même momentanément
+  // impossible à poser (elle affiche alors sa raison, jamais un grisé muet) :
+  // sinon un bâtiment déverrouillé devient introuvable (bug probe, corrigé).
   const hand = page.getByRole('region', { name: 'Construction cards' });
   await expect(hand.getByRole('article').first()).toBeVisible();
-  // Aucune carte bloquée dans la main (le filtre les a écartées).
-  await expect(hand.locator('.ls-card-blocked')).toHaveCount(0);
-  // Chaque carte visible porte une action (Place ou Unlock), zéro cadenas.
   const cardCount = await hand.getByRole('article').count();
   expect(cardCount).toBeGreaterThan(0);
   expect(cardCount).toBeLessThan(29); // strictement moins que le catalogue
+  // Chaque carte visible porte SOIT une action (Place/Unlock), SOIT — si elle
+  // est déverrouillée mais bloquée — sa raison visible ; jamais rien de muet.
   const actionButtons = await hand
     .getByRole('button', { name: /Place|Unlock/ })
     .count();
-  expect(actionButtons).toBe(cardCount);
+  const blockedReasons = await hand.locator('.ls-card-blocked').count();
+  expect(actionButtons + blockedReasons).toBe(cardCount);
   // Un savoir de départ (mine) est posable dans la main.
   await expect(
     hand

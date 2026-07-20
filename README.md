@@ -86,7 +86,10 @@ The seed goes through the real registration flow (`registerPlayer` →
 starter spawn), is idempotent, and is recreated by `pnpm resetDb`. Its
 deterministic tech DNA includes the waterworks → lab → clinic chain, so the
 demo account can exercise the Population v2 clinic, ledger and projected
-survival alarms through the real UI.
+survival alarms through the real UI. The seed also validates and logs the
+starter pyramid produced by that real path (`C/A/S 64/191/95`, total 350);
+colonies likewise receive the exact manifest carried by their ship, without
+injecting fictitious demographic history.
 
 ## Tests (game, from `game/`)
 

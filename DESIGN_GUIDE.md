@@ -132,9 +132,9 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 
 ### 3.2 Population — ⚠ SUPERSEDED
 > **Superseded by §3.2-v2 (owner decision 2026-07-19, JOURNAL).** The
-> growth/illness model below describes the code AS CURRENTLY SHIPPED; do
-> not build anything new on it. It is replaced wholesale once §3.2-v2 is
-> simulated and implemented.
+> growth/illness model below is retained only as historical v1 context; it no
+> longer describes the runtime. Do not build anything new on it: §3.2-v2 is
+> simulated and implemented through chunk BD.
 
 - **Cap:** `popCap = base(size) × qMult(quality)`;
   base: small 2 000 / medium 12 000 / large 60 000;
@@ -158,7 +158,7 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 ### 3.2-v2 Population, demographics & employment (v2 — THE central mechanic)
 
 > **Status: CANON v2 — decided with the owner on 2026-07-19, balanced in
-> Round 9, implemented through chunks BA–BC; BD closes categorical settlers,
+> Round 9, implemented through chunks BA–BD, including categorical settlers,
 > extinction and intel.** Supersedes §3.2 (growth/illness) and the
 > `E_planet` global multiplier of §3.4. Values explicitly labelled [TUNE]
 > remain balance knobs even after implementation.
@@ -335,8 +335,9 @@ the newcomer; population restarts at whatever the settlers bring.
 recolonization is a slow, plunder-free conquest path.
 
 #### l) Spawn demographics
-Starters (and colony landings by default) arrive at the stable pyramid
-(≈ 18/55/27). Starter population ≈ **350** [TUNE — Round 9: lowered
+Starters arrive at the stable pyramid (≈ 18/55/27). Colony landings keep the
+ship's delivered C/A/S manifest exactly; they do not manufacture a stable
+pyramid. Starter population ≈ **350** [TUNE — Round 9: lowered
 from 650; the starter must be born BELOW its early job capacity so the
 managed arc saturates jobs ≈ J+21, not day 3. At 350 a competent
 opening rides τ ≈ 5-7 % through grace end with ~15 % early losses —
@@ -1059,11 +1060,14 @@ computations (plunder, bonds) but are never enumerated to other players.
    common shipyard builds both S and M) + **colony fitting** (1 terraform
    core + **400 cells + 150 steelL** [TUNE] — civilian-grade steel; the whole
    chain is politics-free by construction).
-2. Load ≥ **200 settlers** [TUNE] + seed stock (≥ 30 T food, 30 T water).
+2. Load an explicit **C/A/S manifest totalling ≥ 200 settlers** [TUNE] + seed
+   stock (≥ 30 T food, 30 T water). Counts are bounded by the origin cohorts,
+   but there is no moral/workforce guard; departing actives reduce assigned
+   jobs pro rata.
 3. Fly to an **uninhabited planet**; land (colony ships land wild — canon);
    72 h establishment [TUNE]; planet becomes yours: tiles/DNA roll from seed,
-   settlers become population, hull converts into `depot` + `spaceport_S`
-   (the ship is spent) [TUNE].
+   population/pyramid equals the delivered C/A/S manifest exactly, hull
+   converts into `depot` + `spaceport_S` (the ship is spent) [TUNE].
 4. Settler-risk per §3.2 (civil pilots matter).
 
 **Planet trading (canon):** planets list like any non-fungible. Ownership

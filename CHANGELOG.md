@@ -2,6 +2,40 @@
 
 ## [Non publié]
 
+### Correctif majeur — cartes déverrouillées devenues invisibles (bug probe)
+
+- **Bug** (signalé responsable 2026-07-20) : certaines cartes, une fois
+  DÉVERROUILLÉES, disparaissaient de la main sans aucun moyen de les
+  construire (`probe_pad` en exemple). Cause : le filtre de la main
+  (`CardHand`, directive 2026-07-19) ne gardait que `placeable` +
+  `unlockable` et jetait tout `blocked`. Or `blocked` confondait deux cas
+  distincts : le blocage PRÉ-unlock (hors-ADN, masque, prérequis, unlock
+  trop cher — qui appartient légitimement à l'arbre « Technology DNA ») et
+  le blocage POST-unlock (pas de tuile libre, `maxInstances`, placement trop
+  cher). Un bâtiment déjà déverrouillé mais momentanément impossible à poser
+  basculait donc en `blocked` et sortait de la seule surface où on peut le
+  construire — l'arbre tech ne fait que déverrouiller, pas poser. `probe_pad`
+  y tombe typiquement : son unlock (ore 15 + carbon 10) peut vider le stock
+  sous son coût de pose (ore 8 + carbon 5), le rendant invisible juste après
+  l'unlock.
+- **Correctif** : `CardState` porte désormais un booléen `unlocked` qui
+  sépare les deux familles de blocage. Le filtre de la main garde `placeable`,
+  `unlockable` ET tout `blocked` déverrouillé. Une carte déverrouillée mais
+  bloquée reste visible, désaturée (`data-blocked`), avec sa raison AFFICHÉE
+  (icône d'alerte + libellé, jamais un grisé muet, §4/§18) ; dès que la
+  contrainte se lève, le bouton « Place » réapparaît. Le catalogue pré-unlock
+  continue de vivre exclusivement dans l'arbre « Technology DNA ».
+- **Tests** : `CardHand.test.tsx` (nouveau, 4 cas) verrouille le contrat —
+  probe_pad finançable → `placeable` dans la main ; probe_pad déverrouillé
+  mais trop cher → `blocked`+`unlocked`, RESTE dans la main ; probe_pad non
+  déverrouillé → `blocked`+`unlocked:false`, filtré ; mine déverrouillée sans
+  tuile libre → reste dans la main. E2E `game-flow` (« vue planète »)
+  actualisé : l'invariant devient « chaque carte porte une action OU sa
+  raison visible », jamais rien de muet. Le scénario dédié
+  `card-hand-regression.spec.ts` matérialise aussi le plafond `maxInstances`
+  du télescope et vérifie que la carte bloquée reste visible avec sa raison ;
+  capture `cardreg-telescope-maxed-visible.jpeg` inspectée à 1440×900.
+
 ### Carte galaxie — zoom molette retiré, contrôles − / + ajoutés
 
 - **Problème** : le zoom à la molette entrait en conflit avec le zoom de
@@ -83,6 +117,24 @@
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 
+- **Population v2 — manifeste C/A/S, extinction et mémoire démographique
+  (chunk BD — DG §3.2-v2 j/k, GB §10/§12)** : migration 024 ajoute au
+  vaisseau les cohortes enfants/actifs/seniors avec contrainte
+  `settlers = C + A + S`. L'embarquement choisit chaque catégorie sans garde
+  morale, limite les comptes aux cohortes réelles et réduit le staff au
+  prorata des actifs restants ; le péage de route déterministe ventile ses
+  morts au plus fort reste et alimente l'historique du monde d'origine.
+  Toute voie atteignant P=0 passe par une transition d'extinction unique :
+  propriété, starter, offres innées, horloges et gouverneurs hôtes sont
+  retirés, tandis que bâtiments, techs, stocks et gisements restent ; un
+  monde sauvage ne produit jamais. La recolonisation repart du manifeste
+  livré exact avec compteurs remis à zéro et grâce neuve. L'intel palier ≥3
+  expose morts/départs C/A/S, et le seed valide la pyramide réelle
+  C/A/S 64/191/95. UI d'embarquement, labels accessibles et scénarios
+  extinction→recolonisation/intel livrés ; quatre captures 1440×900 inspectées.
+  DoD final sur PostgreSQL local recréé : shared 176/176, server unit 38/38,
+  client unit 15/15, intégration 289/289, typecheck et build verts, E2E complet
+  39/39 en 29,8 min (un worker déterministe, zéro retry).
 - **Population v2 — clinique, ledger démographique et alarmes de survie
   (chunk BC — DG §3.2-v2 h/i, GB §10)** : la clinique devient le 29e
   bâtiment (carte, nœud T2 politics-free, coûts [TUNE-v1], stubs complets
@@ -127,12 +179,10 @@
   stock revient) ; oxygène = mort INSTANTANÉE (vérifiée au bord de stock
   exact ET au quotidien). Maladie v2 : parabole de sur-cap (1,2·o²,
   morts 0,25·o²·P [TUNE]) avec crochet clinique (bâtiment au chunk BC).
-  Compteurs morts/exodés par catégorie persistés (intel au chunk BD).
-  Migration 022 (pyramide + backfill, horloges, compteurs). RESTENT
-  (annoncé) : emploi universel + popScale + suppression E_planet +
-  starter 350 + mortalité de chômage (chunk BB — dépendance d'ordre),
-  clinique/UI (BC), embarquement par catégorie + extinction-perte de
-  propriété + intel (BD).
+  Compteurs morts/exodés par catégorie persistés. Migration 022 (pyramide +
+  backfill, horloges, compteurs). Les dépendances alors annoncées ont ensuite
+  été livrées dans l'ordre : emploi/popScale/E_planet/chômage (BB),
+  clinique/UI (BC), puis embarquement catégoriel/extinction/intel (BD).
 - **Anti-softlock du démarrage (chunk AN — GB §19 « starter knowledge »,
   décision responsable du 2026-07-19 après playtest)** : l'ouverture
   « télescope d'abord » pouvait consommer la dotation AVANT l'unlock de
