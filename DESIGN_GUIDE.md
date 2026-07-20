@@ -123,6 +123,79 @@ they fire first** — but this shield **voids beyond 100 pc of the account's
 starter planet, and on any inter-account cargo transfer** [TUNE] (no
 invulnerable scouts or mules).
 
+### 2.2b Pocket luck & far bonus worlds (owner directive 2026-07-20)
+
+**Pocket luck.** Two independent draws from the pocket stream, in this fixed
+order (stream stability): starter count, then wild count. Thresholds are
+literal per the directive [TUNE]:
+- **Starter planets:** draw `u`; `u < 0.001` → **3**; `0.001 ≤ u < 0.011` →
+  **2** (P = 1.0%); else **1**.
+- **Near uninhabited planets:** same scheme on a second draw — `u < 0.001` →
+  **4**; `0.001 ≤ u < 0.011` → **3**; else **2**.
+- Each **extra starter** (owner decision 2026-07-20: *colonized + full grant*)
+  is a full `rollStarterPlanet` on its own seed
+  (`{universeSeed}:starter:{playerKey}:{i}`), placed **18–60 pc** from the
+  pocket center outside `R_nova`, born **owned, colonized now**, with its own
+  **350-pop stable pyramid**, its own **full stock grant ×U(1.0, 1.3)** + 150 u
+  star-matched fuel, **T0 starter knowledge** pre-unlocked, `is_starter`,
+  account-bound 45 d, rates rebased at spawn. The personal ship, free Cargo-S
+  and Common pilot are granted **once** (primary).
+
+**Far bonus worlds (the latent frontier).** After the pocket, roll
+**N = 1–3** [TUNE] bonus candidates, seeds
+`{universeSeed}:bonus:{playerKey}:{i}` (+ `:bonusstar:` for the star):
+1. **Position:** direction U(0, 2π), distance from the pocket center
+   **U(800, 4 000) pc** [TUNE]. The 800 pc floor exceeds the maximum possible
+   starter-anchored scope (60 + 200×3 = **660 pc**), so a bonus world is born
+   invisible even to a future L3 telescope on the starter — probes and
+   expansion are the intended discovery paths.
+2. **Invisibility invariant (hard):** the candidate position (planet AND its
+   star, if rolled) must lie **outside the CURRENT visibility of every
+   existing player** — owned-body scopes (60 + 200 × active telescope level),
+   probes (60 pc), non-transit ships (20 pc) — evaluated at spawn time. Up to
+   **K = 8** [TUNE] placement attempts per candidate; if none fits, the bonus
+   world is **silently not spawned**. Crowding therefore self-throttles the
+   reward flow (intended: the denser the universe, the rarer the bonus).
+3. **Richness gradient:** `ρ_eff = 0.25 + 0.75 × clamp((d_center − 20 000) /
+   80 000, 0, 1)` [TUNE], `d_center` = distance from the universe center
+   (500 000, 500 000). Floor 0.25: every bonus world is *at least* rich;
+   saturation ≈ 100 k pc out. As the settled cluster random-walks outward
+   (§2.2.1 neighbor ring), later cohorts spawn farther → richer: the outskirts
+   accumulate increasingly valuable latent worlds over the universe's life.
+4. **Richer rolls** (all [TUNE], blended toward a rich profile by ρ_eff):
+   quality weights → `{A .25, B .30, C .25, D .13, E .05, F .02}`; size
+   weights → `{s .20, m .40, l .40}`; tiles rolled in the **upper half** of
+   the size range; **4–8 deposits** with `initialT × (1 + 2·ρ_eff)`. Climate
+   distribution unchanged — a far poison world is a Nox jackpot (0 tiles,
+   deposits only, no buildings).
+5. **Richer tech DNA:** per-tier keep probability `p → p + 0.6·ρ_eff·(1−p)`
+   [TUNE]; each kept node's depth cap gains **+1 (max 3)** with probability
+   `0.3 + 0.5·ρ_eff` [TUNE]. Implementation: a **separate** seeded stream
+   (`tech-dna-bonus`) consumed only when ρ_eff > 0, so the DNA of every
+   standard world remains **byte-identical** to today. Keys of abandoned
+   buildings are **force-unioned** into availability with
+   `maxLevel ≥ their level`.
+6. **Abandoned buildings:** `count = round(ρ_eff × U(0, 4))`, capped at
+   `⌊tiles/2⌋` [TUNE]; types drawn from the **catalogue predicate**
+   {usesTile, politics-free at every level, non-industry (no
+   batchesPerDayByLevel)} — derived from `BUILDINGS`, never a hardcoded list
+   (completeness rule); levels: **L3 with P = 0.15 + 0.45·ρ_eff, L2 0.30,
+   else L1** [TUNE]; rows born `status = 'active'`, `workforce = 0`,
+   `tile_index` from **2 upward** (tiles 0/1 stay free for the §12.3
+   colonization kit, whose inserts are ON CONFLICT-safe). Unowned worlds
+   produce nothing (extinction rule): the ruins are **inert until settled,
+   then inherited** by the colonizer.
+7. **Leftover supply:** 2–5 resources drawn from basics + food/water, each
+   `ρ_eff × U(40, 200)` T [TUNE] in planet stock; the §3.3b storage brake
+   governs any post-landing overflow.
+8. **Bonus star (owner decision 2026-07-20):** probability **25%** [TUNE];
+   class rolled normally (S/M/L 60/30/10), fuel stock `× (1 + 2·ρ_eff)`
+   [TUNE], placed `U(R_nova + 5, R_nova + 30)` pc from the bonus planet
+   (pocket-like geometry — harvest trips work as at home); the star obeys the
+   same invisibility invariant. The other ~75% are **fuel deserts by
+   design** — their wealth is paid in round-trip logistics (stargates remain
+   the long-term answer).
+
 ---
 
 ## 3. Planets

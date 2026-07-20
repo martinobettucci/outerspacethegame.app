@@ -3528,3 +3528,53 @@ agent (recadré pour éviter ses chantiers) :
    planète ouverte (fichiers codex/ propres).
 HORS périmètre agent (chantiers du responsable) : télescope-sur-tuile,
 caps d'instances dans buildings.ts, panneau de stock HUD.
+
+## 2026-07-20 — Spawn randomisé : pocket luck & frontière latente (directive responsable)
+
+- **Directive.** Le spawn doit être légèrement randomisé : toujours 1 étoile ;
+  1 planète starter (1 % → 2, 0,1 % → 3) ; 2 planètes inhabitées proches
+  (1 % → 3, 0,1 % → 4). Chaque inscription sème AUSSI quelques planètes
+  inhabitées très lointaines, hors de portée du nouveau joueur ET hors de la
+  visibilité de tout joueur existant — l'univers se peuple lentement dans les
+  contreforts au fil des inscriptions. Ces mondes « bonus » sont très riches
+  (stats, qualité, ADN tech), peuvent porter des bâtiments abandonnés (plus
+  loin du centre = plus nombreux, plus hauts niveaux, plus de stocks
+  résiduels) : la récompense latente des explorateurs tardifs. Si un monde
+  bonus ne peut pas être placé hors de toute visibilité → il n'est PAS créé
+  (l'encombrement auto-étrangle le flux ; attendu).
+- **Clarifications responsable (2 questions posées).** (a) Chaque starter
+  supplémentaire naît **colonisée + dotation complète** (pop 350 pyramide
+  stable, grant ×U(1.0–1.3) propre, savoir T0, account-bound 45 j,
+  is_starter ; vaisseaux/pilote uniques sur la primaire). (b) Mondes bonus :
+  **25 % [TUNE] de chance d'étoile propre** (stock ×(1+2ρ), géométrie de
+  poche) ; les autres restent des déserts à carburant, richesse payée en
+  logistique.
+- **Décisions de mécanique** (spec chiffrée : DG §2.2b ; canon : GB §19).
+  Seuils littéraux (u<0,001 → +2 ; u<0,011 → +1) ; deux tirages indépendants
+  starters puis wilds (ordre de flux figé). Bonus : N = 1–3 [TUNE] candidats,
+  distance U(800–4000) pc du centre de poche — plancher 800 > 660 pc (scope
+  máx starter L3), donc invisible même à un futur télescope L3 du starter ;
+  invariant d'invisibilité DUR contre la visibilité COURANTE de tous les
+  joueurs (corps 60+200×niveau télescope actif, sondes 60, vaisseaux hors
+  transit 20), K=8 tentatives puis skip silencieux. Richesse
+  ρ_eff = 0,25 + 0,75·clamp((d_centre−20k)/80k, 0, 1) — plancher : tout bonus
+  est au moins riche ; gradient spatial depuis le centre de l'univers
+  (500k, 500k), progression temporelle émergente via la marche du cluster.
+  Qualité/taille mélangées vers un profil riche, tuiles moitié haute,
+  gisements ×(1+2ρ_eff). ADN enrichi via un flux séparé `tech-dna-bonus`
+  (les mondes standards restent identiques octet pour octet) ; clés des
+  bâtiments abandonnés forcées dans la disponibilité. Bâtiments abandonnés :
+  prédicat de catalogue (usesTile, apolitique à tous niveaux, non-industrie),
+  jamais une liste en dur (règle de complétude) ; tuiles ≥ 2 (0/1 réservées
+  au kit de colonisation §12.3, inserts ON CONFLICT-safe) ; inertes sans
+  propriétaire (règle extinction), hérités à la colonisation.
+- **Conséquences.** La table bodies accueille des corps riches non possédés
+  invisibles de tous ; /galaxy inchangé par construction (visibleBodies filtre
+  déjà par scope) ; aucun changement de schéma requis (ρ_eff dérivée de x/y
+  stockés ; DNA dérivée de seed + ρ_eff côté serveur).
+- **Vérifications prévues.** Unit : seuils de luck, déterminisme et
+  monotonicité ρ_eff, stabilité octet du DNA standard, prédicat bâtiments.
+  Intégration : spawn multi-starter (seeds chanceux trouvés par balayage
+  déterministe), invariant d'invisibilité vérifié par requête directe,
+  saturation → skip. E2E : inscription → mondes bonus ABSENTS de /galaxy,
+  existence prouvée en base.

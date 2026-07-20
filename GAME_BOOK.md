@@ -638,6 +638,24 @@ The engine of specialization, progression and production-balancing.
 - **Planet spawn:** the free first planet and bought planets alike spawn **as near
   to the player as possible** — but placement is random, so you sometimes draw a
   **distant** planet (bad luck or good luck; the game never tells you which).
+- **Pocket luck (canon, owner decision 2026-07-20):** the pocket's composition is
+  slightly randomized — always **1 star**; **1 starter planet, with a 1% chance
+  of 2 and a 0.1% chance of 3**; **2 near uninhabited planets, with a 1% chance
+  of 3 and a 0.1% chance of 4** [TUNE]. Every *extra* starter planet is born
+  **colonized, populated and granted exactly like the primary** (same starter
+  guarantees, same 45-day account binding); the personal ship, free Cargo hull
+  and pilot are granted **once**, docked at the primary.
+- **The latent frontier (canon, owner decision 2026-07-20):** every new join also
+  seeds **a few very-far, uninhabited bonus worlds**, placed strictly **outside
+  the current visibility of every existing player** — if no such position can be
+  found, the world is simply **not spawned** (a crowded universe self-throttles
+  the flow; intended). The farther from the settled center, the **richer** they
+  are: better quality, larger, denser deposits, **richer tech DNA**,
+  **abandoned buildings** of increasing count and level, leftover supplies —
+  and **~25% keep their own star** [TUNE]; the rest are fuel deserts whose
+  wealth is paid in expedition logistics. They are the slowly-accumulating
+  reward that later explorers uncover: production on unowned worlds stays zero
+  (§10), and everything standing is **inherited on colonization** (§19.2).
 - **Buying planets is the business model** and **the only place real money enters
   the game** (fiat, via Stripe). A purchase **mints a new random planet** entity
   for the buyer. Indicative pricing: **€2.99** (one random planet) / **€9.99**
