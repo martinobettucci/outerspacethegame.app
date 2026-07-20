@@ -3294,3 +3294,27 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
 - Le Codex n'est plus « E2E à exécuter » : son scénario dédié a passé le
   balayage complet 38/38 sur base recréée pendant le DoD de BC. BACKLOG,
   CHANGELOG et MANUAL_PLAN reflètent désormais cette preuve.
+
+## 2026-07-20 — Chunk BD : contrat figé avant implémentation
+
+- L'embarquement devient explicitement C/A/S sans garde morale. Le total
+  historique du vaisseau reste matérialisé mais doit égaler la somme des
+  trois cohortes ; les données antérieures sont nécessairement migrées en
+  actifs, seule cohorte qu'autorisait l'ancien flux. Si tous les actifs
+  partent, le staff est réduit proportionnellement jusqu'à zéro.
+- `[TUNE-v1 interp]` : les morts de trajet déjà calculées par l'accumulateur
+  déterministe sont ventilées au plus fort reste sur le manifeste C/A/S,
+  avec départage stable enfants → actifs → seniors. L'exode est compté sur
+  le monde d'origine dès l'embarquement ; les morts de route y sont ajoutées
+  à la résolution. Aucun débarquement ne réécrit cet historique cumulatif.
+- L'extinction est une transition DB unique appelée par toutes les voies
+  menant à zéro : propriété/account/starter/offres innées/horloges retirés,
+  gouverneurs hôtes morts, population et emplois à zéro. Bâtiments, techs,
+  stocks et gisements survivent. La production d'un monde sans propriétaire
+  est forcée à zéro, ce qui ferme l'incohérence d'une industrie fantôme sur
+  des données de staff héritées.
+- Une recolonisation repart exactement du manifeste C/A/S, remet les
+  compteurs démographiques à zéro et redonne la grâce. L'intel expose les
+  morts/exodés normalisés seulement à partir du palier télescope 3. Le seed
+  prouve les vraies pyramides des chemins register/landing, sans inventer
+  d'historique.

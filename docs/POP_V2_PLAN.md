@@ -110,19 +110,44 @@ DG §3.2-v2 j/k + GB §10 observability clause.
 
 - **Per-category embarkation**: pick children/actives/seniors counts
   explicitly (extends the §12 settlers flow + the seed). No moral
-  guardrails (« no honor »); the counterweight is intel (below).
+  guardrails (« no honor »); the counterweight is intel (below). The
+  legacy aggregate `ships.settlers` remains the compatibility total and
+  is constrained to equal the three category columns. Existing settlers
+  are migrated as actives because that is the only category the old flow
+  could embark. Embarking actives may empty the workforce: assigned jobs
+  are then reduced pro rata to the remaining actives instead of refusing
+  the order. Children/seniors do not alter staffing.
+- **Route deaths by category** [TUNE-v1 interp]: keep the existing route
+  mortality and deterministic fractional accumulator, then apportion its
+  integer deaths proportionally over the embarked C/A/S mix by largest
+  remainder (stable tie order children → actives → seniors). This conserves
+  both the total and each non-negative cohort without adding randomness.
+  Origin `demo_counters.exodus` records the selected cohorts at embark;
+  route deaths are recorded by category against that origin when the trip
+  resolves. Disembarkation does not erase cumulative history.
 - **Extinction = ownership strip**: `population = 0` → planet reverts to
   wild **keeping its buildings and tech unlocks** (recolonizer's
   windfall), installed governors die (host-fate), colony grace applies
   to the newcomer. (BA's `wipePopulation` currently leaves the planet
   owned-but-empty — BD adds the strip.) Watch: siege→starvation→
   extinction→recolonization is a plunder-free slow conquest — flag to
-  P5.
+  P5. The transition is centralized and applies to every path reaching
+  zero (death clock, daily simulation and test instrumentation): clear
+  owner/account binding, starter flag, innate offers and population clocks;
+  zero staffing and all live population fields; cancel pending population
+  events; preserve buildings, unlocked tech, stocks and deposits. An
+  ownerless planet has production multiplier 0 even if inherited industrial
+  staffing/data are stale. Recolonization starts from the ship's selected
+  C/A/S mix, resets `demo_counters`, and receives a fresh grace period.
 - **Intel**: per-category deaths/exodus (from `demo_counters`) visible
   at telescope tier ≥ 3 [TUNE] — reputation emerges from observation.
-- **Seed**: demo-mix at spawn/colony landing; per-category demo data in
-  the dev seed contract.
-- Tests: unit (embarkation split, extinction strip), integration
+  The field is absent, not merely redacted, below tier 3 and uses the same
+  normalized zero-filled schema as the simulation.
+- **Seed**: the real registration/landing paths are the seed contract:
+  starters expose the stable C/A/S pyramid and colonies the exact embarked
+  mix; the dev seed validates/logs those real values rather than injecting
+  fictitious demographic history.
+- Tests: unit (deterministic route-death split, intel whitelist), integration
   (ownership revert + buildings preserved + governor host-fate; intel
   exposure with §10 direct refusals), E2E (embark-by-category UI;
   extinction→recolonize; intel read).
