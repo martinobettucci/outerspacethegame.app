@@ -152,10 +152,16 @@ export const HULLS: Record<`${HullCategory}_${HullSize}`, HullDef> = {
 
 export const ALL_HULL_KEYS = Object.keys(HULLS) as (keyof typeof HULLS)[];
 
-/** Sonde — seule classe SANS équipage du jeu (DG §8.1). */
+/**
+ * Sonde — seule classe SANS équipage du jeu (DG §8.1).
+ * Vitesse **120 pc/j** [TUNE, décision responsable 2026-07-20] : PLUS DE
+ * TROIS FOIS le véhicule le plus rapide de la galaxie (la coque légère
+ * `combat_s`, 30 pc/j, pleinement améliorée moteur L2 = 39 pc/j). La sonde
+ * est l'éclaireur : rien ne la rattrape.
+ */
 export const PROBE = {
   buildCost: { ore: 15, silicon: 10 } as CostBundle,
-  speedPcPerDay: 10,
+  speedPcPerDay: 120,
   buildCapPerDayPerPad: 5,
 } as const;
 

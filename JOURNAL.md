@@ -3430,7 +3430,7 @@ Rafale de décisions (à persister AVANT code, CLAUDE.md §5). Statut :
   monte désormais par NIVEAU d'un unique télescope, plus par instances.
 - Stubs bâtiment PRÊTS (27 fichiers `building_telescope_l*` × variantes).
 
-### Politique d'instances par bâtiment [PROPOSÉ — à confirmer]
+### Politique d'instances par bâtiment [VALIDÉ responsable 2026-07-20]
 État ACTUEL du code : seuls **clinic (max 1)** et **telescope (max 3)** ont
 un plafond ; tous les autres sont illimités, et la plupart EMPILENT leur
 effet par instance (depot/warehouse/spaceport/market/industries).
