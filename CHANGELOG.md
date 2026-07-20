@@ -2,6 +2,20 @@
 
 ## [Non publié]
 
+### Carte galaxie — zoom molette retiré, contrôles − / + ajoutés
+
+- **Problème** : le zoom à la molette entrait en conflit avec le zoom de
+  page des navigateurs (Microsoft Edge en particulier détourne la molette),
+  rendant la navigation de la carte inutilisable.
+- **Changement** : l'écouteur `wheel` de la carte galaxie est **retiré**
+  (plus aucun zoom molette). Le zoom passe désormais par des **contrôles
+  explicites `−` / curseur / `+` en bas à gauche** de la vue, plus le
+  clavier (`+` / `-`) déjà présent. Les boutons et le curseur pilotent la
+  caméra LIVE (`sceneRef`), bornes 0.15–8, avec libellés ARIA et focus
+  clavier visible ; le miroir React `zoomLevel` garde le curseur synchrone
+  avec le zoom clavier. Vérifié : typecheck vert ; E2E + visuel à rejouer
+  port 8080 libre (dev server du responsable actif — déjà en HMR).
+
 ### Correctif UI — panneau de bâtiment figé au changement de sélection
 
 - **Bug** : en passant d'un bâtiment à un autre, le panneau affichait la

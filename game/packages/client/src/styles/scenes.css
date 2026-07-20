@@ -182,6 +182,57 @@
   box-shadow: 0 0 18px rgba(62, 107, 199, 0.14);
 }
 
+/* Contrôles de zoom explicites (bas-gauche) — la molette a été retirée
+   (conflit avec le zoom de page des navigateurs, notamment Edge). */
+.galaxy-zoom {
+  position: absolute;
+  z-index: 9;
+  left: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(230px, calc(100% - 36px));
+  padding: 8px 10px;
+  border: 1px solid rgba(91, 128, 190, 0.28);
+  border-radius: 8px 2px 8px 2px;
+  background: rgba(7, 13, 25, 0.9);
+  box-shadow: var(--elevation-raised);
+}
+
+.galaxy-zoom__btn {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(110, 150, 232, 0.32);
+  border-radius: 6px;
+  background: rgba(10, 19, 36, 0.98);
+  color: var(--text-primary);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.galaxy-zoom__btn:hover {
+  border-color: rgba(110, 150, 232, 0.6);
+  background: rgba(16, 28, 52, 0.98);
+}
+
+.galaxy-zoom__btn:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 1px;
+}
+
+.galaxy-zoom__slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: var(--primary-300);
+  cursor: pointer;
+}
+
 .galaxy-label--selected {
   border-color: rgba(225, 212, 70, 0.78);
   color: var(--accent-200);

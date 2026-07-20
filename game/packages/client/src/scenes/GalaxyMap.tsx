@@ -129,6 +129,10 @@ export function GalaxyMap() {
   const { setView, refreshMe } = useAppState();
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
+  // Niveau de zoom courant (miroir React de camera.zoom) pour les
+  // contrôles − / + explicites. La molette ne pilote PLUS le zoom
+  // (conflit avec le zoom de page des navigateurs, notamment Edge).
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [bodies, setBodies] = useState<GalaxyBody[] | null>(null);
   const [junkFields, setJunkFields] = useState<JunkFieldView[]>([]);
   const [derelicts, setDerelicts] = useState<DerelictView[]>([]);
@@ -622,12 +626,9 @@ export function GalaxyMap() {
     const onUp = () => {
       dragging = false;
     };
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const factor = e.deltaY > 0 ? 0.9 : 1.1;
-      camera.zoom = Math.min(8, Math.max(0.15, camera.zoom * factor));
-      camera.updateProjectionMatrix();
-    };
+    // Zoom molette RETIRÉ volontairement : les navigateurs (Edge en tête)
+    // détournent la molette pour le zoom de page — conflit ingérable. Le
+    // zoom passe désormais par les boutons − / + et le clavier.
     const targetMapCenter = () => {
       const currentTargeting = targetingRef.current;
       if (!currentTargeting) return false;
@@ -672,9 +673,11 @@ export function GalaxyMap() {
       else if (event.key === '+' || event.key === '=') {
         camera.zoom = Math.min(8, camera.zoom * 1.1);
         camera.updateProjectionMatrix();
+        setZoomLevel(camera.zoom);
       } else if (event.key === '-' || event.key === '_') {
         camera.zoom = Math.max(0.15, camera.zoom * 0.9);
         camera.updateProjectionMatrix();
+        setZoomLevel(camera.zoom);
       } else if (
         (event.key === 'Enter' || event.key === ' ') &&
         targetMapCenter()
@@ -842,7 +845,6 @@ export function GalaxyMap() {
     el.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
-    el.addEventListener('wheel', onWheel, { passive: false });
     el.addEventListener('keydown', onKeyDown);
     el.addEventListener('click', onClick);
 
@@ -937,7 +939,6 @@ export function GalaxyMap() {
       el.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
-      el.removeEventListener('wheel', onWheel);
       el.removeEventListener('keydown', onKeyDown);
       el.removeEventListener('click', onClick);
       const textures = new Set<THREE.Texture>();
@@ -968,6 +969,21 @@ export function GalaxyMap() {
     return dispose;
   }, [bodies]);
 
+  // Pilote le zoom depuis les contrôles − / + et le curseur : agit sur la
+  // caméra LIVE (sceneRef, même objet que la boucle de rendu) et met à jour
+  // le miroir React. Bornes identiques au clavier (0.15 – 8).
+  const ZOOM_MIN = 0.15;
+  const ZOOM_MAX = 8;
+  const applyZoom = (next: number) => {
+    const cam = sceneRef.current?.camera;
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next));
+    setZoomLevel(clamped);
+    if (cam) {
+      cam.zoom = clamped;
+      cam.updateProjectionMatrix();
+    }
+  };
+
   if (error) {
     return (
       <div role="alert" className="scene-state scene-state--error">
@@ -988,7 +1004,35 @@ export function GalaxyMap() {
       <div ref={mountRef} className="galaxy-canvas" data-testid="galaxy-canvas" />
       <div className="galaxy-scene__readout" aria-hidden="true">
         <span>Deep-space cartography</span>
-        <span>Drag to pan · wheel to focus</span>
+        <span>Drag to pan · zoom with the controls</span>
+      </div>
+      <div className="galaxy-zoom" role="group" aria-label="Galaxy zoom">
+        <button
+          type="button"
+          className="galaxy-zoom__btn"
+          aria-label="Zoom out"
+          onClick={() => applyZoom(zoomLevel * 0.8)}
+        >
+          −
+        </button>
+        <input
+          className="galaxy-zoom__slider"
+          type="range"
+          min={ZOOM_MIN}
+          max={ZOOM_MAX}
+          step={0.01}
+          value={zoomLevel}
+          aria-label="Zoom level"
+          onChange={(e) => applyZoom(Number(e.target.value))}
+        />
+        <button
+          type="button"
+          className="galaxy-zoom__btn"
+          aria-label="Zoom in"
+          onClick={() => applyZoom(zoomLevel * 1.25)}
+        >
+          +
+        </button>
       </div>
       <label className="galaxy-contact-index">
         <span>{targeting ? 'Choose destination' : 'Contact index'}</span>
