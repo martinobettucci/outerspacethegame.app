@@ -3578,3 +3578,27 @@ caps d'instances dans buildings.ts, panneau de stock HUD.
   déterministe), invariant d'invisibilité vérifié par requête directe,
   saturation → skip. E2E : inscription → mondes bonus ABSENTS de /galaxy,
   existence prouvée en base.
+
+## 2026-07-20 — Décision responsable : les sondes carburent (fin du scout infini)
+
+Persisté AVANT code (§5). SUPERSÈDE partiellement la refonte V2 : les
+sondes ne sont PLUS exemptes de consommation.
+
+- **Carburant comme tout vaisseau** : la sonde n'est pas un cheat
+  d'exploration infinie.
+- **Autonomie cible** : une sonde PLEINEMENT AMÉLIORÉE, réservoir plein,
+  atteint AU MOINS l'aller-retour de la vue du plus puissant télescope,
+  marge 5 % — soit ≥ 1,05 × 2 × (60 + 200×3 = 660) = **≥ 1 386 pc**
+  [TUNE : dimensionner tank × burn en conséquence].
+- **Télescope de bord** : une sonde pleinement améliorée porte
+  l'équivalent d'un télescope L1 — où qu'elle soit, vue équivalente
+  (ciel L1 = 60 + 200 = 260 pc autour de la sonde).
+- **Survol** : les sondes SURVOLENT en consommant — extrêmement
+  efficientes, ≥ 3× mieux que la coque la plus sobre (S 0,2 u/j →
+  sonde ≤ 0,067, proposé 0,06 u/j [TUNE]) ; à sec, la sonde EST PERDUE
+  (« gone » — pas d'échouage récupérable, contrairement aux coques).
+- **[TUNE-GAP à trancher responsable]** : l'échelle d'amélioration des
+  sondes (« fully upgraded » implique des niveaux/upgrades de sonde —
+  où s'améliorent-elles, à quel coût, valeurs de base vs améliorées
+  pour tank/vue ?). L'implémentation attend ces réponses OU une v1
+  annoncée « toutes les sondes naissent au niveau max ».
