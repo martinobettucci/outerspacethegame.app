@@ -205,6 +205,7 @@ export function GameShell() {
       {codexSection !== null ? (
         <Codex
           initialSection={codexSection}
+          planetId={currentPlanet?.id ?? null}
           onClose={() => setCodexSection(null)}
         />
       ) : null}

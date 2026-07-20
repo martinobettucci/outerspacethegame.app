@@ -87,6 +87,17 @@ export const codexEn = {
     diagramCaption:
       'The efficiency curve: the peak is the sweet spot, the right shoulder is the overstaffing choke.',
   },
+  buildings: {
+    title: 'Buildings',
+    lead: 'Every structure belongs to one of two families. SINGLE buildings work alone: a second copy adds nothing (or is simply not allowed) — you grow them by LEVELING. MULTIPLE buildings stack: each copy adds its own output, storage or docks, bounded only by your free tiles and deposits.',
+    context:
+      'This chapter shows the building types available in THIS world’s tech DNA — as your horizons widen, so does the chapter.',
+    noPlanet: 'Open one of your worlds to browse the building types its tech DNA allows.',
+    loadError: 'Could not read this world’s tech DNA — try again.',
+    single: 'Single',
+    multiple: 'Stacks',
+    availableHere: 'types available on this world',
+  },
 } as const;
 
 export type CodexStrings = typeof codexEn;

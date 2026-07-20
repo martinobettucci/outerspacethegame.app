@@ -4,21 +4,28 @@
  * live numbers from `CODEX_FACTS`; an "Exact rule" disclosure reveals the
  * formulae for optimisers. First slice: three chapters.
  */
-import type { ReactNode } from 'react';
-import { Gauge, Pickaxe, Users } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Building2, Gauge, Pickaxe, Users } from 'lucide-react';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import type { View } from '../state.tsx';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
 import { codexEn as c } from './strings.ts';
 import { AgePyramidDiagram, DepositDepletionDiagram } from './diagrams.tsx';
+import { api } from '../api.js';
+import { BUILDING_CODEX, CODEX_BUILDING_KEYS } from './codexBuildings.ts';
 
-export type CodexSectionId = 'deposits' | 'population' | 'efficiency';
+export type CodexSectionId = 'deposits' | 'population' | 'efficiency' | 'buildings';
+
+/** Contexte de rendu d'un chapitre (planète actuellement ouverte). */
+export interface CodexBodyContext {
+  planetId: string | null;
+}
 
 export interface CodexSection {
   id: CodexSectionId;
   title: string;
   icon: ReactNode;
-  Body: () => ReactNode;
+  Body: (ctx: CodexBodyContext) => ReactNode;
 }
 
 /** Reusable "Exact rule & formula" disclosure (native <details>, keyboard-safe). */
@@ -132,10 +139,81 @@ function EfficiencyBody() {
   );
 }
 
+
+function BuildingsBody({ planetId }: CodexBodyContext) {
+  const [available, setAvailable] = useState<
+    { kind: 'none' } | { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; keys: string[] }
+  >(planetId ? { kind: 'loading' } : { kind: 'none' });
+  useEffect(() => {
+    if (!planetId) {
+      setAvailable({ kind: 'none' });
+      return;
+    }
+    let cancelled = false;
+    setAvailable({ kind: 'loading' });
+    api
+      .planet(planetId)
+      .then(
+        (d) =>
+          !cancelled &&
+          setAvailable({ kind: 'ready', keys: d.tech.available }),
+      )
+      .catch(() => !cancelled && setAvailable({ kind: 'error' }));
+    return () => {
+      cancelled = true;
+    };
+  }, [planetId]);
+
+  const entries =
+    available.kind === 'ready'
+      ? CODEX_BUILDING_KEYS.filter((k) => available.keys.includes(k))
+      : [];
+  return (
+    <>
+      <p>{c.buildings.lead}</p>
+      <p>{c.buildings.context}</p>
+      {available.kind === 'none' && (
+        <p className="ls-codex-warn">{c.buildings.noPlanet}</p>
+      )}
+      {available.kind === 'error' && (
+        <p className="ls-codex-warn">{c.buildings.loadError}</p>
+      )}
+      {available.kind === 'ready' && (
+        <>
+          <p className="ls-codex-caption">
+            {entries.length} {c.buildings.availableHere}
+          </p>
+          <ul className="ls-codex-facts">
+            {entries.map((key) => {
+              const e = BUILDING_CODEX[key]!;
+              return (
+                <li className="ls-codex-fact" key={key}>
+                  <span>
+                    <strong style={{ textTransform: 'capitalize' }}>
+                      {key.replace(/_/g, ' ')}
+                    </strong>{' '}
+                    ·{' '}
+                    {e.instances === 'single'
+                      ? c.buildings.single
+                      : c.buildings.multiple}
+                    <br />
+                    {e.role} {e.note}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </>
+  );
+}
+
 export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'deposits', title: c.deposits.title, icon: <Pickaxe size={16} />, Body: DepositsBody },
   { id: 'population', title: c.population.title, icon: <Users size={16} />, Body: PopulationBody },
   { id: 'efficiency', title: c.efficiency.title, icon: <Gauge size={16} />, Body: EfficiencyBody },
+  { id: 'buildings', title: c.buildings.title, icon: <Building2 size={16} />, Body: BuildingsBody },
 ];
 
 /**

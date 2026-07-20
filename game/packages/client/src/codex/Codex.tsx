@@ -14,9 +14,12 @@ import '../styles/codex.css';
 
 export function Codex({
   initialSection,
+  planetId = null,
   onClose,
 }: {
   initialSection: CodexSectionId;
+  /** Planète actuellement ouverte (chapitres contextuels — bâtiments). */
+  planetId?: string | null;
   onClose: () => void;
 }) {
   const dialogRef = useDialogFocus(onClose);
@@ -73,7 +76,7 @@ export function Codex({
 
           <article className="ls-codex-content" key={section.id}>
             <h3 className="ls-codex-content__title">{section.title}</h3>
-            <section.Body />
+            <section.Body planetId={planetId} />
           </article>
         </div>
       </section>
