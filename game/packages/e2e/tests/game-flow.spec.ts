@@ -92,9 +92,28 @@ test('vue planète : stats, courbe d\'efficacité, main de cartes exhaustive', a
   await expect(
     page.getByText('Efficiency — the tilted bell', { exact: false }),
   ).toBeVisible();
-  // Main exhaustive : 29 cartes (règle de complétude, clinique incluse).
+  // AO (directive responsable 2026-07-19) : la main est FILTRÉE — elle ne
+  // montre QUE des cartes actionnables (posables/déverrouillables), jamais
+  // une carte bloquée ; le catalogue complet vit dans « Technology DNA ».
   const hand = page.getByRole('region', { name: 'Construction cards' });
-  await expect(hand.getByRole('article')).toHaveCount(29);
+  await expect(hand.getByRole('article').first()).toBeVisible();
+  // Aucune carte bloquée dans la main (le filtre les a écartées).
+  await expect(hand.locator('.ls-card-blocked')).toHaveCount(0);
+  // Chaque carte visible porte une action (Place ou Unlock), zéro cadenas.
+  const cardCount = await hand.getByRole('article').count();
+  expect(cardCount).toBeGreaterThan(0);
+  expect(cardCount).toBeLessThan(29); // strictement moins que le catalogue
+  const actionButtons = await hand
+    .getByRole('button', { name: /Place|Unlock/ })
+    .count();
+  expect(actionButtons).toBe(cardCount);
+  // Un savoir de départ (mine) est posable dans la main.
+  await expect(
+    hand
+      .getByRole('article')
+      .filter({ hasText: /^mine/ })
+      .getByRole('button', { name: 'Place' }),
+  ).toBeVisible();
   await page.waitForTimeout(1200);
   await shot(page, '05-planet-view');
 });

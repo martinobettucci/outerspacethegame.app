@@ -302,6 +302,7 @@ export const t = {
     buildSuccess: 'Construction started.',
     unlockSuccess: 'Card unlocked.',
     cardHand: 'Construction cards',
+    cardHandEmpty: 'No construction card is currently actionable.',
     perDay: '/day',
     dryOn: 'dry on',
     chooseRecipe: 'Choose what this industry will mint (permanent until retooled):',

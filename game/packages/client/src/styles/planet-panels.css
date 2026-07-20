@@ -668,6 +668,47 @@
   transform: translateY(-5px);
 }
 
+/* AO (directive responsable 2026-07-19) : main filtrée en ÉVENTAIL
+   SEMI-REPLIÉ — les cartes se chevauchent (tranche visible), légèrement
+   inclinées ; au survol OU au focus clavier, la carte se déplie, se
+   redresse et passe DEVANT les autres. Le chevauchement laisse le centre
+   du bouton d'action visible au repos (clic direct + Playwright hover). */
+.ls-card-dock[data-fan='true'] {
+  gap: 0;
+  padding-left: 34px;
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card {
+  margin-left: -58px;
+  transform: translateY(7px) rotate(calc((var(--card-i, 0) - 1.5) * 0.55deg));
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:first-child {
+  margin-left: 0;
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:hover,
+.ls-card-dock[data-fan='true'] .ls-construction-card:focus-within,
+.ls-card-dock[data-fan='true'] .ls-construction-card[data-selected='true'] {
+  z-index: 6;
+  transform: translateY(-7px) rotate(0deg) scale(1.02);
+}
+
+.ls-card-dock-empty {
+  align-self: center;
+  margin: 0 auto;
+  max-width: 340px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-card-dock[data-fan='true'] .ls-construction-card {
+    transition: none;
+  }
+}
+
 .ls-construction-card[data-selected='true'] {
   z-index: 3;
   border-color: var(--accent-400);

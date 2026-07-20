@@ -5,7 +5,7 @@
  * L'UI n'est qu'une aide : chaque commande est re-vérifiée serveur.
  */
 import { useMemo } from 'react';
-import { Lock, Hammer, FlaskConical } from 'lucide-react';
+import { Hammer, FlaskConical } from 'lucide-react';
 import {
   BUILDINGS,
   TECH_NODES,
@@ -109,18 +109,29 @@ export function CardHand({
   onAction: (a: CardAction) => void;
 }) {
   const cards = useMemo(() => computeCardStates(planet), [planet]);
-  // Tri : plaçables, déverrouillables, bloquées — la main reste EXHAUSTIVE
-  // (29 cartes, règle de complétude) mais lisible.
+  // AO (directive responsable 2026-07-19) : la main est FILTRÉE — seules
+  // les cartes ACTIONNABLES ici (posables + déverrouillables) restent ;
+  // le catalogue complet (bloquées, hors-ADN, prérequis) vit dans l'arbre
+  // « Technology DNA ». Tri : posables d'abord, puis par tier.
   const order = { placeable: 0, unlockable: 1, blocked: 2 } as const;
-  const sorted = [...cards].sort(
-    (a, b) =>
-      order[a.status] - order[b.status] ||
-      BUILDINGS[a.key].tier - BUILDINGS[b.key].tier,
+  const hand = useMemo(
+    () =>
+      cards
+        .filter((c) => c.status === 'placeable' || c.status === 'unlockable')
+        .sort(
+          (a, b) =>
+            order[a.status] - order[b.status] ||
+            BUILDINGS[a.key].tier - BUILDINGS[b.key].tier,
+        ),
+    [cards],
   );
 
   return (
-    <section aria-label={t.planet.cardHand} className="ls-card-dock">
-      {sorted.map((card) => {
+    <section aria-label={t.planet.cardHand} className="ls-card-dock" data-fan="true">
+      {hand.length === 0 && (
+        <p className="ls-card-dock-empty">{t.planet.cardHandEmpty}</p>
+      )}
+      {hand.map((card, i) => {
         const def = BUILDINGS[card.key];
         const isSelected = selectedCard === card.key;
         return (
@@ -128,8 +139,8 @@ export function CardHand({
             key={card.key}
             title={card.reason ? `${card.reason} — ${def.effects}` : def.effects}
             className="ls-construction-card"
+            style={{ '--card-i': i } as React.CSSProperties}
             data-selected={isSelected ? 'true' : 'false'}
-            data-blocked={card.status === 'blocked' ? 'true' : 'false'}
           >
             <div className="ls-card-body">
               <strong className="ls-card-title">
@@ -179,12 +190,6 @@ export function CardHand({
                 >
                   <Hammer size={12} aria-hidden /> {t.planet.place}
                 </button>
-              )}
-              {card.status === 'blocked' && (
-                <span className="ls-card-blocked">
-                  <Lock size={12} aria-hidden />
-                  <span>{card.reason ?? t.planet.locked}</span>
-                </span>
               )}
             </div>
           </article>
