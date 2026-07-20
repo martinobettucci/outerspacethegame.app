@@ -18,7 +18,9 @@ import {
   NATALITY_BY_RESIDENTIAL,
   RATION_CS,
   OXYGEN_PER_1000_PER_DAY,
+  POP_NEEDS_PER_1000_PER_DAY,
   CLOCK_DAYS,
+  CLINIC_REDUCTION,
   OVERCAP_DEATHS_COEF,
   UNEMP_TOLERANCE,
   UNEMP_GRACE_DAYS,
@@ -48,8 +50,12 @@ describe('CODEX_FACTS binds live @atg/shared constants (anti-drift)', () => {
     );
     expect(CODEX_FACTS.inactiveRation).toBe(RATION_CS);
     expect(CODEX_FACTS.oxygenPer1000PerDay).toBe(OXYGEN_PER_1000_PER_DAY);
+    expect(CODEX_FACTS.medicineNeedPer1000PerDay).toBe(
+      POP_NEEDS_PER_1000_PER_DAY.medicine,
+    );
     expect(CODEX_FACTS.waterClockDays).toBe(CLOCK_DAYS.water);
     expect(CODEX_FACTS.foodClockDays).toBe(CLOCK_DAYS.food);
+    expect(CODEX_FACTS.clinicReductionByLevel).toEqual(CLINIC_REDUCTION);
     expect(CODEX_FACTS.overcapDeathsCoef).toBe(OVERCAP_DEATHS_COEF);
     expect(CODEX_FACTS.starterPop).toBe(STARTER_POP);
   });

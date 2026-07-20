@@ -21,7 +21,9 @@ import {
   NATALITY_BY_RESIDENTIAL,
   RATION_CS,
   OXYGEN_PER_1000_PER_DAY,
+  POP_NEEDS_PER_1000_PER_DAY,
   CLOCK_DAYS,
+  CLINIC_REDUCTION,
   OVERCAP_DEATHS_COEF,
   UNEMP_TOLERANCE,
   UNEMP_GRACE_DAYS,
@@ -45,8 +47,11 @@ export const CODEX_FACTS = {
   natalityMaxPerActivePerDay: Math.max(...NATALITY_BY_RESIDENTIAL),
   inactiveRation: RATION_CS,
   oxygenPer1000PerDay: OXYGEN_PER_1000_PER_DAY,
+  medicineNeedPer1000PerDay: POP_NEEDS_PER_1000_PER_DAY.medicine,
   waterClockDays: CLOCK_DAYS.water,
   foodClockDays: CLOCK_DAYS.food,
+  // Illness-index reduction per clinic level [L0, L1, L2, L3].
+  clinicReductionByLevel: CLINIC_REDUCTION,
   overcapDeathsCoef: OVERCAP_DEATHS_COEF,
   starterPop: STARTER_POP,
 } as const;

@@ -72,6 +72,8 @@ function PopulationBody() {
       <p>{c.population.natality}</p>
       <p className="ls-codex-warn">{c.population.lifesupport}</p>
       <p>{c.population.overcap}</p>
+      <p>{c.population.health}</p>
+      <p>{c.population.clinic}</p>
       <p>{c.population.extinction}</p>
       <AgePyramidDiagram />
       <p className="ls-codex-caption">{c.population.diagramCaption}</p>
@@ -84,9 +86,14 @@ function PopulationBody() {
           />
           <Fact label={c.population.exactRation} value={pct(f.inactiveRation)} />
           <Fact label={c.population.exactOxygen} value={perDay(f.oxygenPer1000PerDay)} />
+          <Fact label={c.population.exactMedicine} value={perDay(f.medicineNeedPer1000PerDay)} />
           <Fact
             label={c.population.exactClocks}
             value={`${days(f.waterClockDays)} / ${days(f.foodClockDays)}`}
+          />
+          <Fact
+            label={c.population.exactClinic}
+            value={f.clinicReductionByLevel.slice(1).map(pct).join(' / ')}
           />
           <Fact label={c.population.exactStarter} value={count(f.starterPop)} />
         </ul>

@@ -52,13 +52,19 @@ export const codexEn = {
       'On climates hostile to life your people also breathe from your oxygen stockpile. If any life-support resource runs dry, a death clock starts and people die on a fixed timer until supply returns — hostile-climate oxygen is the harshest, killing quickly.',
     overcap:
       'A world has a comfortable capacity. Push population far beyond it and crowding breeds illness and extra deaths. Growth is the engine of expansion, but a colony crammed past its means pays for it in lives.',
+    health:
+      'Medicine is a standing need, not an emergency kit: your people consume it every day, right alongside food and water, and steady supply also nudges the birth rate up. Let it run short and two things bite at once — fewer babies, and sickness that spreads markedly faster.',
+    clinic:
+      'Illness is an index that climbs the more you exceed a world’s capacity — and climbs faster when medicine is short — and it steadily kills. The clinic is the counter: each level lowers the illness that actually reaches your citizens, so a well-stocked clinic turns a deadly outbreak into a survivable one. Supply and clinic together, not either alone.',
     extinction:
       'If a colony’s population ever reaches zero, the world goes extinct: it reverts to unclaimed wild space and the governor you installed there is lost. Its buildings, research, stockpiles and deposits all stay in place, though — an extinct world is abandoned, not destroyed, and it can be recolonised later.',
     exactIntro: 'The fixed schedules and rates:',
     exactAges: 'Age spans (children / actives / seniors), in game-days.',
     exactRation: 'Children and seniors each eat this share of an active’s ration.',
     exactOxygen: 'Hostile-climate oxygen draw, per thousand heads per day.',
+    exactMedicine: 'Standing medicine demand, per thousand heads per day.',
     exactClocks: 'Death-clock delays once water or food runs out.',
+    exactClinic: 'Illness-index reduction by clinic level (L1 / L2 / L3).',
     exactStarter: 'A fresh colony starts at this population, on the stable pyramid.',
     diagramCaption: 'The stable age pyramid that a steady population settles into.',
   },
