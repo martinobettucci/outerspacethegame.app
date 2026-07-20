@@ -3459,3 +3459,28 @@ Proposition (deux classes) :
   pleinement améliorée**. Fait : la plus rapide = `combat_s` 30 pc/j ×1,3
   (moteur L2) = 39 pc/j → sonde **≥ 117 pc/j** [TUNE] (actuel : 10 pc/j).
 - Stubs sonde PRÉSENTS (`ship_probe.gif` + companions).
+
+## 2026-07-20 — Contrat de clôture de la file suspendue après BD
+
+Le responsable demande de reprendre puis terminer « AO card hand,
+telescope-on-tile, net-stats/day, pods refusal ». Les critères manquants sont
+figés avant code :
+
+- **AO fold** : le filtre fonctionnel et la conservation des cartes
+  déverrouillées sont acquis. Le fold final expose une tranche NOMMÉE de 64 px
+  par carte non finale (cible ≥44 px), puis la carte entière au survol, au
+  focus clavier ou lorsqu'elle est sélectionnée. Reduced-motion coupe
+  l'animation, jamais l'accès au contenu.
+- **Télescope** : applique la décision ferme ci-dessus (`usesTile: true`,
+  `maxInstances: 1`). Les 27 stubs existants sont utilisés sur le plateau et
+  le panneau bâtiment standard porte niveau/workforce/démolition. La migration
+  choisit le plus petit index libre pour un unique télescope legacy et ABORT
+  explicitement face à plusieurs instances ou à une planète pleine — aucune
+  propriété supprimée ou tuile inventée. `probe_pad` reste sans tuile ; la
+  politique globale d'instances et les sondes v2 restent hors de cette file.
+- **Stats nettes/jour** : aucun nouveau calcul — BC est autoritatif et déjà
+  complet ; cette clôture rejoue ses tests et sa preuve visuelle signée +/−.
+- **Pods** : la raison après clic ne suffit pas. Le GET authentifié du barème
+  projette l'éligibilité du joueur, le seuil et la date de déverrouillage ; le
+  panneau montre ce verrou AVANT interaction et désactive l'ouverture. Le POST
+  verrouille/revérifie toujours le joueur à l'instant de la commande.

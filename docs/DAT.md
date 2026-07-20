@@ -164,8 +164,20 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    and 10/day cap enforced server-side; the NPC is rolled by seeded
    generation-moment RNG (universe:pod:player:purchase-index, serialized
    by the player row lock) and lands account-bound for 60 days.
+   The authenticated pricing read projects only the current player's
+   age-gate state (eligible/minimum/unlock timestamp), allowing the client to
+   explain and disable the action before a refused click. `POST /pods/open`
+   still locks and rechecks the player row; the projection grants no authority.
    Strictest-bind inheritance on host transfers ships with auctions/NFT
    (P4).
+8a. **Unique surface telescope (owner decision 2026-07-20; queued file AO):**
+   telescope uses the ordinary tile-placement command and standard building
+   panel, with one instance per body enforced both by the shared catalog/server
+   and a partial database unique index. Migration 025 deterministically assigns
+   a free tile to a compatible legacy telescope and aborts rather than deleting
+   assets or expanding a full world. `probe_pad` remains the sole tile-free
+   building and keeps the Infrastructure sidebar path. Scope queries read the
+   level of that unique active instrument; +200 pc/level is unchanged.
 9. **Spaceport docks (implemented, chunk S):** landing throughput is
    bounded by CUMULATIVE dock counts of active spaceports (L1 = 2 S,
    L2 = +2 M, L3 = +2 L [TUNE]); a hull fits any dock ≥ its size and

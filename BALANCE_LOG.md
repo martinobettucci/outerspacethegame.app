@@ -92,9 +92,12 @@ against guide v0.1 numbers.
 14. Generic industry throughput defined: **10/20/40 batches/day × E** by level.
 15. Cell sinks rescaled: stargate 250 cells + 400 steelH + 100 crystals;
     artificial planet 8 000 cells + 15 000 steelH (+2 000 crystals, 10 cores).
-16. Telescope & probe_pad are **tile-free infrastructure**; starter planets
-    guarantee **≥8 tiles** + deposits {ore, carbon, hydrogen, climate crystal,
-    lithium|gold}.
+16. Telescope & probe_pad were introduced as **tile-free infrastructure**;
+    starter planets guarantee **≥8 tiles** + deposits {ore, carbon, hydrogen,
+    climate crystal, lithium|gold}. **Superseded for telescope only by the
+    owner decision of 2026-07-20:** telescope now consumes one tile and is
+    unique per planet; `probe_pad` remains tile-free. The scope value itself
+    (+200 pc/level) is unchanged.
 17. **Demolish rule**: any building → 50% refund, tile freed, 6 h.
 18. colony_program **T4 → T3 and never seed-masked**; terraform core minted at
     **shipyard_M** (politics-free).

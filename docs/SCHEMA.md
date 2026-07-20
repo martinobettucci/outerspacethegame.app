@@ -32,7 +32,7 @@
 | `bodies` | planets, stars, black holes | planet: size/climate/quality/tiles/owner/population TOTALE + pyramide v2 (`pop_children`/`pop_seniors`, actives dérivés — DG §3.2-v2), illness, `clock_deadlines` (horloges de mort, échéances fixes), `demo_counters` (morts/exodés par catégorie, intel BD); star: class/fuel_type/hidden stock/`r_nova`; spatial index on 64 pc grid (DG §9.2) |
 | `deposits` | finite per-planet deposits | lazy `(amount_t, rate_t_per_day, as_of)`; dry-forever at 0 (GB §3) |
 | `planet_stock` | ready fungible stock per planet | lazy; capped by base allowance + depots (DG §3.3b) at evaluation |
-| `buildings` | placed instances | `status ∈ constructing/active/demolishing`, `completes_at`, one tile per building (`UNIQUE(body_id, tile_index)`), `recipe` for industry, `run_pct`, `workforce` |
+| `buildings` | placed instances | `status ∈ constructing/active/demolishing`, `completes_at`; one tile per building (`UNIQUE(body_id, tile_index)`) except tile-free `probe_pad`; `recipe` for industry, `run_pct`, `workforce` |
 | `tech_unlocks` | per-planet unlocked nodes | unlock = permanent knowledge (GB §18) |
 | `npcs` | characters | people/role/rarity + individual `stat_rolls` (GB §12), binding host, account-bind timer |
 | `ships` | hulls incl. personal & probe | tanks/survival/cargo as jsonb v0; missions arrive in P3 |
@@ -144,6 +144,11 @@ evaluated stock.
   `account_bound_until` = opening + 60 days [TUNE] (column existed since
   001) — recruitment is a sink, not a mint.
 
+The authenticated pricing projection also carries the current player's
+age-gate status (`eligible`, minimum age and ISO unlock date). It is a UI aid,
+not authorization: `POST /pods/open` rechecks the locked player row at the
+exact command time.
+
 ## 011_docks (spaceport dock counts & dwell eviction, GB §9/§14, DG §5.1/§8.6)
 
 - `ships.docked_at timestamptz` — timestamp of the LAST landing. The
@@ -186,13 +191,6 @@ evaluated stock.
   (survival_low / survival_out).
 - `ships.flee_armed boolean DEFAULT true`: the anti-extortion
   auto-flee-home policy (DG §3.5), disarmable per ship.
-
-## Rollback
-
-Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,
-re-seed). Once staging/production exist, each migration must ship its
-documented down-path or an explicit "irreversible" statement
-(`PROD_MIGRATIONS.md`).
 
 ## 015_harvest.sql (chunk AF)
 
@@ -244,3 +242,43 @@ documented down-path or an explicit "irreversible" statement
 - `ships.auto_trade (jsonb)` — règles d'auto-trade du survol étranger
   ({resource, belowT, buyT} × 3 max [TUNE-v1]) ; évaluation paresseuse
   par l'événement auto_trade_check.
+
+## 022_pop_v2.sql (chunk BA)
+
+- `bodies.pop_children` / `pop_seniors` ventilent le total `population` ; les
+  actifs restent dérivés. Le backfill applique la pyramide stationnaire v2.
+- `clock_deadlines` porte les échéances fixes eau/vivres et `demo_counters`
+  les morts/départs C/A/S cumulés destinés à l'intel.
+
+## 023_pop_v2_unemployment.sql (chunk BB)
+
+- `bodies.unemp_over_days` accumule les jours consécutifs au-dessus de la
+  tolérance de chômage avant les vagues de mortalité.
+
+## 024_pop_v2_settler_categories.sql (chunk BD)
+
+- `ships.settlers_children/actives/seniors` matérialisent le manifeste ; la
+  contrainte `ships_settler_manifest_total` garantit que leur somme égale
+  toujours le total historique `settlers`. Le backfill fidèle place les
+  settlers antérieurs dans la seule catégorie alors embarquable : actifs.
+
+## 025_telescope_tile.sql (unique surface telescope, owner decision 2026-07-20)
+
+- Existing single telescope rows receive the lowest available surface tile,
+  deterministically. The migration aborts with an explicit diagnostic if a
+  legacy planet has multiple telescopes or no free tile; it never deletes a
+  player asset, expands a planet or chooses silently between duplicates.
+- A partial unique index enforces one telescope per body. A tile-contract
+  check makes `probe_pad` the only building allowed to keep `tile_index NULL`;
+  all telescope and ordinary-building writes require a tile.
+- Rollback is manual and preproduction-only: drop the index/check and set
+  telescope tile indices back to NULL. That loses chosen board positions, so
+  no automatic down migration can be lossless.
+
+## Rollback
+
+Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,
+re-seed). Once staging/production exist, each migration must ship its
+documented down-path or an explicit "irreversible" statement
+(`PROD_MIGRATIONS.md`). Migration 025's specific non-lossless board-position
+rollback is documented in its own section above.

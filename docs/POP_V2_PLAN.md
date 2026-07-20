@@ -191,9 +191,11 @@ self-contained:
 
 - **Chunk AO** — card-hand v2: contextual filter delivered (pre-unlock
   blockers stay in Technology DNA; unlocked cards remain visible with an
-  explicit temporary blocker); deeper visual folding remains an owner-directed
-  refinement.
-- **Telescope = building on a tile** (canon change; probe-pad fate to be
-  decided by the owner) + asset stubs.
+  explicit temporary blocker); final fold = a 64 px named spine per non-last
+  card, fully raised on hover/focus/selection.
+- **Telescope = unique building on one tile** (owner decision 2026-07-20):
+  `usesTile: true`, `maxInstances: 1`, standard board panel; the existing 27
+  asset stubs are reused. `probe_pad` remains tile-free in this queue.
 - **Net production per resource/day** — delivered and verified in BC.
-- **Recruitment** — explain the « account < 45 days » refusal in the UI.
+- **Recruitment** — show the « account < 45 days » lock and unlock date before
+  interaction; keep the server-side refusal authoritative.

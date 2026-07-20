@@ -553,9 +553,10 @@ Structure per canon §18. **Placement cost = 50% of unlock cost** unless stated
 **never seed-masked** [colony added in v0.2 — free expansion must never be
 seed-locked].
 
-**T0 (universal, tile-free where noted)**
-- `telescope` — none — 20 ore, 10 silicon — **+200 pc scope/level, max 3**
-  [TUNE]; **occupies no tile** (infrastructure)
+**T0 (universal, tile rule noted explicitly)**
+- `telescope` — none — 20 ore, 10 silicon — **+200 pc scope/level, max 1
+  instance per planet** [TUNE]; **occupies exactly one tile** (owner decision
+  2026-07-20)
 - `probe_pad` — none — 15 ore, 10 carbon — builds probes; **no tile**
 - `depot` — none — 10 ore — +200 T storage/level
 - `mine_basic` — none — 15 ore — extracts basic deposits
@@ -606,7 +607,7 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 
 | Building | Tier | Politics | Effect L1 → L2 → L3 |
 |---|---|---|---|
-| telescope | T0 | — | scope +200 pc/level (max 3 instances); no tile |
+| telescope | T0 | — | scope +200 pc/level; **max 1 instance; exactly 1 tile** |
 | probe_pad | T0 | — | builds probes; 5/day/level cap; no tile |
 | depot | T0 | — | +200/400/600 T **fungible** storage (caps = gameplay: see §3.3b) |
 | warehouse | T1 | — | vehicle+item reserve: **L1 = 2 L / 4 M / 6 S vehicles + 50 items**; L2 ×2, L3 ×3 [TUNE]; allied parking configurable per warehouse; contents consume NOTHING |
@@ -664,8 +665,8 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
 
 ## 6. Buildings & industry
 
-- All buildings: **exactly 1 tile** (canon; telescope/probe_pad exempt as
-  infrastructure), 3 levels, climate-variant art. Level-up in place.
+- All buildings: **exactly 1 tile** (canon; only `probe_pad` remains exempt as
+  tile-free infrastructure), 3 levels, climate-variant art. Level-up in place.
 - **Demolish:** any building → **50% resource refund**, tile freed, 6 h [TUNE].
 - **Industry mints exactly one output** (canon): one recipe per instance,
   chosen at construction; re-targeting = 24 h retool [TUNE].

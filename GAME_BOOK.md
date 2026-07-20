@@ -90,6 +90,10 @@ produce.** Scarcity, logistics and diplomacy are the game.
 ## 4. Discovery, telescopes & fog-of-war
 
 - **Scope** = the combined range of all telescopes across a player's planets.
+- A planet can host **one telescope exactly**. It is a normal, immovable
+  building: it consumes **one surface tile** and gains +200 pc of scope per
+  level (L1/L2/L3). Scope therefore grows by upgrading that instrument and by
+  developing additional worlds, never by stacking telescopes on one world.
 - A player can **ping any planet within scope**.
 - New zones/planets are discovered by traveling there or by sending a **probe**
   to map the void. Exploration requires the right equipment/capacity.
@@ -603,8 +607,10 @@ The engine of specialization, progression and production-balancing.
      industry that *mints* an accessory (e.g. beam lasers) is destroyed, you keep
      your existing stock yet cannot produce more until you rebuild that industry.
      *Knowledge is permanent; production depends on live infrastructure.*
-  2. **Place** (repeatable): pay the placement resource cost, consume free
-     tile(s). Limited only by tiles and the governor mask.
+  2. **Place** (repeatable unless the catalog declares the building unique):
+     pay the placement resource cost, consume free tile(s). The telescope is
+     explicitly unique per planet; every placement is still rechecked by the
+     server against tile, instance and governor constraints.
 - **Consequences:** seed → forced specialization → mandatory trade; governor
   politics gate whole branches, so on a **large planet a node needs *all 3*
   governors to permit it** (intersection mask, §11) — one off-politics governor

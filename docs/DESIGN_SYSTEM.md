@@ -95,7 +95,11 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   keyboard-navigable, collapsible.
 - **Game card (hand)** — bottom-docked fan of construction/NPC cards: sprite
   art, cost chips (resource icons + qty), politics-lock badge, disabled state
-  with reason ("no free tile", "mask denies"). Drag-to-place + keyboard flow.
+  with reason ("no free tile", "mask denies"). AO's resting deck exposes a
+  **64 px pointer-safe spine** per non-last card (name readable, target ≥44 px);
+  hover, keyboard focus or selection raises the complete card, straightens it
+  and exposes the unchanged action. Reduced-motion removes the transition,
+  not the state change. Click-to-place + keyboard flow.
 - **Efficiency curve widget** — the signature component (GAMEBOOK §10): the
   tilted bell rendered with the live position dot; green zone at sweet spot,
   red past it; used per-unit and on the planet stats page.
@@ -120,10 +124,12 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   right-aligned, theirs = raised bubble left with author name in accent-200),
   input + Send. Empty state is lore-flavored ("The Silence is total…").
   Ping entry point: accent button on a foreign-owned planet panel (galaxy).
-- **Infrastructure panel (implemented, chunk I)** — planet sidebar section
-  listing no-tile buildings (telescope, probe pad) as `key Ln — status`
-  (status colored success/warning); infrastructure cards build directly from
-  the hand (no tile selection), and this panel is their only on-screen proof.
+- **Infrastructure panel (implemented, chunk I; telescope contract superseded
+  2026-07-20)** — planet sidebar section listing the remaining no-tile
+  building (`probe_pad`) as `key Ln — status` (status colored
+  success/warning); its card builds directly from the hand and the row is its
+  only on-screen proof. Telescope now uses the board tile flow and its standard
+  building panel.
 - **Ship panel: cargo hold & landing (implemented, chunk J)** — hold section
   (mono manifest `res · X.X T`, `used/total containers` count), success-green
   `Land` when hovering over a world, neutral `Undock` when docked; the
@@ -358,10 +364,11 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   "Deep sight needs a scientific eye — or a probe on site") — UI shows
   the path, the rule lives server-side. Deposit presence chips carry no
   tonnage before deep sight; quality never appears below tier 4.
-- **Infrastructure level-up (implemented, chunk Q)** — tile-less
-  infrastructure rows (telescope, probe pad) gain a violet chip-button
-  "Level up → L{n+1}" (visible when active and below max) — they have no
-  board tile, so the sidebar row is their only control surface.
+- **Infrastructure level-up (implemented, chunk Q; telescope moved to board
+  2026-07-20)** — the tile-less `probe_pad` row gains a violet chip-button
+  "Level up → L{n+1}" (visible when active and below max). Telescope uses the
+  standard building panel opened from its surface tile for level-up,
+  workforce and demolition.
 - **Market screen: Recruitment tab (implemented, chunk R)** — the pod
   flow: pay-with select shows the LIVE per-resource price in each option
   (mono), from-world select, accent "Open pod — N T" button (accent =
@@ -370,8 +377,11 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   legendary accent) + people + rolled stat in mono + paid line with the
   60-day account-bind date. Roster below lists every owned character
   (role, rarity color, stats, host binding or "unassigned", bind date).
-  Refusals surface the server reason verbatim in the status line (the
-  45-day rule is VISIBLE, not hidden).
+  Refusals surface the server reason verbatim in the status line. For accounts
+  younger than 45 days, the console additionally presents a persistent lock
+  explanation **before interaction**, including the server-derived unlock
+  date; the Open action is disabled with the same reason. The POST refusal
+  remains authoritative and is still tested directly.
 - **Toasts & event feed** — combat, arrivals, flares, dry deposits; grouped,
   timestamped, deep-linked.
 - **Empty/loading/error states** — explicitly designed for every screen

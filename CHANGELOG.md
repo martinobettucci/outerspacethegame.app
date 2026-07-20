@@ -2,6 +2,21 @@
 
 ## [Non publié]
 
+### Contrat de clôture — file AO reprise après BD (spec avant code)
+
+- Décision propriétaire synchronisée : un seul télescope par planète,
+  désormais posé sur une tuile (`usesTile: true`, `maxInstances: 1`) et géré
+  par le panneau bâtiment standard. `probe_pad` reste l'infrastructure sans
+  tuile ; la refonte P3 des sondes et la politique globale d'instances restent
+  hors de ce chunk.
+- Le fold AO final est mesurable : tranche nommée de 64 px (cible pointeur
+  ≥44 px), carte complète au survol/focus/sélection, comportement intact en
+  reduced-motion.
+- Le verrou pods des comptes <45 jours doit être visible avant clic avec sa
+  date d'ouverture calculée serveur ; la vérification POST reste autoritative.
+- Les stats nettes signées par ressource/jour sont déjà livrées par BC et
+  entrent dans le balayage de non-régression de cette clôture.
+
 ### Correctif majeur — cartes déverrouillées devenues invisibles (bug probe)
 
 - **Bug** (signalé responsable 2026-07-20) : certaines cartes, une fois
