@@ -135,11 +135,12 @@ update its Codex section in the same commit. Backfill existing mechanics once
 - **Visual:** JPEG captures of the Codex over each screen + each of the 3
   sections, observed (§16); light/tablet widths checked.
 
-## 8. Known related defect (tracked, not fixed here)
+## 8. Resolved related defect (2026-07-20)
 
-CLAUDE.md, JOURNAL and every commit reference `GAMEBOOK.md`, but the file on
-disk is `GAME_BOOK.md`. Doc-integrity item logged in BACKLOG; out of scope for
-this initiative.
+The canonical filename is `GAME_BOOK.md`. All live references in the working
+rules and design documentation now use that path; the doc-integrity item is
+closed in BACKLOG. Historical commit messages are immutable and are not live
+links.
 
 ## 9. Non-goals (first slice)
 

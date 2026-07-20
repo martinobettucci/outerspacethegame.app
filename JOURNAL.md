@@ -1,7 +1,7 @@
 # ATG — Decision JOURNAL (raw log)
 
 > Append-only, chronological log of raw design decisions as they were made.
-> `GAMEBOOK.md` is the reconciled canon; it can be rebuilt from this journal.
+> `GAME_BOOK.md` is the reconciled canon; it can be rebuilt from this journal.
 > Each entry: date · topic · decision · rationale/notes. Newest at the bottom.
 
 ---
@@ -133,7 +133,7 @@ ERC721s, `Material/Cristal/Fuel` ERC20s, an on-chain `GameEngine.sol`);
   isometric 2D tiles + card hand (renderer TBD; Pixi/canvas likely).
 
 ### Process
-- **Created `GAMEBOOK.md` (canon) and `JOURNAL.md` (raw log).** Journal is the
+- **Created `GAME_BOOK.md` (canon) and `JOURNAL.md` (raw log).** Journal is the
   rebuildable source of truth for decisions.
 
 ### Still open (carried forward)
@@ -3283,3 +3283,14 @@ Vérifications finales : typecheck ; shared 172/172 ; server unit 37/37 ;
 client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
 38/38 sur base recréée en 28,4 min. Capture dédiée :
 `game/packages/e2e/captures/pop-bc-clinic-stats-alarms.jpeg`.
+
+## 2026-07-20 — Intégrité documentaire : nom du canon et statuts Codex
+
+- Le fichier canonique présent sur disque est `GAME_BOOK.md`. Tous les liens
+  vivants qui visaient le chemin inexistant `GAMEBOOK.md` ont été corrigés
+  dans les règles d'agent et les volumes de conception. Les mentions
+  conceptuelles « GAMEBOOK §… » restent valides ; les anciens messages de
+  commit sont immuables.
+- Le Codex n'est plus « E2E à exécuter » : son scénario dédié a passé le
+  balayage complet 38/38 sur base recréée pendant le DoD de BC. BACKLOG,
+  CHANGELOG et MANUAL_PLAN reflètent désormais cette preuve.

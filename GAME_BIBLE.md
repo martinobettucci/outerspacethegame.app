@@ -2,7 +2,7 @@
 
 > **What this document is.** The world of the game: its history, peoples,
 > places, substances and themes. Everything here is compatible with the rule
-> canon in `GAMEBOOK.md` (decisions) and made concrete in `DESIGN_GUIDE.md`
+> canon in `GAME_BOOK.md` (decisions) and made concrete in `DESIGN_GUIDE.md`
 > (mechanics & formulae). Where the lore *explains* a rule, the rule wins if
 > they ever drift. Lore invented to fill gaps is part of this document's job.
 >
@@ -301,5 +301,5 @@ hull you already know.
 
 ---
 
-*Companion volumes: `GAMEBOOK.md` (the decision canon) and `DESIGN_GUIDE.md`
+*Companion volumes: `GAME_BOOK.md` (the decision canon) and `DESIGN_GUIDE.md`
 (mechanics, formulae, workflows).*

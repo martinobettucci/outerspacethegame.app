@@ -17,8 +17,9 @@
   (`facts.test.ts`, 7/7) lie chaque valeur à sa constante source. Textes dans un
   namespace `codex/strings.ts` dédié (déviation de concurrence documentée : le
   `i18n/en.ts` partagé était sous édition parallèle). Vérifs : typecheck + vite
-  build OK, vitest 11/11, 5 captures observées (§16). E2E dédié écrit
-  (`e2e/tests/codex.spec.ts`) mais non exécuté ici (stack complète requise).
+  build OK, vitest 11/11, 5 captures observées (§16). L'E2E dédié
+  (`e2e/tests/codex.spec.ts`) passe dans le balayage complet **38/38** sur base
+  recréée (un worker déterministe, zéro retry ; chunk BC).
 
 ### Player Codex — plan persisté (P2.codex, avant tout code — CLAUDE.md §5)
 
@@ -36,9 +37,10 @@
   Première tranche validée : coquille de livraison + 3 mécaniques
   (gisements/minage de trace, population v2, efficacité/emploi). Documents
   impactés committés avant code : MANUAL_PLAN.md, BACKLOG (§P2.codex + garde-fou
-  DoD permanent), DAT (composant Codex), DESIGN_SYSTEM (§5). Défaut d'intégrité
-  documentaire relevé au passage et logué : le fichier de canon s'appelle
-  `GAME_BOOK.md` alors que CLAUDE.md/JOURNAL/commits citent `GAMEBOOK.md`.
+  DoD permanent), DAT (composant Codex), DESIGN_SYSTEM (§5). Le défaut
+  d'intégrité documentaire relevé au passage est désormais corrigé : tous les
+  chemins vivants pointent vers le vrai fichier `GAME_BOOK.md` (les anciens
+  messages de commit restent naturellement immuables).
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
 

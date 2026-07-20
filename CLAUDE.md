@@ -966,7 +966,7 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
   l'application du jeu en construction dans `game/` (monorepo pnpm :
   `shared`, `server`, `client`, `e2e`). Phase P1 entamée.
 - **Documents de conception (à la racine, ordre de préséance) :**
-  1. `GAMEBOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
+  1. `GAME_BOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
   2. `GAME_BIBLE.md` — lore et univers ;
   3. `DESIGN_GUIDE.md` — spécification mécanique chiffrée (valeurs `[TUNE]`) ;
   4. `BALANCE_LOG.md` — journal de la boucle d'équilibrage par simulation.

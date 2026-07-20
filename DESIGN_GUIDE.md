@@ -3,7 +3,7 @@
 > **What this document is.** The complete mechanical specification: every
 > system with concrete rules, numbers and formulae, plus the workflows and
 > expected behaviors around them. It implements the decision canon in
-> `GAMEBOOK.md` and the world in `GAME_BIBLE.md`.
+> `GAME_BOOK.md` and the world in `GAME_BIBLE.md`.
 >
 > **Version v0.10** — Population & Employment v2 (§3.2-v2, owner canon
 > 2026-07-19) simulated & patched by **Round 9** (numerical simulator,
@@ -13,7 +13,7 @@
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
-> rules are canon. Changes here must not contradict `GAMEBOOK.md`; if they
+> rules are canon. Changes here must not contradict `GAME_BOOK.md`; if they
 > must, change the GAMEBOOK first.
 
 ---

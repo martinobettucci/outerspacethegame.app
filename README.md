@@ -20,7 +20,7 @@ first (#P2Enjoy — not a "gamified Ponzi").
 
 | Document | Role |
 |---|---|
-| `GAMEBOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
+| `GAME_BOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
 | `GAME_BIBLE.md` | Lore & world (the Silence, the three peoples, places, tone) |
 | `DESIGN_GUIDE.md` | Complete mechanical spec with formulae — all invented values tagged `[TUNE]` |
 | `BALANCE_LOG.md` | Simulated-campaign balancing loop: findings & applied patches |
@@ -130,7 +130,7 @@ Game-runtime variables (database, Stripe, chain relayer) will be documented in
 ```
 ├── CLAUDE.md            # working conventions + project specifics
 ├── README.md / CHANGELOG.md
-├── GAMEBOOK.md          # rule canon
+├── GAME_BOOK.md          # rule canon
 ├── GAME_BIBLE.md        # lore
 ├── DESIGN_GUIDE.md      # mechanics & formulae
 ├── BALANCE_LOG.md       # balancing loop record
