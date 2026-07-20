@@ -3625,3 +3625,23 @@ tranché). Persisté avant code (§5).
   coques). Le responsable peut invalider ces deux points sans casser le
   reste. Implémentation : chunk dédié ; la VUE de bord L2 touche
   world.ts (chantier responsable en vol) — séquencée à sa détente.
+
+## 2026-07-20 — Décisions responsable : 25 % au build, refuel stellaire des sondes, sondes destructibles
+
+Persisté avant code (§5). Complète la spec sondes v3.
+
+- **TOUT véhicule naît avec 25 % de plein** (coques ET sondes — change
+  la naissance « réservoirs vides » du chunk M et le plein-au-build
+  proposé pour les sondes). Pour un plein : puiser au stock de la
+  planète où le véhicule est À QUAI ou EN ORBITE — règles de refuel
+  EXISTANTES (POST /ships/:id/refuel, monde possédé). [interp annoncée :
+  l'auto-chargement plein au DÉPART depuis son monde (chunk O) demeure —
+  le 25 % concerne la naissance.]
+- **Refuel stellaire des sondes** : une sonde peut se remplir DIRECTEMENT
+  auprès d'une étoile — mais sa COQUE est endommagée à chaque refuel de
+  ce type. Chiffres proposés [TUNE] : portée du scoop ≤ 8 pc (aligné
+  harvest d_max), plein complet, dégâts 10 HP par refuel stellaire.
+- **Les sondes ont des points de coque** et peuvent être ATTAQUÉES et
+  DÉTRUITES (hooks combat P5). MaxHP sonde proposé [TUNE] : 50 HP
+  (fragile — ~4-5 refuels stellaires avant perte). À 0 HP = détruite
+  (cohérent avec « à sec = perdue »).
