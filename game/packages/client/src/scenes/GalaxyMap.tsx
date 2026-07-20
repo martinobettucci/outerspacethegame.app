@@ -34,7 +34,14 @@ import {
   HARVEST_D_MAX_PC,
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
+  HULLS,
+  type HullCategory,
+  type HullSize,
 } from '@atg/shared';
+import {
+  shipRangeRadiiPc,
+  telescopeHaloRadiusPc,
+} from './rangeOverlays.ts';
 import { api, type ApiError, type DerelictView, type GalaxyBody, type JunkFieldView, type ShipView, type StargateView } from '../api.js';
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
@@ -174,6 +181,43 @@ export function GalaxyMap() {
       .bodyIntel(selected.id)
       .then((r) => !cancelled && setIntel({ kind: 'ready', data: r.intel }))
       .catch(() => !cancelled && setIntel({ kind: 'error' }));
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
+  // Halo télescope COSMÉTIQUE (décision 2026-07-20) : sélection d'un
+  // monde possédé → lecture du détail (owner-only) → si télescope ACTIF,
+  // halo + scanner rotatif au rayon du ciel de CE monde. Le brouillard
+  // réel reste l'union serveur de tous les scopes — rien de fonctionnel.
+  const [scanHalo, setScanHalo] = useState<{
+    x: number;
+    y: number;
+    radiusPc: number;
+  } | null>(null);
+  useEffect(() => {
+    if (!selected?.owned || selected.bodyType !== 'planet') {
+      setScanHalo(null);
+      return;
+    }
+    let cancelled = false;
+    api
+      .planet(selected.id)
+      .then((d) => {
+        if (cancelled) return;
+        const tele = d.buildings.find(
+          (b) => b.key === 'telescope' && b.status === 'active',
+        );
+        setScanHalo(
+          tele
+            ? {
+                x: selected.x,
+                y: selected.y,
+                radiusPc: telescopeHaloRadiusPc(tele.level),
+              }
+            : null,
+        );
+      })
+      .catch(() => !cancelled && setScanHalo(null));
     return () => {
       cancelled = true;
     };
@@ -905,6 +949,10 @@ export function GalaxyMap() {
         const pulse = selectedNow && !reduceMotion ? 1 + Math.sin(elapsed * 3) * 0.12 : 1;
         mesh.scale.setScalar(pulse);
       }
+      // Scanner du halo télescope (cosmétique) : rotation continue du
+      // secteur — retrouvé par nom, l'objet vit dans un effet séparé.
+      const scanSweep = scene.getObjectByName('tele-scan-sweep');
+      if (scanSweep && !reduceMotion) scanSweep.rotation.z = -elapsed * 0.8;
       if (!reduceMotion) {
         let routeIndex = 0;
         for (const line of transitLines.values()) {
@@ -968,6 +1016,109 @@ export function GalaxyMap() {
     sceneRef.current = { renderer, scene, camera, meshes, dispose };
     return dispose;
   }, [bodies]);
+
+  // Halo télescope + scanner rotatif (cosmétique — décision 2026-07-20).
+  useEffect(() => {
+    const refs = sceneRef.current;
+    if (!refs || !scanHalo) return;
+    const { scene } = refs;
+    const r = scanHalo.radiusPc;
+    const disposables: (THREE.BufferGeometry | THREE.Material)[] = [];
+    const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => {
+      disposables.push(geo, mat);
+      return new THREE.Mesh(geo, mat);
+    };
+    // Voile discret + liseré : « subtil mais visible ».
+    const fill = mk(
+      new THREE.CircleGeometry(r, 96),
+      new THREE.MeshBasicMaterial({
+        color: 0x6e96e8,
+        transparent: true,
+        opacity: 0.05,
+        depthWrite: false,
+      }),
+    );
+    const rim = mk(
+      new THREE.RingGeometry(r * 0.985, r, 96),
+      new THREE.MeshBasicMaterial({
+        color: 0x8fb2f2,
+        transparent: true,
+        opacity: 0.22,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    // Secteur de balayage (rotation dans la boucle de rendu par nom).
+    const sweep = mk(
+      new THREE.CircleGeometry(r, 48, 0, Math.PI / 6),
+      new THREE.MeshBasicMaterial({
+        color: 0x9dbcff,
+        transparent: true,
+        opacity: 0.09,
+        depthWrite: false,
+      }),
+    );
+    sweep.name = 'tele-scan-sweep';
+    for (const [obj, z] of [
+      [fill, 0.4],
+      [rim, 0.5],
+      [sweep, 0.45],
+    ] as const) {
+      obj.position.set(scanHalo.x, scanHalo.y, z);
+      scene.add(obj);
+    }
+    return () => {
+      scene.remove(fill, rim, sweep);
+      disposables.forEach((d) => d.dispose());
+    };
+  }, [scanHalo, bodies]);
+
+  // Cercles d'autonomie du vaisseau sélectionné (décision 2026-07-20) :
+  // pointillés ROUGE = panne sèche (0,95 × autonomie), VERT =
+  // aller-retour (0,45 ×). personal/probe : pas de conso → pas de cercle.
+  useEffect(() => {
+    const refs = sceneRef.current;
+    if (!refs || !selectedShip) return;
+    const hull =
+      HULLS[
+        `${selectedShip.hullCategory}_${selectedShip.hullSize}` as `${HullCategory}_${HullSize}`
+      ];
+    const fuelUnits = Object.values(selectedShip.fuel)[0] ?? 0;
+    const radii = shipRangeRadiiPc(fuelUnits, hull?.burnUPerPc ?? 0);
+    if (!radii) return;
+    const { scene } = refs;
+    const disposables: (THREE.BufferGeometry | THREE.Material)[] = [];
+    const circle = (radius: number, color: number) => {
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        pts.push(
+          new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0),
+        );
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineDashedMaterial({
+        color,
+        transparent: true,
+        opacity: 0.8,
+        dashSize: Math.max(2, radius * 0.03),
+        gapSize: Math.max(1.4, radius * 0.02),
+        depthWrite: false,
+      });
+      disposables.push(geo, mat);
+      const line = new THREE.Line(geo, mat);
+      line.computeLineDistances();
+      line.position.set(selectedShip.x, selectedShip.y, 0.6);
+      return line;
+    };
+    const maxLine = circle(radii.oneWay, 0xf24141);
+    const returnLine = circle(radii.roundTrip, 0x2fb544);
+    scene.add(maxLine, returnLine);
+    return () => {
+      scene.remove(maxLine, returnLine);
+      disposables.forEach((d) => d.dispose());
+    };
+  }, [selectedShip, bodies]);
 
   // Pilote le zoom depuis les contrôles − / + et le curseur : agit sur la
   // caméra LIVE (sceneRef, même objet que la boucle de rendu) et met à jour
