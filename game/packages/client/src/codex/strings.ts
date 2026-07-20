@@ -52,6 +52,8 @@ export const codexEn = {
       'On climates hostile to life your people also breathe from your oxygen stockpile. If any life-support resource runs dry, a death clock starts and people die on a fixed timer until supply returns — hostile-climate oxygen is the harshest, killing quickly.',
     overcap:
       'A world has a comfortable capacity. Push population far beyond it and crowding breeds illness and extra deaths. Growth is the engine of expansion, but a colony crammed past its means pays for it in lives.',
+    extinction:
+      'If a colony’s population ever reaches zero, the world goes extinct: it reverts to unclaimed wild space and the governor you installed there is lost. Its buildings, research, stockpiles and deposits all stay in place, though — an extinct world is abandoned, not destroyed, and it can be recolonised later.',
     exactIntro: 'The fixed schedules and rates:',
     exactAges: 'Age spans (children / actives / seniors), in game-days.',
     exactRation: 'Children and seniors each eat this share of an active’s ration.',

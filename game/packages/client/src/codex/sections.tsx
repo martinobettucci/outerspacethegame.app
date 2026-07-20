@@ -72,6 +72,7 @@ function PopulationBody() {
       <p>{c.population.natality}</p>
       <p className="ls-codex-warn">{c.population.lifesupport}</p>
       <p>{c.population.overcap}</p>
+      <p>{c.population.extinction}</p>
       <AgePyramidDiagram />
       <p className="ls-codex-caption">{c.population.diagramCaption}</p>
       <ExactRule>
