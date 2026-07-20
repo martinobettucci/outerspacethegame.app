@@ -3776,27 +3776,70 @@ export function GalaxyMap() {
             </section>
           )}
           {selected.owned && (
-            <button
-              type="button"
-              onClick={() => {
-                setTargeting({ kind: 'probe', planetId: selected.id });
-                setNotice(t.galaxy.probeHint);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                justifyContent: 'center',
-                background: 'var(--violet-500)',
-                color: 'var(--text-primary)',
-                border: 'none',
-                borderRadius: 'var(--radius-button)',
-                padding: '8px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              <Radar size={14} aria-hidden /> {t.galaxy.launchProbe}
-            </button>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {/* Refonte sondes (2026-07-20) : build → survol du monde ;
+                  envoi = PREMIÈRE sonde disponible. */}
+              <button
+                type="button"
+                onClick={() => {
+                  void api
+                    .buildProbe(selected.id)
+                    .then(() => {
+                      setNotice(t.galaxy.probeBuilt);
+                      void api.fleet().then((r) => setShips(r.ships));
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(
+                        `${t.galaxy.probeBuildFailed} — ${err.message ?? err.error}`,
+                      ),
+                    );
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Radar size={14} aria-hidden /> {t.galaxy.buildProbe}
+                <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>
+                  ({ships.filter(
+                    (s) =>
+                      s.hullCategory === 'probe' &&
+                      s.status === 'hovering' &&
+                      s.hoverBodyId === selected.id,
+                  ).length}{' '}
+                  {t.galaxy.probesHovering})
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTargeting({ kind: 'probe', planetId: selected.id });
+                  setNotice(t.galaxy.probeHint);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: 'center',
+                  background: 'var(--violet-500)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Radar size={14} aria-hidden /> {t.galaxy.launchProbe}
+              </button>
+            </div>
           )}
           {selected.owned && (
             <button

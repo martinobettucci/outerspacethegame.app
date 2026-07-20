@@ -60,7 +60,8 @@ import {
   buildShip,
   fleet,
   landShip,
-  launchProbe,
+  buildProbe,
+  sendProbe,
   listNpcs,
   moveShip,
   pendingShipBuilds,
@@ -573,7 +574,27 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     }
   });
 
+  // Refonte sondes (2026-07-20) : build et envoi DÉCOUPLÉS.
+  // POST /planets/:id/probes (sans corps) = construire, la sonde survole
+  // son monde ; POST /planets/:id/probes/send {x,y} = expédier la
+  // PREMIÈRE sonde disponible.
   app.post('/planets/:id/probes', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    try {
+      const r = await buildProbe(deps.pool, player.id, id);
+      return { probeId: r.probeId };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  app.post('/planets/:id/probes/send', async (req, reply) => {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     const parsed = probeSchema.safeParse(req.body);
@@ -581,7 +602,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       return reply.status(400).send({ error: 'invalid_input' });
     }
     try {
-      const r = await launchProbe(deps.pool, player.id, id, parsed.data, {
+      const r = await sendProbe(deps.pool, player.id, id, parsed.data, {
         timeScale: deps.config.TIME_SCALE,
       });
       return { probeId: r.probeId, arrivesAt: r.arrivesAt.toISOString() };

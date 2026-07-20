@@ -87,7 +87,11 @@ export const t = {
     sendShip: 'Send ship',
     sendHint:
       'Click a destination, or pan the map and press Enter, to plot the course.',
-    launchProbe: 'Launch probe',
+    launchProbe: 'Send probe',
+    buildProbe: 'Build probe',
+    probesHovering: 'hovering',
+    probeBuilt: 'Probe built — it hovers over this world until sent.',
+    probeBuildFailed: 'Probe build refused',
     probeHint:
       'Click anywhere, or pan the map and press Enter: the probe will sail there and open your sky.',
     inTransit: 'in transit',

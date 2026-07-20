@@ -497,13 +497,20 @@ export async function moveShip(
 }
 
 /** Cap de sondes : 5/jour/pad actif [TUNE, DG §8.1]. */
-export async function launchProbe(
+/**
+ * Refonte sondes (décision responsable 2026-07-20, JOURNAL) : build et
+ * envoi DÉCOUPLÉS. `buildProbe` construit une sonde qui reste en SURVOL
+ * de son monde d'origine (aucune limite de flotte — seul le cap de
+ * production 5/j/pad demeure) ; `sendProbe` expédie la PREMIÈRE sonde
+ * disponible en survol de ce monde. Les sondes sont exemptes de drains
+ * (canon) : le survol ne coûte rien.
+ */
+export async function buildProbe(
   pool: pg.Pool,
   playerId: string,
   planetId: string,
-  dest: { x: number; y: number },
-  opts: { nowMs?: number; timeScale?: number } = {},
-): Promise<{ probeId: string; arrivesAt: Date }> {
+  opts: { nowMs?: number } = {},
+): Promise<{ probeId: string }> {
   const nowMs = opts.nowMs ?? Date.now();
   const client = await pool.connect();
   try {
@@ -564,20 +571,51 @@ export async function launchProbe(
         [planetId, resource, available - (amount as number), nowMs],
       );
     }
+    // La sonde née reste en SURVOL de son monde d'origine (exempte de
+    // tout drain — canon) jusqu'à un `sendProbe`.
     const { rows: created } = await client.query<{ id: string }>(
-      `INSERT INTO ships (owner_id, hull_category, name, x, y, status, docked_body_id, docked_at)
-       VALUES ($1, 'probe', 'Probe', $2, $3, 'docked', $4, now()) RETURNING id`,
+      `INSERT INTO ships (owner_id, hull_category, name, x, y, status, hover_body_id)
+       VALUES ($1, 'probe', 'Probe', $2, $3, 'hovering', $4) RETURNING id`,
       [playerId, planet[0].x, planet[0].y, planetId],
     );
     await client.query('COMMIT');
-    const move = await moveShip(pool, playerId, created[0]!.id, dest, opts);
-    return { probeId: created[0]!.id, arrivesAt: move.arrivesAt };
+    return { probeId: created[0]!.id };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;
   } finally {
     client.release();
   }
+}
+
+/**
+ * Expédie la PREMIÈRE sonde disponible en survol de ce monde (ordre de
+ * construction). Refus explicite s'il n'y en a aucune.
+ */
+export async function sendProbe(
+  pool: pg.Pool,
+  playerId: string,
+  planetId: string,
+  dest: { x: number; y: number },
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ probeId: string; arrivesAt: Date }> {
+  const { rows: candidates } = await pool.query<{ id: string }>(
+    `SELECT id FROM ships
+     WHERE owner_id = $1 AND hull_category = 'probe'
+       AND status = 'hovering' AND hover_body_id = $2
+     ORDER BY created_at, id LIMIT 1`,
+    [playerId, planetId],
+  );
+  if (!candidates[0]) {
+    // 'not_available' (409) — le code dédié exigerait d'étendre l'union
+    // CommandError dans planets.ts, chantier en cours du responsable.
+    throw new CommandError(
+      'not_available',
+      'Aucune sonde disponible en survol de ce monde — construisez-en une',
+    );
+  }
+  const move = await moveShip(pool, playerId, candidates[0].id, dest, opts);
+  return { probeId: candidates[0].id, arrivesAt: move.arrivesAt };
 }
 
 /** Verrouille un vaisseau et vérifie sa propriété. */

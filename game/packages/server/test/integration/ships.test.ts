@@ -8,7 +8,7 @@ import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
 import { placeBuilding } from '../../src/services/planets.js';
-import { fleet, launchProbe, moveShip, shipPosition } from '../../src/services/ships.js';
+import { fleet, buildProbe, sendProbe, moveShip, shipPosition } from '../../src/services/ships.js';
 import { visibleBodies } from '../../src/services/world.js';
 import { createTestPool } from './helpers.js';
 
@@ -148,16 +148,27 @@ describe('vol libre (GB §6)', () => {
   });
 });
 
-describe('sondes & vision (GB §4, DG §8.1)', () => {
-  it('probe_pad requis, coût payé, la sonde arrivée étend la vision', async () => {
-    const t0 = Date.now();
+describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
+  it('build → la sonde SURVOLE son monde ; send → la PREMIÈRE part et étend la vision', async () => {
+    // Sans probe_pad : ni build ni send.
+    await expect(buildProbe(pool, playerId, starterId)).rejects.toMatchObject({
+      code: 'not_available',
+    });
     await expect(
-      launchProbe(pool, playerId, starterId, { x: 500_100, y: 500_100 }, FAST),
-    ).rejects.toMatchObject({ code: 'not_available' });
+      sendProbe(pool, playerId, starterId, { x: 500_100, y: 500_100 }, FAST),
+    ).rejects.toMatchObject({ code: 'not_available' }); // aucune sonde en survol
 
     await placeBuilding(pool, playerId, starterId, 'probe_pad', null, FAST);
     await new Promise((res) => setTimeout(res, 60));
     await processDueEvents(pool, baseHandlers());
+
+    // Build découplé : la sonde née SURVOLE le monde d'origine.
+    const built = await buildProbe(pool, playerId, starterId);
+    const hovering = (await fleet(pool, playerId)).find(
+      (s) => s.id === built.probeId,
+    )!;
+    expect(hovering.status).toBe('hovering');
+    expect(hovering.hoverBodyId).toBe(starterId);
 
     // Cible : le starter du voisin (à 150–300 pc) — invisible sans scope.
     const { rows: foreign } = await pool.query(
@@ -167,28 +178,46 @@ describe('sondes & vision (GB §4, DG §8.1)', () => {
     const before = await visibleBodies(pool, playerId);
     expect(before.some((b) => b.id === foreign[0].id)).toBe(false);
 
-    const probe = await launchProbe(
+    // Send : c'est LA sonde en survol (la première) qui part.
+    const sent = await sendProbe(
       pool,
       playerId,
       starterId,
       { x: foreign[0].x, y: foreign[0].y },
       FAST,
     );
-    await waitArrived(probe.probeId);
+    expect(sent.probeId).toBe(built.probeId);
+    await waitArrived(sent.probeId);
     const ships = await fleet(pool, playerId);
-    expect(ships.find((s) => s.id === probe.probeId)!.status).toBe('idle');
+    expect(ships.find((s) => s.id === sent.probeId)!.status).toBe('idle');
 
     // La Silence se lève : le monde du voisin entre dans le ciel connu.
     const after = await visibleBodies(pool, playerId);
     expect(after.some((b) => b.id === foreign[0].id)).toBe(true);
   });
 
-  it('cap de sondes : 5/jour/pad', async () => {
+  it('ordre FIFO du send, cap de production 5/j/pad, aucune limite de flotte', async () => {
+    // 4 sondes de plus aujourd'hui (1 déjà construite) → cap 5 atteint.
+    const builtIds: string[] = [];
     for (let i = 0; i < 4; i++) {
-      await launchProbe(pool, playerId, starterId, { x: 500_200 + i, y: 500_200 }, FAST);
+      builtIds.push((await buildProbe(pool, playerId, starterId)).probeId);
     }
-    await expect(
-      launchProbe(pool, playerId, starterId, { x: 500_300, y: 500_300 }, FAST),
-    ).rejects.toMatchObject({ code: 'not_available' });
+    await expect(buildProbe(pool, playerId, starterId)).rejects.toMatchObject({
+      code: 'not_available', // cap de PRODUCTION du jour — pas de flotte max
+    });
+    // Toutes survolent le monde en attendant (aucune limite de flotte).
+    const flotte = await fleet(pool, playerId);
+    for (const id of builtIds) {
+      expect(flotte.find((s) => s.id === id)!.status).toBe('hovering');
+    }
+    // Send = la PREMIÈRE construite disponible (FIFO par created_at).
+    const sent = await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: 500_300, y: 500_300 },
+      FAST,
+    );
+    expect(sent.probeId).toBe(builtIds[0]);
   });
 });

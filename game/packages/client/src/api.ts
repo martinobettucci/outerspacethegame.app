@@ -368,10 +368,14 @@ export const api = {
       `/ships/${shipId}/move`,
       dest,
     ),
+  /** Construit une sonde — elle reste en SURVOL du monde (2026-07-20). */
+  buildProbe: (planetId: string) =>
+    call<{ probeId: string }>('POST', `/planets/${planetId}/probes`),
+  /** Expédie la PREMIÈRE sonde disponible en survol de ce monde. */
   launchProbe: (planetId: string, dest: { x: number; y: number }) =>
     call<{ probeId: string; arrivesAt: string }>(
       'POST',
-      `/planets/${planetId}/probes`,
+      `/planets/${planetId}/probes/send`,
       dest,
     ),
   land: (shipId: string) =>
