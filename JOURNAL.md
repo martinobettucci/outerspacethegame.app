@@ -3418,3 +3418,44 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
   `codex-06-tablet-min.jpeg` (1280×800) ont été inspectées : chiffres live,
   texte final, aucun clipping, chevauchement ni texte illisible. Aucun
   changement de schéma n'était nécessaire.
+
+## 2026-07-20 — Décisions responsable : télescope sur tuile, politique d'instances, refonte des sondes
+
+Rafale de décisions (à persister AVANT code, CLAUDE.md §5). Statut :
+[DÉCIDÉ] = ferme ; [PROPOSÉ] = attend confirmation du responsable.
+
+### Télescope [DÉCIDÉ]
+- Passe **sur tuile** (`usesTile: true` ; change le canon DG §5.1 « no
+  tile ») et **max 1 par planète** (`maxInstances: 1`, était 3). Le scope
+  monte désormais par NIVEAU d'un unique télescope, plus par instances.
+- Stubs bâtiment PRÊTS (27 fichiers `building_telescope_l*` × variantes).
+
+### Politique d'instances par bâtiment [PROPOSÉ — à confirmer]
+État ACTUEL du code : seuls **clinic (max 1)** et **telescope (max 3)** ont
+un plafond ; tous les autres sont illimités, et la plupart EMPILENT leur
+effet par instance (depot/warehouse/spaceport/market/industries).
+Proposition (deux classes) :
+- **MULTIPLE** (l'effet empile — plafonné par tuiles/gisements) : mine* &
+  crystal_extractor* (*1/gisement), farm, waterworks, smelter, refinery,
+  fuelcell_plant, depot, warehouse, spaceport, market, shipyard,
+  military_district, weapon_foundry, probe_pad.
+- **SINGLE** (2ᵉ instance redondante ou effet unique) : telescope, clinic,
+  terraformer (une fois), residential (natalité = niveau max), workshop
+  (réparation = meilleur atelier), lab, research_center, obs_station,
+  diplomatic_district, commerce_district, casino, faction_hq,
+  stargate_yard, artificial_planet_yard.
+- **DÉBATTUS** (dépendent d'un choix P5/économie du responsable) :
+  shipyard / military_district / weapon_foundry (multiple = production
+  parallèle ?), residential (logement empilable ?).
+
+### Sondes (refonte P3) [DÉCIDÉ]
+- **Découpler build et lancement** : une sonde construite **HOVER autour de
+  son monde d'origine** (statut hovering) au lieu d'être envoyée aussitôt.
+  Aujourd'hui `launchProbe` fait build+move d'un coup — à scinder.
+- **Aucune limite** du nombre de sondes construites/en hover par planète.
+- **« Envoyer une sonde »** = envoie la **PREMIÈRE sonde disponible** en
+  hover.
+- **Vitesse** : très rapide — **≥ 3× la coque légère la plus rapide
+  pleinement améliorée**. Fait : la plus rapide = `combat_s` 30 pc/j ×1,3
+  (moteur L2) = 39 pc/j → sonde **≥ 117 pc/j** [TUNE] (actuel : 10 pc/j).
+- Stubs sonde PRÉSENTS (`ship_probe.gif` + companions).
