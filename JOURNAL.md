@@ -3602,3 +3602,26 @@ sondes ne sont PLUS exemptes de consommation.
   où s'améliorent-elles, à quel coût, valeurs de base vs améliorées
   pour tank/vue ?). L'implémentation attend ces réponses OU une v1
   annoncée « toutes les sondes naissent au niveau max ».
+
+## 2026-07-20 — Décision responsable : DEUX niveaux de sonde
+
+Complète la spec « sondes v3 carburant » (le TUNE-GAP upgrade est
+tranché). Persisté avant code (§5).
+
+- **Sonde L1** : l'éclaireuse de base — vue à l'arrivée inchangée
+  (60 pc), consommation de survol de référence.
+- **Sonde L2** : embarque un TÉLESCOPE de bord (vue équivalente à un
+  télescope L1 = 260 pc autour d'elle, où qu'elle soit) et consomme
+  MOITIÉ au survol (usage espionnage — loiter longue durée).
+- **Identiques pour le reste** : même vitesse (120 pc/j), même portée,
+  même consommation en trajet.
+- Chiffres proposés [TUNE] : réservoir 70 u × burn 0,05 u/pc → portée
+  1 400 pc (≥ 1 386 exigés) ; survol L1 0,06 u/j (≥ 3× plus sobre que
+  la coque la plus efficiente 0,2), L2 0,03 u/j ; à sec = sonde PERDUE.
+- Interprétations annoncées [TUNE-v1 interp] : (a) le NIVEAU du
+  probe_pad gate le niveau de sonde constructible (pad L1 → sonde L1,
+  pad L2+ → sonde L2, surcoût L2 façon télescope) ; (b) carburant du
+  type de l'étoile locale, plein au build depuis le stock (règle des
+  coques). Le responsable peut invalider ces deux points sans casser le
+  reste. Implémentation : chunk dédié ; la VUE de bord L2 touche
+  world.ts (chantier responsable en vol) — séquencée à sa détente.
