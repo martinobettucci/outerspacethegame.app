@@ -103,7 +103,39 @@ Content authoring surface (client): `src/codex/` — a typed section registry
 Like the seed contract (§8), **manual coverage becomes part of DoD**: any
 future gameplay chunk that adds/changes a player-visible mechanic must add or
 update its Codex section in the same commit. Backfill existing mechanics once
-(this initiative); gate new ones permanently. Added to BACKLOG DoD notes.
+(this initiative); gate new ones permanently.
+
+**The gate, in one rule:** *if the change alters what the player sees or does
+on a screen, the Codex section for that screen is updated in the same commit —
+and the update stays spoiler-free, explaining only what the player can already
+see and act on there.*
+
+What "player-visible" covers (non-exhaustive): a new/changed field, panel,
+button, badge, status, resource, cost, timer, forecast, chart, alert, or any
+rule the player can feel through those. Pure backend/refactor with no on-screen
+or behavioural difference does not trigger the gate.
+
+**Preserve the lore and the discovery — do not spoil (binds §1).** The Codex
+explains *the system behind what is already on the player's screen*, never the
+map ahead of them. Concretely, when you write or update a section:
+
+- **Scope it to the current screen.** A section deep-linked from a screen (§3)
+  explains the mechanics of things visible or reachable *on that screen now* —
+  not content the player has yet to discover.
+- **Explain systems, not the map.** Say *how* a mechanic works (deposits
+  deplete, illness kills, medicine is optional); never enumerate undiscovered
+  content — planet types, specific crystals, factions, unreached tech, hidden
+  worlds, story/lore reveals. Those are for the player to find (GB §0, §4).
+- **No forward references.** If a mechanic only becomes visible after an action,
+  a place, or an unlock the player hasn't reached, it does not belong in a
+  Codex section they can open before then. Its explanation ships with the
+  screen that first surfaces it.
+- **Reference before strategy.** State the rule; do not prescribe the optimal
+  play (§1) while balance is still moving.
+
+When in doubt: describe what is on the screen, in the player's language, with
+numbers rendered live from `@atg/shared` (§2) — and stop at the edge of what
+they have discovered.
 
 ## 6. Section outline (spoiler-free; ★ = first slice)
 

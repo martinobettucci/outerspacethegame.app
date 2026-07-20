@@ -137,9 +137,18 @@
 > Spec: `docs/MANUAL_PLAN.md`. Owner decisions: spoiler-free (systems only),
 > first slice = shell + 3 mechanics, reference before strategy, **all numbers
 > single-sourced live from `@atg/shared`** (anti-drift). Supersedes the in-app
-> half of the P7 "User manual" line. **Forward DoD gate:** every later chunk
-> that changes a player-visible mechanic updates its Codex section in the same
-> commit.
+> half of the P7 "User manual" line.
+>
+> **Forward DoD gate (authoritative statement: `MANUAL_PLAN.md` §5).** If a
+> chunk changes what the player *sees or does* on a screen (a field, panel,
+> button, status, resource, cost, timer, forecast, chart, alert, or a rule felt
+> through them), it updates that screen's Codex section **in the same commit** —
+> and the update **preserves the lore and the discovery**: spoiler-free,
+> explaining only what the player can already see and act on *on the current
+> screen*. Explain the system, never the map ahead: no undiscovered content
+> (planet types, crystals, factions, unreached tech, hidden worlds, lore
+> reveals), no forward references to mechanics a screen hasn't surfaced yet.
+> Pure backend/refactor with no on-screen difference does not trigger the gate.
 
 - [x] Codex spec persisted (MANUAL_PLAN.md + DAT component + DESIGN_SYSTEM entry + this backlog) → CLAUDE.md §5 — plan committed before code (8dcbbdf)
 - [x] Codex delivery shell: rail entry (reachable every screen) + `useDialogFocus` dialog overlay + contextual deep-link from `view.kind` + layered "Exact rule" disclosure → DESIGN_SYSTEM §5; CLAUDE.md §7/§22 — implémenté (commit 2a4990e), typecheck + vite build OK, **vérifié visuellement** (7 captures observées : chapitres, callouts, diagrammes, disclosure, médicaments et viewport minimum 1280×800) et E2E complet vert

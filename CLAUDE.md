@@ -1001,3 +1001,17 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
   annoncé est une faute. Toute valeur ou contenu non testé reste `[TUNE]` et
   déclenche un tour d'équilibrage/vérification avant d'être considéré fiable.
   En cas de doute sur le périmètre : demander, jamais réduire en silence.
+- **Player Codex — porte de la Definition of Done (exigence du responsable).**
+  Le jeu embarque un manuel joueur in-game (« le Codex », `game/packages/client/src/codex/`,
+  spec `docs/MANUAL_PLAN.md`). **Tout chunk qui change ce que le joueur VOIT ou
+  FAIT sur un écran** (un champ, panneau, bouton, statut, ressource, coût,
+  minuterie, prévision, graphe, alerte, ou une règle ressentie via eux) **met à
+  jour la section Codex de cet écran dans le MÊME commit** — fait partie de la
+  DoD (§17). La mise à jour **préserve le lore et la découverte** : spoiler-free,
+  elle explique uniquement ce que le joueur peut déjà voir et faire *sur l'écran
+  courant*. Expliquer le SYSTÈME, jamais la carte à venir : aucun contenu non
+  découvert (types de planètes, cristaux, factions, techs non atteintes, mondes
+  cachés, révélations de lore), aucune référence en avant vers une mécanique
+  qu'un écran n'a pas encore fait apparaître. Les chiffres sont rendus EN DIRECT
+  depuis `@atg/shared` (jamais codés en dur — anti-dérive). Un refactor backend
+  sans différence à l'écran ne déclenche pas la porte. Détail : `MANUAL_PLAN.md` §5.
