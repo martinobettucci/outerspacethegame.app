@@ -7,7 +7,8 @@
 >
 > **Version v0.10** — Population & Employment v2 (§3.2-v2, owner canon
 > 2026-07-19) simulated & patched by **Round 9** (numerical simulator,
-> all six anchors green) ; previously: sanctuary = earned status
+> all six anchors green), with the owner-approved medicine-age addendum
+> implemented 2026-07-20 ; previously: sanctuary = earned status
 > (owner-approved F1d) + rounds 1–2 system patches + round-4 content
 > patches + the **build ≠ install** keystone — see `BALANCE_LOG.md`.
 >
@@ -134,7 +135,7 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 > **Superseded by §3.2-v2 (owner decision 2026-07-19, JOURNAL).** The
 > growth/illness model below is retained only as historical v1 context; it no
 > longer describes the runtime. Do not build anything new on it: §3.2-v2 is
-> simulated and implemented through chunk BD.
+> simulated and implemented through chunk BD plus the medicine follow-up.
 
 - **Cap:** `popCap = base(size) × qMult(quality)`;
   base: small 2 000 / medium 12 000 / large 60 000;
@@ -158,8 +159,9 @@ governors[], buildings[], stargates[], owner, factionBanner`.
 ### 3.2-v2 Population, demographics & employment (v2 — THE central mechanic)
 
 > **Status: CANON v2 — decided with the owner on 2026-07-19, balanced in
-> Round 9, implemented through chunks BA–BD, including categorical settlers,
-> extinction and intel.** Supersedes §3.2 (growth/illness) and the
+> Round 9, implemented through chunks BA–BD plus the medicine follow-up,
+> including categorical settlers, extinction and intel.** Supersedes §3.2
+> (growth/illness) and the
 > `E_planet` global multiplier of §3.4. Values explicitly labelled [TUNE]
 > remain balance knobs even after implementation.
 
@@ -191,8 +193,9 @@ The planet stats page must show the pyramid explicitly.
   poison) at 0.6 T/1 000/day [TUNE], same 0.6× ration for C/S.
   **Temperate = ambient oxygen, zero stock draw** — the life-side climate
   differentiator (owner-validated).
-- **Medicine is a separate, optional ration**: base burn 0.1 T per 1 000
-  adult-equivalent heads/day [TUNE], with actives **1×**, children **1.25×**
+- **Medicine is a separate, optional ration (implemented post-BD)**: base burn
+  0.1 T per 1 000 adult-equivalent heads/day [TUNE], with actives **1×**,
+  children **1.25×**
   and seniors **1.5×** [TUNE-v1, owner-approved 2026-07-20]. `med_1 → med_3`
   are consumed in family order. While any family stock remains, the full burn
   applies and illness receives its medication mitigation until the exact

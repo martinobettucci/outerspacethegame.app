@@ -1,9 +1,9 @@
 # DAT — Dossier d'Architecture Technique / Technical Architecture Dossier
 
-> Target architecture for ATG (Across The Galaxies). **Preproduction:** this
-> dossier describes the *designed* system; no application code exists yet.
-> Mechanics and numbers live in `DESIGN_GUIDE.md`; rules canon in
-> `GAME_BOOK.md`. This document covers the technical shape.
+> Living architecture dossier for ATG (Across The Galaxies). The application
+> is under active implementation in `game/`; this document distinguishes the
+> implemented state from remaining target architecture. Mechanics and numbers
+> live in `DESIGN_GUIDE.md`; rules canon in `GAME_BOOK.md`.
 
 ## 1. System overview
 
@@ -47,8 +47,10 @@
   `docs/MANUAL_PLAN.md`. **Architecturally the key rule is anti-drift:** the
   Codex owns *no* numbers of its own — every value renders live from the same
   `@atg/shared` constants the simulation runs on (`TRACE_MINING_T_PER_DAY`,
-  `EFFICIENCY_*`/`efficiency()`, `UNEMP_*`, `popv2` epochs…), text is i18n-keyed
-  (`t.codex.*`), curves are plotted from the real shared functions. A unit test
+  `EFFICIENCY_*`/`efficiency()`, `UNEMP_*`, `popv2` epochs…), text lives in the
+  typed `src/codex/strings.ts` namespace (`codexEn`; the future mechanical
+  migration to `t.codex.*` is documented), and curves are plotted from the
+  real shared functions. A unit test
   asserts each documented value equals its live constant, so a balance change
   can never leave the manual stale. Distinct from the developer canon
   (`GAME_BOOK.md`/`DESIGN_GUIDE.md`): zero internal references, spoiler-free
@@ -403,7 +405,9 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    (arrival, undock, §15 relocate). AMM slots stay out of scope v1
    (announced).
 
-### Population v2 — demographics, jobs and observability (implemented, chunks BA–BD; DG §3.2-v2)
+### Population v2 — demographics, jobs and observability
+
+Implemented in chunks BA–BD plus the medicine follow-up (DG §3.2-v2).
 
 Population is three ages (`bodies.population` = TOTAL; `pop_children` /
 `pop_seniors` columns; actives derived), materialized daily by the v2
@@ -432,6 +436,16 @@ stock edge. The clinic is catalog/tech building 29 (T2, politics-free
 C/A/S ship manifest, category-aware route history, centralized extinction,
 exact-manifest recolonization and tier-3 demographic history. Ownerless
 worlds always rebase with a zero production multiplier.
+
+The post-BD medicine follow-up uses a second demographic burden, distinct
+from survival rations: C/A/S weights 1.25/1/1.5 feed the 0.1 T/1 000/day burn.
+`computeRates` drains `med_1→med_3` while a reserve is positive, switches at
+the exact lazy `stock_edge`, accepts full live production at zero and may burn
+a partial live flow without granting mitigation. Only full coverage reaches
+`pop_daily` as medicated; medicine never enters `clock_deadlines` or
+`pop_clock`. Output above burn remains a positive ordinary `planet_stock`
+rate. The compatibility `habitability()` helper excludes medicine, keeping it
+out of natality as required by v2.
 
 ### Intel tiers (implemented, chunk Q)
 

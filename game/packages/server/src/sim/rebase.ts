@@ -15,6 +15,7 @@ import {
   governanceMultiplier,
   hoverIdleFuelUPerDay,
   isAmmSlot,
+  medicineWeightedHeads,
   type PlanetSize,
   popCap,
   type Quality,
@@ -321,9 +322,11 @@ export async function loadProductionSnapshot(
   const rates = computeRates({
     planetMultiplier,
     population,
-    // v2 (BA) : rations pondérées (C/S ×0,6) + oxygène au stock sur les
-    // climats hostiles (temperate = ambiant).
+    // v2 : rations de survie pondérées C/S ×0,6, médecine optionnelle avec
+    // sa pondération propre C 1,25× / A 1× / S 1,5×, oxygène seulement sur
+    // climat hostile (temperate = ambiant).
     weightedHeadsCount: weightedHeads(pyramid),
+    medicineWeightedHeadsCount: medicineWeightedHeads(pyramid),
     breathesOxygen: breathesFromStock(climate),
     storageCapT,
     stocks,

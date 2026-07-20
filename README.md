@@ -13,8 +13,8 @@ first (#P2Enjoy — not a "gamified Ponzi").
 
 - Preserve and evolve the **design canon** of the game.
 - Host the public marketing/whitepaper site (legacy Jekyll).
-- Serve as the working repository for preproduction (design system, backlog,
-  architecture dossier) until implementation begins.
+- Serve as the working repository for design, architecture, implementation,
+  verification and release history.
 
 ## Design corpus (read in this order)
 
@@ -85,9 +85,10 @@ Environment variables are documented in `game/.env.example` (copy to
 The seed goes through the real registration flow (`registerPlayer` →
 starter spawn), is idempotent, and is recreated by `pnpm resetDb`. Its
 deterministic tech DNA includes the waterworks → lab → clinic chain, so the
-demo account can exercise the Population v2 clinic, ledger and projected
-survival alarms through the real UI. The seed also validates and logs the
-starter pyramid produced by that real path (`C/A/S 64/191/95`, total 350);
+demo account can exercise the Population v2 clinic, ledger, optional medicine
+chain and projected survival alarms through the real UI. The seed also
+validates and logs the starter pyramid produced by that real path
+(`C/A/S 64/191/95`, total 350);
 colonies likewise receive the exact manifest carried by their ship, without
 injecting fictitious demographic history.
 

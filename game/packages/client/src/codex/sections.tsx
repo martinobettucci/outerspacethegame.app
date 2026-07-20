@@ -88,6 +88,10 @@ function PopulationBody() {
           <Fact label={c.population.exactOxygen} value={perDay(f.oxygenPer1000PerDay)} />
           <Fact label={c.population.exactMedicine} value={perDay(f.medicineNeedPer1000PerDay)} />
           <Fact
+            label={c.population.exactMedicineWeights}
+            value={`${f.medicineAgeWeights.children}× / ${f.medicineAgeWeights.actives}× / ${f.medicineAgeWeights.seniors}×`}
+          />
+          <Fact
             label={c.population.exactClocks}
             value={`${days(f.waterClockDays)} / ${days(f.foodClockDays)}`}
           />

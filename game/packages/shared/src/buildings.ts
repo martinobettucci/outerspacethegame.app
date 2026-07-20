@@ -307,8 +307,9 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
     tier: 2,
     politics: null,
     usesTile: true,
-    // [TUNE-v1] La clinique consomme la médecine produite par le lab ;
-    // placement = moitié arrondie comme le reste du catalogue.
+    // [TUNE-v1] Le coût d'accès lie la clinique à la filière du lab ; la
+    // population (pas le bâtiment) brûle ensuite la médecine optionnelle.
+    // Placement = moitié arrondie comme le reste du catalogue.
     unlockCost: { ore: 80, silicon: 30, med_1: 10 },
     // Les réductions ne se cumulent pas : une seule clinique, dont le
     // niveau porte l'effet planétaire complet (DG §3.2-v2 h).

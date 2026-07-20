@@ -16,6 +16,9 @@ import {
   illnessDeltaV2,
   illnessDeathsPerDay,
   effectiveIllness,
+  hasFullMedicineSupply,
+  MEDICINE_AGE_WEIGHTS,
+  medicineWeightedHeads,
   STABLE_PYRAMID,
   stableSplit,
   weightedHeads,
@@ -72,6 +75,28 @@ describe('rations & oxygène (§b)', () => {
     expect(breathesFromStock('hot')).toBe(true);
     expect(breathesFromStock('cold')).toBe(true);
     expect(breathesFromStock('poison')).toBe(true);
+  });
+
+  it('médicaments : pondération distincte C 1,25× / A 1× / S 1,5×', () => {
+    expect(MEDICINE_AGE_WEIGHTS).toEqual({
+      children: 1.25,
+      actives: 1,
+      seniors: 1.5,
+    });
+    expect(
+      medicineWeightedHeads({ children: 100, actives: 100, seniors: 100 }),
+    ).toBeCloseTo(375, 9);
+    // Pyramide entière du starter seedée en base (64/191/95).
+    expect(
+      medicineWeightedHeads({ children: 64, actives: 191, seniors: 95 }),
+    ).toBeCloseTo(413.5, 9);
+  });
+
+  it('médicaments : couverture live complète requise au stock zéro', () => {
+    expect(hasFullMedicineSupply(0, 0)).toBe(true);
+    expect(hasFullMedicineSupply(0.345, 0.345)).toBe(true);
+    expect(hasFullMedicineSupply(0.1, 0.345)).toBe(false);
+    expect(hasFullMedicineSupply(0, 0.345)).toBe(false);
   });
 });
 

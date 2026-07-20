@@ -3390,3 +3390,31 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
   `col-07-recolonized-windfall.jpeg`, `int-03-strategic.jpeg` et la capture de
   non-régression de main ont été inspectées à 1440×900 : aucun clipping,
   chevauchement bloquant ni texte illisible.
+
+## 2026-07-20 — Médicaments optionnels par âge livrés
+
+- **Simulation.** Le burn médical utilise désormais ses propres têtes
+  pondérées : enfants 1,25×, actifs 1×, seniors 1,5×, sur la base
+  0,1 T/1 000/j. Le rebase le sépare des rations de survie C/S×0,6 et le
+  recalcule après chaque évolution de pyramide. Une réserve positive paie le
+  plein besoin jusqu'au `stock_edge`; à zéro, un flux live intégral maintient
+  la mitigation, un flux partiel est brûlé sans bonus. Le surplus du lab reste
+  un stock fongible positif et vendable.
+- **Santé et invariants.** Le prédicat partagé de couverture pilote
+  `pop_daily`; aucun stock ne descend sous zéro et la médecine ne crée ni
+  `clock_deadlines` ni événement `pop_clock`. L'ancien helper v1
+  `habitability()` ne lui accorde plus de bonus de natalité. Les libellés
+  runtime, tests, architecture et manuel distinguent désormais partout la
+  médecine optionnelle des ressources de survie.
+- **Preuve PostgreSQL.** Sur quatre mondes identiques, le stock et le lab à
+  flux complet donnent la même pression de maladie réduite ; le monde vide et
+  la petite réserve épuisée rejoignent la même pression non mitigée. Le lab
+  conserve plus de 9 T/j de surplus et aucune horloge médicale n'existe.
+  Intégration complète : 290/290 après reset et migrations 001→024.
+- **Preuve finale.** Shared 178/178, server unit 42/42, client 15/15,
+  typecheck monorepo et build production verts. Playwright complet 39/39 en
+  32,2 min, un worker, zéro retry, puis Codex ciblé 1/1 sur une nouvelle base
+  recréée. Les captures `codex-03-population-medicine.jpeg` (1440×900) et
+  `codex-06-tablet-min.jpeg` (1280×800) ont été inspectées : chiffres live,
+  texte final, aucun clipping, chevauchement ni texte illisible. Aucun
+  changement de schéma n'était nécessaire.

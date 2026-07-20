@@ -9,7 +9,11 @@
  * to assert beyond reaching the authenticated shell.
  */
 import { expect, test } from '@playwright/test';
-import { TRACE_MINING_T_PER_DAY } from '@atg/shared';
+import {
+  MEDICINE_AGE_WEIGHTS,
+  POP_NEEDS_PER_1000_PER_DAY,
+  TRACE_MINING_T_PER_DAY,
+} from '@atg/shared';
 import { registerSovereign, shot } from './lib.ts';
 
 function rail(page: import('@playwright/test').Page) {
@@ -41,7 +45,22 @@ test('Codex : ouvrable depuis chaque écran, deep-link contextuel, 3 chapitres, 
   // --- Chapter navigation -------------------------------------------------
   await dialog.getByRole('button', { name: 'Population' }).click();
   await expect(dialog.getByRole('heading', { name: 'Population' })).toBeVisible();
+  await expect(dialog.getByText(/Medicine is optional:/)).toBeVisible();
+  await dialog.getByText('Exact rule & formula').click();
+  await expect(
+    dialog.getByText(
+      `${POP_NEEDS_PER_1000_PER_DAY.medicine} T/day`,
+      { exact: false },
+    ),
+  ).toBeVisible();
+  const medicineWeights = dialog.getByText(
+    `${MEDICINE_AGE_WEIGHTS.children}× / ${MEDICINE_AGE_WEIGHTS.actives}× / ${MEDICINE_AGE_WEIGHTS.seniors}×`,
+    { exact: true },
+  );
+  await expect(medicineWeights).toBeVisible();
   await shot(page, 'codex-03-population');
+  await medicineWeights.scrollIntoViewIfNeeded();
+  await shot(page, 'codex-03-population-medicine');
 
   await dialog
     .getByRole('button', { name: 'Efficiency & employment' })
@@ -72,4 +91,17 @@ test('Codex : ouvrable depuis chaque écran, deep-link contextuel, 3 chapitres, 
     page.getByRole('dialog').getByRole('heading', { name: 'Deposits & mining' }),
   ).toBeVisible();
   await shot(page, 'codex-05-from-planet');
+
+  // --- Minimum supported viewport (DESIGN_SYSTEM §7) --------------------
+  // The Codex must remain wholly inside the 1280×800 desktop/tablet floor.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const shell = page.getByRole('dialog').locator('.ls-codex-shell');
+  await expect(shell).toBeVisible();
+  const bounds = await shell.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(1280);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(800);
+  await shot(page, 'codex-06-tablet-min');
 });

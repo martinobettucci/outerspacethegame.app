@@ -61,13 +61,18 @@ export interface IndustryRate {
 export interface RatesInput {
   /** Gouvernance G ; 0 est le verrou explicite d'un monde sauvage. */
   planetMultiplier: number;
-  /** Population (consommation de survie). */
+  /** Population totale (fallback de compatibilité des charges démographiques). */
   population: number;
   /**
-   * v2 (DG §3.2-v2 b) : têtes PONDÉRÉES pour les rations (actifs 1×,
+   * v2 (DG §3.2-v2 b) : têtes pondérées pour les rations de SURVIE (actifs 1×,
    * enfants/seniors 0,6×). Absent = population brute (compat v1).
    */
   weightedHeadsCount?: number;
+  /**
+   * v2 : têtes pondérées pour la médecine OPTIONNELLE (C 1,25×, A 1×,
+   * S 1,5×). Absent = weightedHeadsCount puis population brute (compat).
+   */
+  medicineWeightedHeadsCount?: number;
   /** v2 : la population respire l'oxygène AU STOCK (climat hostile). */
   breathesOxygen?: boolean;
   /** Cap de stockage total (franchise + dépôts). */
@@ -99,7 +104,7 @@ export interface RatesResult {
   /** Débit (négatif) par gisement (T/jour). */
   depositRates: Partial<Record<ResourceId, number>>;
   industries: IndustryRate[];
-  /** Consommation de survie effective (pour H au pop_daily). */
+  /** Consommation effective ; la médecine reste hors survie/horloges. */
   popConsumption: { food: number; water: number; medicine: number; oxygen: number };
   /** Besoins théoriques (pour les saturations). */
   popNeeds: { food: number; water: number; medicine: number; oxygen: number };
@@ -215,15 +220,23 @@ export function computeRates(input: RatesInput): RatesResult {
     });
   }
 
-  // 2. Consommation de survie de la population (nourriture en priorité
-  //    food_1 → food_3, médecine med_1 → med_3 [TUNE]). v2 : têtes
-  //    pondérées (C/S ×0,6) + oxygène au stock sur climat hostile.
-  const per1000 = (input.weightedHeadsCount ?? input.population) / 1_000;
+  // 2. Consommation de la population. Survie : têtes pondérées C/S ×0,6.
+  //    Médecine OPTIONNELLE : pondération distincte C 1,25× / A 1× / S 1,5×.
+  //    Les familles se consomment en cascade (food_1→3, med_1→3).
+  const survivalPer1000 =
+    (input.weightedHeadsCount ?? input.population) / 1_000;
+  const medicinePer1000 =
+    (input.medicineWeightedHeadsCount ??
+      input.weightedHeadsCount ??
+      input.population) /
+    1_000;
   const popNeeds = {
-    food: POP_NEEDS_PER_1000_PER_DAY.food * per1000,
-    water: POP_NEEDS_PER_1000_PER_DAY.water * per1000,
-    medicine: POP_NEEDS_PER_1000_PER_DAY.medicine * per1000,
-    oxygen: input.breathesOxygen ? OXYGEN_PER_1000_PER_DAY * per1000 : 0,
+    food: POP_NEEDS_PER_1000_PER_DAY.food * survivalPer1000,
+    water: POP_NEEDS_PER_1000_PER_DAY.water * survivalPer1000,
+    medicine: POP_NEEDS_PER_1000_PER_DAY.medicine * medicinePer1000,
+    oxygen: input.breathesOxygen
+      ? OXYGEN_PER_1000_PER_DAY * survivalPer1000
+      : 0,
   };
 
   // 3. Point fixe : partage des intrants à sec au prorata des demandes.
@@ -300,7 +313,7 @@ export function computeRates(input: RatesInput): RatesResult {
     });
   }
 
-  // Consommation de survie : puise si stock > 0 OU arrivage suffisant.
+  // Consommations de la population : puise si stock > 0 OU arrivage suffisant.
   const consumeFamily = (
     family: readonly ResourceId[],
     needPerDay: number,
@@ -330,8 +343,8 @@ export function computeRates(input: RatesInput): RatesResult {
       popNeeds.oxygen > EMPTY ? consumeFamily(['oxygen'], popNeeds.oxygen) : 0,
   };
 
-  // Drain de loitering des coques en survol (GB §7) : après la survie de
-  // la population, même règle « puise si stock > 0 OU arrivage ».
+  // Drain de loitering des coques en survol (GB §7) : après les consommations
+  // de la population, même règle « puise si stock > 0 OU arrivage ».
   const hoverConsumption: Partial<Record<ResourceId, number>> = {};
   for (const [res, need] of Object.entries(input.hoverFuelNeeds ?? {})) {
     if ((need ?? 0) <= EMPTY) continue;

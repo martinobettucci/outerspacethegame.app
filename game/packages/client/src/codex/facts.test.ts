@@ -17,6 +17,7 @@ import {
   SENIOR_DAYS,
   NATALITY_BY_RESIDENTIAL,
   RATION_CS,
+  MEDICINE_AGE_WEIGHTS,
   OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   CLOCK_DAYS,
@@ -53,6 +54,7 @@ describe('CODEX_FACTS binds live @atg/shared constants (anti-drift)', () => {
     expect(CODEX_FACTS.medicineNeedPer1000PerDay).toBe(
       POP_NEEDS_PER_1000_PER_DAY.medicine,
     );
+    expect(CODEX_FACTS.medicineAgeWeights).toEqual(MEDICINE_AGE_WEIGHTS);
     expect(CODEX_FACTS.waterClockDays).toBe(CLOCK_DAYS.water);
     expect(CODEX_FACTS.foodClockDays).toBe(CLOCK_DAYS.food);
     expect(CODEX_FACTS.clinicReductionByLevel).toEqual(CLINIC_REDUCTION);

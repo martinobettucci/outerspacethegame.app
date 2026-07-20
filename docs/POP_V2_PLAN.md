@@ -147,7 +147,7 @@ DG §3.2-v2 j/k + GB §10 observability clause.
   starters expose the stable C/A/S pyramid and colonies the exact embarked
   mix; the dev seed validates/logs those real values rather than injecting
   fictitious demographic history.
-- **Medicine follow-up contract (owner, 2026-07-20; implementation next)**:
+- **Medicine follow-up (owner, 2026-07-20; ✅ implemented post-BD)**:
   medicine is optional
   and physically burned at 0.1 T/1 000 weighted heads/day, but unlike the
   survival families its weights are A=1, C=1.25 and S=1.5 [TUNE-v1]. A
@@ -155,6 +155,17 @@ DG §3.2-v2 j/k + GB §10 observability clause.
   reaches the exact zero edge; no resource may become negative. Full live
   supply also medicates, partial supply at zero does not. Surplus production
   remains in stock and is tradable; medicine never creates a death clock.
+  Shared `MEDICINE_AGE_WEIGHTS` and `medicineWeightedHeads` feed the
+  authoritative rebase; `hasFullMedicineSupply` is the single all-or-nothing
+  mitigation predicate used by `pop_daily`. The obsolete v1 habitability
+  helper no longer grants medicine any natality effect. The player Codex
+  renders the base burn and C/A/S weights from those live shared constants.
+- Medicine follow-up DoD on freshly reset local PostgreSQL: shared **178/178**,
+  server unit **42/42**, client unit **15/15**, integration **290/290**,
+  typecheck and production build green. The complete Playwright sweep passed
+  **39/39** in 32.2 min with one deterministic worker and zero retry; the final
+  Codex-only replay passed **1/1** after the last wording/1280×800 proof. Both
+  final captures were inspected without clipping, overlap or unreadable text.
 - Tests delivered: unit (deterministic route-death split, manifest helpers,
   intel whitelist), integration on real PostgreSQL (ownership revert,
   buildings/tech/stocks preserved, governor host-fate, every zero-population

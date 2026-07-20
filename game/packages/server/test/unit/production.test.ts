@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { efficiency, TRACE_MINING_T_PER_DAY } from '@atg/shared';
+import {
+  efficiency,
+  hasFullMedicineSupply,
+  TRACE_MINING_T_PER_DAY,
+} from '@atg/shared';
 import { computeRates, type RatesInput } from '../../src/sim/production.js';
 
 const base = (over: Partial<RatesInput> = {}): RatesInput => ({
@@ -30,6 +34,16 @@ const smelter = (): RatesInput['industries'][number] => ({
   baseBatchesPerDay: 10,
   workforce: 35,
   runPct: 100,
+});
+
+const lab = (runPct = 100): RatesInput['industries'][number] => ({
+  buildingId: 'lab-1',
+  key: 'lab',
+  level: 1,
+  recipe: 'med_1',
+  baseBatchesPerDay: 10,
+  workforce: 28, // optimum 40, u = 0,7 ⇒ E = 1 à popScale = 1
+  runPct,
 });
 
 describe('computeRates — extraction (DG §3.3)', () => {
@@ -155,8 +169,8 @@ describe('computeRates — frein de stockage §3.3b', () => {
   });
 });
 
-describe('computeRates — consommation de survie (DG §3.2)', () => {
-  it('10 000 habitants : 10 T food + 10 T eau + 1 T médecine par jour', () => {
+describe('computeRates — consommations de population (DG §3.2)', () => {
+  it('10 000 habitants : 10 T food + 10 T eau + 1 T médecine optionnelle par jour', () => {
     const r = computeRates(
       base({
         population: 10_000,
@@ -184,5 +198,68 @@ describe('computeRates — consommation de survie (DG §3.2)', () => {
     expect(r.stockRates.food_1).toBeCloseTo(-10, 6);
     expect((r.stockRates.food_2 ?? 0)).toBeCloseTo(0, 6);
     expect(r.popConsumption.food).toBeCloseTo(10, 6);
+  });
+
+  it('sépare les têtes pondérées de survie du burn médical par âge', () => {
+    const r = computeRates(
+      base({
+        population: 300,
+        weightedHeadsCount: 220, // C/A/S 100/100/100 aux rations 0,6/1/0,6
+        medicineWeightedHeadsCount: 375, // mêmes cohortes : 1,25/1/1,5
+        breathesOxygen: true,
+        stocks: { food_1: 10, water: 10, med_1: 10, oxygen: 10 },
+      }),
+    );
+    expect(r.popNeeds.food).toBeCloseTo(0.22, 9);
+    expect(r.popNeeds.water).toBeCloseTo(0.22, 9);
+    expect(r.popNeeds.oxygen).toBeCloseTo(0.132, 9);
+    expect(r.popNeeds.medicine).toBeCloseTo(0.0375, 9);
+  });
+
+  it("une réserve médicale positive sert le plein burn jusqu'à son bord exact", () => {
+    const r = computeRates(
+      base({
+        medicineWeightedHeadsCount: 10_000,
+        stocks: { med_1: 0.1 },
+      }),
+    );
+    expect(r.popNeeds.medicine).toBe(1);
+    expect(r.popConsumption.medicine).toBe(1);
+    expect(r.stockRates.med_1).toBe(-1);
+    expect(
+      hasFullMedicineSupply(r.popConsumption.medicine, r.popNeeds.medicine),
+    ).toBe(true);
+  });
+
+  it('un lab à stock zéro couvre le burn live et accumule le surplus vendable', () => {
+    const r = computeRates(
+      base({
+        medicineWeightedHeadsCount: 10_000,
+        stocks: { water: 100, lithium: 100 },
+        industries: [lab()],
+      }),
+    );
+    expect(r.popNeeds.medicine).toBe(1);
+    expect(r.popConsumption.medicine).toBe(1);
+    expect(r.stockRates.med_1).toBeCloseTo(9, 9);
+    expect(
+      hasFullMedicineSupply(r.popConsumption.medicine, r.popNeeds.medicine),
+    ).toBe(true);
+  });
+
+  it('un flux médical partiel est brûlé mais ne donne pas la mitigation', () => {
+    const r = computeRates(
+      base({
+        medicineWeightedHeadsCount: 10_000,
+        stocks: { water: 100, lithium: 100 },
+        industries: [lab(5)], // 0,5 T/j produite pour 1 T/j nécessaire
+      }),
+    );
+    expect(r.popNeeds.medicine).toBe(1);
+    expect(r.popConsumption.medicine).toBeCloseTo(0.5, 9);
+    expect(r.stockRates.med_1 ?? 0).toBeCloseTo(0, 9);
+    expect(
+      hasFullMedicineSupply(r.popConsumption.medicine, r.popNeeds.medicine),
+    ).toBe(false);
   });
 });

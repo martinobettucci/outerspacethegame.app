@@ -744,3 +744,9 @@ clock and no natality life-flux factor), so the six Round-9 survival/growth
 anchors are structurally unchanged. The correction only raises the physical
 medicine sink; even lab L1's 10 T/day nominal output remains far above a
 starter's burn, preserving a sellable surplus by design.
+
+Implementation closed on 2026-07-20: the shared C/A/S burden now feeds the
+authoritative PostgreSQL rebase, and four otherwise identical integration
+worlds prove reserve, zero stock, exact exhaustion and full lab supply. The
+survival anchors remain unchanged; the implementation adds no medicine clock
+and the compatibility natality helper now excludes medicine.

@@ -84,7 +84,10 @@ export function popCap(size: PlanetSize, quality: Quality): number {
 /** Taux de croissance logistique journalier r. [TUNE] DG §3.2 */
 export const POP_GROWTH_R = 0.05;
 
-/** Besoins par 1 000 habitants et par jour (tonnes). [TUNE] DG §3.2 */
+/**
+ * Besoins de base par 1 000 têtes pondérées et par jour (tonnes). Les poids
+ * survival/medicine distincts sont appliqués dans la simulation v2. [TUNE]
+ */
 export const POP_NEEDS_PER_1000_PER_DAY = {
   food: 1,
   water: 1,
@@ -92,31 +95,35 @@ export const POP_NEEDS_PER_1000_PER_DAY = {
 } as const;
 
 /**
- * Habitabilité H = min(foodSat, waterSat) × (0.8 + 0.2 × medSat).
- * Chaque saturation ∈ [0,1] = consommation servie / besoin.
+ * Compatibilité v1 : l'habitabilité ne dépend plus que de food/water.
+ * La médecine v2 est optionnelle, hors natalité et agit uniquement sur la
+ * pression de maladie (DG §3.2-v2 b/h). Le 3e argument reste pour ne pas
+ * casser les appelants historiques de cette fonction exportée.
  */
 export function habitability(
   foodSat: number,
   waterSat: number,
-  medSat: number,
+  _medicineSat: number,
 ): number {
   const clamp = (v: number) => Math.min(1, Math.max(0, v));
-  return (
-    Math.min(clamp(foodSat), clamp(waterSat)) * (0.8 + 0.2 * clamp(medSat))
-  );
+  return Math.min(clamp(foodSat), clamp(waterSat));
 }
 
-/** Maladie : dI/jour = 1.5 × max(0, u − 0.9) − 0.05 × I (×2 si medSat < 1). [TUNE] */
+/** Maladie v1 : dI/jour = 1.5 × max(0, u − 0.9) − 0.05 × I (×2 sans médecine). [TUNE] */
 export const ILLNESS_CROWDING_THRESHOLD = 0.9;
 export const ILLNESS_GROWTH_COEF = 1.5;
 export const ILLNESS_DECAY_COEF = 0.05;
 export const ILLNESS_DEATH_COEF = 0.03;
 
-export function illnessDelta(u: number, illness: number, medSatBelowOne: boolean): number {
+export function illnessDelta(
+  u: number,
+  illness: number,
+  medicineUnavailable: boolean,
+): number {
   const growth =
     ILLNESS_GROWTH_COEF *
     Math.max(0, u - ILLNESS_CROWDING_THRESHOLD) *
-    (medSatBelowOne ? 2 : 1);
+    (medicineUnavailable ? 2 : 1);
   return growth - ILLNESS_DECAY_COEF * illness;
 }
 

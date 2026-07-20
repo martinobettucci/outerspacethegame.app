@@ -365,6 +365,149 @@ describe('boucle colonie', () => {
     expect(deaths(withClinic)).toBeLessThan(deaths(withoutClinic) - 2.5);
   });
 
+  it('médicaments par âge : stock/flux complet mitigent, déficit tombe à zéro sans horloge, surplus reste vendable', async () => {
+    const t0 = Date.now();
+    const { playerId } = await registerPlayer(pool, {
+      email: `loop-med-${run}@test.local`,
+      password: 'motdepasse-solide-1',
+      displayName: 'Medic',
+      politics: 'scientific',
+      universeSeed: `loop-med-universe-${run}`,
+    });
+    let coordinate = 900_170;
+    const mk = async (
+      name: string,
+      opts: { medicineT?: number; labRunPct?: number } = {},
+    ) => {
+      coordinate += 1;
+      // P=3 000 sur cap 2 000 : la parabole rend la différence de pression
+      // médicale observable dès le premier pop_daily. Pyramide C/A/S
+      // 600/1 800/600 ⇒ 3 450 têtes médicales, donc 0,345 T/jour.
+      const { rows } = await pool.query<{ id: string }>(
+        `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
+            quality, tiles, owner_id, population, pop_children, pop_seniors,
+            illness, colonized_at, pop_as_of)
+         VALUES ('planet', $1, $2, $2, $3, 's', 'temperate', 'F', 8, $4,
+                 3000, 600, 600, 0, to_timestamp($5 / 1000.0),
+                 to_timestamp($5 / 1000.0))
+         RETURNING id`,
+        [name, coordinate, `medicine-${name}-${run}`, playerId, t0],
+      );
+      const bodyId = rows[0]!.id;
+      for (const [resource, tons] of [
+        ['food_1', 200],
+        ['water', 200],
+        ['lithium', 100],
+      ] as const) {
+        await pool.query(
+          `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+           VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+          [bodyId, resource, tons, t0],
+        );
+      }
+      if (opts.medicineT !== undefined) {
+        await pool.query(
+          `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+           VALUES ($1, 'med_1', $2, to_timestamp($3 / 1000.0))`,
+          [bodyId, opts.medicineT, t0],
+        );
+      }
+      if (opts.labRunPct !== undefined) {
+        await pool.query(
+          `INSERT INTO buildings
+             (body_id, key, level, tile_index, status, recipe, workforce, run_pct)
+           VALUES ($1, 'lab', 1, 0, 'active', 'med_1', 34, $2)`,
+          [bodyId, opts.labRunPct],
+        );
+      }
+      // Rebase autoritatif : écrit le burn, programme le bord exact de la
+      // petite réserve et garantit un pop_daily unique à J+1.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await recomputePlanetRates(client, bodyId, t0);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+      return bodyId;
+    };
+
+    const stocked = await mk('Med-stocked', { medicineT: 10 });
+    const empty = await mk('Med-empty');
+    const exhausted = await mk('Med-exhausted', { medicineT: 0.1 });
+    const producer = await mk('Med-producer', { labRunPct: 100 });
+
+    await processDueEvents(pool, baseHandlers(), { nowMs: t0 + DAY + 1000 });
+
+    const read = async (bodyId: string) =>
+      (
+        await pool.query(
+          `SELECT population, illness, clock_deadlines
+           FROM bodies WHERE id = $1`,
+          [bodyId],
+        )
+      ).rows[0];
+    const stockedRow = await read(stocked);
+    const emptyRow = await read(empty);
+    const exhaustedRow = await read(exhausted);
+    const producerRow = await read(producer);
+
+    // Stock et production live COMPLÈTE donnent la même mitigation. La
+    // réserve déficitaire s'est épuisée avant J+1 et rejoint le monde vide.
+    expect(Number(producerRow.illness)).toBeCloseTo(
+      Number(stockedRow.illness),
+      6,
+    );
+    expect(Number(exhaustedRow.illness)).toBeCloseTo(
+      Number(emptyRow.illness),
+      6,
+    );
+    expect(Number(emptyRow.illness)).toBeGreaterThan(
+      Number(stockedRow.illness) * 1.9,
+    );
+    expect(Number(stockedRow.population)).toBeGreaterThan(
+      Number(emptyRow.population) + 20,
+    );
+    expect(Number(producerRow.population)).toBeGreaterThan(
+      Number(exhaustedRow.population) + 20,
+    );
+
+    const deficitMed = await stockRow(exhausted, 'med_1');
+    expect(Number(deficitMed.amount_t)).toBeGreaterThanOrEqual(0);
+    expect(Number(deficitMed.amount_t)).toBeLessThanOrEqual(1e-6);
+    expect(Number(deficitMed.rate_t_per_day)).toBe(0);
+
+    // Le lab L1 produit bien au-delà de 0,345 T/j : après burn, le reliquat
+    // est un stock fongible ordinaire, positif et donc vendable.
+    const producerMed = await stockRow(producer, 'med_1');
+    expect(Number(producerMed.amount_t)).toBeGreaterThan(9);
+    expect(Number(producerMed.rate_t_per_day)).toBeGreaterThan(9);
+
+    // Aucun stock ne passe négatif et « medicine » n'entre jamais dans les
+    // horloges létales (réservées à water/food ; oxygen reste instantané).
+    const ids = [stocked, empty, exhausted, producer];
+    const { rows: physical } = await pool.query(
+      `SELECT min(amount_t)::float8 AS minimum
+       FROM planet_stock WHERE body_id = ANY($1::uuid[])`,
+      [ids],
+    );
+    expect(Number(physical[0].minimum)).toBeGreaterThanOrEqual(0);
+    for (const row of [stockedRow, emptyRow, exhaustedRow, producerRow]) {
+      expect(row.clock_deadlines.medicine).toBeUndefined();
+    }
+    const { rows: clocks } = await pool.query(
+      `SELECT count(*)::int AS n FROM events
+       WHERE kind = 'pop_clock' AND payload->>'bodyId' = ANY($1::text[])
+         AND payload->>'family' = 'medicine'`,
+      [ids],
+    );
+    expect(clocks[0].n).toBe(0);
+  });
+
   it('horloge de mort v2 : eau à sec → échéance 3 j posée → tout le monde meurt (canon)', async () => {
     const t0 = Date.now();
     const { rows: b } = await pool.query<{ id: string }>(

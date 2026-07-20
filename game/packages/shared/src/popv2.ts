@@ -6,6 +6,8 @@
  * modulateur de croissance, parabole de sur-capacité, horloges de mort.
  * Chunk BB : emploi universel, popScale, suppression d'E_planet et
  * mortalité du chômage (livrés dans cet ordre pour préserver les mondes).
+ * Suivi post-BD : burn médical optionnel pondéré C/A/S, hors natalité et
+ * hors horloges de survie (décision responsable 2026-07-20).
  */
 import type { Climate } from './types.js';
 
@@ -98,10 +100,38 @@ export function agingFlows(
 export const RATION_CS = 0.6;
 /** Oxygène (climats hostiles seulement), T/1000 têtes/j. [TUNE] */
 export const OXYGEN_PER_1000_PER_DAY = 0.6;
+/**
+ * Pondération distincte du burn de médicaments. La médecine n'est pas une
+ * ration de survie : enfants et seniors en consomment davantage qu'un actif.
+ * [TUNE-v1, décision responsable 2026-07-20]
+ */
+export const MEDICINE_AGE_WEIGHTS = {
+  children: 1.25,
+  actives: 1,
+  seniors: 1.5,
+} as const;
 
-/** Têtes pondérées pour la consommation (actifs 1×, C/S 0,6×). */
+/** Têtes pondérées pour les rations de survie (actifs 1×, C/S 0,6×). */
 export function weightedHeads(pyr: Pyramid): number {
   return pyr.actives + RATION_CS * (pyr.children + pyr.seniors);
+}
+
+/** Têtes pondérées pour le burn médical optionnel (C 1,25× / A 1× / S 1,5×). */
+export function medicineWeightedHeads(pyr: Pyramid): number {
+  return (
+    MEDICINE_AGE_WEIGHTS.children * pyr.children +
+    MEDICINE_AGE_WEIGHTS.actives * pyr.actives +
+    MEDICINE_AGE_WEIGHTS.seniors * pyr.seniors
+  );
+}
+
+/**
+ * La mitigation est tout-ou-rien : réserve positive (qui sert le plein burn)
+ * ou flux live couvrant 100 % du besoin. Un flux partiel à stock zéro peut
+ * être consommé physiquement, mais ne médicamente pas la population.
+ */
+export function hasFullMedicineSupply(served: number, need: number): boolean {
+  return need <= 1e-9 || served >= need - 1e-9;
 }
 
 /** L'oxygène est-il respiré AU STOCK sur ce climat ? (temperate = ambiant) */
@@ -177,14 +207,14 @@ export function effectiveIllness(
   return Math.max(0, illness - (CLINIC_REDUCTION[clinicLevel] ?? 0));
 }
 
-/** dI/jour v2 : parabole de sur-cap − décroissance (×2 si med < 1). */
+/** dI/jour v2 : parabole de sur-cap − décroissance (×2 sans couverture médicale). */
 export function illnessDeltaV2(
   overRatio: number,
   illness: number,
-  medSatBelowOne: boolean,
+  medicineUnavailable: boolean,
 ): number {
   const o = Math.max(0, overRatio);
-  const growth = OVERCAP_ILLNESS_COEF * o * o * (medSatBelowOne ? 2 : 1);
+  const growth = OVERCAP_ILLNESS_COEF * o * o * (medicineUnavailable ? 2 : 1);
   return growth - 0.05 * illness;
 }
 

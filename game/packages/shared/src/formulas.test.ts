@@ -61,10 +61,10 @@ describe('Population (DG §3.2)', () => {
     expect(efficiency(u)).toBeLessThan(0.97);
   });
 
-  it('habitabilité : nourriture/eau en porte dure, médecine en boost', () => {
+  it('habitabilité v2 : nourriture/eau en porte dure, médecine hors natalité', () => {
     expect(habitability(0, 1, 1)).toBe(0);
     expect(habitability(1, 0, 1)).toBe(0);
-    expect(habitability(1, 1, 0)).toBeCloseTo(0.8);
+    expect(habitability(1, 1, 0)).toBe(1);
     expect(habitability(1, 1, 1)).toBe(1);
   });
 
@@ -76,7 +76,7 @@ describe('Population (DG §3.2)', () => {
   it("maladie : croît au-delà de 90 % d'occupation, décroît sinon", () => {
     expect(illnessDelta(0.95, 0, false)).toBeGreaterThan(0);
     expect(illnessDelta(0.5, 0.4, false)).toBeLessThan(0);
-    // medSat < 1 double la croissance.
+    // L'absence de couverture médicale double la pression.
     expect(illnessDelta(0.95, 0, true)).toBeCloseTo(
       2 * illnessDelta(0.95, 0, false),
     );

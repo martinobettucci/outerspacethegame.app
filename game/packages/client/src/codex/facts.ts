@@ -20,6 +20,7 @@ import {
   SENIOR_DAYS,
   NATALITY_BY_RESIDENTIAL,
   RATION_CS,
+  MEDICINE_AGE_WEIGHTS,
   OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   CLOCK_DAYS,
@@ -48,6 +49,7 @@ export const CODEX_FACTS = {
   inactiveRation: RATION_CS,
   oxygenPer1000PerDay: OXYGEN_PER_1000_PER_DAY,
   medicineNeedPer1000PerDay: POP_NEEDS_PER_1000_PER_DAY.medicine,
+  medicineAgeWeights: MEDICINE_AGE_WEIGHTS,
   waterClockDays: CLOCK_DAYS.water,
   foodClockDays: CLOCK_DAYS.food,
   // Illness-index reduction per clinic level [L0, L1, L2, L3].

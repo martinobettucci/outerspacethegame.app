@@ -64,7 +64,7 @@
   depuis le bâtiment courant. Vérifié : typecheck vert ; vérification E2E +
   visuelle à rejouer port 8080 libre (dev server du responsable actif).
 
-### Population v2 — contrat médicaments par âge figé avant code
+### Population v2 — médicaments optionnels pondérés par âge
 
 - **Décision responsable du 2026-07-20** : la médecine reste facultative et
   vendable en surplus, mais son burn démographique est distinct des rations
@@ -74,6 +74,24 @@
   mitigation sur flux partiel à zéro, aucun stock négatif et aucune horloge
   de mort. Contrat persisté avant implémentation dans GAME_BOOK §10,
   DESIGN_GUIDE §3.2-v2, POP_V2_PLAN, BACKLOG, BALANCE_LOG et JOURNAL.
+- **Implémentation** : `MEDICINE_AGE_WEIGHTS` et
+  `medicineWeightedHeads(C/A/S)` séparent le burn médical des rations de
+  survie C/S×0,6. Le rebase passe les deux charges à `computeRates` ; le
+  `pop_daily` utilise un prédicat partagé de couverture complète. Une réserve
+  positive paie le plein débit jusqu'à son `stock_edge`, un flux live complet
+  maintient le bonus à stock zéro, un flux partiel est brûlé sans mitigation,
+  et le surplus conserve un débit `planet_stock` positif. L'ancien helper v1
+  `habitability()` a été corrigé : la médecine ne nourrit jamais la natalité.
+- **Preuves dédiées** : unit shared (poids, starter 413,5, couverture) et
+  server (réserve, flux partiel/complet, surplus), intégration PostgreSQL sur
+  quatre mondes identiques (stock/à-sec/épuisé/lab), Codex anti-dérive + E2E
+  avec capture `codex-03-population-medicine.jpeg` inspectée à 1440×900.
+- **DoD final** : shared 178/178, server unit 42/42, client 15/15,
+  intégration PostgreSQL 290/290, typecheck et build production verts. Le
+  balayage Playwright complet passe 39/39 en 32,2 min (base recréée, un
+  worker, zéro retry), puis le scénario Codex final 1/1 sur une seconde base
+  recréée. Sept captures sont observées, dont la règle médicale finale et le
+  viewport minimum 1280×800 ; aucune migration n'était requise.
 
 ### Player Codex — tranche 1 implémentée (P2.codex, shell + 3 chapitres)
 
@@ -83,16 +101,19 @@
   chapitre correspondant à l'écran courant. Trois chapitres spoiler-free :
   gisements & minage de trace (avec l'asymétrie « à sec = 0 pour toujours » ≠
   « jamais eu = trace pour toujours »), population (trois âges, natalité,
-  rations, oxygène hostile, horloges de mort, sur-capacité), efficacité & emploi
-  (courbe E(u), optimum qui dérive, le chômage tue, frein de stockage). Tous les
+  rations, oxygène hostile, médecine optionnelle par âge, horloges de mort,
+  sur-capacité), efficacité & emploi (courbe E(u), optimum qui dérive, le
+  chômage tue, frein de stockage). Tous les
   chiffres et courbes rendus EN DIRECT depuis `@atg/shared` (`facts.ts`,
   `EfficiencyCurve` réutilisé, pyramide via `stableSplit`) — un test unitaire
   (`facts.test.ts`, 7/7) lie chaque valeur à sa constante source. Textes dans un
   namespace `codex/strings.ts` dédié (déviation de concurrence documentée : le
   `i18n/en.ts` partagé était sous édition parallèle). Vérifs : typecheck + vite
-  build OK, vitest 11/11, 5 captures observées (§16). L'E2E dédié
-  (`e2e/tests/codex.spec.ts`) passe dans le balayage complet **38/38** sur base
-  recréée (un worker déterministe, zéro retry ; chunk BC).
+  build OK, vitest 11/11 à la livraison initiale, 7 captures désormais
+  observées (§16), dont la règle médicale exacte et le viewport minimum.
+  L'E2E dédié (`e2e/tests/codex.spec.ts`) est revalidé post-médecine dans le
+  balayage complet **39/39**, puis seul **1/1**, sur bases recréées (un worker
+  déterministe, zéro retry).
 
 ### Player Codex — plan persisté (P2.codex, avant tout code — CLAUDE.md §5)
 
@@ -105,7 +126,9 @@
   le Codex ne possède aucun chiffre, toutes les valeurs sont rendues en direct
   depuis les constantes `@atg/shared` que la simulation elle-même utilise
   (`TRACE_MINING_T_PER_DAY`, `EFFICIENCY_*`, `UNEMP_*`, épochs `popv2`…), textes
-  clés i18n `t.codex.*`, courbes tracées depuis les vraies fonctions partagées ;
+  centralisés dans le namespace typé `codexEn` (migration future vers
+  `t.codex.*` documentée), courbes tracées depuis les vraies fonctions
+  partagées ;
   un test unitaire liera chaque valeur documentée à sa constante vivante.
   Première tranche validée : coquille de livraison + 3 mécaniques
   (gisements/minage de trace, population v2, efficacité/emploi). Documents

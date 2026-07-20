@@ -13,6 +13,7 @@ import {
   clockDeathsPerDay,
   COLONY_SEED_STOCK,
   FOOD_RESOURCES,
+  hasFullMedicineSupply,
   HULLS,
   illnessDeathsPerDay,
   illnessDeltaV2,
@@ -162,8 +163,7 @@ export const popDaily: EventHandler = async (client, event) => {
   const snap = await recomputePlanetRates(client, bodyId, nowMs);
   if (!snap || !snap.ownerId) return;
 
-  const sat = (served: number, need: number) => (need > 1e-9 ? served / need : 1);
-  const medSat = sat(
+  const medicineSupplied = hasFullMedicineSupply(
     snap.rates.popConsumption.medicine,
     snap.rates.popNeeds.medicine,
   );
@@ -222,7 +222,10 @@ export const popDaily: EventHandler = async (client, event) => {
   const over = popNow / cap - 1;
   const newIllness = Math.min(
     1,
-    Math.max(0, snap.illness + illnessDeltaV2(over, snap.illness, medSat < 1)),
+    Math.max(
+      0,
+      snap.illness + illnessDeltaV2(over, snap.illness, !medicineSupplied),
+    ),
   );
   const parabDeaths =
     illnessDeathsPerDay(newIllness, clinicLevel, popNow) +

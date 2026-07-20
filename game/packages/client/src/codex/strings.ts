@@ -45,27 +45,28 @@ export const codexEn = {
     title: 'Population',
     lead: 'Your people live in three ages — children, actives and seniors — and only actives work. Everyone ages on a fixed schedule: children grow into workers, workers become seniors, seniors eventually die of old age. The pyramid is always visible on the planet stats page.',
     consumers:
-      'Children and seniors produce nothing but still eat, at a smaller ration than a working adult. A colony is therefore always feeding more mouths than it has workers — plan supply around the whole pyramid, not just the workforce.',
+      'Children and seniors produce nothing but still consume. Their food, water and hostile-climate oxygen ration is smaller than an active’s, but their medicine burden is higher. Plan every supply family around the whole pyramid, not just the workforce.',
     natality:
-      'Births need residential districts and good management. A healthy average efficiency together with a local surplus of water, food and oxygen fills the cradle; shortages brake it. No residential district means no births at all.',
+      'Births need residential districts and good management. A healthy average efficiency together with a local surplus of water, food and oxygen where it is required fills the cradle; shortages brake it. No residential district means no births at all.',
     lifesupport:
-      'On climates hostile to life your people also breathe from your oxygen stockpile. If any life-support resource runs dry, a death clock starts and people die on a fixed timer until supply returns — hostile-climate oxygen is the harshest, killing quickly.',
+      'On climates hostile to life your people also breathe from your oxygen stockpile. Water and food start fixed death clocks when dry; hostile-climate oxygen is immediate. Medicine is deliberately outside this survival trio.',
     overcap:
       'A world has a comfortable capacity. Push population far beyond it and crowding breeds illness and extra deaths. Growth is the engine of expansion, but a colony crammed past its means pays for it in lives.',
     health:
-      'Medicine is a standing need, not an emergency kit: your people consume it every day, right alongside food and water, and steady supply also nudges the birth rate up. Let it run short and two things bite at once — fewer babies, and sickness that spreads markedly faster.',
+      'Medicine is optional: running out never starts a death clock and never changes births. While a family stock remains, people burn the full daily need and receive illness mitigation. At exact zero the bonus ends; a full live supply keeps it, a partial live trickle does not. Production beyond the burn remains ordinary stock that you may sell.',
     clinic:
-      'Illness is an index that climbs the more you exceed a world’s capacity — and climbs faster when medicine is short — and it steadily kills. The clinic is the counter: each level lowers the illness that actually reaches your citizens, so a well-stocked clinic turns a deadly outbreak into a survivable one. Supply and clinic together, not either alone.',
+      'Illness is an index that climbs the more you exceed a world’s capacity, and an unmedicated population accumulates that pressure faster. A clinic is a separate defence: each level lowers the illness that actually reaches your citizens. Medical supply controls new pressure; the clinic reduces its lethal effect.',
     extinction:
       'If a colony’s population ever reaches zero, the world goes extinct: it reverts to unclaimed wild space and the governor you installed there is lost. Its buildings, research, stockpiles and deposits all stay in place, though — an extinct world is abandoned, not destroyed, and it can be recolonised later.',
     exactIntro: 'The fixed schedules and rates:',
     exactAges: 'Age spans (children / actives / seniors), in game-days.',
-    exactRation: 'Children and seniors each eat this share of an active’s ration.',
+    exactRation: 'Children and seniors each use this share of an active’s survival ration.',
     exactOxygen: 'Hostile-climate oxygen draw, per thousand heads per day.',
-    exactMedicine: 'Standing medicine demand, per thousand heads per day.',
+    exactMedicine: 'Optional medicine base burn, per thousand weighted heads per day.',
+    exactMedicineWeights: 'Medicine weights (children / actives / seniors).',
     exactClocks: 'Death-clock delays once water or food runs out.',
     exactClinic: 'Illness-index reduction by clinic level (L1 / L2 / L3).',
-    exactStarter: 'A fresh colony starts at this population, on the stable pyramid.',
+    exactStarter: 'A starter world begins at this population, on the stable pyramid.',
     diagramCaption: 'The stable age pyramid that a steady population settles into.',
   },
 
