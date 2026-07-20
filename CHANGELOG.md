@@ -2,6 +2,17 @@
 
 ## [Non publié]
 
+### Population v2 — contrat médicaments par âge figé avant code
+
+- **Décision responsable du 2026-07-20** : la médecine reste facultative et
+  vendable en surplus, mais son burn démographique est distinct des rations
+  de survie : actifs 1×, enfants 1,25×, seniors 1,5× [TUNE-v1], sur une base
+  de 0,1 T/1 000 têtes pondérées/jour. Mitigation maladie jusqu'au bord exact
+  du stock zéro (ou fourniture live couvrant tout le besoin), aucune
+  mitigation sur flux partiel à zéro, aucun stock négatif et aucune horloge
+  de mort. Contrat persisté avant implémentation dans GAME_BOOK §10,
+  DESIGN_GUIDE §3.2-v2, POP_V2_PLAN, BACKLOG, BALANCE_LOG et JOURNAL.
+
 ### Player Codex — tranche 1 implémentée (P2.codex, shell + 3 chapitres)
 
 - **Manuel joueur in-game (commit 2a4990e)** : bouton « Codex » sur le rail de

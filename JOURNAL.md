@@ -3318,3 +3318,20 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
   morts/exodés normalisés seulement à partir du palier télescope 3. Le seed
   prouve les vraies pyramides des chemins register/landing, sans inventer
   d'historique.
+
+## 2026-07-20 — Correctif de contrat BD : médicaments optionnels par âge
+
+- Décision responsable : les médicaments ne partagent pas la ration C/S
+  réduite de l'eau, de la nourriture et de l'oxygène. Burn validé
+  `[TUNE-v1]` : actifs 1×, enfants 1,25×, seniors 1,5×, sur la base existante
+  de 0,1 T/1 000 têtes pondérées/jour.
+- La médecine n'est jamais une ressource de survie obligatoire : aucun
+  stock-out ne tue et aucune horloge de mort n'est créée. Elle réduit la
+  pression de maladie tant que le stock familial existe ; le bonus tombe au
+  bord exact zéro si la production live ne couvre pas le besoin complet.
+  Une couverture live intégrale reste une fourniture continue ; un flux
+  partiel peut être brûlé mais n'accorde pas le bonus.
+- Invariants physiques : aucun stock négatif ; `med_1 → med_3` en cascade ;
+  la production au-delà du burn s'accumule et reste vendable. L'addendum
+  analytique du BALANCE_LOG confirme que les six ancres Round 9 ne bougent
+  pas, la médecine restant hors horloges et hors facteur de natalité.

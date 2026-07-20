@@ -147,6 +147,13 @@ DG §3.2-v2 j/k + GB §10 observability clause.
   starters expose the stable C/A/S pyramid and colonies the exact embarked
   mix; the dev seed validates/logs those real values rather than injecting
   fictitious demographic history.
+- **Medicine closure correction (owner, 2026-07-20)**: medicine is optional
+  and physically burned at 0.1 T/1 000 weighted heads/day, but unlike the
+  survival families its weights are A=1, C=1.25 and S=1.5 [TUNE-v1]. A
+  deficit world keeps the illness mitigation only until its family stock
+  reaches the exact zero edge; no resource may become negative. Full live
+  supply also medicates, partial supply at zero does not. Surplus production
+  remains in stock and is tradable; medicine never creates a death clock.
 - Tests: unit (deterministic route-death split, intel whitelist), integration
   (ownership revert + buildings preserved + governor host-fate; intel
   exposure with §10 direct refusals), E2E (embark-by-category UI;

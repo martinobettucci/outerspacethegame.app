@@ -321,6 +321,11 @@ spec → simulated balance → code.)*
   3 days; food out = 10 days; oxygen out = instant — and oxygen is only
   breathed from stock on hostile climates (temperate worlds have ambient
   air).
+- **Medicine is optional, never a survival clock.** Its burn follows the
+  demographic pyramid (children and seniors consume more medicine than an
+  active). A supplied population receives the illness mitigation; the bonus
+  ends at the exact exhaustion of the medicine reserve, resources never go
+  negative, and any production surplus remains ordinary tradable stock.
 - **Extinction strips ownership.** The world reverts to wild **keeping
   its buildings and unlocked knowledge** (a recolonizer's windfall);
   installed governors die with it (host-fate).

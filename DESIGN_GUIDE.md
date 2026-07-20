@@ -186,12 +186,20 @@ rule is **retired** — the actives count replaces it (≈ 55 % naturally).
 The planet stats page must show the pyramid explicitly.
 
 #### b) Consumption (per 1 000 heads per day)
-- Actives: food 1 T · water 1 T · medicine 0.1 T [TUNE].
-- Children & seniors: **0.6 ×** those rations [TUNE].
+- Food/water: actives 1 T each; children and seniors **0.6 ×** [TUNE].
 - **Oxygen** (NEW): consumed **only on hostile climates** (hot / cold /
   poison) at 0.6 T/1 000/day [TUNE], same 0.6× ration for C/S.
   **Temperate = ambient oxygen, zero stock draw** — the life-side climate
   differentiator (owner-validated).
+- **Medicine is a separate, optional ration**: base burn 0.1 T per 1 000
+  adult-equivalent heads/day [TUNE], with actives **1×**, children **1.25×**
+  and seniors **1.5×** [TUNE-v1, owner-approved 2026-07-20]. `med_1 → med_3`
+  are consumed in family order. While any family stock remains, the full burn
+  applies and illness receives its medication mitigation until the exact
+  stock edge. At zero, stock is clamped (never negative): an insufficient
+  live inflow may be consumed but gives no mitigation; a live inflow covering
+  the full burn is continuous supply and keeps it. Medicine creates **no death
+  clock**. Output above burn accumulates as normal stock and may be sold.
 
 #### c) Natality (residential establishes it)
 ```

@@ -727,3 +727,20 @@ recoverable/irreversible · clocks 3/10/instant exact · stationary pyramid
 18.2/54.5/27.3 · colony stabilizes · siege measured. Boom worlds skew
 young (up to ~55 % children) — accepted as identity ("nursery worlds").
 Implementation may start on guide v0.10.
+
+---
+
+## Round 9 addendum — medicine age burden (2026-07-20)
+
+Owner-approved correction: medicine is not weighted like food/water.
+Actives consume 1×, children 1.25× and seniors 1.5× [TUNE-v1]. At the
+stationary 18.2/54.5/27.3 pyramid this is 1.182 adult-equivalent medicine
+heads per resident. The 350-head starter therefore burns 0.04135 T/day
+(64×1.25 + 191 + 95×1.5), versus 0.02864 T/day under the incorrect shared
+0.6 C/S ration.
+
+No dynamic re-simulation is required: medicine remains optional (no death
+clock and no natality life-flux factor), so the six Round-9 survival/growth
+anchors are structurally unchanged. The correction only raises the physical
+medicine sink; even lab L1's 10 T/day nominal output remains far above a
+starter's burn, preserving a sellable surplus by design.
