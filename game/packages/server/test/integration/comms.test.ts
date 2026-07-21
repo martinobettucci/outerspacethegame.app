@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Ping/ping-back”; GAME_BOOK.md §4/§5; DESIGN_GUIDE.md §15. */
 /**
  * Intégration : la Silence et son protocole (GB §5) — portée obligatoire,
  * quota, ping-back qui ouvre LE canal, messages, refus d'autorisation.

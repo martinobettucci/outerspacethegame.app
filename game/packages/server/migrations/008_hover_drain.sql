@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §008_hover_drain; docs/BACKLOG.md §P3 “Hovering”; GAME_BOOK.md §7/§13; DESIGN_GUIDE.md §3.5.
 -- 008_hover_drain — drains de loitering & échouage (GB §7/§13, DG §3.5) :
 -- - le réservoir devient une quantité PARESSEUSE (amount dans ships.fuel,
 --   taux + as_of en colonnes) : hovering/idle consomment en continu ;

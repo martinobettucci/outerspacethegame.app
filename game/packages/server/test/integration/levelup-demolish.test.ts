@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Building catalog” and “Card hand”; GAME_BOOK.md §9/§25; DESIGN_GUIDE.md §5.1/§6. */
 /**
  * Intégration : montée de niveau & démolition (GB §18, DG §5.1/§6) sur
  * vraie base — coûts, plafond de profondeur du seed, politique de niveau

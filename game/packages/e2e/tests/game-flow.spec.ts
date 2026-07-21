@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 MVP and §P7 “User manual + onboarding”; GAME_BOOK.md §19; DESIGN_GUIDE.md §17; CLAUDE.md §15/§16. */
 /**
  * E2E — parcours complet du chunk D (CLAUDE.md §15/§16) :
  * états d'erreur d'auth → éveil d'un Souverain (vrai flux d'inscription)

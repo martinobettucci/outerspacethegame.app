@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 import { describe, expect, it } from 'vitest';
 import { evalLazy, rebase, whenReaches } from '../../src/sim/lazy.js';
 

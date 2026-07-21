@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 /**
  * Évaluation paresseuse (value, rate, t0) — DESIGN_GUIDE §1.
  * Les quantités continues sont stockées avec leur taux ; la valeur à

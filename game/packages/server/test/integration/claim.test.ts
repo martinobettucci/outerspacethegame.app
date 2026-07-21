@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * Intégration claim rig & salvage (GB §6 « no honor », DG §8.8) sur vraie
  * base : rig monté à l'atelier L2 (coût 25 steelL + 5 gold), réclamation
@@ -11,7 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { registerPlayer } from '../../src/services/players.js';
-import { fitClaimRig, startClaim } from '../../src/services/junk.js';
+import {  startClaim } from '../../src/services/junk.js';
 import { fleet, moveShip, setShipFuelForTest } from '../../src/services/ships.js';
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
@@ -101,25 +102,13 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe('fit du claim rig (atelier L2, coût, §10)', () => {
-  it('coût payé (25 steelL + 5 gold), double-fit refusé, autrui refusé', async () => {
-    await expect(fitClaimRig(pool, other, cargo)).rejects.toThrow(/obéit pas/);
-    await fitClaimRig(pool, owner, cargo);
+describe('claim rig — accessoire du pipeline (erratum 2026-07-22)', () => {
+  it('monté par fixture (fabrication/installation/refus couverts par gear.test)', async () => {
+    await pool.query(
+      `UPDATE ships SET claim_rig = true, accessories = accessories || '["claim_rig"]'::jsonb WHERE id = $1`,
+      [cargo],
+    ); // fixture §15
     expect((await ship(cargo)).claim_rig).toBe(true);
-    const { rows } = await pool.query(
-      `SELECT resource, amount_t FROM planet_stock
-       WHERE body_id = $1 AND resource IN ('steel_l', 'gold') ORDER BY resource`,
-      [ownerStarter],
-    );
-    expect(Number(rows.find((r) => r.resource === 'steel_l')!.amount_t)).toBeCloseTo(
-      35,
-      3,
-    );
-    expect(Number(rows.find((r) => r.resource === 'gold')!.amount_t)).toBeCloseTo(
-      15,
-      3,
-    );
-    await expect(fitClaimRig(pool, owner, cargo)).rejects.toThrow(/déjà monté/);
   });
 });
 

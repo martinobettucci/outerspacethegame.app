@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Migrations framework”; docs/SCHEMA.md §Conventions; CLAUDE.md §24. */
 /**
  * Migrateur SQL minimal et explicite (CLAUDE.md §24) : applique dans l'ordre
  * les fichiers `migrations/NNN_nom.sql` non encore enregistrés dans

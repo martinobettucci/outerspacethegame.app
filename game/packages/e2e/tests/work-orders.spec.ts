@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W7; GAME_BOOK.md §9; DESIGN_GUIDE.md §6. */
 /**
  * E2E — W7 usinage partiel des usines L3 (MASTER_PLAN W7, 2026-07-21) :
  * une mine montée L3 (vraies commandes) bascule la fabrication d'item en

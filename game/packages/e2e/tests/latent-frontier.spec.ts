@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; GAME_BOOK.md §15/§19; DESIGN_GUIDE.md §1/§2.2b. */
 /**
  * E2E — §2.2b frontière latente (directive responsable 2026-07-20,
  * CLAUDE.md §15/§16) : les mondes bonus lointains existent (prouvé en

@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §017_junk; docs/BACKLOG.md §P3 “Junk fields”; GAME_BOOK.md §22; DESIGN_GUIDE.md §10.4.
 -- Champs de junk (GB §22, DG §10.4) : UN champ max par cellule de 0,5 pc
 -- (les apports fusionnent), tonnage à DÉCROISSANCE EXPONENTIELLE 10 %/j
 -- évaluée à la lecture (0,9^jours — pas de taux linéaire, pas de bord :

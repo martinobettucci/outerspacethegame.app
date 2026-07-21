@@ -1,3 +1,4 @@
+/* @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”/“Free flight”; docs/DESIGN_SYSTEM.md §5–§8. */
 /*
  * Shared presentation for the Market and Comms operation surfaces.
  * Mechanics remain in their screen components; this layer owns atmosphere,

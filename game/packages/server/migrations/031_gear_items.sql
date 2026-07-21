@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship fitting”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8; PROD_MIGRATIONS.md §“Migrations en attente” (docs/SCHEMA.md gap: IR-004).
 -- 031 : W6 — pipeline accessoires & upgrades-items (MASTER_PLAN W6,
 -- JOURNAL 2026-07-21). Items NON-FONGIBLES : une ligne = un objet,
 -- entreposé sur un monde (balance d'items des warehouses — 50 × mult,

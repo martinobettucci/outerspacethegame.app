@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; GAME_BOOK.md §15/§19; DESIGN_GUIDE.md §1/§2.2b. */
 import { describe, expect, it } from 'vitest';
 import { SeededStream, seededFloat } from './rng.js';
 

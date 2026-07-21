@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”/“Free flight”/“Hovering”/“Sondes L3”; docs/MASTER_PLAN.md §W1–§W6; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §3.5/§7–§9. */
 /**
  * Coques et modules — DESIGN_GUIDE §8 (v0.9.2). COMPLET :
  * 9 coques (Combat/Cargo/Civil × S/M/L) + vaisseau personnel + sonde.

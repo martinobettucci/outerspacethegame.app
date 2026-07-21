@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.pop “Extinction”; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2(k). */
 /**
  * Transition canonique d'extinction (GB §10, DG §3.2-v2 k, chunk BD).
  *

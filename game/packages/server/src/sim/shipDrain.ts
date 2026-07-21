@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Hovering”/“Survival clocks & derelicts”/“Hull wear & shields”; docs/MASTER_PLAN.md §W1/§W5/§W6; GAME_BOOK.md §6/§7/§27; DESIGN_GUIDE.md §3.5/§8.7/§8.8. */
 /**
  * Drain de loitering d'un vaisseau (GB §7, DG §3.5) — le réservoir est une
  * quantité paresseuse : `ships.fuel[type]` porte le montant matérialisé,

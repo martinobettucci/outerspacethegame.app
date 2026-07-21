@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Recruitment pods”; GAME_BOOK.md §12/§13/§19; DESIGN_GUIDE.md §11.4. */
 /**
  * Intégration : pods de recrutement (GB §12/§13, DG §11.4) sur vraie
  * base — barème dérivé du census, impact immédiat des achats sur S_r,

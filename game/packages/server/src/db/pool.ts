@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §3/§8; docs/SCHEMA.md §Conventions. */
 import pg from 'pg';
 import { config } from '../config.js';
 

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Codex — catalogue des TYPES de bâtiments (décision responsable
  * 2026-07-20, JOURNAL) : rôle en clair + politique d'instances VALIDÉE
@@ -82,7 +83,7 @@ export const BUILDING_CODEX: Record<string, CodexBuildingEntry> = {
     note: 'Docks of every active spaceport add up.',
   },
   workshop: {
-    role: 'Repairs hulls, fits shields and rigs, crafts accessories.',
+    role: 'Repairs hulls and fabricates accessory items — rigs included — for warehoused hulls to install.',
     instances: 'single',
     note: 'Repair uses your BEST workshop — a second adds nothing.',
   },

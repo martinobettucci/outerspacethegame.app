@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W3; docs/BACKLOG.md §P3 “Sondes L3 & multi-carburant”; GAME_BOOK.md §4/§6/§14; DESIGN_GUIDE.md §8.1-v3; PROD_MIGRATIONS.md §“Migrations en attente” (docs/SCHEMA.md gap: IR-004).
 -- 029 : W3 — sondes L3, ancrage & transfert (MASTER_PLAN W3, JOURNAL
 -- 2026-07-21). Le flag « en transfert » (cible valide attaque 0, hook
 -- P5) est DÉRIVÉ : transfer_target_id NOT NULL.

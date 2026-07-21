@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; GAME_BOOK.md §15/§19; DESIGN_GUIDE.md §1/§2.2b. */
 /**
  * Intégration — §2.2b pocket luck & frontière latente (directive
  * responsable 2026-07-20) sur VRAIE base, via le VRAI flux d'inscription :

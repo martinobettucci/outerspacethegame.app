@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Colonisation — GB §19/§14/§12, DG §12/§3.2/§10.3.
  *

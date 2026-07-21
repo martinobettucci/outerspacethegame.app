@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4. */
 /**
  * E2E — consentement 50/50 des stargates (canon GB §6, DG §9.3), deux
  * comptes séquentiels (patron manual.spec) : Alice (yard actif, moitié

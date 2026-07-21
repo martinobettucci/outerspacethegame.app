@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Building catalog” and “Card hand”; GAME_BOOK.md §9/§25; DESIGN_GUIDE.md §5.1/§6. */
 /**
  * Tests de complétude du catalogue (règle de complétude CLAUDE.md) :
  * les ensembles énumérables du canon sont livrés EXHAUSTIVEMENT.

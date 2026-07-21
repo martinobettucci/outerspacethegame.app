@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Observability baseline”; CLAUDE.md §15/§20; docs/DAT.md §4. */
 import { describe, expect, it } from 'vitest';
 import type pg from 'pg';
 import { buildServer } from '../../src/api/server.js';

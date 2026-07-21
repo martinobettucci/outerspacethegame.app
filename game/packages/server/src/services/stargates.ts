@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4. */
 /**
  * Stargates (GB §6, DG §9.3–9.4) — le raccourci sûr du réseau.
  *

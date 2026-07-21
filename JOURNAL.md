@@ -4313,3 +4313,22 @@ Plan d'implémentation (chunk immédiat) :
   le flux fabrique→entrepose→installe ;
 - terraform core / colony kit : hors périmètre de cet erratum (flux
   colonial), à trancher séparément si souhaité.
+
+## 2026-07-22 — Erratum W6 livré : les rigs sont des accessoires
+
+Conforme au plan persisté ce matin : GEAR += harvest_rig /
+junk_collector / claim_rig (workshop, coûts historiques, 24 h [TUNE]) ;
+item_installed écrit le booléen d'effet hérité (les systèmes harvest/
+junk/claim le lisent inchangés) et l'objet occupe un slot accessoire ;
+migration 034 backfille les rigs posés dans accessories[] ; montage
+direct SUPPRIMÉ (services, routes, boutons — y compris le nettoyage
+d'une regex trop gourmande qui avait avalé le helper wrap, restauré).
+Codex : rôle du workshop réécrit (porte DoD). E2E : /test/grant-item
+(§15) + installRigViaPipeline — harvest/junk/claim verts en sériel.
+Conséquence canon assumée : cargo_s (1 slot) choisit UN équipement ;
+gear.test prouve le débordement de slots refusé.
+
+Preuves : shared items 3 ; gear.test 7/7 ; harvest 12 + junk + claim +
+wear adaptés (fixtures §15) ; balayage sériel 335/337 (census ×2 =
+flaky R5) ; E2E harvest/junk/claim 3/3 sériels ; client 21 ; build
+vert.

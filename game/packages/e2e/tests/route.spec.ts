@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Markets” and “Cells-star routing”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.2. */
 /**
  * E2E — routage cells-étoile & nudge triade (GB §13, DG §11.2) : deux
  * pools ore/cells + cells/water SANS pool direct ore/water ; le nudge

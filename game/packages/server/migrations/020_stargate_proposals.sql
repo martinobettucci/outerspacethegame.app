@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §020_stargate_proposals; docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3.
 -- Consentement 50/50 des stargates (canon GB §6 : « the price is split
 -- between the two owners », DG §9.3 « both consent ») — patron des
 -- offres manuelles : proposition épinglée du monde A (yard actif du

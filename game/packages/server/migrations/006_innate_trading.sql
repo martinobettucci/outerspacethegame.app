@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §006_innate_trading; docs/BACKLOG.md §P4 “Merchant-planet innate trading”; GAME_BOOK.md §9; DESIGN_GUIDE.md §11.2.
 -- 006_innate_trading — l'exception du monde marchand (GB §9) : une planète
 -- sous gouvernance Mercantile échange survie + carburant SANS bâtiment de
 -- marché. La config (offres innées + planchers keep-for-self) vit sur le

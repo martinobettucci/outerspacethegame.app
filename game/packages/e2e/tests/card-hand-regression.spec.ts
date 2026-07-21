@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Card hand UI”/“Card hand v2”; GAME_BOOK.md §17/§18; docs/DESIGN_SYSTEM.md §5. */
 /**
  * E2E — clôture AO + télescope sur tuile (décisions propriétaire
  * 2026-07-19/20, CLAUDE.md §16/§18).

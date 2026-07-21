@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Ping/ping-back”; GAME_BOOK.md §4/§5; DESIGN_GUIDE.md §15. */
 /**
  * Pings & canaux — GB §5 : « un ping doit être répondu par un ping-back
  * pour que le contact s'établisse ; aucun contact unilatéral. »

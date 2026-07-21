@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §024_pop_v2_settler_categories; docs/BACKLOG.md §P2.pop; docs/POP_V2_PLAN.md §BD; DESIGN_GUIDE.md §3.2-v2(j–k).
 -- 024 — Population v2, chunk BD : manifeste settlers par catégorie.
 -- Le total historique reste matérialisé pour les gardes/capacités, mais la
 -- contrainte garantit qu'il égale toujours enfants + actifs + seniors.

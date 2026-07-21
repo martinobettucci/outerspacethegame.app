@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4. */
 /**
  * Intégration consentement 50/50 des stargates (canon GB §6 « price
  * split between the two owners », DG §9.3 « both consent ») sur vraie

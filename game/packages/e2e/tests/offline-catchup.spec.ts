@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 /**
  * E2E — rattrapage hors-ligne (GB §15, DG §1) : le Souverain lance des
  * travaux (mine en chantier, extraction déjà active, quille de chantier

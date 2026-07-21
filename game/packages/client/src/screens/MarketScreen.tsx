@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Markets”/“Merchant-planet innate trading”/“Recruitment pods”/“Global census”; GAME_BOOK.md §9/§12/§13; DESIGN_GUIDE.md §11.1–§11.5. */
 /**
  * Écran Market — v1 : onglet Census (GB §13, DG §11.5). Totaux GLOBAUX
  * par ressource, catalogue EXHAUSTIF (zéros affichés), regroupés par

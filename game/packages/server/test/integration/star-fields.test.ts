@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * Intégration W5 : champs climatiques stellaires (MASTER_PLAN W5,
  * JOURNAL 2026-07-21) sur vraie base — une étoile diffuse son climat sur

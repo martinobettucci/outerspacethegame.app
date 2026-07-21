@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; DESIGN_GUIDE.md §0/§1. */
 /**
  * Constantes globales du jeu — DESIGN_GUIDE.md §0 (v0.9.2).
  *

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P5 “Ground defense”; GAME_BOOK.md §25; DESIGN_GUIDE.md §10.1. */
 /**
  * Catalogue des unités sol — DESIGN_GUIDE §10.1 (v0 COMPLET, 6 types).
  * Tous les chiffres [TUNE]. L2/L3 ≈ ×1.4 / ×1.9 de la ligne L1.

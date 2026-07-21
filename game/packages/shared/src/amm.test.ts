@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Markets” and “Cells-star routing”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.2. */
 /**
  * AMM (GB §13, DG §11.2) : produit constant, frais 25 bp LP + 25 bp
  * maison (L3 : LP 20 bp), seed = prix initial, croissance de k par la

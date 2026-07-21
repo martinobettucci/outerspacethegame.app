@@ -1,3 +1,4 @@
+/* @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Tech tree runtime”; GAME_BOOK.md §18; DESIGN_GUIDE.md §5. */
 .tech-tree-layer {
   position: fixed;
   z-index: 2200;

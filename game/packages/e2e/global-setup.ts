@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: CLAUDE.md §15/§16; docs/DAT.md §6. */
 /**
  * Setup global E2E : démarre le tick worker (Playwright ne gère en
  * webServer que des processus à URL). TICK_MS court pour observer la

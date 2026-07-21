@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §003_pings_channels; docs/BACKLOG.md §P4 “Ping/ping-back”; GAME_BOOK.md §5; DESIGN_GUIDE.md §15.
 -- 003_pings_channels — le protocole de la Silence (GB §5, GAME_BIBLE §1) :
 -- un ping doit recevoir un ping-back pour ouvrir un canal ; jamais de
 -- contact unilatéral. Retour arrière : DROP des trois tables.

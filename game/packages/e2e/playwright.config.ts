@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: CLAUDE.md §15/§16; docs/DAT.md §6. */
 import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
 

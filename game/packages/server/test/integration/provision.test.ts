@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Survival clocks & derelicts”; GAME_BOOK.md §6/§7; DESIGN_GUIDE.md §3.5/§8.8. */
 /**
  * Intégration avitaillement & chemin stock-planète de la survie (GB §6/§7,
  * DG §3.5) sur vraie base : en survol de SON monde, le stock planétaire

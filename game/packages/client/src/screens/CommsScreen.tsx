@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Ping/ping-back”; GAME_BOOK.md §4/§5; DESIGN_GUIDE.md §15. */
 /**
  * Comms — le protocole de la Silence (GB §5, GAME_BIBLE §1) : hails
  * entrants (ping-back = l'événement historique), canaux, chat.

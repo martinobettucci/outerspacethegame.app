@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.pop “Campagnes simulées”; DESIGN_GUIDE.md §3.2-v2; BALANCE_LOG.md §Round 9.
 """Round 9 — numerical simulator for DESIGN_GUIDE §3.2-v2
 (Population, demographics & employment v2 — THE central mechanic).
 

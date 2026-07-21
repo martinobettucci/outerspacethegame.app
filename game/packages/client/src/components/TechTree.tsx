@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Tech tree runtime”; GAME_BOOK.md §18; DESIGN_GUIDE.md §5. */
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {

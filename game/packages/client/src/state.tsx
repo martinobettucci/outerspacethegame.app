@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding” and §P2.codex; docs/DAT.md §2/§4; docs/DESIGN_SYSTEM.md §5. */
 /**
  * État applicatif minimal : session joueur + vue courante.
  * Pas de bibliothèque d'état : la surface est petite et explicite (§19 —

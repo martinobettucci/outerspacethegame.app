@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §015_harvest; docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8.
 -- Récolte stellaire (GB §22, DG §8.8) : le rig est un accessoire monté à
 -- l'atelier (booléen, patron colony_kit) ; une coque IDLE à ≤ 8 pc d'une
 -- étoile récolte via un lien harvesting_star_id — son réservoir devient un

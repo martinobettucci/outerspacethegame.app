@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5. */
 /**
  * Census publié en jeu (GB §13, DG §11.5) : totaux GLOBAUX par ressource
  * UNIQUEMENT — la ventilation par source (stocks vs soutes) et, plus

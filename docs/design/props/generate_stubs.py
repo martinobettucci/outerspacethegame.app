@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §5–§7; docs/DESIGN_SYSTEM.md §5/§10–§11.
 """Génère les images stub du pipeline d'assets ATG (voir docs/ASSET_PIPELINE.md).
 
 COUVERTURE COMPLÈTE du catalogue v0 (DESIGN_GUIDE §5.1/§8/§10, GAMEBOOK §25) :
@@ -264,7 +265,9 @@ with open(os.path.join(REPO, "docs", "design", "props", "manifest.json"), "w") a
 groups = {}
 for m in manifest:
     groups.setdefault(m["file"].split("/")[2], []).append(m)
-html = ["<!doctype html><html><head><meta charset='utf-8'><title>ATG — Full asset gallery</title>",
+html = ["<!doctype html>",
+        "<!-- @spec All generated gallery markup implements: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §5–§7; docs/DESIGN_SYSTEM.md §5/§10–§11. -->",
+        "<html><head><meta charset='utf-8'><title>ATG — Full asset gallery</title>",
         "<style>body{background:#060810;color:#F2F4FA;font:13px Inter,sans-serif;padding:24px;min-width:1280px}",
         "h1{color:#D9CF4A;font-family:Orbitron,sans-serif}h2{color:#6E96E8;margin-top:40px;font-family:Orbitron,sans-serif}",
         ".g{display:flex;flex-wrap:wrap;gap:12px}figure{margin:0;background:#111A30;border:1px solid #24314F;",

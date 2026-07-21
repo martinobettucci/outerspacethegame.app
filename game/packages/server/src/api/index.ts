@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §2/§4/§5; docs/BACKLOG.md §P1–§P4. */
 import { config } from '../config.js';
 import { createPool } from '../db/pool.js';
 import { buildServer } from './server.js';

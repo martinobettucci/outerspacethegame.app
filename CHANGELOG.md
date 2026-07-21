@@ -2,6 +2,27 @@
 
 ## [Non publié]
 
+### Erratum W6 (décision responsable 2026-07-22) : les rigs SONT des accessoires
+
+- Harvest rig, junk collector et claim rig rejoignent le pipeline
+  d'items : fabriqués au WORKSHOP (coûts des rigs historiques, 24 h
+  [TUNE]), entreposés (balance d'items), INSTALLÉS sur coque entreposée
+  et **occupant un slot accessoire** (une cargo_s n'a qu'UN slot : elle
+  choisit). L'installation écrit le booléen d'effet hérité (une seule
+  vérité d'effet, l'objet dans accessories[]).
+- Migration 034 : les rigs posés sont backfillés dans accessories[]
+  (comptage de slots honnête ; coques héritées sur-remplies tolérées,
+  annoncé).
+- SUPPRESSION du montage direct : services fitHarvestRig/
+  fitJunkCollector/fitClaimRig, routes et boutons UI retirés — la seule
+  voie est le pipeline. Codex : rôle du workshop mis à jour.
+- Instrumentation §15 : /test/grant-item (jamais en prod) + helper E2E
+  installRigViaPipeline (entrepôt → install réel → quai) ; specs
+  harvest/junk/claim réécrits dessus et VERTS (3/3, sériel).
+- Tests : shared items 3 (11 items dont 4 accessoires), gear.test 7/7
+  (rig par pipeline = booléen écrit + slot débordé refusé), balayage
+  sériel 335/337 (census ×2 = flaky R5 connu), client 21, build vert.
+
 ### W8d — le Crusader : flotte-suiveuse (MASTER_PLAN W8, 2026-07-21)
 
 - Escorte en SURVOL du Crusader (`hoverAtCrusader`, ≤ 1 pc, v1 vos

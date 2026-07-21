@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * W6 — catalogue d'items non-fongibles : exhaustivité (règle de
  * complétude), multiplicateurs DG §8.2, capacité d'items AD réveillée.
@@ -17,6 +18,9 @@ describe('W6 — catalogue ITEMS', () => {
     expect(ALL_GEAR_KEYS.sort()).toEqual(
       [
         'advanced_refueling_system',
+        'harvest_rig',
+        'junk_collector',
+        'claim_rig',
         'engine_l2',
         'engine_l3',
         'armor_l2',

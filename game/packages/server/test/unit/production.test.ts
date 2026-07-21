@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Industry”/“Efficiency engine” and §P2.pop; GAME_BOOK.md §9/§10; DESIGN_GUIDE.md §3.2-v2/§3.3/§3.4/§6. */
 import { describe, expect, it } from 'vitest';
 import {
   efficiency,

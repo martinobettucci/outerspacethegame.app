@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.pop; docs/POP_V2_PLAN.md §BA–§BD; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2. */
 /**
  * E2E visuel — chunk BC (GB §10, DG §3.2-v2 h/i) : vraie carte clinique,
  * vraie chaîne d'unlock/pose, puis ledger démographique complet avec

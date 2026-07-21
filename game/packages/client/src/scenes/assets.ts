@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Isometric planet view”; GAME_BOOK.md §17/§26; docs/ASSET_PIPELINE.md §2–§4; docs/DESIGN_SYSTEM.md §9. */
 /**
  * Chargement des sprites du contrat d'assets (docs/ASSET_PIPELINE.md §4).
  * - GIF animés : décodés par pixi.js/gif (GifSource mis en cache par URL) ;

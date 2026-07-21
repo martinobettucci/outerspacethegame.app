@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Building catalog”; GAME_BOOK.md §8/§24; DESIGN_GUIDE.md §7. */
 /**
  * Liste maîtresse des ressources fongibles — GAMEBOOK §24, GAME_BIBLE §6.
  * COMPLÈTE : les 30 fongibles canon (alignés sur les assets `res_{id}.gif`)

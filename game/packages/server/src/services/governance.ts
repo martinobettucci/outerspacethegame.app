@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Governance v1”; GAME_BOOK.md §11/§21; DESIGN_GUIDE.md §4.1. */
 /**
  * Gouvernance v1 (GB §11/§21, DG §4.1) — installation PERMANENTE de
  * gouverneurs et préview canon-obligatoire.

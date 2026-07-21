@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Markets” and “Merchant-planet innate trading”; GAME_BOOK.md §9/§13; DESIGN_GUIDE.md §11.1–§11.2. */
 /**
  * Marché L1 taux fixe — GB §9/§13, DG §11.1.
  *

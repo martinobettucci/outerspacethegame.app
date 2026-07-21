@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Hovering”; GAME_BOOK.md §7/§13; DESIGN_GUIDE.md §3.5. */
 /**
  * E2E — drains de loitering, échouage & sauvetage (GB §7/§13, DG §3.5) :
  * survol possédé payé par la planète (taux visibles), échouage

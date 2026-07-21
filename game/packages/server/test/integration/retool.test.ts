@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Industry”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3/§5.1/§6. */
 /**
  * Intégration retool (DG §5.1 « re-targeting = 24 h retool » ; §4.1
  * Industrialist : instantané ≤ 1 switch/24 h) : chemin minuté (statut

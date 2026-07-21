@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Hovering”; GAME_BOOK.md §7/§13; DESIGN_GUIDE.md §3.5. */
 /**
  * Intégration : drains de loitering, échouage & ravitaillement (GB §7/§13,
  * DG §3.5) sur vraie base — survol possédé payé par le stock planétaire,

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Auth + account lifecycle”; GAME_BOOK.md §19; docs/DAT.md §5. */
 /**
  * Sessions serveur — jeton opaque en cookie httpOnly ; seul le hash SHA-256
  * du jeton est stocké (un dump de base ne donne aucune session utilisable).

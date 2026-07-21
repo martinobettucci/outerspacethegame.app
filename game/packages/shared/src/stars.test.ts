@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Universe gen” and §P3 “Star harvest”; GAME_BOOK.md §22; DESIGN_GUIDE.md §2.1/§8.8. */
 /** Récolte stellaire (GB §22, DG §8.8) — gradient, flare, bornes. */
 import { describe, expect, it } from 'vitest';
 import {

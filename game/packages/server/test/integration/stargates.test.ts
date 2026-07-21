@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4. */
 /**
  * Intégration stargates (GB §6, DG §9.3–9.4) sur vraie base : chantier au
  * stargate_yard ACTIF (coût payé — crystal_any résolu par climat, 1

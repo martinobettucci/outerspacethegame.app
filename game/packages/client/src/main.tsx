@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding” and §P2.codex; docs/DAT.md §2/§4; docs/DESIGN_SYSTEM.md §5. */
 import '@fontsource/orbitron/500.css';
 import '@fontsource/orbitron/700.css';
 import '@fontsource-variable/inter';

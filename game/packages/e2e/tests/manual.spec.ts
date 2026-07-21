@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6. */
 /**
  * E2E — canal manuel (GB §9, DG §6 round 7) : le vendeur rend un warehouse
  * PUBLIC (panneau bâtiment) et ouvre son port ; l'acheteur — VRAI second

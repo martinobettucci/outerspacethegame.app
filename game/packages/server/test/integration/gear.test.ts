@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * Intégration W6 : pipeline accessoires & upgrades-items (MASTER_PLAN
  * W6, JOURNAL 2026-07-21) sur vraie base — fabrication (bâtiment hôte
@@ -228,6 +229,38 @@ describe('W6 — installation sur coque ENTREPOSÉE', () => {
     expect(view.tankU).toBeCloseTo(90, 6);
     expect(view.hull.maxHp).toBeCloseTo(128, 6); // 80 × 1,6
     expect(view.upgrades).toEqual({ fuel: 2, armor: 3, engine: 2 });
+  });
+
+  it('erratum 2026-07-22 : un RIG installé par le pipeline écrit le booléen d\'effet et occupe un slot', async () => {
+    // Le hauler (cargo_s, 1 slot accessoire) porte déjà l'advanced
+    // refueling system : un rig de plus DÉBORDE les slots — refus.
+    await fabricateGear(pool, owner, starter, 'claim_rig', FAST);
+    await drainGear();
+    await warehouseShip(pool, owner, haulerId).catch(() => undefined);
+    await expect(
+      installGear(pool, owner, haulerId, 'claim_rig', FAST),
+    ).rejects.toMatchObject({ code: 'not_available' });
+    // Sur une coque L (4 slots) : l'installation écrit claim_rig = true.
+    await pool.query(
+      `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
+          status, docked_body_id, fuel, engine_type)
+       VALUES ($1, 'cargo', 'l', 'Big Rigger',
+          (SELECT x FROM bodies WHERE id = $2),
+          (SELECT y FROM bodies WHERE id = $2),
+          'warehoused', $2, '{"cold": 0}', 'cold')`,
+      [owner, starter],
+    );
+    const { rows: big } = await pool.query(
+      `SELECT id FROM ships WHERE name = 'Big Rigger'`,
+    );
+    await installGear(pool, owner, big[0].id, 'claim_rig', FAST);
+    await drainGear();
+    const { rows: rigged } = await pool.query(
+      `SELECT claim_rig, accessories FROM ships WHERE id = $1`,
+      [big[0].id],
+    );
+    expect(rigged[0].claim_rig).toBe(true);
+    expect(rigged[0].accessories).toContain('claim_rig');
   });
 
   it('effet accessoire : DEUX sondes L3 ancrées (au lieu d\'une)', async () => {

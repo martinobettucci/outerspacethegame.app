@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §7; docs/DESIGN_SYSTEM.md §5/§9–§11. */
 /**
  * Textures de FOND pour l'UI (panneaux, cartes, rail, voile modal) —
  * demande du responsable : « UI texturing », PAS de l'art de jeu.

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding”; docs/DAT.md §6; README.md §Environment variables. */
 /**
  * Configuration centralisée du serveur (CLAUDE.md §3 : configuration
  * centralisée, variables documentées dans game/.env.example).

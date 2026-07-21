@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Card hand UI”/“Card hand v2”; GAME_BOOK.md §17/§18; docs/DESIGN_SYSTEM.md §5. */
 /**
  * La main de cartes de construction (GB §17, DESIGN_SYSTEM §5) :
  * ancrée en bas, art des cartes + chips de coût + badge de politique,

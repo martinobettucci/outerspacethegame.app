@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: CLAUDE.md §15; docs/DAT.md §6. */
 /**
  * Base de test dédiée (atg_test) sur la MÊME instance Postgres locale que
  * le dev — vraie base, vraies migrations (CLAUDE.md §15), sans polluer

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.pop; docs/POP_V2_PLAN.md §BA–§BD; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2. */
 /**
  * Population v2 — règles pures (DG §3.2-v2, Round 9 / guide v0.10).
  */

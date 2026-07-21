@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * E2E — W5 champs climatiques stellaires & coque morphique (GB §27,
  * MASTER_PLAN W5, 2026-07-21) : le champ d'une étoile (0,5 × r_nova) est

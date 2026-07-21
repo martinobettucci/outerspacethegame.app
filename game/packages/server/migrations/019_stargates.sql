@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §019_stargates; docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4.
 -- Stargates (GB §6, DG §9.3–9.4) : raccourci instantané entre deux
 -- mondes-endpoints POSSÉDÉS (v1 même propriétaire — le partage 50/50
 -- avec consentement inter-joueurs arrive avec son flux dédié, annoncé).

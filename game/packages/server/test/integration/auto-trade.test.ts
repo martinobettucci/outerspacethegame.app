@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Hover auto-trade”; GAME_BOOK.md §7; DESIGN_GUIDE.md §3.5. */
 /**
  * Intégration auto-trade du survol étranger (GB §7, DG §3.5) sur vraie
  * base : règles par coque (§10, validation), déclenchement PARESSEUX

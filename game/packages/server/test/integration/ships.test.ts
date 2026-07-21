@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Ship hulls”, “Free flight”, and “Hovering”; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §7–§9. */
 /**
  * Intégration : vol libre & sondes (GB §6/§14/§21, DG §8) sur vraie base.
  */

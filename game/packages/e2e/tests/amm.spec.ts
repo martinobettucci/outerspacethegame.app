@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Markets” and “Cells-star routing”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.2. */
 /**
  * E2E — pools AMM du marché L2 (GB §13, DG §11.2) : un Souverain
  * Mercantile monte son marché au L2 (gate de gouvernance réel), seed un

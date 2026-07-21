@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Efficiency engine” and “Fungible storage”; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.3b/§3.4. */
 /**
  * Formules canoniques — DESIGN_GUIDE §3 (v0.9.2).
  * Chaque constante [TUNE] est nommée et centralisée ici.

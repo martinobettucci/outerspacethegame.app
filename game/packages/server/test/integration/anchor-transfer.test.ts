@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W1/§W3/§W4; docs/BACKLOG.md §P3 “Sondes L3 & multi-carburant”; GAME_BOOK.md §4/§6/§14; DESIGN_GUIDE.md §8.1–§8.3. */
 /**
  * Intégration W3 : sondes L3 — ancrage & transfert (MASTER_PLAN W3,
  * JOURNAL 2026-07-21) sur vraie base — gate pad L3 + surcoût empilé,

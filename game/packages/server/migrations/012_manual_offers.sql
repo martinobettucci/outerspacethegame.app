@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §012_manual_offers; docs/BACKLOG.md §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6.
 -- 012 — Canal manuel (GB §9, DG §6 round 7) : offres d'achat manuelles
 -- sur le stock browsable des warehouses PUBLICS. L'offre épingle le
 -- vaisseau À QUAI de l'acheteur (ship_id) : le règlement à l'acceptation

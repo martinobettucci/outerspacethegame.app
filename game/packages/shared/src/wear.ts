@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * Usure de coque environnementale (GB §27 SETTLED round 4, DG §8.8) —
  * règles PURES. Un péage déterministe, JAMAIS un blocage ni une mort :

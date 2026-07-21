@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Codex bâtiments — exhaustivité (règle de complétude) et cohérence de
  * la politique d'instances VALIDÉE (responsable 2026-07-20, JOURNAL).

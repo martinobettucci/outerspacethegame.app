@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Hover auto-trade”; GAME_BOOK.md §7; DESIGN_GUIDE.md §3.5. */
 /**
  * Auto-trade du survol étranger (GB §7, DG §3.5) — la coque en orbite
  * d'un monde d'AUTRUI rachète au marché local quand un réservoir passe

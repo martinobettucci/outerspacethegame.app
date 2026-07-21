@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Card hand UI”/“Card hand v2”; GAME_BOOK.md §17/§18; docs/DESIGN_SYSTEM.md §5. */
 /**
  * Régression « probe invisible » (2026-07-20) : une carte DÉVERROUILLÉE mais
  * momentanément impossible à poser (placement trop cher, pas de tuile, max

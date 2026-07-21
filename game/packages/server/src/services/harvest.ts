@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
 /**
  * Récolte stellaire (GB §22, DG §8.8) — le rig s'équipe à l'atelier, la
  * récolte se fait IMMOBILE (statut idle [interp annoncée : l'image canon
@@ -12,7 +13,6 @@
  * flare ≤ 5 % est visible sous scope.
  */
 import {
-  HARVEST_RIG_COST,
   harvestYieldPerDay,
   hoverIdleFuelUPerDay,
   HULLS,
@@ -22,7 +22,7 @@ import {
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
-import { payCost, CommandError } from './planets.js';
+import { CommandError } from './planets.js';
 import { evalShipFuel, rebaseShipDrain, rebaseShipHull, type ShipRow } from '../sim/shipDrain.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,60 +92,6 @@ export async function settleStarHarvest(
     if (at !== null) {
       await enqueue(client, 'star_supernova', new Date(at), { bodyId: star.id });
     }
-  }
-}
-
-/**
- * Monte le harvest rig (accessoire atelier, politics-free — DG §8.8) : à
- * quai sur SON monde avec un workshop ACTIF (L1 suffit [TUNE interp — le
- * guide n'exige L2 que pour le terraform core]), coût 20 steelL +
- * 5 crystal_temperate + 5 gold [TUNE]. Sondes et personnel exclus (pas de
- * réservoir).
- */
-export async function fitHarvestRig(
-  pool: pg.Pool,
-  playerId: string,
-  shipId: string,
-  opts: { nowMs?: number } = {},
-): Promise<{ cost: typeof HARVEST_RIG_COST }> {
-  const nowMs = opts.nowMs ?? Date.now();
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const ship = await lockOwnedShip(client, playerId, shipId);
-    if (['probe', 'personal'].includes(ship.hull_category)) {
-      throw new CommandError('not_available', 'Cette coque ne porte pas de rig');
-    }
-    if (ship.harvest_rig) {
-      throw new CommandError('not_available', 'Le rig est déjà monté');
-    }
-    if (ship.status !== 'docked' || !ship.docked_body_id) {
-      throw new CommandError('not_available', 'Le rig se monte à quai');
-    }
-    const { rows: worlds } = await client.query(
-      `SELECT * FROM bodies WHERE id = $1 FOR UPDATE`,
-      [ship.docked_body_id],
-    );
-    if (!worlds[0] || worlds[0].owner_id !== playerId) {
-      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
-    }
-    const { rows: shop } = await client.query(
-      `SELECT 1 FROM buildings
-       WHERE body_id = $1 AND key = 'workshop' AND status = 'active'`,
-      [ship.docked_body_id],
-    );
-    if (!shop[0]) {
-      throw new CommandError('not_available', 'Un workshop actif est requis');
-    }
-    await payCost(client, worlds[0].id, worlds[0].climate, HARVEST_RIG_COST, nowMs);
-    await client.query(`UPDATE ships SET harvest_rig = true WHERE id = $1`, [shipId]);
-    await client.query('COMMIT');
-    return { cost: HARVEST_RIG_COST };
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  } finally {
-    client.release();
   }
 }
 

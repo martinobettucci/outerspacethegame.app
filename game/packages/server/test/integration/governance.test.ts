@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Governance v1”; GAME_BOOK.md §11/§21; DESIGN_GUIDE.md §4.1. */
 /**
  * Intégration gouvernance v1 (GB §11/§21, DG §4.1) sur vraie base :
  * exigences par taille (S 0 / M 1 / L 3), G ×0.5 appliqué aux DÉBITS,

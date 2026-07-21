@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Building catalog” and “Card hand”; GAME_BOOK.md §9/§25; DESIGN_GUIDE.md §5.1/§6. */
 /**
  * Catalogue des bâtiments — DESIGN_GUIDE §5/§5.1/§6 (v0.10), COMPLET (29).
  * Clés = contrat d'assets (`building_{key}_l{n}.gif`).

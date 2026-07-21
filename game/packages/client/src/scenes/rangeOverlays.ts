@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen” and §P3 “Galaxy map”/“Telescope intel”; GAME_BOOK.md §2/§4/§6/§22; DESIGN_GUIDE.md §2/§9; docs/MASTER_PLAN.md §W4. */
 /**
  * Superpositions COSMÉTIQUES de la carte galaxie (décisions responsable
  * 2026-07-20, JOURNAL) — maths pures, testables sans three.js :

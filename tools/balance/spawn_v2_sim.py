@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Pocket luck & frontière latente”; GAME_BOOK.md §19; DESIGN_GUIDE.md §2.2b; BALANCE_LOG.md §Round 10.
 """Round 10 — Monte-Carlo universe simulator for DESIGN_GUIDE §2.2b
 (Pocket luck & the latent frontier — owner directive 2026-07-20).
 

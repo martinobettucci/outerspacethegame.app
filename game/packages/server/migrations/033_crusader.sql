@@ -1,4 +1,4 @@
--- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8; PROD_MIGRATIONS.md §“Migrations en attente”.
+-- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8; PROD_MIGRATIONS.md §“Migrations en attente”; INCONSISTENCY_REPORT.md §IR-004/§IR-010 (missing schema/canon sections).
 -- 033 : W8a — le CRUSADER, petite planète volante (MASTER_PLAN W8,
 -- JOURNAL 2026-07-21). Le combat_l ne se pose JAMAIS (GB amendé —
 -- intention première draft) : les existants à quai/en entrepôt sont

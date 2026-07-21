@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.pop; docs/POP_V2_PLAN.md §BA–§BD; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2. */
 /** Indicateurs/projections de la page stats — purs, sans base. */
 import { describe, expect, it } from 'vitest';
 import type { ProductionSnapshot } from '../../src/sim/rebase.js';

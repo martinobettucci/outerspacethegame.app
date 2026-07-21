@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.pop; docs/POP_V2_PLAN.md §BA–§BD; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2. */
 /**
  * Population & Employment v2 — règles PURES (DESIGN_GUIDE §3.2-v2,
  * canon GB §10 réécrit 2026-07-19 ; équilibré Round 9, guide v0.10).

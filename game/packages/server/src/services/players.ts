@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Auth + account lifecycle”; GAME_BOOK.md §19; docs/DAT.md §5. */
 /**
  * Cycle de vie des comptes — inscription = création du joueur + spawn du
  * système starter, dans UNE transaction (GB §19 : chaque joueur démarre

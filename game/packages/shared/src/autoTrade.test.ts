@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Hover auto-trade”; GAME_BOOK.md §7; DESIGN_GUIDE.md §3.5. */
 /** Auto-trade du survol (GB §7, DG §3.5) — destinations, validation. */
 import { describe, expect, it } from 'vitest';
 import {

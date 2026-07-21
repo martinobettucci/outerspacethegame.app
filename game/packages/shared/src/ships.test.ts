@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Ship hulls”, “Free flight”, and “Hovering”; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §7–§9. */
 /**
  * Drains de loitering (GB §7, DG §3.5/§9.1) : taux par taille, exemptions
  * canon (personal §21, probe sans réservoir), table de vérité COMPLÈTE de

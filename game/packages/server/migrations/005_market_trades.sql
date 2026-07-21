@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §005_market_trades; docs/BACKLOG.md §P4 “Markets”; GAME_BOOK.md §9/§13; DESIGN_GUIDE.md §11.1.
 -- 005_market_trades — marché L1 taux fixe (GB §9/§13, DG §11.1) : journal
 -- des échanges exécutés (les limites quotidienne/absolue d'un slot se
 -- vérifient contre ce journal ; la config des slots vit dans

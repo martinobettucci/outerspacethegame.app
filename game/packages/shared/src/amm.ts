@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Markets” and “Cells-star routing”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.2. */
 /**
  * Pools AMM des marchés L2+ (GB §13, DG §11.2) — maths PURES.
  *

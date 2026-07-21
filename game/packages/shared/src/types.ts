@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §3/§4; docs/SCHEMA.md §Tables. */
 /**
  * Types & énumérations du domaine — GAMEBOOK §3/§8/§11/§12/§14/§24.
  * Les identifiants textuels correspondent au contrat d'assets

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Markets” and “Cells-star routing”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.2. */
 /**
  * Intégration pools AMM (GB §13, DG §11.2) sur vraie base : seed = prix
  * initial payé PHYSIQUEMENT, réserves comptées au stockage, échanges à

@@ -14,8 +14,6 @@ import {
 import {
   collectJunk,
   dumpCargo,
-  fitClaimRig,
-  fitJunkCollector,
   startClaim,
   visibleDerelicts,
   visibleJunkFields,
@@ -50,7 +48,6 @@ import {
   visibleBodies,
 } from '../services/world.js';
 import {
-  fitHarvestRig,
   setStarStockForTest,
   startHarvest,
   stopHarvest,
@@ -1030,6 +1027,29 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
 
+    // W6/erratum rigs : granter un ITEM en entrepôt (l'acquisition par
+    // pipeline est couverte par gear.test/gear.spec — ici on outille les
+    // parcours AVAL de façon déterministe).
+    app.post('/test/grant-item', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({ planetId: z.string().uuid(), itemKey: z.string().min(1) })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+      const { rows } = await deps.pool.query(
+        `SELECT owner_id FROM bodies WHERE id = $1`,
+        [parsed.data.planetId],
+      );
+      if (rows[0]?.owner_id !== player.id) {
+        return reply.status(403).send({ error: 'forbidden' });
+      }
+      await deps.pool.query(
+        `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+        [parsed.data.planetId, parsed.data.itemKey],
+      );
+      return { granted: parsed.data.itemKey };
+    });
+
     app.post('/test/grant-npc', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z
@@ -1179,12 +1199,6 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     return wrap(reply, () => dumpCargo(deps.pool, player.id, id, parsed.data));
   });
 
-  app.post('/ships/:id/junk-collector', async (req, reply) => {
-    const player = await requirePlayer(req);
-    const { id } = req.params as { id: string };
-    return wrap(reply, () => fitJunkCollector(deps.pool, player.id, id));
-  });
-
   app.post('/stargates', async (req, reply) => {
     const player = await requirePlayer(req);
     const parsed = z
@@ -1265,12 +1279,6 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     );
   });
 
-  app.post('/ships/:id/claim-rig', async (req, reply) => {
-    const player = await requirePlayer(req);
-    const { id } = req.params as { id: string };
-    return wrap(reply, () => fitClaimRig(deps.pool, player.id, id));
-  });
-
   app.post('/ships/:id/claim', async (req, reply) => {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
@@ -1309,12 +1317,6 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         timeScale: deps.config.TIME_SCALE,
       }),
     );
-  });
-
-  app.post('/ships/:id/harvest-rig', async (req, reply) => {
-    const player = await requirePlayer(req);
-    const { id } = req.params as { id: string };
-    return wrap(reply, () => fitHarvestRig(deps.pool, player.id, id));
   });
 
   app.post('/ships/:id/harvest', async (req, reply) => {

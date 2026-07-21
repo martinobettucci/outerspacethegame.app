@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Tech tree runtime”; GAME_BOOK.md §18; DESIGN_GUIDE.md §5. */
 /**
  * ADN enrichi des mondes bonus (DG §2.2b, directive responsable 2026-07-20).
  *

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Docks”; GAME_BOOK.md §9/§14; DESIGN_GUIDE.md §5.1/§7/§8.6. */
 /**
  * Docks de spaceport (DG §5.1/§8.6) : comptes cumulatifs par niveau,
  * exemptions canon, faisabilité gloutonne (débordement S→M→L),

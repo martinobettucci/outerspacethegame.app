@@ -10,12 +10,10 @@
 import {
   CLAIM_HOURS,
   CLAIM_RADIUS_PC,
-  CLAIM_RIG_COST,
   containersUsed,
   evalJunkAmount,
   HULLS,
   JUNK_CELL_PC,
-  JUNK_COLLECTOR_COST,
   JUNK_DUMPS_PER_DAY,
   JUNK_FIELD_EPSILON_T,
   JUNK_NO_DUMP_STARTER_PC,
@@ -28,7 +26,7 @@ import {
   type ResourceId,
 } from '@atg/shared';
 import type pg from 'pg';
-import { CommandError, payCost } from './planets.js';
+import { CommandError } from './planets.js';
 import { rebaseShipDrain } from '../sim/shipDrain.js';
 import { enqueue } from '../sim/events.js';
 
@@ -209,64 +207,6 @@ export async function dumpCargo(
   }
 }
 
-/** Monte le junk collector (atelier L2, 15 steelL + 5 silicon [TUNE]). */
-export async function fitJunkCollector(
-  pool: pg.Pool,
-  playerId: string,
-  shipId: string,
-  opts: { nowMs?: number } = {},
-): Promise<{ cost: typeof JUNK_COLLECTOR_COST }> {
-  const nowMs = opts.nowMs ?? Date.now();
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const ship = await lockOwnedShip(client, playerId, shipId);
-    if (['probe', 'personal'].includes(ship.hull_category)) {
-      throw new CommandError('not_available', 'Cette coque ne collecte pas');
-    }
-    if (ship.junk_collector) {
-      throw new CommandError('not_available', 'Le collecteur est déjà monté');
-    }
-    if (ship.status !== 'docked' || !ship.docked_body_id) {
-      throw new CommandError('not_available', 'Le collecteur se monte à quai');
-    }
-    const { rows: worlds } = await client.query(
-      `SELECT * FROM bodies WHERE id = $1 FOR UPDATE`,
-      [ship.docked_body_id],
-    );
-    if (!worlds[0] || worlds[0].owner_id !== playerId) {
-      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
-    }
-    const { rows: shop } = await client.query(
-      `SELECT 1 FROM buildings
-       WHERE body_id = $1 AND key = 'workshop' AND status = 'active'
-         AND level >= 2`,
-      [ship.docked_body_id],
-    );
-    if (!shop[0]) {
-      throw new CommandError('not_available', 'Un workshop L2 actif est requis');
-    }
-    await payCost(client, worlds[0].id, worlds[0].climate, JUNK_COLLECTOR_COST, nowMs);
-    await client.query(
-      `UPDATE ships SET junk_collector = true WHERE id = $1`,
-      [shipId],
-    );
-    await client.query('COMMIT');
-    return { cost: JUNK_COLLECTOR_COST };
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Un scoop de collecte (30 T [TUNE-v1] par 24 h-jeu) dans la cellule où
- * la coque s'attarde — limité par les conteneurs libres (1 T = 1
- * conteneur) et le champ ; le champ matérialisé descend, se dissipe sous
- * l'epsilon.
- */
 export async function collectJunk(
   pool: pg.Pool,
   playerId: string,
@@ -353,61 +293,6 @@ export async function collectJunk(
   }
 }
 
-/** Monte le claim rig (atelier L2, 25 steelL + 5 gold [TUNE]). */
-export async function fitClaimRig(
-  pool: pg.Pool,
-  playerId: string,
-  shipId: string,
-  opts: { nowMs?: number } = {},
-): Promise<{ cost: typeof CLAIM_RIG_COST }> {
-  const nowMs = opts.nowMs ?? Date.now();
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const ship = await lockOwnedShip(client, playerId, shipId);
-    if (['probe', 'personal'].includes(ship.hull_category)) {
-      throw new CommandError('not_available', 'Cette coque ne réclame pas');
-    }
-    if (ship.claim_rig) {
-      throw new CommandError('not_available', 'Le claim rig est déjà monté');
-    }
-    if (ship.status !== 'docked' || !ship.docked_body_id) {
-      throw new CommandError('not_available', 'Le rig se monte à quai');
-    }
-    const { rows: worlds } = await client.query(
-      `SELECT * FROM bodies WHERE id = $1 FOR UPDATE`,
-      [ship.docked_body_id],
-    );
-    if (!worlds[0] || worlds[0].owner_id !== playerId) {
-      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
-    }
-    const { rows: shop } = await client.query(
-      `SELECT 1 FROM buildings
-       WHERE body_id = $1 AND key = 'workshop' AND status = 'active'
-         AND level >= 2`,
-      [ship.docked_body_id],
-    );
-    if (!shop[0]) {
-      throw new CommandError('not_available', 'Un workshop L2 actif est requis');
-    }
-    await payCost(client, worlds[0].id, worlds[0].climate, CLAIM_RIG_COST, nowMs);
-    await client.query(`UPDATE ships SET claim_rig = true WHERE id = $1`, [shipId]);
-    await client.query('COMMIT');
-    return { cost: CLAIM_RIG_COST };
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Démarre une réclamation (GB §6 « no honor ») : coque STATIONNAIRE
- * (survol/idle) à ≤ 1 pc [TUNE-v1] d'une épave SANS propriétaire, claim
- * rig monté, une réclamation à la fois. L'événement salvage_claimed
- * (2 h de jeu [TUNE]) RE-VÉRIFIE tout à l'échéance — bouger annule.
- */
 export async function startClaim(
   pool: pg.Pool,
   playerId: string,

@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §009_census; docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5.
 -- 009_census — census global de l'offre (GB §13, DG §11.5) :
 -- - census_snapshots : totaux par ressource, 4×/jour [TUNE] ;
 --   la ventilation par SOURCE (stocks vs soutes) est INTERNE (debug +

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Survival clocks & derelicts”; GAME_BOOK.md §6/§7; DESIGN_GUIDE.md §3.5/§8.8. */
 /**
  * E2E — avitaillement de survie & survol nourri par le monde (GB §6/§7,
  * DG §3.5) : provisions basses (instrumentation §15), le bouton

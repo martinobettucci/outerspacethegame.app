@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §004_landing_cargo; docs/BACKLOG.md §P4 “Docks” (chunk J: atterrissage & fret); GAME_BOOK.md §9/§13; DESIGN_GUIDE.md §7.
 -- 004_landing_cargo — atterrissage & fret (GB §9/§13, DG §7) :
 -- - le survol garde la référence du corps (hover_body_id) : « atterrir »
 --   devient un acte explicite, distinct de l'arrivée (BUILD ≠ INSTALL,

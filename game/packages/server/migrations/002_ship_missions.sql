@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §002_ship_missions; docs/BACKLOG.md §P3 “Free flight”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.1.
 -- 002_ship_missions — vol libre (GB §6, DG §8/§9.1) : colonnes de mission
 -- sur ships (segment origine→destination, interpolation lazy à la lecture),
 -- statut 'idle' (à l'arrêt dans le vide, distinct de 'stranded' = panne).

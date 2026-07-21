@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: CLAUDE.md §22; docs/DESIGN_SYSTEM.md §6/§8. */
 import { useEffect, useRef } from 'react';
 
 const FOCUSABLE = [

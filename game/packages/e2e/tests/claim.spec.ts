@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * E2E — claim rig & salvage (GB §6 « no honor », DG §8.8) : une VRAIE
  * épave naît du survival-out (pilote granté §15, survol sauvage,
@@ -7,7 +8,7 @@
  * et l'épave (réservoir résiduel non vide) rejoint SA flotte en idle.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, installRigViaPipeline, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -188,8 +189,9 @@ test('salvage : le cimetière est un marché — épave réclamée en 2 h', asyn
       .selectOption(`ship:${haulerId}`);
     await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
   }).toPass({ timeout: 30_000 });
-  await haulerPanel.getByRole('button', { name: 'Fit claim rig' }).click();
-  await expect(page.getByRole('status')).toContainText('Claim rig mounted');
+  // Erratum 2026-07-22 : rig = accessoire du pipeline (grant §15 +
+  // install réel) — l'acquisition UI vit dans gear.spec.
+  await installRigViaPipeline(page, planetId, haulerId, 'claim_rig');
   // Radar « Wrecks » : l'épave est listée (le label d'optgroup n'entre
   // pas dans textContent — on vérifie l'option elle-même, marqueur †).
   await expect(

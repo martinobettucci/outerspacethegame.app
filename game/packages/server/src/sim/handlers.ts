@@ -214,9 +214,19 @@ export const itemInstalled: EventHandler = async (client, event) => {
       ? ship.accessories
       : [];
     if (!accessories.includes(itemKey)) accessories.push(itemKey);
+    // Erratum 2026-07-22 : les rigs sont des accessoires — l'effet vit
+    // dans le booléen hérité (tout le code existant le lit), l'objet
+    // dans accessories[] (comptage de slots).
+    const legacyFlag: Record<string, string> = {
+      harvest_rig: 'harvest_rig',
+      junk_collector: 'junk_collector',
+      claim_rig: 'claim_rig',
+    };
+    const flagCol = legacyFlag[itemKey];
     await client.query(
       `UPDATE ships SET accessories = $2,
           installing_item = NULL, install_started_at = NULL
+          ${flagCol ? `, ${flagCol} = true` : ''}
        WHERE id = $1`,
       [shipId, JSON.stringify(accessories)],
     );

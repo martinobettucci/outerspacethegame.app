@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Auth + account lifecycle”; GAME_BOOK.md §19; docs/DAT.md §5. */
 import { useState, type FormEvent } from 'react';
 import {
   Atom,

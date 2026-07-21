@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Telescope intel”; GAME_BOOK.md §4/§20; DESIGN_GUIDE.md §4.1. */
 /**
  * Intel planétaire par paliers (GB §20 « depending on telescope level »,
  * DG §4.1/§5/§11.3) — règles PURES.

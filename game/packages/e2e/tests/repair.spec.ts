@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * E2E — réparation d'atelier (DG §8.7) : coque endommagée (§15) à quai
  * de SON monde à workshop actif — la jauge affiche 40/80 et la ligne

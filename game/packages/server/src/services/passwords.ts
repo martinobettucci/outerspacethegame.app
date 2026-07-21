@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Auth + account lifecycle”; GAME_BOOK.md §19; docs/DAT.md §5. */
 /**
  * Hachage de mots de passe — scrypt natif Node (aucune dépendance).
  * Format : scrypt$N$r$p$salt_b64$hash_b64 — auto-décrit pour permettre

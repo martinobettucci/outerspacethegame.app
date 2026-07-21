@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6. */
 /**
  * Canal manuel (GB §9, DG §6 round 7) : validation des bundles, limites
  * (1 ouverte/(acheteur, monde, ressource), 20/24 h), échéance 48 h réelles.

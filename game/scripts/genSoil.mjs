@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §7; docs/DESIGN_SYSTEM.md §9–§11. */
 /**
  * Génération des textures de SOL par climat (demande du responsable) via
  * l'API OpenAI Images — la clé vient de .env à la racine du dépôt

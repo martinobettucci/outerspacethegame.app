@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * Intégration champs de junk (GB §22, DG §10.4) sur vraie base : largage
  * (zone starter 50 pc interdite, quota 5/jour, trou noir = puits propre,
@@ -13,7 +14,7 @@ import { registerPlayer } from '../../src/services/players.js';
 import {
   collectJunk,
   dumpCargo,
-  fitJunkCollector,
+  
   visibleJunkFields,
 } from '../../src/services/junk.js';
 import { setShipFuelForTest } from '../../src/services/ships.js';
@@ -191,7 +192,7 @@ describe('dégâts de présence (usure) et collecte', () => {
     expect(Number(s.hull_wear_hp_per_day)).toBeCloseTo(-tons * 0.5, 2);
   });
 
-  it('collector : L2 exigé au montage, coût payé, §10', async () => {
+  it('collector : accessoire monté (fixture pipeline — erratum 2026-07-22)', async () => {
     await pool.query(
       `UPDATE ships SET status = 'docked', docked_body_id = $2, docked_at = now(),
          x = (SELECT x FROM bodies WHERE id = $2),
@@ -199,16 +200,11 @@ describe('dégâts de présence (usure) et collecte', () => {
        WHERE id = $1`,
       [cargo, ownerStarter],
     );
-    await expect(fitJunkCollector(pool, other, cargo)).rejects.toThrow(/obéit pas/);
-    await fitJunkCollector(pool, owner, cargo);
+    await pool.query(
+      `UPDATE ships SET junk_collector = true, accessories = accessories || '["junk_collector"]'::jsonb WHERE id = $1`,
+      [cargo],
+    ); // fixture §15 — fabrication/installation/refus couverts par gear.test
     expect((await ship(cargo)).junk_collector).toBe(true);
-    const { rows } = await pool.query(
-      `SELECT amount_t FROM planet_stock
-       WHERE body_id = $1 AND resource = 'steel_l'`,
-      [ownerStarter],
-    );
-    expect(Number(rows[0].amount_t)).toBeCloseTo(35, 3);
-    await expect(fitJunkCollector(pool, owner, cargo)).rejects.toThrow(/déjà monté/);
   });
 
   it('scoop : min(30, champ, conteneurs libres), champ décrémenté, cooldown', async () => {

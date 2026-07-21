@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.pop and §P2 “Stats planète”; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2/§3.4. */
 /**
  * Planet operations ledger — demographic pyramid, employment, natality,
  * survival alarms, net resource flows and per-unit efficiency (GB §10).

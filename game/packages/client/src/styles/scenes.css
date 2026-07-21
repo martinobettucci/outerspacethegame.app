@@ -1,3 +1,4 @@
+/* @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Isometric planet view” and §P3 “Galaxy map”; docs/DESIGN_SYSTEM.md §2–§9. */
 /* Galaxy and colony scenes. All decorative layers are pointer-transparent so
  * the existing Three/Pixi hit contracts remain the only interaction plane. */
 

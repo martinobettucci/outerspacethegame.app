@@ -181,6 +181,41 @@ La documentation fait partie du produit.
 
 Une tâche n'est pas terminée si le code et la documentation ne décrivent plus le même fonctionnement.
 
+Traçabilité obligatoire entre spécification, backlog et code
+
+Toute ligne de code maintenue dans le dépôt doit être couverte par un commentaire
+de traçabilité vers sa spécification. Cette règle s'applique au code applicatif,
+aux classes, fonctions, algorithmes, composants, routes API, migrations, scripts,
+styles, générateurs et tests.
+
+- Chaque fichier de code commence par un commentaire de portée fichier au format
+  `@spec` qui nomme au minimum l'unité exacte de `docs/BACKLOG.md` (ou de
+  `docs/MASTER_PLAN.md` lorsqu'elle est l'index d'exécution autoritatif) ET le ou
+  les fichiers documentaires pertinents avec leur chapitre ou section :
+  `GAME_BOOK.md`, `GAME_BIBLE.md`, `DESIGN_GUIDE.md`, `docs/DAT.md`,
+  `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`, `docs/MANUAL_PLAN.md`, etc.
+- Le commentaire de portée fichier couvre explicitement toutes les déclarations,
+  fonctions auxiliaires et algorithmes du fichier qui partagent les mêmes
+  références. Lorsqu'un fichier met en œuvre plusieurs unités fonctionnelles,
+  chaque classe, fonction publique ou bloc algorithmique concerné reçoit un
+  commentaire `@spec` plus proche et limité à ses propres références.
+- Chaque fichier de test utilise `@verifies` et cite l'unité de backlog ainsi que
+  les chapitres dont il prouve le contrat. Un test ne référence pas seulement le
+  fichier de code testé.
+- Une migration cite `docs/SCHEMA.md` et l'unité fonctionnelle correspondante ;
+  une règle d'interface cite aussi `docs/DESIGN_SYSTEM.md` ; une fonctionnalité
+  visible cite aussi le chapitre concerné du Player Codex (`docs/MANUAL_PLAN.md`).
+- `CHANGELOG.md` et `JOURNAL.md` peuvent compléter la trace, mais ne remplacent
+  jamais la spécification ni l'unité de backlog.
+- Aucun code d'une nouvelle fonctionnalité ne peut être écrit tant que son unité
+  de backlog et sa spécification ne possèdent pas de référence stable. Toute
+  modification ultérieure maintient les commentaires `@spec` / `@verifies` dans
+  le même changement que le code et la documentation.
+- Si la relecture révèle une contradiction ou une référence absente, ne pas la
+  résoudre implicitement : la consigner dans `INCONSISTENCY_REPORT.md`, laisser
+  le comportement inchangé et demander l'arbitrage du responsable lorsque la
+  correction dépasse la tâche autorisée.
+
 Persistance immédiate des décisions (règle non négociable du responsable)
 
 Dès qu'une spécification, une décision de conception ou un résultat de
@@ -723,6 +758,8 @@ Une tâche n'est terminée que lorsque toutes les conditions applicables sont sa
 - le changelog a été mis à jour sous "[Non publié]" ;
 - le contrat de déploiement a été mis à jour si nécessaire ;
 - le backlog reflète le véritable état ;
+- chaque fichier et unité d'implémentation possède ses commentaires de
+  traçabilité `@spec` / `@verifies` vers le backlog et les chapitres pertinents ;
 - les modifications distantes ont été récupérées ;
 - les tests ont été rejoués après synchronisation ;
 - le commit cohérent a été créé ;

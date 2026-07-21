@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5. */
 /**
  * E2E — census global (GB §13, DG §11.5) : l'écran Market/Census publie
  * des totaux GLOBAUX par ressource, exhaustifs (catalogue entier, zéros

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Seed contract”; GAME_BOOK.md §19; DESIGN_GUIDE.md §2.2; CLAUDE.md §8. */
 /**
  * Seed de développement — contrat maintenu (CLAUDE.md §8).
  * Passe par le VRAI flux applicatif (registerPlayer → spawn starter) :

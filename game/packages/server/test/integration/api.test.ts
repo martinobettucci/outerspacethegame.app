@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Observability baseline”; CLAUDE.md §15/§20; docs/DAT.md §4. */
 /**
  * Intégration API : inscription/login/session, lecture galaxie/planète,
  * unlock + construction, et REFUS d'autorisation vérifiés par requêtes

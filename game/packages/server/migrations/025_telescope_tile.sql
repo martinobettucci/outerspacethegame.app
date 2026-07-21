@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §025_telescope_tile; docs/BACKLOG.md §P2 “Télescope = bâtiment sur tuile”; GAME_BOOK.md §4/§9; DESIGN_GUIDE.md §4.1/§5.1.
 -- 025 — Télescope unique sur tuile (décision responsable 2026-07-20).
 --
 -- Transition volontairement conservatrice : aucune instance joueur n'est

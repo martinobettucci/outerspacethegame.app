@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §010_pods; docs/BACKLOG.md §P4 “Recruitment pods”; GAME_BOOK.md §12/§13/§19; DESIGN_GUIDE.md §11.4.
 -- 010_pods — pods de recrutement (GB §12/§13, DG §11.4) :
 -- - pod_openings : journal des ouvertures — sert au cap quotidien
 --   (10/jour/compte [TUNE]) ET à l'impact de prix immédiat (les tonnes

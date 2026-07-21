@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * Intégration usure de coque & adaptations (GB §27 SETTLED, DG §8.8 ;
  * W5 2026-07-21) sur vraie base : coque MORPHIQUE (adaptation = temps
@@ -13,7 +14,7 @@ import type pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { registerPlayer } from '../../src/services/players.js';
 import {
-  fitHarvestRig,
+  
   setStarStockForTest,
   startHarvest,
 } from '../../src/services/harvest.js';
@@ -341,7 +342,10 @@ describe('zone de hasard ≤ 5 pc : flare et trou noir (radio)', () => {
 describe('dégâts de proximité du rig (d < d_safe) et cumul', () => {
   it('récolte à 2,5 pc d\'une étoile en flare : −(20 + 4) HP/j', async () => {
     const digger = await newDockedShip(`wr-digger-${run}`);
-    await fitHarvestRig(pool, owner, digger);
+    await pool.query(
+      `UPDATE ships SET harvest_rig = true, accessories = accessories || '[\"harvest_rig\"]'::jsonb WHERE id = $1`,
+      [digger],
+    ); // fixture §15 — l'acquisition par pipeline est couverte par gear.test
     const { rows: init } = await pool.query(
       `SELECT star_fuel_initial FROM bodies WHERE id = $1`,
       [starId],

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 import { useMemo } from 'react';
 import { describeRemaining, useGameClock } from '../hooks/useGameClock.ts';
 

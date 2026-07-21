@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
 /**
  * E2E — récolte stellaire & Starfall (GB §22, DG §8.8) : rig monté à
  * l'atelier (vraie commande, coût payé), vol RÉEL jusqu'à ~1 pc de
@@ -9,7 +10,7 @@
  * récolteur est annihilé, le starter À R_nova exactement reste SAUF.
  */
 import { expect, test } from '@playwright/test';
-import { pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { installRigViaPipeline, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -79,8 +80,9 @@ test('récolte : rig, gradient, flare, supernova — la tragédie des communs', 
   }).toPass({ timeout: 30_000 });
   await haulerPanel.getByRole('button', { name: /Assign pilot/ }).click();
   await expect(page.getByRole('status')).toContainText('Pilot bound');
-  await haulerPanel.getByRole('button', { name: 'Fit harvest rig' }).click();
-  await expect(page.getByRole('status')).toContainText('Harvest rig mounted');
+  // Erratum 2026-07-22 : le rig est un ACCESSOIRE — item granté (§15)
+  // puis installé par les vraies commandes (entrepôt → install → quai).
+  await installRigViaPipeline(page, planetId, haulerId, 'harvest_rig');
 
   // 3. Vol réel jusqu'à ~1 pc de l'étoile de la poche (×7200 ≈ 20 s).
   const galaxy = (await page.request.get('/api/galaxy').then((r) => r.json())) as {

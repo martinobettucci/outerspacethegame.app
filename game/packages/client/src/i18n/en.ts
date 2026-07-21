@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P7 “Accessibility pass + i18n”; CLAUDE.md §23. */
 /**
  * Textes de l'interface, centralisés (CLAUDE.md §23) — langue par défaut :
  * anglais (continuité des documents de conception) ; le français arrive avec

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Codex chapter registry — spoiler-free "systems only" content
  * (docs/MANUAL_PLAN.md §1, §6). Each body composes prose from `codexEn` with

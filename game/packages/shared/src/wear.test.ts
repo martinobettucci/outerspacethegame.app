@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /** Usure de coque (GB §27, DG §8.8) — cumul, climats, coûts. */
 import { describe, expect, it } from 'vitest';
 import {

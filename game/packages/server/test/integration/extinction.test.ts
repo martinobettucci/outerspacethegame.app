@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.pop “Extinction”; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.2-v2(k). */
 /**
  * Intégration BD sur vraie PostgreSQL : embarquement C/A/S sans garde morale
  * jusqu'à P=0, extinction canonique, héritage intact, puis recolonisation du

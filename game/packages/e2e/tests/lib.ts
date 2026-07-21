@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: CLAUDE.md §15/§16; docs/DAT.md §6. */
 /**
  * Aides E2E partagées (§15) : choix d'e-mail par ADN de compte (seed pur
  * universe:starter:email — précomputable, zéro roll perdu), inscription,
@@ -241,4 +242,53 @@ export async function boardHelpers(
   };
 
   return { tilePx, hand, panel, unlockCard, placeCard, openPanel, hasBuilding };
+}
+
+/**
+ * Erratum 2026-07-22 : les rigs sont des ACCESSOIRES du pipeline — pour
+ * les parcours AVAL, on grante l'item (§15) puis on l'installe par les
+ * VRAIES commandes : entrepôt → install (12 h-jeu ÷ 7200 = 6 s) →
+ * redéploiement à quai.
+ */
+export async function installRigViaPipeline(
+  page: Page,
+  planetId: string,
+  shipId: string,
+  itemKey: string,
+): Promise<void> {
+  const g = await page.request.post('/api/test/grant-item', {
+    data: { planetId, itemKey },
+  });
+  if (!g.ok()) throw new Error(`grant-item: ${await g.text()}`);
+  const wh = await page.request.post(`/api/ships/${shipId}/warehouse`);
+  if (!wh.ok()) throw new Error(`warehouse: ${await wh.text()}`);
+  const inst = await page.request.post(`/api/ships/${shipId}/install`, {
+    data: { itemKey },
+  });
+  if (!inst.ok()) throw new Error(`install: ${await inst.text()}`);
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; installingItem: string | null; accessories: string[] }[];
+        };
+        const s = f.ships.find((x) => x.id === shipId);
+        return s?.installingItem === null && s.accessories.includes(itemKey);
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(true);
+  const ret = await page.request.post(`/api/ships/${shipId}/retrieve`);
+  if (!ret.ok()) throw new Error(`retrieve: ${await ret.text()}`);
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; status: string }[];
+        };
+        return f.ships.find((x) => x.id === shipId)?.status;
+      },
+      { timeout: 60_000 },
+    )
+    .toBe('docked');
 }

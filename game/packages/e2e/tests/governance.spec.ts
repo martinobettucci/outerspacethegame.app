@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Governance v1”; GAME_BOOK.md §11/§21; DESIGN_GUIDE.md §4.1. */
 /**
  * E2E — gouvernance v1 (GB §11/§21, DG §4.1) : sur un monde MOYEN, le
  * vaisseau personnel parqué gouverne (G ×1) ; le décoller fait tomber le

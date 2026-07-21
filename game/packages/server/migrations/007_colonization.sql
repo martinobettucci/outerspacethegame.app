@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §007_colonization; docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12.
 -- 007_colonization — la deuxième planète (GB §19/§14/§12, DG §12/§3.2) :
 -- - settlers embarqués sur les coques Civil (+ origine de la route) ;
 -- - fitting colonie (colony_kit) — donne le droit d'atterrir sauvage ;

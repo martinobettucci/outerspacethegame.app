@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * Intégration réparation d'atelier (DG §8.7) sur vraie base : 5 % HP/h ×
  * mult(1/2/4) à quai de SON monde à workshop ACTIF, acier facturé au

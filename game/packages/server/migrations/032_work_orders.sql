@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W7; GAME_BOOK.md §9; DESIGN_GUIDE.md §6; PROD_MIGRATIONS.md §“Migrations en attente” (docs/SCHEMA.md gap: IR-004).
 -- 032 : W7 — usinage partiel des usines L3 (MASTER_PLAN W7, JOURNAL
 -- 2026-07-21). Paiement par paliers de 5 % × 20 au lieu du paiement à
 -- la commande, dès qu'une industrie L3 active existe sur le monde.

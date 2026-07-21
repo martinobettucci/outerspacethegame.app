@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding”; docs/DAT.md §2/§6. */
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 

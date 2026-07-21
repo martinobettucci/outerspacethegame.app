@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * W6 — pipeline accessoires & upgrades-items (MASTER_PLAN W6, JOURNAL
  * 2026-07-21) : fabrication d'ITEMS non-fongibles sur un monde (bâtiment

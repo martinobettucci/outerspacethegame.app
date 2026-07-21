@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 /**
  * Intégration file d'événements : vraie base locale, vraies migrations
  * (CLAUDE.md §15). Vérifie : enchaînement enqueue → claim → handler →

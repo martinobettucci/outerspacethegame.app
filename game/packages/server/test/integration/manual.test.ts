@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6. */
 /**
  * Intégration canal manuel (GB §9, DG §6 round 7) sur vraie base :
  * visibilité du warehouse (commande réelle, §10 direct), browse à quai

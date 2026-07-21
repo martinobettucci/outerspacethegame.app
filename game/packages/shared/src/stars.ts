@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen” and §P3 “Star harvest”; GAME_BOOK.md §22; DESIGN_GUIDE.md §2.1/§8.8. */
 /**
  * Étoiles & récolte (GB §22, DG §2.1/§8.8) — règles PURES.
  *

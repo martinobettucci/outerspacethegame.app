@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Anti-drift guard (docs/MANUAL_PLAN.md §2 / §7): every Codex fact must equal
  * its live `@atg/shared` source constant. If a future edit replaces an import

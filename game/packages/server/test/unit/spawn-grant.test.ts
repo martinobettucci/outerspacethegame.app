@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Seed contract” and §P2 “Starter spawn”; GAME_BOOK.md §19/§22; DESIGN_GUIDE.md §2.2. */
 /**
  * Invariant anti-softlock du démarrage (GB §19 « starter knowledge »,
  * décision responsable 2026-07-19) : la dotation de départ doit couvrir

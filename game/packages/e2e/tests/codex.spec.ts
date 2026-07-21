@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Player Codex (P2.codex — docs/MANUAL_PLAN.md). The in-game manual must be
  * reachable from every screen, open deep-linked to the chapter matching the

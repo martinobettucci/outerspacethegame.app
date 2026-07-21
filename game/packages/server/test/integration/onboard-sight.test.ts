@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W4; docs/BACKLOG.md §P3 “Sondes v3”; GAME_BOOK.md §4/§14; DESIGN_GUIDE.md §8.1-v3. */
 /**
  * Intégration W4 : vue de bord des sondes L2/L3 (MASTER_PLAN W4, JOURNAL
  * 2026-07-21) sur vraie base — une sonde L2+ embarque un télescope L1 :

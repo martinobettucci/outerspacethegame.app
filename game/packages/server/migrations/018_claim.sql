@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §018_claim; docs/BACKLOG.md §P3 “Salvage claims”; GAME_BOOK.md §6; DESIGN_GUIDE.md §8.8.
 -- Claim rig (GB §6, DG §8.8) : réclamer une coque SANS propriétaire
 -- (épave du survival-out) après 2 h de proximité — le rig est monté à
 -- l'atelier, la réclamation est un événement salvage_claimed qui

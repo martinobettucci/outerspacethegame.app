@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
 /** Champs de junk (GB §22, DG §10.4) — cellule, décroissance, hasard. */
 import { describe, expect, it } from 'vitest';
 import {

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6. */
 /**
  * Canal manuel (GB §9 « Markets & manual trade », DG §6 round 7) — règles
  * PURES.

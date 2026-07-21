@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Telescope intel”; GAME_BOOK.md §4/§20; DESIGN_GUIDE.md §4.1. */
 /**
  * Intel par paliers (GB §20, DG §4.1/§11.3) : calcul du palier (bonus
  * scientifique plafonné, sonde sur site, visibilité seule), projection

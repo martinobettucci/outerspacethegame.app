@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §016_wear; docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.8.
 -- Usure de coque environnementale (GB §27 SETTLED, DG §8.8) : HP de coque
 -- PARESSEUX (amount/rate/as_of — motif fuel/survie ; hull_hp NULL = coque
 -- neuve, matérialisée au premier rebase) + trois boucliers d'atelier.

@@ -1,3 +1,4 @@
+/* @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Player Codex overlay (DESIGN_SYSTEM §5). Groovy-dark tokens only; no
  * hardcoded palette. Self-contained so it never collides with panel styles.

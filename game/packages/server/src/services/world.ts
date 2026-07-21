@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Galaxy map”/“Telescope intel”/“Sondes v3”; GAME_BOOK.md §2/§4/§20; DESIGN_GUIDE.md §2/§4.1; docs/MASTER_PLAN.md §W4. */
 /**
  * Visibilité & brouillard de guerre — GAMEBOOK §4.
  * Scope = union des cercles par planète possédée :

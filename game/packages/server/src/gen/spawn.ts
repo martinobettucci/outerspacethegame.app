@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Seed contract” and §P2 “Starter spawn”/“Pocket luck”; GAME_BOOK.md §19/§22; DESIGN_GUIDE.md §2.2/§2.2b. */
 /**
  * Spawn nouveau joueur — la poche de Fermi (DESIGN_GUIDE §2.2 + §2.2b).
  *

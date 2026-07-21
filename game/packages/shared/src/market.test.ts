@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Markets” and “Merchant-planet innate trading”; GAME_BOOK.md §9/§13; DESIGN_GUIDE.md §11.1–§11.2. */
 /**
  * Unitaires marché taux fixe (chunk K) — GB §9 (slots = niveau), DG §11.1
  * (re-tarification ≤ 1/min), validation pure d'un slot.

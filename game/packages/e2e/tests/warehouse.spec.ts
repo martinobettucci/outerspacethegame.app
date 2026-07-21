@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Vehicle warehouse” and §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3b/§6. */
 /**
  * E2E — entrepôt de véhicules (GB §9, DG §6 round 6) : warehouse construit
  * puis, depuis le panneau vaisseau de la carte galactique, la coque À QUAI

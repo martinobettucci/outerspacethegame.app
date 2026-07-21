@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Isometric planet view”; GAME_BOOK.md §17/§26; docs/ASSET_PIPELINE.md §2–§4; docs/DESIGN_SYSTEM.md §9. */
 /**
  * Passe de lumière 2D WebGL — exigence moteur ASSET_PIPELINE §3 :
  * chaque sprite a `X.bump.gif` (relief) et `X.light.gif` (sources

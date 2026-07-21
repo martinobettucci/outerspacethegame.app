@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Tech tree runtime”/“Building catalog”/“Industry”; GAME_BOOK.md §9/§10/§18; DESIGN_GUIDE.md §3/§5/§6. */
 /**
  * Lecture & commandes planète — GB §9/§18, DG §5/§6.
  * Toutes les règles d'accès sont appliquées ICI (CLAUDE.md §10) : la

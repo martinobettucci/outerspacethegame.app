@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Survival clocks & derelicts”; GAME_BOOK.md §6/§7; DESIGN_GUIDE.md §3.5/§8.8. */
 /**
  * E2E — horloges de survie (GB §6, DG §3.5) : le pilote embarque
  * (jauge d'équipage visible, réserves du spawn 2/2), le drain s'arme en

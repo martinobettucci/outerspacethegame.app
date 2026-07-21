@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5. */
 /**
  * Census global de l'offre (GB §13, DG §11.5) — agrégation PURE des deux
  * sources : stocks planétaires (évalués lazy à l'instant du snapshot) +

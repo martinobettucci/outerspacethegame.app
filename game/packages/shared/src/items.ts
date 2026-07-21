@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * ITEMS non-fongibles (W6, MASTER_PLAN — décisions responsable
  * 2026-07-21) : accessoires et upgrades fabriqués comme des OBJETS
@@ -74,6 +75,41 @@ export const GEAR: Record<string, GearDef> = {
     installCost: { steel_l: 10 },
     installHours: 12,
     note: 'Twin anchor manifolds — two tanker probes may couple at once.',
+  },
+  /** Rigs historiques — DES ACCESSOIRES comme les autres (erratum
+   *  responsable 2026-07-22) : un slot accessoire chacun. */
+  harvest_rig: {
+    key: 'harvest_rig',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 20, crystal_temperate: 5, gold: 5 },
+    fabricationHours: 24,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Star harvesting rig — yield by closeness, hull risk closer still.',
+  },
+  junk_collector: {
+    key: 'junk_collector',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 15, silicon: 5 },
+    fabricationHours: 24,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Scoops drifting junk fields — 30 T/day.',
+  },
+  claim_rig: {
+    key: 'claim_rig',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 25, gold: 5 },
+    fabricationHours: 24,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Claims ownerless wrecks after two hours of held proximity.',
   },
   engine_l2: upgrade('engine', 2, 'shipyard', { steel_l: 40, fuel_cells: 20 }, 'Speed ×1.15.'),
   engine_l3: upgrade('engine', 3, 'shipyard', { steel_h: 60, fuel_cells: 50 }, 'Speed ×1.30.'),

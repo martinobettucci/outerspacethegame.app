@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1; docs/DAT.md §2/§4. */
 /**
  * Tick worker — avance la simulation en traitant la file d'événements
  * (DG §1). Cadence de réveil = TICK_MS (60 s canon ; abaissable en dev/E2E).

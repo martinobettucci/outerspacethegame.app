@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Unitaires colonisation (chunk N) — DG §3.2 (péage déterministe,
  * accumulateur fractionnaire), §10.3 (grâce 14 j), §8.6 (Civil M/L),

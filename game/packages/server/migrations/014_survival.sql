@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §014_survival; docs/BACKLOG.md §P3 “Survival clocks & derelicts”; GAME_BOOK.md §6/§7; DESIGN_GUIDE.md §3.5/§8.8.
 -- 014 — Horloges de survie & derelict (GB §6, DG §3.5/§8.8).
 -- Réservoir de survie PARESSEUX (motif fuel du 008) : `survival` (jsonb,
 -- existant depuis 001) + taux/as_of matérialisés au rebase ; l'alarme à

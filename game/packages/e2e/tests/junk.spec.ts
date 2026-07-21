@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * E2E — champs de junk (GB §22, DG §10.4) : collecteur monté à l'atelier
  * L2 (vraies commandes), fret chargé, vol dans le VIDE (> 50 pc des
@@ -7,7 +8,7 @@
  * Effets backend vérifiés à chaque pas.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, installRigViaPipeline, pickEmailByDna, registerSovereign, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -80,8 +81,8 @@ test('junk : larguer crée le champ, collecter le résorbe', async ({ page }) =>
     ships: { id: string; name: string }[];
   };
   const haulerId = fleet.ships.find((s) => s.name === 'First hauler')!.id;
-  const fit = await page.request.post(`/api/ships/${haulerId}/junk-collector`);
-  expect(fit.ok()).toBe(true);
+  // Erratum 2026-07-22 : rig = accessoire du pipeline.
+  await installRigViaPipeline(page, planetId, haulerId, 'junk_collector');
   const load = await page.request.post(`/api/ships/${haulerId}/cargo`, {
     data: { resource: 'ore', tons: 3, direction: 'load' },
   });

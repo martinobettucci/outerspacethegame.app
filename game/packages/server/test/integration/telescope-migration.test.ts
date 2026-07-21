@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Télescope = bâtiment sur tuile” and §P3 “Telescope intel”; GAME_BOOK.md §4/§9; DESIGN_GUIDE.md §4.1/§5.1. */
 /**
  * Migration 025 sur un schéma legacy minimal et isolé : on exécute le vrai
  * fichier SQL, sans recopier son algorithme dans le test. Les trois chemins

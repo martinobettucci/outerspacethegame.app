@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Ping/ping-back”; GAME_BOOK.md §4/§5; DESIGN_GUIDE.md §15. */
 /**
  * Unitaires comms (GB §5) : paire canonique de canal et normalisation du
  * corps de message — la logique pure derrière le protocole de la Silence

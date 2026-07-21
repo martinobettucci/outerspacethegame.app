@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Docks” (chunk J: atterrissage & fret); GAME_BOOK.md §9/§13; DESIGN_GUIDE.md §7. */
 /**
  * Unitaires fret & atterrissage (chunk J) — DG §7 (conteneurs) et GB §9
  * (droit d'atterrir, v1 self|everyone).

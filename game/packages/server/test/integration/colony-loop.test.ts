@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Industry”/“Population sim v2”/“Efficiency engine”; GAME_BOOK.md §9/§10; DESIGN_GUIDE.md §3.2-v2/§3.3/§3.4/§6. */
 /**
  * Intégration : la boucle colonie vivante (DG §3.2/§3.3/§6) sur vraie
  * base — construction → activation par événement → débits écrits →

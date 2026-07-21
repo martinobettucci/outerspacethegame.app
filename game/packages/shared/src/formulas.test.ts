@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Efficiency engine” and “Fungible storage”; GAME_BOOK.md §10; DESIGN_GUIDE.md §3.3b/§3.4. */
 import { describe, expect, it } from 'vitest';
 import {
   EFFICIENCY_FLOOR,

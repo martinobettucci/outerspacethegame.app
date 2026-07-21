@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding” and §P2.codex; docs/DAT.md §2/§4; docs/DESIGN_SYSTEM.md §5. */
 /**
  * Coquille HUD (DESIGN_SYSTEM §5) : barre supérieure (joueur, politique),
  * rail gauche (navigation compacte, sections futures désactivées AVEC

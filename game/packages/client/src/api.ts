@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §2/§4/§5; docs/BACKLOG.md §P1–§P4. */
 /**
  * Client API — toutes les requêtes passent par /api (proxy Vite en dev).
  * Les erreurs serveur sont typées et remontées aux écrans (états d'erreur
@@ -715,15 +716,8 @@ export const api = {
       `/ships/${shipId}/traverse`,
       { gateId },
     ),
-  fitClaimRig: (shipId: string) =>
-    call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/claim-rig`),
   claim: (shipId: string, targetId: string) =>
     call<{ claimsAt: string }>('POST', `/ships/${shipId}/claim`, { targetId }),
-  fitJunkCollector: (shipId: string) =>
-    call<{ cost: Record<string, number> }>(
-      'POST',
-      `/ships/${shipId}/junk-collector`,
-    ),
   collectJunk: (shipId: string) =>
     call<{ collected: number; fieldLeftT: number }>(
       'POST',
@@ -733,11 +727,6 @@ export const api = {
     call<{ cost: Record<string, number> }>('POST', `/ships/${shipId}/shield`, {
       kind,
     }),
-  fitHarvestRig: (shipId: string) =>
-    call<{ cost: Record<string, number> }>(
-      'POST',
-      `/ships/${shipId}/harvest-rig`,
-    ),
   startHarvest: (shipId: string, starId: string) =>
     call<{ netPerDay: number; yieldPerDay: number; distancePc: number }>(
       'POST',

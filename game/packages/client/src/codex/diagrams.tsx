@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * Codex concept diagrams — inline SVG plotted from the real shared model, so
  * the drawing IS the rule and cannot drift (docs/MANUAL_PLAN.md §4). The

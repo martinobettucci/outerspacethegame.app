@@ -1,3 +1,4 @@
+-- @spec All declarations and algorithms in this file implement: docs/SCHEMA.md §001_baseline; docs/BACKLOG.md §P1 “Migrations framework”; GAME_BOOK.md §1; docs/DAT.md §3.
 -- 001_baseline — schéma fondateur ATG (DAT §3, DESIGN_GUIDE v0.9.2).
 -- Objectif : univers (corps, gisements), joueurs/sessions, planètes
 -- (stock, bâtiments, unlocks), NPC, vaisseaux, file d'événements.

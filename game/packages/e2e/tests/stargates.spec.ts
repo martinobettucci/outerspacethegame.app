@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Stargates”; GAME_BOOK.md §6; DESIGN_GUIDE.md §9.3–§9.4. */
 /**
  * E2E — stargates (GB §6, DG §9.3–9.4) : le second monde vient d'une
  * VRAIE colonisation (scriptée par l'API — le parcours UI de la colonie

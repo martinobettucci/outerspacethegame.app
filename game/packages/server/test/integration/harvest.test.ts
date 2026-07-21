@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
 /**
  * Intégration récolte stellaire (GB §22, DG §8.8) sur vraie base : rig
  * monté à l'atelier (coût payé), récolte IMMOBILE à ≤ 8 pc (gradient
@@ -14,7 +15,7 @@ import type pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { registerPlayer } from '../../src/services/players.js';
 import {
-  fitHarvestRig,
+  
   setStarStockForTest,
   startHarvest,
   stopHarvest,
@@ -111,32 +112,19 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe('fit du rig (atelier, coût, §10)', () => {
-  it('paie le coût et monte le rig ; le double-fit est refusé', async () => {
-    await fitHarvestRig(pool, owner, cargo);
+describe('harvest rig — accessoire du pipeline (erratum 2026-07-22)', () => {
+  it('monté par fixture', async () => {
+    await pool.query(
+      `UPDATE ships SET harvest_rig = true, accessories = accessories || '[\"harvest_rig\"]'::jsonb WHERE id = $1`,
+      [cargo],
+    ); // fixture §15 — l'acquisition par pipeline est couverte par gear.test
     const s = await ship(cargo);
-    expect(s.harvest_rig).toBe(true);
-    const { rows } = await pool.query(
-      `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = 'steel_l'`,
-      [ownerStarter],
-    );
-    expect(Number(rows[0].amount_t)).toBeCloseTo(10, 3); // 30 − 20
-    await expect(fitHarvestRig(pool, owner, cargo)).rejects.toThrow(/déjà monté/);
+    expect(s.harvest_rig).toBe(true); // coût/temps du pipeline : gear.test
   });
 
-  it('§10 : autrui ne monte pas de rig sur MA coque', async () => {
-    await expect(fitHarvestRig(pool, other, cargo)).rejects.toThrow(/obéit pas/);
-  });
-
-  it('le vaisseau personnel ne porte pas de rig', async () => {
-    const { rows } = await pool.query(
-      `SELECT id FROM ships WHERE owner_id = $1 AND hull_category = 'personal'`,
-      [owner],
-    );
-    await expect(fitHarvestRig(pool, owner, rows[0].id)).rejects.toThrow(
-      /ne porte pas de rig/,
-    );
-  });
+  // Erratum 2026-07-22 : le rig est un ACCESSOIRE du pipeline — les
+  // refus (doublon, §10 autrui, coque sans slots) sont couverts par
+  // gear.test (installGear) ; le montage direct n'existe plus.
 });
 
 describe('démarrage : gardes de distance, type, statut, net', () => {

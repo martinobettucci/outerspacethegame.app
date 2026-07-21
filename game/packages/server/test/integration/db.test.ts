@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Migrations framework”; docs/SCHEMA.md §Conventions; CLAUDE.md §15/§24. */
 /**
  * Intégration : vraie base locale (docker-compose.dev.yml) — CLAUDE.md §15.
  * Prérequis : `pnpm runDev:db` (ou la CI) a démarré Postgres.

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * E2E — colonisation (GB §19/§14/§12, DG §12/§3.2/§10.3) : le parcours
  * complet vers la deuxième planète — chaîne d'infrastructures, coque

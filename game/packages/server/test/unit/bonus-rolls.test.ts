@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; GAME_BOOK.md §15/§19; DESIGN_GUIDE.md §1/§2.2b. */
 /**
  * Unit — pocket luck & mondes bonus (DG §2.2b, directive responsable
  * 2026-07-20) : seuils LITTÉRAUX de luck, gradient ρ_eff borné/monotone,

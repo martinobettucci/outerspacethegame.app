@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Hover auto-trade”; GAME_BOOK.md §7; DESIGN_GUIDE.md §3.5. */
 /**
  * E2E — auto-trade du survol étranger (GB §7 « if food < 20, buy 200
  * best effort », DG §3.5) : Bob tient l'épicerie (marché fixe food_1

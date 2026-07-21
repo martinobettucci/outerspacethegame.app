@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Docks”; GAME_BOOK.md §9/§14; DESIGN_GUIDE.md §5.1/§7/§8.6. */
 /**
  * Intégration docks de spaceport (GB §9/§14, DG §5.1/§8.6) sur vraie base :
  * capacité S/M/L cumulée par niveau, refus structurel vs saturation,

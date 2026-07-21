@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Industry”/“Efficiency engine” and §P2.pop; GAME_BOOK.md §9/§10; DESIGN_GUIDE.md §3.2-v2/§3.3/§3.3b/§3.4/§6. */
 /**
  * Cœur de production — DG §3.3/§3.3b/§3.4/§6, GB §9/§10.
  *

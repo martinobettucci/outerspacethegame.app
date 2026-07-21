@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P1 “Seed contract” and §P2 “Starter spawn”; GAME_BOOK.md §19/§22; DESIGN_GUIDE.md §2.2. */
 /**
  * Intégration : garanties du spawn starter (DG §2.2) sur vraie base,
  * via le VRAI flux d'inscription (registerPlayer) — CLAUDE.md §8/§15.

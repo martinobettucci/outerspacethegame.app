@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Ship hulls”, “Free flight”, and “Hovering”; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §7–§9. */
 /**
  * Intégration : chantier naval (GB §14, DG §381) sur vraie base — gate de
  * taille par niveau, remise M à L2+, coût payé, événement ship_built →

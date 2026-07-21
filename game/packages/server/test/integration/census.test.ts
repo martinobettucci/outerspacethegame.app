@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5. */
 /**
  * Intégration : census global (GB §13, DG §11.5) sur vraie base —
  * agrégation exacte (delta lazy compris), méta des sources, récurrence

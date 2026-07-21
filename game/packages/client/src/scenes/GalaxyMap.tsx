@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen”, §P3 “Galaxy map”/“Free flight”/“Telescope intel”/“Junk fields”/“Stargates”, and §P4 “Ping/ping-back”/“Manual channel”; docs/MASTER_PLAN.md §W4/§W5; GAME_BOOK.md §2/§4–§7/§13/§22; DESIGN_GUIDE.md §2/§4.1/§9/§10.4. */
 /**
  * Carte galaxie — GB §17 : champ d'étoiles three.js stylé 3D, navigation
  * 2D (pan/zoom), corps en pixel-sprites (DESIGN_SYSTEM §11.3), brouillard
@@ -3427,44 +3428,7 @@ export function GalaxyMap() {
                 </button>
               );
             })()}
-          {selectedShip.status === 'docked' &&
-            !selectedShip.harvestRig &&
-            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
-            selectedShip.dockedBodyId &&
-            bodies.some(
-              (b) => b.id === selectedShip.dockedBodyId && b.owned,
-            ) && (
-              <button
-                type="button"
-                onClick={() =>
-                  api
-                    .fitHarvestRig(selectedShip.id)
-                    .then(() => {
-                      setNotice(t.galaxy.rigFitted);
-                      void refreshShips();
-                    })
-                    .catch((err: ApiError) =>
-                      setNotice(
-                        `${t.galaxy.rigRefused} — ${err.message ?? err.error}`,
-                      ),
-                    )
-                }
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  justifyContent: 'center',
-                  background: 'var(--bg-overlay)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--stroke-subtle)',
-                  borderRadius: 'var(--radius-button)',
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                <Sun size={14} aria-hidden /> {t.galaxy.fitHarvestRig}
-              </button>
-            )}
+          
           {/* W5 : coque MORPHIQUE — adaptation sur place, temps seul,
               une chimie à la fois (plus d'accessoire d'atelier). */}
           {selectedShip.morphingShield && (
@@ -3527,82 +3491,8 @@ export function GalaxyMap() {
                   <ShieldIcon size={14} aria-hidden /> {label}
                 </button>
               ))}
-          {selectedShip.status === 'docked' &&
-            !selectedShip.junkCollector &&
-            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
-            selectedShip.dockedBodyId &&
-            bodies.some(
-              (b) => b.id === selectedShip.dockedBodyId && b.owned,
-            ) && (
-              <button
-                type="button"
-                onClick={() =>
-                  api
-                    .fitJunkCollector(selectedShip.id)
-                    .then(() => {
-                      setNotice(t.galaxy.collectorFitted);
-                      void refreshShips();
-                    })
-                    .catch((err: ApiError) =>
-                      setNotice(
-                        `${t.galaxy.collectorRefused} — ${err.message ?? err.error}`,
-                      ),
-                    )
-                }
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  justifyContent: 'center',
-                  background: 'var(--bg-overlay)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--stroke-subtle)',
-                  borderRadius: 'var(--radius-button)',
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                <Package size={14} aria-hidden /> {t.galaxy.fitJunkCollector}
-              </button>
-            )}
-          {selectedShip.status === 'docked' &&
-            !selectedShip.claimRig &&
-            !['personal', 'probe'].includes(selectedShip.hullCategory) &&
-            selectedShip.dockedBodyId &&
-            bodies.some(
-              (b) => b.id === selectedShip.dockedBodyId && b.owned,
-            ) && (
-              <button
-                type="button"
-                onClick={() =>
-                  api
-                    .fitClaimRig(selectedShip.id)
-                    .then(() => {
-                      setNotice(t.galaxy.claimRigFitted);
-                      void refreshShips();
-                    })
-                    .catch((err: ApiError) =>
-                      setNotice(
-                        `${t.galaxy.claimRigRefused} — ${err.message ?? err.error}`,
-                      ),
-                    )
-                }
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  justifyContent: 'center',
-                  background: 'var(--bg-overlay)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--stroke-subtle)',
-                  borderRadius: 'var(--radius-button)',
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                <Anchor size={14} aria-hidden /> {t.galaxy.fitClaimRig}
-              </button>
-            )}
+          
+          
           {selectedShip.status === 'idle' &&
             selectedShip.harvestRig &&
             !selectedShip.harvestingStarId &&

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 MVP and §P7 “User manual + onboarding”; GAME_BOOK.md §19; DESIGN_GUIDE.md §17; CLAUDE.md §15/§16. */
 /**
  * Onboarding anti-softlock (GB §19 « starter knowledge », chunk AN) :
  * un Souverain NEUF doit pouvoir poser sa mine SANS unlock (savoir de

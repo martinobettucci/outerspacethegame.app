@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
 /**
  * The Player Codex overlay (docs/MANUAL_PLAN.md §3). Reachable from every
  * screen via the command rail; opens deep-linked to the chapter matching the

@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Docks”; GAME_BOOK.md §9/§14; DESIGN_GUIDE.md §5.1/§7/§8.6. */
 /**
  * Intégration : atterrissage & fret (GB §9/§13, DG §7) sur vraie base —
  * décoller/atterrir, matrice spaceport (self/everyone), manutention des

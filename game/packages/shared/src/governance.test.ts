@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P2 “Governance v1”; GAME_BOOK.md §11/§21; DESIGN_GUIDE.md §4.1. */
 /**
  * Gouvernance v1 (GB §11, DG §4.1) : exigences par taille, G 1.0/0.5,
  * bonus +2 %/tier du gouverneur installé le plus faible, rôle du vaisseau
