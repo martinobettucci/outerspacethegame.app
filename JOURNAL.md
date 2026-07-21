@@ -3696,3 +3696,27 @@ figer après le tour de Q/R ; persisté immédiatement, §5) :
 - Synergie remarquée (agent) : scoop stellaire + multi-tank + transfert
   = boucle de sauvetage/logistique bornée par la coque (10 HP/scoop,
   4 scoops par vie de sonde) — coût réel des missions de secours.
+
+## 2026-07-21 — Sondes L3 & carburant : spec FIGÉE (réponses du responsable)
+
+Tour de Q/R clos. Décisions FERMES :
+
+- « Ciel compatible » = **FUEL compatible** (correcteur d'orthographe) :
+  le transfert exige le type correspondant au moteur du receveur.
+- **TOUTES les sondes sont multi-carburant** (stocks séparés par type,
+  ordre de consommation configuré SONDE PAR SONDE) ; **seules les L3
+  transfèrent**. **Sonde→sonde INTERDIT** (sinon OP — chaînes de relais
+  exclues par conception).
+- **Ancrage L3** : la sonde ancre un vaisseau et le remplit pendant que
+  LES DEUX restent À L'ARRÊT, en OPENSPACE (ni landed ni hovering).
+  Procédé **relativement lent** [TUNE — proposé 20 u/h de jeu] :
+  l'immobilisation est un axe stratégique à peser, sans être pénible.
+  Pendant le transfert, les deux sont des CIBLES VALIDES et ne peuvent
+  pas se défendre (attaque 0 — hook combat P5). Montant AU CHOIX.
+- **Moteur figé au build** : migration impossible. Le chantier naval
+  peut usiner N'IMPORTE quel moteur via un simple RETOOLING de l'usine
+  (le chantier gagne une ligne moteur re-toolable, patron industrie —
+  24 h [TUNE], type de l'étoile natale = défaut).
+- **L3 = L2 pour le reste** (télescope de bord, survol moitié, même
+  tank 70 u / vitesse / portée) + la capacité d'ancrage/transfert.
+  Gating naturel : pad L3 [interp], surcoût [TUNE].
