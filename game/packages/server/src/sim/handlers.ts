@@ -44,7 +44,7 @@ import { extinguishPlanet } from './extinction.js';
 import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
-import { shipPosition } from '../services/ships.js';
+import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
 import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
 
 /**
@@ -83,6 +83,32 @@ export const retoolComplete: EventHandler = async (client, event) => {
   if (rows[0]) {
     await recomputePlanetRates(client, rows[0].body_id, event.dueAt.getTime());
   }
+};
+
+/**
+ * fuel_transfer_complete { probeId, startedAtMs } — bord d'un transfert
+ * ancré (W3) : règle le transfert au montant planifié (min donneur/
+ * capacité au moment du bord). Idempotence : ne règle que si la sonde
+ * porte encore CE transfert (transfer_started_at = startedAtMs) — une
+ * annulation ou un nouveau transfert a purgé/remplacé ce bord.
+ */
+export const fuelTransferComplete: EventHandler = async (client, event) => {
+  const probeId = String(event.payload.probeId ?? '');
+  const startedAtMs = Number(event.payload.startedAtMs ?? 0);
+  if (!probeId || !startedAtMs) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships
+     WHERE id = $1 AND transfer_started_at = to_timestamp($2 / 1000.0)
+     FOR UPDATE`,
+    [probeId, startedAtMs],
+  );
+  if (!rows[0]) return;
+  await settleAnchorTransfer(
+    client,
+    rows[0],
+    event.dueAt.getTime(),
+    Number(rows[0].transfer_units ?? 0),
+  );
 };
 
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
@@ -1334,6 +1360,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     colony_established: colonyEstablished,
     dock_eviction: dockEviction,
     retool_complete: retoolComplete,
+    fuel_transfer_complete: fuelTransferComplete,
     ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;

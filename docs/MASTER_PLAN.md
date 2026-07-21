@@ -24,14 +24,14 @@ le même commit, tests §15, captures §16, docs.
   moteur, UI outillage+retool+quille, DG §8.3 consolidé (matrice
   hors-diagonale [TUNE]-dormante → programme D). engines.test 5/5,
   E2E engines.spec vert, captures eng-01..03. → JOURNAL 2026-07-21
-- [ ] **W3 — Sondes L3 : ancrage & transfert** : niveau 3 (= L2 +
-  capacité tanker ; gate pad L3 [interp], surcoût [TUNE]) ;
-  `anchorShip`/transfert LENT [TUNE 20 u/h] à montant choisi, les deux
-  À L'ARRÊT EN OPENSPACE (ni landed ni hovering) ; fuel compatible
-  moteur receveur ; 1 sonde ancrée de base, **2 avec le « système de
-  ravitaillement avancé »** (accessoire, W6) ; sonde→sonde INTERDIT ;
-  flag « en transfert » = cible valide attaque 0 (hook P5).
-  → JOURNAL 2026-07-21
+- [x] **W3 — Sondes L3 : ancrage & transfert — LIVRÉ (2026-07-21)** :
+  migration 029 (probe_level 3 + colonnes transfert), gate pad L3,
+  surcoût empilé [TUNE], ancrage openspace strict (receveur idle ou
+  échoué-au-vide), type = moteur receveur (W2), 20 u/h-jeu, règlement
+  au bord + annulation pro-rata, sonde→sonde interdit, saturation 1
+  (hook accessoire W6), moveShip verrouillé, attaque-0 dérivé (P5).
+  anchor-transfer.test 5/5, E2E anchor.spec vert, captures anc-01..03,
+  DG §8.1 consolidé v3. → JOURNAL 2026-07-21
 - [ ] **W4 — Vue de bord des sondes L2/L3** : télescope embarqué =
   ciel L1 (260 pc) continu autour de la sonde, où qu'elle soit
   (`world.ts` désormais libre). → JOURNAL 2026-07-20

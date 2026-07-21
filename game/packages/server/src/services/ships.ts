@@ -32,6 +32,7 @@ import {
   HULLS,
   type HullSize,
   type LandingPolicy,
+  MAX_ANCHORED_PROBES,
   occupiesDock,
   PROBE,
   type ResourceId,
@@ -91,6 +92,15 @@ export interface ShipView {
   fuelType: string;
   /** W2 : moteur FIGÉ au build (null : sonde multicarburant/personnelle). */
   engineType: string | null;
+  /** W3 : transfert ancré en cours (sonde donneuse) — cible attaque 0. */
+  transfer: {
+    targetId: string;
+    fuelType: string;
+    unitsPlanned: number;
+    endsAt: string | null;
+  } | null;
+  /** W3 : id de la sonde ancrée à CETTE coque (receveur), sinon null. */
+  anchoredProbeId: string | null;
   fuelRatePerDay: number;
   fuelAsOf: string | null;
   tankU: number;
@@ -184,6 +194,20 @@ export async function fleet(
   const claimsBy = new Map(
     claiming.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  // W3 : échéances des transferts ancrés (bords non traités).
+  const { rows: transferring } = await pool.query(
+    `SELECT payload->>'probeId' AS ship_id, due_at FROM events
+     WHERE kind = 'fuel_transfer_complete' AND processed_at IS NULL`,
+  );
+  const transferEndsBy = new Map(
+    transferring.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
+  // W3 : sonde ancrée par receveur (flag dérivé côté receveur).
+  const anchoredBy = new Map(
+    rows
+      .filter((r) => r.transfer_target_id)
+      .map((r) => [String(r.transfer_target_id), String(r.id)]),
+  );
   const { rows: crewCounts } = await pool.query(
     `SELECT bound_host_id AS ship_id, count(*)::int AS crew FROM npcs
      WHERE bound_host_type = 'ship' GROUP BY bound_host_id`,
@@ -259,6 +283,15 @@ export async function fleet(
       })(),
       fuelType: tank.type,
       engineType: r.engine_type ?? null,
+      transfer: r.transfer_target_id
+        ? {
+            targetId: String(r.transfer_target_id),
+            fuelType: String(r.transfer_fuel_type ?? ''),
+            unitsPlanned: Number(r.transfer_units ?? 0),
+            endsAt: transferEndsBy.get(String(r.id)) ?? null,
+          }
+        : null,
+      anchoredProbeId: anchoredBy.get(String(r.id)) ?? null,
       fuelRatePerDay: Number(r.fuel_rate_u_per_day ?? 0),
       fuelAsOf: r.fuel_as_of ? new Date(r.fuel_as_of).toISOString() : null,
       tankU:
@@ -343,6 +376,24 @@ export async function moveShip(
     }
     if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
       throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    // W3 : une coque ENGAGÉE dans un transfert ancré ne bouge pas — ni
+    // la sonde donneuse, ni le receveur (annuler d'abord).
+    if (ship.transfer_target_id) {
+      throw new CommandError(
+        'not_available',
+        'Transfert ancré en cours — annulez-le avant de partir',
+      );
+    }
+    const { rows: anchored } = await client.query(
+      `SELECT 1 FROM ships WHERE transfer_target_id = $1 LIMIT 1`,
+      [shipId],
+    );
+    if (anchored[0]) {
+      throw new CommandError(
+        'not_available',
+        'Une sonde est ancrée à cette coque — annulez le transfert d\'abord',
+      );
     }
     // Départ = fin de récolte (le gréement se replie — GB §22) : réservoir
     // matérialisé, l'étoile récupère ce rendement.
@@ -558,8 +609,8 @@ export async function buildProbe(
   pool: pg.Pool,
   playerId: string,
   planetId: string,
-  opts: { nowMs?: number; level?: 1 | 2 } = {},
-): Promise<{ probeId: string; level: 1 | 2 }> {
+  opts: { nowMs?: number; level?: 1 | 2 | 3 } = {},
+): Promise<{ probeId: string; level: 1 | 2 | 3 }> {
   const nowMs = opts.nowMs ?? Date.now();
   const client = await pool.connect();
   try {
@@ -582,14 +633,17 @@ export async function buildProbe(
     if (pads[0].n === 0) {
       throw new CommandError('not_available', 'Aucun probe_pad actif ici');
     }
-    // Deux niveaux de sonde (2026-07-20) : le NIVEAU du pad gate le
-    // niveau constructible [TUNE-v1 interp]. Défaut = meilleur permis.
-    const level: 1 | 2 =
-      opts.level ?? (pads[0].max_level >= 2 ? 2 : 1);
-    if (level === 2 && pads[0].max_level < 2) {
+    // Niveaux de sonde (2026-07-20 ; W3 2026-07-21 : L3 tanker) : le
+    // NIVEAU du pad gate le niveau constructible [TUNE-v1 interp].
+    // Défaut = meilleur permis.
+    const level: 1 | 2 | 3 =
+      opts.level ?? (Math.min(pads[0].max_level, 3) as 1 | 2 | 3);
+    if (level > pads[0].max_level) {
       throw new CommandError(
         'not_available',
-        'Une sonde L2 (télescope de bord) exige un probe_pad L2+',
+        level === 3
+          ? 'Une sonde L3 (tanker) exige un probe_pad L3'
+          : 'Une sonde L2 (télescope de bord) exige un probe_pad L2+',
       );
     }
     const { rows: today } = await client.query(
@@ -603,8 +657,14 @@ export async function buildProbe(
     }
     // Coût payé sur le stock planétaire (mêmes règles que les bâtiments).
     const totalCost: Record<string, number> = { ...PROBE.buildCost };
-    if (level === 2) {
+    if (level >= 2) {
       for (const [res, qty] of Object.entries(PROBE.l2Surcost)) {
+        totalCost[res] = (totalCost[res] ?? 0) + (qty as number);
+      }
+    }
+    // W3 : L3 = L2 + tanker, le surcoût s'EMPILE. [TUNE]
+    if (level >= 3) {
+      for (const [res, qty] of Object.entries(PROBE.l3Surcost)) {
         totalCost[res] = (totalCost[res] ?? 0) + (qty as number);
       }
     }
@@ -808,6 +868,274 @@ export async function scoopProbeFuel(
     }
     await client.query('COMMIT');
     return { destroyed: false, hp: newHp, fuelUnits: PROBE.tankU };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * W3 — ancrage & transfert (MASTER_PLAN W3, JOURNAL 2026-07-21) : une
+ * sonde L3 (tanker) ancrée à une coque, LES DEUX À L'ARRÊT EN OPENSPACE
+ * (sonde `idle` strict ; receveur `idle`, ou `stranded` hors survol —
+ * le sauvetage au vide est LE cas d'usage), à ≤ FUEL_TRANSFER_RADIUS_PC.
+ * Le type donné = TYPE MOTEUR du receveur (W2). Débit 20 u/h-jeu [TUNE],
+ * règlement au BORD (`fuel_transfer_complete`), annulation PRO-RATA.
+ * Sonde→sonde INTERDIT ; 1 sonde ancrée par receveur (accessoire W6 → 2) ;
+ * v1 entre VOS coques. Pendant le transfert : cible valide attaque 0
+ * (hook P5) — flag dérivé de transfer_target_id.
+ */
+export async function anchorTransferFuel(
+  pool: pg.Pool,
+  playerId: string,
+  probeId: string,
+  opts: { toShipId: string; units: number; nowMs?: number; timeScale?: number },
+): Promise<{ endsAt: Date; unitsPlanned: number; fuelType: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  if (probeId === opts.toShipId) {
+    throw new CommandError('not_available', 'Une sonde ne se ravitaille pas elle-même');
+  }
+  if (!(opts.units > 0)) {
+    throw new CommandError('not_available', 'Quantité invalide');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+      [[probeId, opts.toShipId]],
+    );
+    const probe = rows.find((r) => r.id === probeId);
+    const target = rows.find((r) => r.id === opts.toShipId);
+    if (!probe || !target) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (probe.owner_id !== playerId || target.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'v1 : transfert entre VOS coques seulement');
+    }
+    if (probe.hull_category !== 'probe' || Number(probe.probe_level ?? 1) < 3) {
+      throw new CommandError('not_available', 'Seule une sonde L3 (tanker) peut s\'ancrer');
+    }
+    if (probe.status !== 'idle') {
+      throw new CommandError(
+        'not_available',
+        'La sonde doit être À L\'ARRÊT en openspace (ni survol, ni quai)',
+      );
+    }
+    if (probe.transfer_target_id) {
+      throw new CommandError('not_available', 'Cette sonde transfère déjà');
+    }
+    if (target.hull_category === 'probe') {
+      throw new CommandError('not_available', 'Sonde→sonde interdit (canon 2026-07-21)');
+    }
+    if (target.hull_category === 'personal') {
+      throw new CommandError('not_available', 'Cette coque n\'a pas de réservoir');
+    }
+    const strandedInVoid = target.status === 'stranded' && !target.hover_body_id;
+    if (target.status !== 'idle' && !strandedInVoid) {
+      throw new CommandError(
+        'not_available',
+        'Le receveur doit être à l\'arrêt en openspace (ni survol, ni quai)',
+      );
+    }
+    const a = shipPosition(probe, nowMs);
+    const b = shipPosition(target, nowMs);
+    const distance = Math.hypot(a.x - b.x, a.y - b.y);
+    if (distance > FUEL_TRANSFER_RADIUS_PC + 1e-9) {
+      throw new CommandError(
+        'not_available',
+        `Trop loin pour ancrer : ${distance.toFixed(2)} pc (max ${FUEL_TRANSFER_RADIUS_PC} pc)`,
+      );
+    }
+    const { rows: anchored } = await client.query(
+      `SELECT count(*)::int AS n FROM ships WHERE transfer_target_id = $1`,
+      [target.id],
+    );
+    if (anchored[0].n >= MAX_ANCHORED_PROBES) {
+      throw new CommandError(
+        'not_available',
+        `Receveur saturé : ${MAX_ANCHORED_PROBES} sonde ancrée max (accessoire à venir)`,
+      );
+    }
+    // Type donné = MOTEUR du receveur (W2) ; les coques héritées non
+    // typées retombent sur leur slot actif (annoncé).
+    const fuelType = String(target.engine_type ?? evalShipFuel(target, nowMs).type);
+    const probeTank = evalShipFuel(probe, nowMs);
+    const probeSlots = { ...((probe.fuel ?? {}) as Record<string, number>) };
+    probeSlots[probeTank.type] = probeTank.units;
+    const donorAvail = Math.max(0, probeSlots[fuelType] ?? 0);
+    if (donorAvail <= 1e-9) {
+      throw new CommandError(
+        'insufficient_resources',
+        `La sonde n'a pas de ${fuelType} en soute (moteur du receveur)`,
+      );
+    }
+    const targetTankU =
+      HULLS[`${target.hull_category}_${target.hull_size}` as `${HullCategory}_${HullSize}`]
+        ?.tankU ?? 0;
+    const targetTank = evalShipFuel(target, nowMs);
+    const capLeft = Math.max(0, targetTankU - targetTank.units);
+    if (capLeft <= 1e-9) {
+      throw new CommandError('not_available', 'Réservoir receveur déjà plein');
+    }
+    // Montant PLANIFIÉ borné au départ (donneur/capacité) — le règlement
+    // refait les min au bord (le drain de la sonde court pendant le pompage).
+    const unitsPlanned = Math.min(opts.units, donorAvail, capLeft);
+    const gameHours = unitsPlanned / PROBE.transferUPerHour;
+    const endsAt = new Date(nowMs + (gameHours * 3_600_000) / timeScale);
+    await client.query(
+      `UPDATE ships
+         SET transfer_target_id = $2, transfer_fuel_type = $3,
+             transfer_units = $4, transfer_started_at = to_timestamp($5 / 1000.0)
+       WHERE id = $1`,
+      [probeId, target.id, fuelType, unitsPlanned, nowMs],
+    );
+    await enqueue(client, 'fuel_transfer_complete', endsAt, {
+      probeId,
+      startedAtMs: nowMs,
+    });
+    await client.query('COMMIT');
+    return { endsAt, unitsPlanned, fuelType };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Règlement d'un transfert ancré (bord OU annulation pro-rata) : déplace
+ * min(pompé, slot donneur, capacité receveur), libère l'ancre, purge les
+ * bords non traités. S'exécute DANS la transaction appelante, sonde déjà
+ * verrouillée FOR UPDATE.
+ */
+export async function settleAnchorTransfer(
+  client: pg.PoolClient,
+  probe: Record<string, unknown>,
+  nowMs: number,
+  pumpedUnits: number,
+): Promise<{ moved: number; fuelType: string }> {
+  const fuelType = String(probe.transfer_fuel_type ?? 'cold');
+  const targetId = probe.transfer_target_id as string | null;
+  const clearAnchor = async () => {
+    await client.query(
+      `UPDATE ships
+         SET transfer_target_id = NULL, transfer_fuel_type = NULL,
+             transfer_units = NULL, transfer_started_at = NULL
+       WHERE id = $1`,
+      [probe.id],
+    );
+    await client.query(
+      `DELETE FROM events
+       WHERE kind = 'fuel_transfer_complete' AND processed_at IS NULL
+         AND payload->>'probeId' = $1`,
+      [String(probe.id)],
+    );
+  };
+  if (!targetId) {
+    // Receveur disparu (ON DELETE SET NULL) : rien à déplacer.
+    await clearAnchor();
+    return { moved: 0, fuelType };
+  }
+  const { rows: targets } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+    [targetId],
+  );
+  const target = targets[0];
+  if (!target) {
+    await clearAnchor();
+    return { moved: 0, fuelType };
+  }
+  // Donneur : slots évalués (le drain de survol/idle a couru pendant le
+  // pompage — le slot actif est lazy, les autres statiques).
+  const probeTank = evalShipFuel(probe as ShipRowLike, nowMs);
+  const probeSlots = { ...((probe.fuel ?? {}) as Record<string, number>) };
+  probeSlots[probeTank.type] = probeTank.units;
+  const donorAvail = Math.max(0, probeSlots[fuelType] ?? 0);
+  const targetTankU =
+    HULLS[`${target.hull_category}_${target.hull_size}` as `${HullCategory}_${HullSize}`]
+      ?.tankU ?? 0;
+  const targetTank = evalShipFuel(target, nowMs);
+  const targetSlots = { ...((target.fuel ?? {}) as Record<string, number>) };
+  targetSlots[targetTank.type] = targetTank.units;
+  const capLeft = Math.max(0, targetTankU - targetTank.units);
+  const moved = Math.max(0, Math.min(pumpedUnits, donorAvail, capLeft));
+
+  probeSlots[fuelType] = donorAvail - moved;
+  await client.query(
+    `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
+        fuel_as_of = to_timestamp($3 / 1000.0)
+     WHERE id = $1`,
+    [probe.id, JSON.stringify(probeSlots), nowMs],
+  );
+  await clearAnchor();
+
+  targetSlots[fuelType] = (targetSlots[fuelType] ?? 0) + moved;
+  // Receveur échoué au vide servi : il repart à l'arrêt (idle).
+  const targetStatus =
+    target.status === 'stranded' && moved > 1e-9 ? 'idle' : target.status;
+  await client.query(
+    `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
+        fuel_as_of = to_timestamp($3 / 1000.0), status = $4
+     WHERE id = $1`,
+    [target.id, JSON.stringify(targetSlots), nowMs, targetStatus],
+  );
+  // Re-armement des drains sur l'état réel (openspace : le réservoir paie).
+  for (const id of [String(probe.id), String(target.id)]) {
+    const { rows: fresh } = await client.query(
+      `SELECT * FROM ships WHERE id = $1`,
+      [id],
+    );
+    if (fresh[0] && ['hovering', 'idle'].includes(fresh[0].status)) {
+      await rebaseShipDrain(client, fresh[0], nowMs, 'tank');
+    }
+  }
+  return { moved, fuelType };
+}
+
+/** Ligne ships minimale pour evalShipFuel (idiome ShipRow non typé). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShipRowLike = Record<string, any>;
+
+/**
+ * W3 — annulation d'un transfert ancré par le propriétaire : règlement
+ * PRO-RATA (écoulé × débit, bornés donneur/capacité) — l'abandon ne perd
+ * pas le carburant déjà pompé.
+ */
+export async function cancelAnchorTransfer(
+  pool: pg.Pool,
+  playerId: string,
+  probeId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ moved: number; fuelType: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [probeId],
+    );
+    const probe = rows[0];
+    if (!probe) throw new CommandError('not_found', 'Sonde inconnue');
+    if (probe.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette sonde ne vous obéit pas');
+    }
+    if (!probe.transfer_target_id && !probe.transfer_started_at) {
+      throw new CommandError('not_available', 'Aucun transfert en cours');
+    }
+    const startedMs = new Date(probe.transfer_started_at).getTime();
+    const gameHours = (Math.max(0, nowMs - startedMs) / 3_600_000) * timeScale;
+    const pumped = Math.min(
+      Number(probe.transfer_units ?? 0),
+      gameHours * PROBE.transferUPerHour,
+    );
+    const r = await settleAnchorTransfer(client, probe, nowMs, pumped);
+    await client.query('COMMIT');
+    return r;
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

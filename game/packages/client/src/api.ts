@@ -298,6 +298,17 @@ export interface ShipView {
   /** Réservoir évalué à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
+  /** W2 : moteur figé au build (null : sonde/personnelle). */
+  engineType: string | null;
+  /** W3 : transfert ancré en cours (sonde donneuse). */
+  transfer: {
+    targetId: string;
+    fuelType: string;
+    unitsPlanned: number;
+    endsAt: string | null;
+  } | null;
+  /** W3 : sonde ancrée à cette coque (receveur), sinon null. */
+  anchoredProbeId: string | null;
   fuelRatePerDay: number;
   fuelAsOf: string | null;
   tankU: number;
@@ -377,6 +388,19 @@ export const api = {
     call<{ destroyed: boolean; hp: number; fuelUnits: number }>(
       'POST',
       `/ships/${shipId}/scoop`,
+    ),
+  /** W3 : ancre une sonde L3 et lance le transfert (règlement au bord). */
+  anchorTransfer: (probeId: string, input: { toShipId: string; units: number }) =>
+    call<{ endsAt: string; unitsPlanned: number; fuelType: string }>(
+      'POST',
+      `/ships/${probeId}/anchor-transfer`,
+      input,
+    ),
+  /** W3 : annule un transfert ancré (règlement pro-rata). */
+  anchorCancel: (probeId: string) =>
+    call<{ moved: number; fuelType: string }>(
+      'POST',
+      `/ships/${probeId}/anchor-cancel`,
     ),
   /** Expédie la PREMIÈRE sonde disponible en survol de ce monde. */
   launchProbe: (planetId: string, dest: { x: number; y: number }) =>

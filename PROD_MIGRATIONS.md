@@ -42,6 +42,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 26 | `game/packages/server/migrations/026_probe_levels.sql` | Sondes v3 (GB §4/§14) : `ships.probe_level` (1\|2, défaut 1) | 001 | DROP de la colonne |
 | 27 | `game/packages/server/migrations/027_probe_fuel_order.sql` | W1 multi-fuel : `ships.fuel_order` (ordre de consommation par sonde) | 001 | DROP de la colonne |
 | 28 | `game/packages/server/migrations/028_engine_types.sql` | W2 moteurs typés : `ships.engine_type` ('cold'\|'hot'\|'gas', NULL sondes/personnelles) + backfill du type courant | 001 | DROP de la colonne |
+| 29 | `game/packages/server/migrations/029_probe_l3_transfer.sql` | W3 sondes L3 : `probe_level` étendu à 3, colonnes de transfert ancré (`transfer_target_id`/`_fuel_type`/`_units`/`_started_at`) + index partiel | 026 | Recréer la contrainte (1,2) après rétrogradage des L3, DROP des 4 colonnes + index |
 
 ## Services à déployer (au premier déploiement)
 

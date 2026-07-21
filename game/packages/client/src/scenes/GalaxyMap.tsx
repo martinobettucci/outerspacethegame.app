@@ -167,6 +167,9 @@ export function GalaxyMap() {
   const [settlerSeniors, setSettlerSeniors] = useState('40');
   const [transferTo, setTransferTo] = useState('');
   const [transferUnits, setTransferUnits] = useState('10');
+  // W3 : ancrage tanker d'une sonde L3.
+  const [anchorTo, setAnchorTo] = useState('');
+  const [anchorUnits, setAnchorUnits] = useState('10');
   const [intel, setIntel] = useState<
     { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: PlanetIntel } | null
   >(null);
@@ -1683,6 +1686,172 @@ export function GalaxyMap() {
                 <Fuel size={14} aria-hidden /> {t.galaxy.scoopStar}
               </button>
             )}
+          {/* W3 : ancrage & transfert d'une sonde L3 (tanker). */}
+          {selectedShip.hullCategory === 'probe' &&
+            selectedShip.probeLevel >= 3 &&
+            selectedShip.transfer && (
+              <section
+                aria-label={t.galaxy.anchorInProgress}
+                style={{
+                  fontSize: 12,
+                  color: 'var(--text-secondary)',
+                  display: 'grid',
+                  gap: 6,
+                }}
+              >
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  <Anchor size={13} aria-hidden style={{ verticalAlign: -2 }} />{' '}
+                  {t.galaxy.anchorInProgress} — {selectedShip.transfer.unitsPlanned}
+                  u {selectedShip.transfer.fuelType}
+                </strong>
+                <button
+                  type="button"
+                  onClick={() =>
+                    api
+                      .anchorCancel(selectedShip.id)
+                      .then((r) => {
+                        setNotice(
+                          `${t.galaxy.anchorCancelled} (+${r.moved.toFixed(1)} u ${r.fuelType})`,
+                        );
+                        void refreshShips();
+                      })
+                      .catch((err: ApiError) =>
+                        setNotice(
+                          `${t.galaxy.anchorRefused} — ${err.message ?? err.error}`,
+                        ),
+                      )
+                  }
+                  style={{
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    justifySelf: 'start',
+                  }}
+                >
+                  {t.galaxy.anchorCancel}
+                </button>
+              </section>
+            )}
+          {selectedShip.hullCategory === 'probe' &&
+            selectedShip.probeLevel >= 3 &&
+            !selectedShip.transfer &&
+            selectedShip.status === 'idle' &&
+            (() => {
+              // Receveurs valides : VOS coques à réservoir, à l'arrêt en
+              // openspace, à ≤ 1 pc (FUEL_TRANSFER_RADIUS_PC).
+              const candidates = ships.filter(
+                (s) =>
+                  s.id !== selectedShip.id &&
+                  !['probe', 'personal'].includes(s.hullCategory) &&
+                  (s.status === 'idle' ||
+                    (s.status === 'stranded' && !s.hoverBodyId)) &&
+                  Math.hypot(s.x - selectedShip.x, s.y - selectedShip.y) <= 1,
+              );
+              return (
+                <section
+                  aria-label={t.galaxy.anchorTitle}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    display: 'grid',
+                    gap: 6,
+                  }}
+                >
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    <Anchor size={13} aria-hidden style={{ verticalAlign: -2 }} />{' '}
+                    {t.galaxy.anchorTitle}
+                  </strong>
+                  {candidates.length === 0 ? (
+                    <span>{t.galaxy.anchorNoTargets}</span>
+                  ) : (
+                    <>
+                      <label style={{ display: 'grid', gap: 2 }}>
+                        <span>{t.galaxy.anchorTarget}</span>
+                        <select
+                          aria-label={t.galaxy.anchorTarget}
+                          value={anchorTo}
+                          onChange={(e) => setAnchorTo(e.target.value)}
+                          style={{
+                            background: 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '4px 8px',
+                          }}
+                        >
+                          <option value="">—</option>
+                          {candidates.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.status})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label style={{ display: 'grid', gap: 2 }}>
+                        <span>{t.galaxy.anchorUnits}</span>
+                        <input
+                          aria-label={t.galaxy.anchorUnits}
+                          value={anchorUnits}
+                          onChange={(e) => setAnchorUnits(e.target.value)}
+                          inputMode="decimal"
+                          style={{
+                            background: 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '4px 8px',
+                            width: 80,
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!anchorTo || !(Number(anchorUnits) > 0)}
+                        onClick={() =>
+                          api
+                            .anchorTransfer(selectedShip.id, {
+                              toShipId: anchorTo,
+                              units: Number(anchorUnits),
+                            })
+                            .then((r) => {
+                              setNotice(
+                                `${t.galaxy.anchorStarted} (${r.unitsPlanned.toFixed(1)} u ${r.fuelType})`,
+                              );
+                              void refreshShips();
+                            })
+                            .catch((err: ApiError) =>
+                              setNotice(
+                                `${t.galaxy.anchorRefused} — ${err.message ?? err.error}`,
+                              ),
+                            )
+                        }
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '6px 10px',
+                          cursor: 'pointer',
+                          justifySelf: 'start',
+                        }}
+                      >
+                        {t.galaxy.anchorDo}
+                      </button>
+                    </>
+                  )}
+                </section>
+              );
+            })()}
+          {selectedShip.anchoredProbeId && (
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              <Anchor size={12} aria-hidden style={{ verticalAlign: -2 }} />{' '}
+              {t.galaxy.anchoredNote}
+            </span>
+          )}
           {selectedShip.crewCount > 0 && (
             <section
               aria-label={t.galaxy.survivalTitle}

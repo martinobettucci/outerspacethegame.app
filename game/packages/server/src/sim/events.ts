@@ -30,6 +30,7 @@ export type EventKind =
   | 'stargate_built'
   | 'auto_trade_check'
   | 'pop_clock'
+  | 'fuel_transfer_complete'
   | 'noop';
 
 export interface GameEvent {

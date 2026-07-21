@@ -900,11 +900,25 @@ Slots: Engine/Armor/Fuel/OBS/Weapon/Accessory/Cargo. Upgrades: 2 levels each
 (canon). **Only Combat mounts weapons; only Cargo mounts container upgrades**
 (canon).
 
-**Probes** are their own crewless class [only crewless class in the game]:
-built at probe_pad for **15 ore + 10 silicon** [TUNE], **fuel-free solar
-sail, 10 pc/day** [TUNE], unlimited endurance, built-in scanner, no cargo, no
-survival clock, no hijack value. Build cap 5/day/pad [TUNE]. The exploration
-bootstrap.
+**Probes** are their own crewless class [only crewless class in the game] —
+**v3 implemented (2026-07-20/21)**: built at probe_pad for **15 ore +
+10 silicon** [TUNE], **120 pc/day** (nothing catches the scout), real fuel:
+**tank 70 u × 0.05 u/pc** (range 1 400 pc ≥ 2× the largest telescope +5 %),
+hover burn **0.06 u/day** (≥3× leaner than the leanest hull; dry tank =
+probe LOST, not stranded), **50 HP** hull, attackable (P5). Born hovering
+their homeworld with 25 % fuel (§8.1-v3 birth rule, natal star type);
+**star scoop** ≤8 pc refills the tank for −10 HP. **Multi-fuel tank (W1)**:
+separate stocks per chemistry, per-probe consumption order, ordered preburn.
+Three levels, pad-level gated, surcosts stack [TUNE]: **L1** base (60 pc
+arrival sky) · **L2** +20 ore +10 silicon — onboard L1 telescope (260 pc
+continuous) and HALF hover burn · **L3** +40 ore +25 silicon — L2 +
+**tanker**: anchors to one of your hulls, BOTH stopped in openspace, and
+pumps the receiver-engine's fuel at **20 u/game-hour** [TUNE], settled at
+the edge (cancel = pro-rata); probe→probe forbidden; 1 anchored probe per
+receiver (2 with the advanced-refueling accessory, W6); anchored pair =
+valid target, attack 0 (P5 hook). No cargo, no survival clock, no hijack
+value. Build cap 5/day/pad counts LIVING probes born today [TUNE-v1 quirk].
+The exploration bootstrap.
 
 ### 8.2 Upgrade effects (level 1 / level 2) [TUNE]
 - Engine: speed ×1.15 / ×1.30; carries the fuel-tuning (§8.3)

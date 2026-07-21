@@ -181,7 +181,19 @@ export const PROBE = {
    *  la coque (10 HP par scoop). [TUNE] */
   scoopRangePc: 8,
   scoopHullDamage: 10,
+  /** W3 — L3 = L2 + capacité TANKER (ancrage & transfert). Surcoût
+   *  au-delà du L2 [TUNE], gate pad L3 [interp]. */
+  l3Surcost: { ore: 40, silicon: 25 } as CostBundle,
+  /** Débit de transfert ancré, en u par HEURE-jeu. LENT à dessein
+   *  (fenêtre d'attaque-0, hook P5). [TUNE] */
+  transferUPerHour: 20,
 } as const;
+
+/**
+ * W3 : sondes ancrées simultanément sur UN receveur — 1 de base, 2 avec
+ * l'accessoire « système de ravitaillement avancé » (W6, hook config).
+ */
+export const MAX_ANCHORED_PROBES = 1;
 
 /** Conso de survol d'une sonde selon son niveau (L2 = moitié). */
 export function probeHoverUPerDay(level: number): number {

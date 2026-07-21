@@ -62,6 +62,8 @@ import {
   landShip,
   buildProbe,
   scoopProbeFuel,
+  anchorTransferFuel,
+  cancelAnchorTransfer,
   setProbeFuelOrder,
   sendProbe,
   listNpcs,
@@ -181,6 +183,11 @@ const manualRespondSchema = z.object({
 });
 const governorSchema = z.object({ npcId: z.string().uuid() });
 const retoolSchema = z.object({ recipe: z.string().min(1).max(64) });
+// W3 : ancrage & transfert d'une sonde L3.
+const anchorTransferSchema = z.object({
+  toShipId: z.string().uuid(),
+  units: z.number().positive(),
+});
 const governorPreviewSchema = z.object({
   npcIds: z.array(z.string().uuid()).min(1).max(3),
 });
@@ -627,6 +634,47 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const { id } = req.params as { id: string };
     try {
       return await scoopProbeFuel(deps.pool, player.id, id);
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  // W3 : ancrage & transfert d'une sonde L3 (règlement au bord).
+  app.post('/ships/:id/anchor-transfer', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = anchorTransferSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid_body' });
+    }
+    try {
+      return await anchorTransferFuel(deps.pool, player.id, id, {
+        ...parsed.data,
+        timeScale: deps.config.TIME_SCALE,
+      });
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  // W3 : annulation pro-rata d'un transfert ancré.
+  app.post('/ships/:id/anchor-cancel', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    try {
+      return await cancelAnchorTransfer(deps.pool, player.id, id, {
+        timeScale: deps.config.TIME_SCALE,
+      });
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

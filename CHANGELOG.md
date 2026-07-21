@@ -2,6 +2,27 @@
 
 ## [Non publié]
 
+### W3 — sondes L3 : ancrage & transfert (MASTER_PLAN W3, 2026-07-21)
+
+- Sonde **L3 = L2 + tanker** (migration 029) : gate pad L3, surcoût
+  empilé +40 ore +25 silicon [TUNE] ; ancrage à UNE de vos coques, les
+  DEUX à l'arrêt en openspace (receveur `idle` ou échoué au vide — le
+  sauvetage tanker), ≤ 1 pc ; type donné = MOTEUR du receveur (W2) ;
+  débit 20 u/h-jeu [TUNE], règlement au BORD (`fuel_transfer_complete`
+  idempotent), annulation PRO-RATA ; sonde→sonde interdit ; 1 sonde
+  ancrée par receveur (accessoire W6 → 2) ; paire ancrée = cible valide
+  attaque 0 (hook P5, flag dérivé) ; moveShip verrouillé des deux côtés.
+- API POST /ships/:id/anchor-transfer + /anchor-cancel ; vue flotte :
+  bloc `transfer` (sonde) + `anchoredProbeId` (receveur) ; UI galaxie :
+  section « Tanker anchor (L3) » (cibles ≤ 1 pc, montant, annulation).
+- DG §8.1 : paragraphe sondes consolidé v3 complet (120 pc/j, réservoir
+  70 u, multi-fuel W1, scoop, niveaux L1/L2/L3 — il datait du pré-v3).
+- Tests : intégration anchor-transfer.test.ts 5/5 (stabilité ×4),
+  balayage sériel 314/314 (39 fichiers, census vert), unit 55 + client
+  21, E2E anchor.spec.ts vert ×4 (ADN pad L3 requis, carbon granté) +
+  captures anc-01..03 observées (§16 — resynchronisation du panneau au
+  poll de 5 s constatée et attendue par le spec).
+
 ### W2 — moteurs typés à l'usinage (MASTER_PLAN W2, 2026-07-21)
 
 - `ships.engine_type` FIGÉ au build (migration 028, backfill du type

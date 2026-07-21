@@ -3930,3 +3930,25 @@ Spec validée (MASTER_PLAN W3). Interprétations d'implémentation :
   POST /ships/:id/anchor-cancel ; vue flotte : bloc transfer
   {targetId, endsAt, unitsPlanned}. UI minimale : action sur sonde L3
   sélectionnée (patron scoop) + annulation ; E2E dédié.
+
+## 2026-07-21 — W3 livré : sondes L3, ancrage & transfert
+
+Livré conformément au plan de chunk : migration 029 (probe_level 3 +
+transfer_target_id/_fuel_type/_units/_started_at, index partiel), gate
+pad L3 avec surcoût empilé (+40 ore +25 silicon [TUNE]), ancrage
+openspace strict (sonde idle ; receveur idle ou échoué AU VIDE — un
+receveur servi repart idle), type donné = moteur du receveur (W2),
+débit 20 u/h-jeu [TUNE], règlement au BORD (fuel_transfer_complete,
+idempotent par transfer_started_at), annulation PRO-RATA, sonde→sonde
+interdit, MAX_ANCHORED_PROBES = 1 (hook accessoire W6), moveShip
+verrouillé des deux côtés, attaque-0 dérivée (P5). API anchor-transfer/
+anchor-cancel, vue flotte transfer/anchoredProbeId, UI galaxie
+« Tanker anchor (L3) ». DG §8.1 : le paragraphe sondes datait du PRÉ-v3
+(voile solaire 10 pc/j) — consolidé v3 complet (faute de W-1 réparée).
+
+Preuves : anchor-transfer.test 5/5 (×4 stabilité) ; balayage sériel
+314/314 (39 fichiers, census vert cette passe) ; unit 55 ; client 21 ;
+E2E anchor.spec vert ×4 (leçons : l'ADN du seed gate le pad L3 →
+prédicat pickEmailByDna ; carbon seedé variable → granté ; capture
+« settled » attendait la resynchronisation du panneau au poll 5 s) ;
+captures anc-01..03 OBSERVÉES.
