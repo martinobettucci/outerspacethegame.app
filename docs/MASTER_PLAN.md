@@ -32,9 +32,10 @@ le même commit, tests §15, captures §16, docs.
   (hook accessoire W6), moveShip verrouillé, attaque-0 dérivé (P5).
   anchor-transfer.test 5/5, E2E anchor.spec vert, captures anc-01..03,
   DG §8.1 consolidé v3. → JOURNAL 2026-07-21
-- [ ] **W4 — Vue de bord des sondes L2/L3** : télescope embarqué =
-  ciel L1 (260 pc) continu autour de la sonde, où qu'elle soit
-  (`world.ts` désormais libre). → JOURNAL 2026-07-20
+- [x] **W4 — Vue de bord des sondes L2/L3 — LIVRÉ (2026-07-21)** :
+  scope 260 pc continu (y compris transit interpolé en SQL), halo UI à
+  la sélection, intel par paliers inchangé (scan riche → R4).
+  onboard-sight.test 4/4, E2E vert, capture obs-01. → JOURNAL 2026-07-21
 - [ ] **W5 — Champs climatiques stellaires + bouclier morphique** :
   (a) une étoile diffuse son climat en openspace, rayon **0,5 ×
   R_nova** [TUNE] (S 20 / M 32 / L 50 pc), champ VISUALISÉ au clic sur

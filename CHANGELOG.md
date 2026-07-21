@@ -2,6 +2,20 @@
 
 ## [Non publié]
 
+### W4 — vue de bord des sondes L2/L3 (MASTER_PLAN W4, 2026-07-21)
+
+- `visibleBodies` : une sonde L2+ porte un ciel de bord de **260 pc**
+  (télescope L1 embarqué), CONTINU « où qu'elle soit » — y compris EN
+  TRANSIT (position interpolée en SQL sur la mission) ; L1 reste 60 pc
+  à l'arrêt, vaisseaux 20 pc. L'intel par paliers ne bouge pas (le scan
+  riche des sondes reste R4, annoncé).
+- UI : sélectionner une sonde L2+ à l'arrêt affiche le halo de scan
+  (même visuel que le télescope planétaire, rayon 260 pc).
+- Tests : intégration onboard-sight.test.ts 4/4 (×3), balayage sériel
+  318/318 (40 fichiers), unit 55, client 21, E2E onboard-sight.spec.ts
+  vert (leçon v3 : 350 pc = plein de naissance exact → sonde perdue à
+  sec ; trajet 250 pc) + capture obs-01 observée (halo + panneau idle).
+
 ### W3 — sondes L3 : ancrage & transfert (MASTER_PLAN W3, 2026-07-21)
 
 - Sonde **L3 = L2 + tanker** (migration 029) : gate pad L3, surcoût

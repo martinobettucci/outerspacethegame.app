@@ -911,7 +911,7 @@ their homeworld with 25 % fuel (§8.1-v3 birth rule, natal star type);
 separate stocks per chemistry, per-probe consumption order, ordered preburn.
 Three levels, pad-level gated, surcosts stack [TUNE]: **L1** base (60 pc
 arrival sky) · **L2** +20 ore +10 silicon — onboard L1 telescope (260 pc
-continuous) and HALF hover burn · **L3** +40 ore +25 silicon — L2 +
+continuous, swept even IN TRANSIT — W4 implemented) and HALF hover burn · **L3** +40 ore +25 silicon — L2 +
 **tanker**: anchors to one of your hulls, BOTH stopped in openspace, and
 pumps the receiver-engine's fuel at **20 u/game-hour** [TUNE], settled at
 the edge (cancel = pro-rata); probe→probe forbidden; 1 anchored probe per
