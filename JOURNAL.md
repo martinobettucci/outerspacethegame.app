@@ -3847,3 +3847,24 @@ l'étoile à la capacité restante). fuel_order par sonde (migration 027,
 API POST /ships/:id/fuel-order, §10 sondes seules, doublons refusés).
 Cercles d'autonomie = TOTAL des slots. Intégration ships 8/8 ; hover et
 census ordonno-dépendants au balayage (passent seuls) → R5 élargi.
+
+## 2026-07-21 — W2 : plan de chunk (moteurs typés à l'usinage)
+
+Spec validée (MASTER_PLAN W2). Interprétations d'implémentation :
+- `engine_type` colonne ships ('cold'|'hot'|'gas'), NULL pour sondes
+  (multicarburant W1) et coques personnelles (sans réservoir) ;
+  migration 028 backfille le type courant (slot du jsonb fuel, sinon
+  'cold').
+- Le chantier naval réutilise le PATRON INDUSTRIE tel quel : `recipe`
+  du bâtiment = 'engine_cold'|'engine_hot'|'engine_gas', retool 24 h
+  [TUNE] via retoolBuilding (statut retooling = chantier arrêté),
+  gouvernance toute-Industrialist = instantané (même règle §4.1).
+  Recipe NULL = accordé à l'étoile NATALE (défaut historique).
+- buildShip : choix moteur (défaut étoile natale) ; il faut UN chantier
+  actif dont l'outillage correspond ET dont le niveau couvre la taille.
+- Naissance : le plein de 25 % est du type MOTEUR (plus forcément
+  l'étoile natale), engine_type écrit à l'INSERT.
+- Contraintes : refuel = fuel_<engine> uniquement ; transferts refusés
+  entre moteurs différents ; slot actif (shipDrain) = engine_type pour
+  les coques typées ; le pré-brûlage ordonné W1 reste réservé sondes.
+- DG §8.3 consolidé dans le même commit. Tests intégration dédiés.
