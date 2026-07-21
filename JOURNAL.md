@@ -4099,3 +4099,27 @@ W6c — restes explicites (au MASTER_PLAN) : arbre ADN dédié des
   accessoires, achat/acheminement par cargo (marché des items),
   conversion des rigs booléens historiques (harvest/junk/claim) en
   items, obs/weapon effectifs (P5).
+
+## 2026-07-21 — W6 cœur livré : pipeline accessoires & upgrades-items
+
+Livré conformément au plan de chunk (W6a+W6b) : catalogue GEAR partagé
+(11 items exhaustifs — règle de complétude ; collision de nom avec le
+catalogue descriptif ITEMS de recipes.ts résolue par le nom GEAR),
+migration 031 (planet_items + accessories/upgrades/installing sur
+ships), fabrication sur bâtiment hôte actif avec balance d'items des
+warehouses réveillée (50 × mult, chunk AD), installation sur coque
+ENTREPOSÉE (item consommé à la commande, immobilisation 12 h, retrieve
+refusé pendant), effets branchés : 2 ancrages (accessoire, W3), vitesse
+moteur (moveShip + péage de traversée W5), réservoir effectif partout
+(refuel/transfert/ancrage/vue), HP max (armure). API + UI (fabrication
+dans les panneaux hôtes, installation dans le panneau galaxie, chips).
+
+LIMITE ANNONCÉE (§25) : gear.spec.ts (E2E) est ÉCRIT mais NON EXÉCUTÉ
+et aucune capture §16 — le port 8080 a été repris par l'environnement
+du responsable pendant le chunk (règle : ne jamais le toucher). Le
+chunk reste [~] au MASTER_PLAN jusqu'au passage E2E (motif R6). Restes
+W6c listés au MASTER_PLAN (arbre ADN dédié, marché des items,
+conversion des rigs, obs/weapon P5).
+
+Preuves : unit items 3 ; gear.test.ts 6/6 (×3) ; balayage sériel
+327/327 (42 fichiers) ; unit 55 ; client 21 ; build monorepo vert.

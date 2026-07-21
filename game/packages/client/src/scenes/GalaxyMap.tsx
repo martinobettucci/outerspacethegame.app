@@ -170,6 +170,25 @@ export function GalaxyMap() {
   // W3 : ancrage tanker d'une sonde L3.
   const [anchorTo, setAnchorTo] = useState('');
   const [anchorUnits, setAnchorUnits] = useState('10');
+  // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
+  const [installGearList, setInstallGearList] = useState<
+    { itemKey: string; count: number }[]
+  >([]);
+  const [installSel, setInstallSel] = useState('');
+  useEffect(() => {
+    if (selectedShip?.status !== 'warehoused' || !selectedShip.dockedBodyId) {
+      setInstallGearList([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .planetItems(selectedShip.dockedBodyId)
+      .then((r) => !cancelled && setInstallGearList(r.items))
+      .catch(() => !cancelled && setInstallGearList([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedShip]);
   const [intel, setIntel] = useState<
     { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: PlanetIntel } | null
   >(null);
@@ -1917,6 +1936,26 @@ export function GalaxyMap() {
                 </section>
               );
             })()}
+          {/* W6 : équipement monté (accessoires + upgrades). */}
+          {(selectedShip.accessories.length > 0 ||
+            Object.keys(selectedShip.upgrades).length > 0) && (
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {selectedShip.accessories.length > 0 &&
+                `${t.galaxy.gearAccessories} : ${selectedShip.accessories
+                  .map((a) => a.replace(/_/g, ' '))
+                  .join(', ')}`}
+              {selectedShip.accessories.length > 0 &&
+              Object.keys(selectedShip.upgrades).length > 0
+                ? ' · '
+                : ''}
+              {Object.keys(selectedShip.upgrades).length > 0 &&
+                `${t.galaxy.gearUpgrades} : ${Object.entries(
+                  selectedShip.upgrades,
+                )
+                  .map(([slot, lvl]) => `${slot} L${lvl}`)
+                  .join(', ')}`}
+            </span>
+          )}
           {selectedShip.anchoredProbeId && (
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               <Anchor size={12} aria-hidden style={{ verticalAlign: -2 }} />{' '}
@@ -3207,6 +3246,72 @@ export function GalaxyMap() {
                 >
                   {t.galaxy.warehousedHint}
                 </p>
+                {/* W6 : installation d'items sur la coque entreposée. */}
+                {selectedShip.installingItem ? (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--warning-500)',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {t.galaxy.gearInstalling} —{' '}
+                    {selectedShip.installingItem.replace(/_/g, ' ')}
+                  </span>
+                ) : installGearList.length > 0 ? (
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    <label style={{ display: 'grid', gap: 2, fontSize: 12 }}>
+                      <span>{t.galaxy.gearInstall}</span>
+                      <select
+                        aria-label={t.galaxy.gearInstall}
+                        value={installSel}
+                        onChange={(e) => setInstallSel(e.target.value)}
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 8px',
+                        }}
+                      >
+                        <option value="">—</option>
+                        {installGearList.map((i) => (
+                          <option key={i.itemKey} value={i.itemKey}>
+                            {i.itemKey.replace(/_/g, ' ')} ×{i.count}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={!installSel}
+                      onClick={() =>
+                        api
+                          .installItem(selectedShip.id, installSel)
+                          .then(() => {
+                            setNotice(t.galaxy.gearInstallStarted);
+                            void refreshShips();
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.gearInstallRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        justifySelf: 'start',
+                      }}
+                    >
+                      {t.galaxy.gearInstall}
+                    </button>
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   onClick={() =>

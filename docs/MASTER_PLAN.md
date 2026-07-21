@@ -44,17 +44,19 @@ le même commit, tests §15, captures §16, docs.
   active, immobilisée pendant, fitShield supprimé. star-fields 3/3,
   wear 9/9, balayage 321/321, E2E shields réécrit vert, captures
   sh-00..03. → JOURNAL 2026-07-21
-- [ ] **W6 — Pipeline ACCESSOIRES & upgrades-items** : (a) arbre ADN
-  des accessoires (découverte) ; (b) fabrication = items NON-FONGIBLES
-  occupant la balance d'items des warehouses (50/niveau — dormante
-  depuis le chunk AD, réveillée ici) ; achetables/acheminables par
-  cargo ; (c) installation : vaisseau LANDED → WAREHOUSED → menu des
-  accessoires disponibles → coût ressources + TEMPS d'immobilisation →
-  deck → décollage ; (d) les UPGRADES (moteur/armure/OBS/armes
-  L2/L3) deviennent des items : un engine L3 en stock s'installe
-  DIRECTEMENT (plus de « montée » L2→L3) ; (e) PAS de rnd de slots —
-  slots = ceux de la coque (canon). Premier item : « système de
-  ravitaillement avancé » (2 ancrages). → JOURNAL 2026-07-21
+- [~] **W6 — Pipeline ACCESSOIRES & upgrades-items — CŒUR LIVRÉ
+  (2026-07-21)** : catalogue GEAR 11 items (accessoire « advanced
+  refueling system » = 2 ancrages W3 ; upgrades L2/L3 moteur/armure/
+  réservoir BRANCHÉS, obs/weapon dormants P5), fabrication (migration
+  031, hôte actif, balance d'items 50×mult AD réveillée), installation
+  sur coque ENTREPOSÉE (item consommé à la commande, 12 h immobilisée,
+  slots de coque, L3 remplace L2), API + UI. gear.test 6/6, balayage
+  327/327. **Restent** : (a) E2E gear.spec écrit NON exécuté + captures
+  §16 (port 8080 repris par le responsable — R6) ; (b) arbre ADN dédié
+  des accessoires (v1 : gate = bâtiment hôte disponible) ; (c) achat/
+  acheminement par cargo (marché des items) ; (d) conversion des rigs
+  booléens historiques (harvest/junk/claim) en items ; (e) obs/weapon
+  effectifs (P5). → JOURNAL 2026-07-21
 - [ ] **W7 — Usinage partiel (usines L3)** : fabrication (véhicules,
   accessoires, BÂTIMENTS) débitée par paliers de 5 % (20 étapes) au
   lieu du paiement à la commande, dès qu'UNE usine L3 (n'importe

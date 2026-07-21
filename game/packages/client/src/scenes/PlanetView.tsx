@@ -206,6 +206,21 @@ export function PlanetView({ planetId }: { planetId: string }) {
     const interval = setInterval(refreshShipBuilds, 4_000);
     return () => clearInterval(interval);
   }, [refreshShipBuilds]);
+  // W6 : inventaire d'items du monde (fabrications comprises).
+  const [gearInventory, setGearInventory] = useState<
+    Awaited<ReturnType<typeof api.planetItems>> | null
+  >(null);
+  const refreshGear = useCallback(() => {
+    api
+      .planetItems(planetId)
+      .then((r) => setGearInventory(r))
+      .catch(() => setGearInventory(null));
+  }, [planetId]);
+  useEffect(() => {
+    refreshGear();
+    const interval = setInterval(refreshGear, 4_000);
+    return () => clearInterval(interval);
+  }, [refreshGear]);
   const selectedCardRef = useRef<{ building: BuildingKey; recipe: string | null } | null>(null);
   selectedCardRef.current = selectedCard;
   const selectBuildingRef = useRef<(id: string) => void>(() => undefined);
@@ -964,6 +979,19 @@ export function PlanetView({ planetId }: { planetId: string }) {
                   }
                 }}
                 shipBuilds={shipBuilds}
+                gearInventory={gearInventory}
+                onFabricate={async (itemKey) => {
+                  try {
+                    await api.fabricateItem(planetId, itemKey);
+                    setNotice(t.planet.gearStarted);
+                    refreshGear();
+                    await refresh();
+                  } catch (err) {
+                    setNotice(
+                      `${t.planet.gearRefused} — ${(err as ApiError).message ?? t.errors.generic}`,
+                    );
+                  }
+                }}
                 onBuildShip={async (input) => {
                   try {
                     await api.buildShip(planetId, input);

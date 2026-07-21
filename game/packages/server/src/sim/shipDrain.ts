@@ -9,6 +9,7 @@
  */
 import {
   activeFuelSlot,
+  armorHpMult,
   PROBE,
   evalJunkAmount,
   junkCellOf,
@@ -261,9 +262,10 @@ export function shipMaxHp(ship: ShipRow): number {
   // Sondes v3 (2026-07-20) : la sonde a des points de coque — fragile,
   // endommagée par le scoop stellaire, attaquable (combat P5).
   if (ship.hull_category === 'probe') return PROBE.maxHp;
+  // W6 : l'upgrade d'armure multiplie les HP max (DG §8.2).
   return (
-    HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS]
-      ?.armorHp ?? 0
+    (HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS]
+      ?.armorHp ?? 0) * armorHpMult(ship.upgrades)
   );
 }
 

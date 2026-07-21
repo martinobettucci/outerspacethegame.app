@@ -5,6 +5,7 @@ export * from './formulas.js';
 export * from './rng.js';
 export * from './buildings.js';
 export * from './units.js';
+export * from './items.js';
 export * from './ships.js';
 export * from './recipes.js';
 export * from './techtree.js';

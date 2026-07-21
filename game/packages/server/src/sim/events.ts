@@ -32,6 +32,8 @@ export type EventKind =
   | 'pop_clock'
   | 'fuel_transfer_complete'
   | 'shield_morph_complete'
+  | 'item_fabricated'
+  | 'item_installed'
   | 'noop';
 
 export interface GameEvent {

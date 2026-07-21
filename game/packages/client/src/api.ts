@@ -296,6 +296,11 @@ export interface ShipView {
   /** W5 : morphose d'adaptation en cours (coque immobilisée). */
   morphingShield: string | null;
   morphCompletesAt: string | null;
+  /** W6 : accessoires montés et upgrades {slot: niveau}. */
+  accessories: string[];
+  upgrades: Record<string, number>;
+  installingItem: string | null;
+  installCompletesAt: string | null;
   junkCollector: boolean;
   claimRig: boolean;
   claimingTargetId: string | null;
@@ -394,6 +399,23 @@ export const api = {
       'POST',
       `/ships/${shipId}/scoop`,
     ),
+  /** W6 : items d'un monde (inventaire + fabrications en cours). */
+  planetItems: (planetId: string) =>
+    call<{
+      items: { itemKey: string; count: number }[];
+      capacity: number;
+      fabricating: { itemKey: string; completesAt: string }[];
+    }>('GET', `/planets/${planetId}/items`),
+  /** W6 : fabrique un item non-fongible (bâtiment hôte actif). */
+  fabricateItem: (planetId: string, itemKey: string) =>
+    call<{ completesAt: string }>('POST', `/planets/${planetId}/items`, {
+      itemKey,
+    }),
+  /** W6 : installe un item sur une coque ENTREPOSÉE de ce monde. */
+  installItem: (shipId: string, itemKey: string) =>
+    call<{ completesAt: string }>('POST', `/ships/${shipId}/install`, {
+      itemKey,
+    }),
   /** W3 : ancre une sonde L3 et lance le transfert (règlement au bord). */
   anchorTransfer: (probeId: string, input: { toShipId: string; units: number }) =>
     call<{ endsAt: string; unitsPlanned: number; fuelType: string }>(

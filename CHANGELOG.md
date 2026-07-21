@@ -2,6 +2,35 @@
 
 ## [Non publié]
 
+### W6 — pipeline accessoires & upgrades-items (MASTER_PLAN W6, 2026-07-21) — cœur livré
+
+- Catalogue partagé `items.ts` (GEAR, 11 items exhaustifs) :
+  1 accessoire (« advanced refueling system » → 2 sondes ancrées, W3) +
+  5 familles d'upgrades × L2/L3 (moteur ×1,15/×1,30, armure ×1,3/×1,6,
+  réservoir ×1,5/×2 BRANCHÉS ; obs/weapon fabricables mais DORMANTS
+  jusqu'au combat P5, annoncé).
+- Fabrication (migration 031, table planet_items) : bâtiment hôte ACTIF
+  (workshop/shipyard/weapon_foundry), coût au stock, temps [TUNE],
+  balance d'items des warehouses RÉVEILLÉE (50 × mult — chunk AD) ;
+  bord item_fabricated → ligne non-fongible.
+- Installation : coque ENTREPOSÉE uniquement, item consommé à la
+  commande, coût + 12 h [TUNE] d'immobilisation (retrieve refusé
+  pendant), bord item_installed idempotent ; slots de la coque (canon,
+  pas de rnd), upgrades 1/famille, un niveau supérieur REMPLACE (l'ancien
+  n'est pas rendu [TUNE-v1]).
+- Effets câblés partout : vitesse (moveShip + péage W5), réservoir
+  effectif (refuel/transferts/ancrage/vue flotte), HP max (armure),
+  2 ancrages (accessoire).
+- API planets/:id/items (GET/POST) + ships/:id/install ; UI : section
+  « Gear fabrication » des panneaux hôtes, menu d'installation sur coque
+  entreposée, chips équipement.
+- Tests : unit items 3, intégration gear.test.ts 6/6 (×3), balayage
+  sériel 327/327 (42 fichiers), client 21, build vert.
+- **E2E gear.spec.ts ÉCRIT mais NON exécuté ni captures §16 : le port
+  8080 est repris par l'environnement du responsable (motif R6) — chunk
+  en [~] jusqu'au passage E2E.** Restes W6c au MASTER_PLAN (arbre ADN
+  dédié, marché/acheminement des items, conversion des rigs).
+
 ### W5 — champs climatiques stellaires & coque morphique (MASTER_PLAN W5, 2026-07-21)
 
 - **Champs stellaires** : chaque étoile diffuse son climat sur

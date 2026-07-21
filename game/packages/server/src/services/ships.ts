@@ -14,6 +14,8 @@
 import {
   ALL_RESOURCE_IDS,
   BUILD_FUEL_FRACTION,
+  effectiveTankU,
+  engineSpeedMult,
   ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
   recipeEngine,
@@ -88,6 +90,11 @@ export interface ShipView {
   /** W5 : morphose d'adaptation en cours (coque immobilisée). */
   morphingShield: string | null;
   morphCompletesAt: string | null;
+  /** W6 : accessoires montés (items non-fongibles) et upgrades {slot: L}. */
+  accessories: string[];
+  upgrades: Record<string, number>;
+  installingItem: string | null;
+  installCompletesAt: string | null;
   junkCollector: boolean;
   claimRig: boolean;
   /** Épave en cours de réclamation (id) + échéance ISO, sinon null. */
@@ -208,6 +215,14 @@ export async function fleet(
   const transferEndsBy = new Map(
     transferring.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  // W6 : échéances des installations d'items (bords non traités).
+  const { rows: installing } = await pool.query(
+    `SELECT payload->>'shipId' AS ship_id, due_at FROM events
+     WHERE kind = 'item_installed' AND processed_at IS NULL`,
+  );
+  const installEndsBy = new Map(
+    installing.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
   // W5 : échéances des morphoses d'adaptation (bords non traités).
   const { rows: morphing } = await pool.query(
     `SELECT payload->>'shipId' AS ship_id, due_at FROM events
@@ -277,6 +292,10 @@ export async function fleet(
       },
       morphingShield: r.morphing_shield ?? null,
       morphCompletesAt: morphEndsBy.get(String(r.id)) ?? null,
+      accessories: Array.isArray(r.accessories) ? r.accessories : [],
+      upgrades: r.upgrades ?? {},
+      installingItem: r.installing_item ?? null,
+      installCompletesAt: installEndsBy.get(String(r.id)) ?? null,
       junkCollector: !!r.junk_collector,
       claimRig: !!r.claim_rig,
       claimingTargetId: r.claiming_target_id ?? null,
@@ -313,9 +332,12 @@ export async function fleet(
       tankU:
         r.hull_category === 'probe' || r.hull_category === 'personal'
           ? 0
-          : (HULLS[
-              `${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`
-            ]?.tankU ?? 0),
+          : effectiveTankU(
+              HULLS[
+                `${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`
+              ]?.tankU ?? 0,
+              r.upgrades,
+            ),
       mission:
         r.status === 'transit' && r.departed_at
           ? {
@@ -479,7 +501,13 @@ export async function moveShip(
       throw new CommandError('not_available', 'Destination trop proche');
     }
 
-    const stats = hullStats(ship.hull_category, ship.hull_size);
+    const baseStats = hullStats(ship.hull_category, ship.hull_size);
+    // W6 : les upgrades-items s'appliquent — vitesse moteur, réservoir.
+    const stats = {
+      speed: baseStats.speed * engineSpeedMult(ship.upgrades),
+      burnPerPc: baseStats.burnPerPc,
+      tank: effectiveTankU(baseStats.tank, ship.upgrades),
+    };
     let fuelBurned = 0;
     let stockMutatedBodyId: string | null = null;
     if (stats.burnPerPc > 0) {
@@ -975,10 +1003,17 @@ export async function anchorTransferFuel(
       `SELECT count(*)::int AS n FROM ships WHERE transfer_target_id = $1`,
       [target.id],
     );
-    if (anchored[0].n >= MAX_ANCHORED_PROBES) {
+    // W6 : le « système de ravitaillement avancé » double les ancrages.
+    const targetAccessories: string[] = Array.isArray(target.accessories)
+      ? target.accessories
+      : [];
+    const maxAnchored = targetAccessories.includes('advanced_refueling_system')
+      ? 2
+      : MAX_ANCHORED_PROBES;
+    if (anchored[0].n >= maxAnchored) {
       throw new CommandError(
         'not_available',
-        `Receveur saturé : ${MAX_ANCHORED_PROBES} sonde ancrée max (accessoire à venir)`,
+        `Receveur saturé : ${maxAnchored} sonde(s) ancrée(s) max`,
       );
     }
     // Type donné = MOTEUR du receveur (W2) ; les coques héritées non
@@ -994,9 +1029,11 @@ export async function anchorTransferFuel(
         `La sonde n'a pas de ${fuelType} en soute (moteur du receveur)`,
       );
     }
-    const targetTankU =
+    const targetTankU = effectiveTankU(
       HULLS[`${target.hull_category}_${target.hull_size}` as `${HullCategory}_${HullSize}`]
-        ?.tankU ?? 0;
+        ?.tankU ?? 0,
+      target.upgrades,
+    );
     const targetTank = evalShipFuel(target, nowMs);
     const capLeft = Math.max(0, targetTankU - targetTank.units);
     if (capLeft <= 1e-9) {
@@ -1077,9 +1114,11 @@ export async function settleAnchorTransfer(
   const probeSlots = { ...((probe.fuel ?? {}) as Record<string, number>) };
   probeSlots[probeTank.type] = probeTank.units;
   const donorAvail = Math.max(0, probeSlots[fuelType] ?? 0);
-  const targetTankU =
+  const targetTankU = effectiveTankU(
     HULLS[`${target.hull_category}_${target.hull_size}` as `${HullCategory}_${HullSize}`]
-      ?.tankU ?? 0;
+      ?.tankU ?? 0,
+    target.upgrades,
+  );
   const targetTank = evalShipFuel(target, nowMs);
   const targetSlots = { ...((target.fuel ?? {}) as Record<string, number>) };
   targetSlots[targetTank.type] = targetTank.units;
@@ -1554,9 +1593,12 @@ export async function refuelShip(
     if (ship.hull_category === 'probe' || ship.hull_category === 'personal') {
       throw new CommandError('not_available', 'Cette coque n\'a pas de réservoir');
     }
-    const tankU =
+    // W6 : capacité EFFECTIVE (upgrade réservoir compris).
+    const tankU = effectiveTankU(
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
-        ?.tankU ?? 0;
+        ?.tankU ?? 0,
+      ship.upgrades,
+    );
     const tank = evalShipFuel(ship, nowMs);
     const resource = `fuel_${tank.type}`;
     const capLeft = tankU - tank.units;
@@ -1805,9 +1847,11 @@ export async function transferFuel(
         `Trop loin pour transférer : ${distance.toFixed(2)} pc (max ${FUEL_TRANSFER_RADIUS_PC} pc)`,
       );
     }
-    const toTankU =
+    const toTankU = effectiveTankU(
       HULLS[`${to.hull_category}_${to.hull_size}` as `${HullCategory}_${HullSize}`]
-        ?.tankU ?? 0;
+        ?.tankU ?? 0,
+      to.upgrades,
+    );
     const capLeft = toTankU - toTank.units;
     const take = Math.min(opts.units, fromTank.units, capLeft);
     if (capLeft <= 1e-9) {
@@ -2062,6 +2106,13 @@ export async function retrieveShip(
     const ship = await lockOwnedShip(client, playerId, shipId);
     if (ship.status !== 'warehoused' || !ship.docked_body_id) {
       throw new CommandError('not_available', "Cette coque n'est pas en entrepôt");
+    }
+    // W6 : l'installation d'item immobilise la coque en entrepôt.
+    if (ship.installing_item) {
+      throw new CommandError(
+        'not_available',
+        'Installation en cours — la coque est immobilisée en atelier',
+      );
     }
     const { rows: pendingRows } = await client.query(
       `SELECT 1 FROM events WHERE processed_at IS NULL

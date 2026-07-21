@@ -14,6 +14,8 @@ import {
   clockDeathsPerDay,
   COLONY_SEED_STOCK,
   FOOD_RESOURCES,
+  GEAR,
+  engineSpeedMult,
   hasFullMedicineSupply,
   HULL_WEAR_FLOOR_HP,
   HULL_WEAR_FRACTION_PER_DAY,
@@ -155,6 +157,66 @@ export const shieldMorphComplete: EventHandler = async (client, event) => {
   );
   if (fresh[0]) {
     await rebaseShipHull(client, fresh[0], event.dueAt.getTime());
+  }
+};
+
+/**
+ * item_fabricated { bodyId, itemKey } — fin de fabrication (W6) : la
+ * ligne non-fongible naît en entrepôt. Exactement-une-fois par la
+ * transaction du processeur.
+ */
+export const itemFabricated: EventHandler = async (client, event) => {
+  const bodyId = String(event.payload.bodyId ?? '');
+  const itemKey = String(event.payload.itemKey ?? '');
+  if (!bodyId || !itemKey || !GEAR[itemKey]) return;
+  await client.query(
+    `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+    [bodyId, itemKey],
+  );
+};
+
+/**
+ * item_installed { shipId, itemKey, startedAtMs } — fin d'installation
+ * (W6) : accessoire ajouté OU upgrade écrit (1 par famille, le niveau
+ * remplace). Idempotence : la coque doit porter encore CETTE
+ * installation.
+ */
+export const itemInstalled: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  const itemKey = String(event.payload.itemKey ?? '');
+  const startedAtMs = Number(event.payload.startedAtMs ?? 0);
+  if (!shipId || !itemKey || !startedAtMs) return;
+  const def = GEAR[itemKey];
+  if (!def) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships
+     WHERE id = $1 AND installing_item = $2
+       AND install_started_at = to_timestamp($3 / 1000.0)
+     FOR UPDATE`,
+    [shipId, itemKey, startedAtMs],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  if (def.kind === 'accessory') {
+    const accessories: string[] = Array.isArray(ship.accessories)
+      ? ship.accessories
+      : [];
+    if (!accessories.includes(itemKey)) accessories.push(itemKey);
+    await client.query(
+      `UPDATE ships SET accessories = $2,
+          installing_item = NULL, install_started_at = NULL
+       WHERE id = $1`,
+      [shipId, JSON.stringify(accessories)],
+    );
+  } else {
+    const upgrades = { ...(ship.upgrades ?? {}) } as Record<string, number>;
+    upgrades[def.slot] = def.level ?? 2;
+    await client.query(
+      `UPDATE ships SET upgrades = $2,
+          installing_item = NULL, install_started_at = NULL
+       WHERE id = $1`,
+      [shipId, JSON.stringify(upgrades)],
+    );
   }
 };
 
@@ -559,11 +621,11 @@ export const shipArrival: EventHandler = async (client, event) => {
     const dxx = Number(ship.dest_x);
     const dyy = Number(ship.dest_y);
     const speed =
-      ship.hull_category === 'probe'
+      (ship.hull_category === 'probe'
         ? PROBE.speedPcPerDay
         : (HULLS[
             `${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS
-          ]?.speedPcPerDay ?? 0);
+          ]?.speedPcPerDay ?? 0)) * engineSpeedMult(ship.upgrades);
     if (speed > 0) {
       const pad = 51; // ≥ champ L ≈ 50,4 pc
       const { rows: fieldStars } = await client.query(
@@ -1460,6 +1522,8 @@ export function baseHandlers(): Record<string, EventHandler> {
     retool_complete: retoolComplete,
     fuel_transfer_complete: fuelTransferComplete,
     shield_morph_complete: shieldMorphComplete,
+    item_fabricated: itemFabricated,
+    item_installed: itemInstalled,
     ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;

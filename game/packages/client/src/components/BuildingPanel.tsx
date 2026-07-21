@@ -21,6 +21,7 @@ import {
   BUILDINGS,
   ENGINE_TYPES,
   engineRecipe,
+  GEAR,
   HULLS,
   recipeEngine,
   shipBuildCost,
@@ -60,6 +61,8 @@ export function BuildingPanel({
   onAmmLiquidity,
   onBuildShip,
   onRetoolRecipe,
+  onFabricate,
+  gearInventory,
   shipBuilds,
   onRetool,
   onLevelUp,
@@ -130,6 +133,13 @@ export function BuildingPanel({
   }) => void;
   /** W2 : rééquipage direct du chantier naval (recipe `engine_<type>`). */
   onRetoolRecipe?: (recipe: string) => void;
+  /** W6 : fabrication d'items (bâtiments hôtes : workshop/shipyard/foundry). */
+  onFabricate?: (itemKey: string) => void;
+  gearInventory?: {
+    items: { itemKey: string; count: number }[];
+    capacity: number;
+    fabricating: { itemKey: string; completesAt: string }[];
+  } | null;
   shipBuilds?: {
     name: string;
     category: string;
@@ -670,6 +680,55 @@ export function BuildingPanel({
             >
               <Anchor size={13} aria-hidden /> {t.planet.yardBuild}
             </button>
+          </section>
+        )}
+
+      {/* W6 : fabrication d'items non-fongibles (bâtiment hôte). */}
+      {['workshop', 'shipyard', 'weapon_foundry'].includes(building.key) &&
+        building.status === 'active' &&
+        onFabricate && (
+          <section aria-label={t.planet.gearTitle} className="ls-section">
+            <div className="ls-section-heading">
+              <Store size={14} aria-hidden /> {t.planet.gearTitle}
+            </div>
+            <p className="ls-section-subtitle">{t.planet.gearHint}</p>
+            {gearInventory && (
+              <span className="ls-mono-line">
+                {t.planet.gearInventory} :{' '}
+                {gearInventory.items.length === 0
+                  ? '—'
+                  : gearInventory.items
+                      .map((i) => `${i.itemKey.replace(/_/g, ' ')} ×${i.count}`)
+                      .join(', ')}{' '}
+                ({gearInventory.items.reduce((s, i) => s + i.count, 0)}/
+                {gearInventory.capacity})
+              </span>
+            )}
+            {gearInventory && gearInventory.fabricating.length > 0 && (
+              <span className="ls-mono-line">
+                {t.planet.gearFabricating} :{' '}
+                {gearInventory.fabricating
+                  .map((f) => f.itemKey.replace(/_/g, ' '))
+                  .join(', ')}
+              </span>
+            )}
+            {Object.values(GEAR)
+              .filter((d) => d.fabricator === building.key)
+              .map((d) => (
+                <div key={d.key} className="ls-inline-fields">
+                  <span className="ls-mono-line" style={{ flex: 1 }}>
+                    {d.key.replace(/_/g, ' ')} — {costText(d.fabricationCost)}
+                    {d.dormant ? ' (dormant)' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className="ls-button"
+                    onClick={() => onFabricate(d.key)}
+                  >
+                    {t.planet.gearFabricate}
+                  </button>
+                </div>
+              ))}
           </section>
         )}
 

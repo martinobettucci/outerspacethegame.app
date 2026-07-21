@@ -1013,6 +1013,19 @@ proportional to HP restored; policy: whom to serve (canon).
   field disc is PUBLIC — visualized on star click (like the flare, a
   radius, never the stock).
 - Scanner, terraform core (§6): same slot family.
+- **Item pipeline (W6, 2026-07-21 — v1 implemented)**: accessories and
+  upgrades are fabricated as NON-FUNGIBLE items (host building active:
+  workshop for accessories, shipyard for engine/armor/fuel/obs, foundry
+  for weapons; cost + hours [TUNE]) stored under the warehouses' ITEM
+  balance (50 × level-mult — awakened), and installed on a WAREHOUSED
+  hull (item consumed on order, install cost + 12 h [TUNE] immobilized;
+  hull slots only, no slot rnd — canon). First accessory: **advanced
+  refueling system** (2 anchored tanker probes, W3). Upgrades are items:
+  a higher level installs DIRECTLY and replaces (the old one is not
+  returned [TUNE-v1]); wired effects: engine speed ×1.15/×1.30, armor HP
+  ×1.3/×1.6, tank ×1.5/×2.0; obs/weapon fabricable but DORMANT until
+  combat (P5). Remaining (MASTER_PLAN): dedicated accessory DNA tree,
+  item cargo carriage/market, legacy rig conversion.
 
 ---
 
