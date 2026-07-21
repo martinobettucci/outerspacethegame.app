@@ -3675,3 +3675,24 @@ Persisté avant code (§5). Complète la spec sondes v3.
   refund = investi payé. Intégration : centroïde servi au spawn, ruines sans
   stargate_yard, refund d'une ruine héritée = 0, luck reproductible via pepper
   de test, verrou de concurrence. E2E inchangé (frontière latente déjà verte).
+
+## 2026-07-21 — Brainstorm responsable : sondes L3 tankers, réservoir multi-carburant, moteurs typés à l'usinage
+
+Proposition du responsable (questions/avis demandés — décisions à
+figer après le tour de Q/R ; persisté immédiatement, §5) :
+
+- **Sonde L3 (NOUVEAU niveau)** : peut ANCRER un vaisseau et lui
+  TRANSFÉRER du carburant (« à condition que ce soit le ciel
+  compatible » — à préciser : compatibilité de TYPE moteur, ou
+  co-localisation ?). Rôle stratégique : EXPANSION et SAUVETAGE.
+- **Réservoir de sonde multi-carburant** : peut contenir N'IMPORTE quel
+  fuel, stocks SÉPARÉS par type ; la sonde les consomme pour son propre
+  fonctionnement L'UN APRÈS L'AUTRE dans un ORDRE SPÉCIFIÉ sonde par
+  sonde.
+- **Moteurs typés** : les autres vaisseaux ont un moteur spécifique et
+  ne peuvent utiliser QUE le fuel adapté — CHOISI À L'USINAGE
+  (chantier naval). [Impact : le typage par étoile natale du 25 %-au-
+  build devient le DÉFAUT proposé au chantier.]
+- Synergie remarquée (agent) : scoop stellaire + multi-tank + transfert
+  = boucle de sauvetage/logistique bornée par la coque (10 HP/scoop,
+  4 scoops par vie de sonde) — coût réel des missions de secours.
