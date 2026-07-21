@@ -54,6 +54,7 @@ import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
+import { payStep, WORK_ORDER_RETRY_HOURS } from '../services/workOrders.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipHull, rebaseShipSurvival, shipMaxHp } from './shipDrain.js';
 
 /**
@@ -218,6 +219,78 @@ export const itemInstalled: EventHandler = async (client, event) => {
       [shipId, JSON.stringify(upgrades)],
     );
   }
+};
+
+/**
+ * work_step { orderId, stepMs } — un palier d'usinage partiel (W7) :
+ * l'ordre ne court que s'il est le PLUS ANCIEN inachevé de son usine
+ * (FIFO d'insertion) ; 5 % payés ou `starved` (retry 1 h-jeu × stepMs
+ * relatif) ; 20e palier → événement terminal EXISTANT.
+ */
+export const workStep: EventHandler = async (client, event) => {
+  const orderId = String(event.payload.orderId ?? '');
+  const stepMs = Number(event.payload.stepMs ?? 0);
+  if (!orderId || !stepMs) return;
+  const { rows } = await client.query(
+    `SELECT * FROM work_orders WHERE id = $1 FOR UPDATE`,
+    [orderId],
+  );
+  const order = rows[0];
+  if (!order) return;
+  const nowMs = event.dueAt.getTime();
+  // FIFO par usine : un ordre plus ancien inachevé de la même usine
+  // passe d'abord — ce palier se replanifie derrière lui.
+  if (order.factory_building_id) {
+    const { rows: elder } = await client.query(
+      `SELECT 1 FROM work_orders
+       WHERE factory_building_id = $1 AND created_at < $2 LIMIT 1`,
+      [order.factory_building_id, order.created_at],
+    );
+    if (elder[0]) {
+      await enqueue(client, 'work_step', new Date(nowMs + stepMs), {
+        orderId,
+        stepMs,
+      });
+      return;
+    }
+  }
+  const paid = await payStep(
+    client,
+    order.body_id,
+    order.cost as Record<string, number>,
+    nowMs,
+  );
+  if (!paid) {
+    // Affamé : retry à LA CADENCE DU PALIER (stepMs porte déjà l'échelle
+    // de temps) [TUNE-v1 simplification annoncée — la constante
+    // WORK_ORDER_RETRY_HOURS reste le levier de tuning].
+    void WORK_ORDER_RETRY_HOURS;
+    await client.query(
+      `UPDATE work_orders SET status = 'starved' WHERE id = $1`,
+      [orderId],
+    );
+    await enqueue(client, 'work_step', new Date(nowMs + stepMs), {
+      orderId,
+      stepMs,
+    });
+    return;
+  }
+  const done = Number(order.steps_done) + 1;
+  if (done >= Number(order.steps_total)) {
+    await client.query(`DELETE FROM work_orders WHERE id = $1`, [orderId]);
+    // Naissance par la voie EXISTANTE (exactement-une-fois).
+    const kind = order.kind === 'ship' ? 'ship_built' : 'item_fabricated';
+    await enqueue(client, kind as 'ship_built', event.dueAt, order.payload);
+    return;
+  }
+  await client.query(
+    `UPDATE work_orders SET steps_done = $2, status = 'running' WHERE id = $1`,
+    [orderId, done],
+  );
+  await enqueue(client, 'work_step', new Date(nowMs + stepMs), {
+    orderId,
+    stepMs,
+  });
 };
 
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
@@ -1524,6 +1597,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     shield_morph_complete: shieldMorphComplete,
     item_fabricated: itemFabricated,
     item_installed: itemInstalled,
+    work_step: workStep,
     ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;

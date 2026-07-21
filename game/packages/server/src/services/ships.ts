@@ -56,6 +56,7 @@ import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseSh
 import { releaseHarvest } from './harvest.js';
 import { releaseClaim } from './junk.js';
 import { armAutoTradeOnHover } from './hoverTrade.js';
+import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -2486,6 +2487,31 @@ export async function buildShip(
       );
     }
     const cost = shipBuildCost(hull, level);
+    // W7 : une industrie L3 active bascule la commande en USINAGE
+    // PARTIEL (20 paliers de 5 %, rien d'avance) — sinon chemin
+    // historique (paiement à la commande).
+    if (await hasL3Factory(client, planetId)) {
+      const factoryId = await pickL3Factory(client, planetId);
+      const r = await createWorkOrder(client, {
+        bodyId: planetId,
+        factoryBuildingId: factoryId!,
+        kind: 'ship',
+        payload: {
+          planetId,
+          playerId,
+          category: input.category,
+          size: input.size,
+          name,
+          engine,
+        },
+        cost: cost as Record<string, number>,
+        totalHours: SHIP_BUILD_HOURS[hull.size],
+        nowMs,
+        timeScale,
+      });
+      await client.query('COMMIT');
+      return { completesAt: r.completesAt, cost: cost as Record<string, number>, engine };
+    }
     for (const [resource, amount] of Object.entries(cost)) {
       const { rows: stockRows } = await client.query(
         `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
@@ -2549,12 +2575,28 @@ export async function pendingShipBuilds(
      ORDER BY e.due_at`,
     [planetId, playerId],
   );
-  return rows.map((r) => ({
+  const builds = rows.map((r) => ({
     category: String(r.payload.category),
     size: String(r.payload.size),
     name: String(r.payload.name),
     completesAt: new Date(r.due_at).toISOString(),
   }));
+  // W7 : ordres d'usinage partiel en cours (paliers visibles).
+  const { rows: orders } = await pool.query(
+    `SELECT payload, steps_done, status, created_at FROM work_orders
+     WHERE body_id = $1 AND kind = 'ship' AND payload->>'playerId' = $2
+     ORDER BY created_at`,
+    [planetId, playerId],
+  );
+  for (const o of orders) {
+    builds.push({
+      category: String(o.payload.category),
+      size: String(o.payload.size),
+      name: `${String(o.payload.name)} (${o.steps_done}/20${o.status === 'starved' ? ' starved' : ''})`,
+      completesAt: new Date(o.created_at).toISOString(),
+    });
+  }
+  return builds;
 }
 
 /** NPCs du joueur (main + liés), avec leurs rolls individuels (GB §12). */

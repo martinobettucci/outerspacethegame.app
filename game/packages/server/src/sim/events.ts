@@ -34,6 +34,7 @@ export type EventKind =
   | 'shield_morph_complete'
   | 'item_fabricated'
   | 'item_installed'
+  | 'work_step'
   | 'noop';
 
 export interface GameEvent {

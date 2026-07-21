@@ -20,6 +20,7 @@ import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { CommandError } from './planets.js';
+import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -128,6 +129,23 @@ export async function fabricateGear(
         'not_available',
         `Balance d'items pleine (${stored[0].n + pending[0].n}/${cap}) — un warehouse actif en stocke 50 × niveau`,
       );
+    }
+    // W7 : une industrie L3 active bascule la fabrication en USINAGE
+    // PARTIEL (20 paliers de 5 %) — sinon paiement à la commande.
+    if (await hasL3Factory(client, planetId)) {
+      const factoryId = await pickL3Factory(client, planetId);
+      const r = await createWorkOrder(client, {
+        bodyId: planetId,
+        factoryBuildingId: factoryId!,
+        kind: 'item',
+        payload: { bodyId: planetId, itemKey },
+        cost: def.fabricationCost as Record<string, number>,
+        totalHours: def.fabricationHours,
+        nowMs,
+        timeScale,
+      });
+      await client.query('COMMIT');
+      return { completesAt: r.completesAt };
     }
     await payStock(client, planetId, def.fabricationCost as Record<string, number>, nowMs);
     const completesAt = new Date(
@@ -304,6 +322,16 @@ export async function listPlanetGear(
      ORDER BY due_at`,
     [planetId],
   );
+  // W7 : ordres d'usinage partiel en cours (items).
+  const { rows: orders } = await pool.query(
+    `SELECT payload->>'itemKey' AS item_key, created_at, steps_done, status
+     FROM work_orders WHERE body_id = $1 AND kind = 'item'
+     ORDER BY created_at`,
+    [planetId],
+  );
+  for (const o of orders) {
+    fab.push({ item_key: `${o.item_key} (${o.steps_done}/20${o.status === 'starved' ? ' starved' : ''})`, due_at: o.created_at });
+  }
   return {
     items: items.map((r) => ({ itemKey: r.item_key, count: r.n })),
     capacity: itemCapacity(wh.map((w) => Number(w.level))),
