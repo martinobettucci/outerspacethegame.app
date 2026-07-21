@@ -24,6 +24,7 @@ import {
   OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   weightedHeads,
+  hoverIdleFuelUPerDay,
   GEAR,
   engineSpeedMult,
   hasFullMedicineSupply,
@@ -345,10 +346,28 @@ export const crusaderDaily: EventHandler = async (client, event) => {
     `SELECT count(n.id)::int AS crew
      FROM ships g
      LEFT JOIN npcs n ON n.bound_host_type = 'ship' AND n.bound_host_id = g.id
-     WHERE g.follow_ship_id = $1 AND g.status = 'docked'`,
+     WHERE g.follow_ship_id = $1 AND g.status IN ('docked', 'hovering')`,
     [shipId],
   );
   const guestCrew = Number(guests[0]?.crew ?? 0);
+  // W8d : le bord paie aussi le SURVOL de son escorte — déduction
+  // quotidienne fuel_<moteur> par suiveur (partielle si le stock
+  // manque [TUNE-v1 annoncé]).
+  const { rows: escorts } = await client.query(
+    `SELECT engine_type, hull_category, hull_size, probe_level FROM ships
+     WHERE follow_ship_id = $1 AND status = 'hovering'`,
+    [shipId],
+  );
+  for (const e of escorts) {
+    const perDay = hoverIdleFuelUPerDay(
+      e.hull_category,
+      e.hull_size,
+      Number(e.probe_level ?? 1),
+    );
+    const res = `fuel_${e.engine_type ?? 'cold'}`;
+    const have = Math.max(0, Number(stock[res] ?? 0));
+    stock[res] = Math.max(0, have - perDay);
+  }
   const heads = weightedHeads(pyr) + guestCrew;
   const per1000 = heads / 1_000;
   const needs = {
@@ -941,7 +960,8 @@ export const shipArrival: EventHandler = async (client, event) => {
     `UPDATE ships g
         SET x = s.x, y = s.y
        FROM ships s
-      WHERE s.id = $1 AND g.follow_ship_id = s.id AND g.status = 'docked'`,
+      WHERE s.id = $1 AND g.follow_ship_id = s.id
+        AND g.status IN ('docked', 'hovering')`,
     [shipId],
   );
 

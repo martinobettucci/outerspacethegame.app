@@ -2,6 +2,20 @@
 
 ## [Non publié]
 
+### W8d — le Crusader : flotte-suiveuse (MASTER_PLAN W8, 2026-07-21)
+
+- Escorte en SURVOL du Crusader (`hoverAtCrusader`, ≤ 1 pc, v1 vos
+  coques) : réservoir GELÉ, le bord PAIE le survol de chaque suiveur
+  (déduction quotidienne fuel_<moteur> dans crusader_daily, partielle
+  si le stock manque [TUNE-v1 annoncé]) ; équipages des suiveurs
+  comptés aux têtes du bord ; TOUT ce qui suit (amarré OU en escorte)
+  arrive AVEC lui (sync aux arrivées — philosophie lazy, annoncé) ;
+  fin d'escorte/appareillage par undock ou départ direct. API
+  hover-crusader.
+- Tests : crusader.test.ts 8/8 (×3), balayage sériel **338/338**
+  (census vert cette passe), build vert. **Reste W8e** (fabrication à
+  bord ADN complet + usinage partiel d'office, UI, E2E).
+
 ### W8c — le Crusader : docks VOLANTS (MASTER_PLAN W8, 2026-07-21)
 
 - Amarrage au Crusader (3 spaceports L3 figés → **6 S / 6 M / 6 L**,

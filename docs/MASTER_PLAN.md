@@ -75,8 +75,10 @@ le même commit, tests §15, captures §16, docs.
   bord (conso/horloges/oxygène-instantané/natalité L3/chômage vs 400
   emplois fixes/overcap 0,25), crusader.test 5/5. **W8c LIVRÉ (2026-07-21)** : docks volants 6/6/6 (amarrage ≤ 1 pc,
   réservoir gelé, équipages invités au stock du bord, voyage synchrone,
-  API). Restent W8d (flotte-suiveuse des coques en SURVOL), W8e
-  (fabrication à bord, UI, E2E). (le plus gros —
+  API). **W8d LIVRÉ (2026-07-21)** : escorte en survol (bord paie le survol,
+  équipages comptés, sync aux arrivées, API hover-crusader),
+  crusader.test 8/8, balayage 338/338. Reste W8e (fabrication à bord
+  ADN complet + usinage partiel d'office, UI, E2E). (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt
   FORCÉS en hovering, effet immédiat) ; infra FIXE non

@@ -14,7 +14,7 @@ import { CRUSADER } from '@atg/shared';
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { buildShip, dockAtCrusader, fleet, landShip, moveShip, undockFromCrusader, warehouseShip } from '../../src/services/ships.js';
+import { buildShip, dockAtCrusader, fleet, hoverAtCrusader, landShip, moveShip, undockFromCrusader, warehouseShip } from '../../src/services/ships.js';
 import { createTestPool } from './helpers.js';
 
 let pool: pg.Pool;
@@ -238,6 +238,64 @@ describe('W8c — docks VOLANTS (amarrage au Crusader)', () => {
     await expect(
       dockAtCrusader(pool, owner, hauler, crusaderId),
     ).rejects.toMatchObject({ code: 'not_available' });
+  });
+});
+
+describe("W8d — flotte-suiveuse (escorte en survol)", () => {
+  it("une coque escorte le Crusader : réservoir gelé, elle SUIT ses vols, le bord paie son survol", async () => {
+    await pump(10);
+    const f = await fleet(pool, owner);
+    const hauler = f.find((s) => s.name === 'First hauler')!.id;
+    const { rows: pos } = await pool.query(
+      `SELECT x, y, status FROM ships WHERE id = $1`,
+      [crusaderId],
+    );
+    await pool.query(
+      `UPDATE ships SET status = 'idle', x = $2, y = $3, fuel = '{"cold": 20}',
+         docked_body_id = NULL, docked_at = NULL, hover_body_id = NULL,
+         follow_ship_id = NULL, fuel_rate_u_per_day = 0, fuel_as_of = now(),
+         engine_type = 'cold'
+       WHERE id = $1`,
+      [hauler, Number(pos[0].x) + 0.3, Number(pos[0].y)],
+    );
+    await hoverAtCrusader(pool, owner, hauler, crusaderId);
+    const { rows: g } = await pool.query(`SELECT * FROM ships WHERE id = $1`, [hauler]);
+    expect(g[0].status).toBe('hovering');
+    expect(g[0].follow_ship_id).toBe(crusaderId);
+    expect(g[0].hover_body_id).toBeNull();
+    expect(Number(g[0].fuel_rate_u_per_day)).toBe(0); // le bord paie
+
+    // Le Crusader vole : l'escorte arrive AVEC lui.
+    const { rows: home } = await pool.query(
+      `SELECT x, y FROM bodies WHERE id = $1`,
+      [starter],
+    );
+    await moveShip(
+      pool,
+      owner,
+      crusaderId,
+      { x: Number(home[0].x) + 25, y: Number(home[0].y) - 4 },
+      FAST,
+    );
+    await pump(15);
+    const { rows: after } = await pool.query(
+      `SELECT g.x AS gx, g.y AS gy, g.status, s.x AS sx, s.y AS sy
+       FROM ships g JOIN ships s ON s.id = g.follow_ship_id
+       WHERE g.id = $1`,
+      [hauler],
+    );
+    expect(after[0].status).toBe('hovering');
+    expect(Number(after[0].gx)).toBeCloseTo(Number(after[0].sx), 6);
+    expect(Number(after[0].gy)).toBeCloseTo(Number(after[0].sy), 6);
+
+    // Fin d'escorte : la coque repart à l'arrêt, libre.
+    const r = await undockFromCrusader(pool, owner, hauler);
+    expect(r.status).toBe('idle');
+    const { rows: freed } = await pool.query(
+      `SELECT status, follow_ship_id FROM ships WHERE id = $1`,
+      [hauler],
+    );
+    expect(freed[0].follow_ship_id).toBeNull();
   });
 });
 

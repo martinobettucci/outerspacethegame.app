@@ -419,8 +419,8 @@ export async function moveShip(
     if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
       throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
     }
-    // W8c : partir depuis le bord d'un Crusader = appareillage direct.
-    if (ship.follow_ship_id && ship.status === 'docked') {
+    // W8c/W8d : partir du bord ou de l'escorte = appareillage direct.
+    if (ship.follow_ship_id && ['docked', 'hovering'].includes(ship.status)) {
       await client.query(
         `UPDATE ships SET follow_ship_id = NULL WHERE id = $1`,
         [shipId],
@@ -1371,6 +1371,79 @@ export async function dockAtCrusader(
   }
 }
 
+
+/**
+ * W8d — flotte-suiveuse : une coque se met EN SURVOL du Crusader
+ * (≤ 1 pc, les deux à l'arrêt) — elle consomme « comme au sol » sur SES
+ * ressources (réservoir gelé, le bord paie le survol via crusader_daily
+ * [TUNE-v1 : déduction quotidienne partielle si le stock manque,
+ * annoncée]) et SUIT ses déplacements (positions synchronisées aux
+ * arrivées — philosophie lazy, annoncé). Sondes exclues du service ;
+ * v1 entre VOS coques.
+ */
+export async function hoverAtCrusader(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  crusaderId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ hovering: true }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  if (shipId === crusaderId) {
+    throw new CommandError('not_available', "Une coque ne se suit pas elle-même");
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+      [[shipId, crusaderId]],
+    );
+    const guest = rows.find((r) => r.id === shipId);
+    const host = rows.find((r) => r.id === crusaderId);
+    if (!guest || !host) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (guest.owner_id !== playerId || host.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'v1 : escorte entre VOS coques seulement');
+    }
+    if (!isCrusader(host.hull_category, host.hull_size) || !host.crusader_infra) {
+      throw new CommandError('not_available', "La cible n'est pas un Crusader");
+    }
+    if (['probe', 'personal'].includes(guest.hull_category)) {
+      throw new CommandError('not_available', "Cette coque ne prend pas l'escorte");
+    }
+    if (isCrusader(guest.hull_category, guest.hull_size)) {
+      throw new CommandError('not_available', 'Un Crusader ne suit pas un autre');
+    }
+    if (!['idle', 'hovering'].includes(guest.status)) {
+      throw new CommandError('not_available', `Coque indisponible (${guest.status})`);
+    }
+    if (!['idle', 'hovering'].includes(host.status)) {
+      throw new CommandError('not_available', "Le Crusader doit être à l'arrêt");
+    }
+    const d = Math.hypot(guest.x - host.x, guest.y - host.y);
+    if (d > 1 + 1e-9) {
+      throw new CommandError('not_available', `Trop loin pour escorter : ${d.toFixed(2)} pc (max 1 pc)`);
+    }
+    await client.query(
+      `UPDATE ships
+         SET status = 'hovering', hover_body_id = NULL,
+             docked_body_id = NULL, docked_at = NULL,
+             follow_ship_id = $2, x = $3, y = $4
+       WHERE id = $1`,
+      [shipId, crusaderId, host.x, host.y],
+    );
+    const { rows: fresh } = await client.query(`SELECT * FROM ships WHERE id = $1`, [shipId]);
+    await rebaseShipDrain(client, fresh[0], nowMs, 'none', { survivalServed: true });
+    await client.query('COMMIT');
+    return { hovering: true };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /** W8c — appareillage depuis le Crusader : la coque repart à l'arrêt à
  * sa position (le vol libre existant fait le reste). */
 export async function undockFromCrusader(
@@ -1384,8 +1457,8 @@ export async function undockFromCrusader(
   try {
     await client.query('BEGIN');
     const ship = await lockOwnedShip(client, playerId, shipId);
-    if (ship.status !== 'docked' || !ship.follow_ship_id) {
-      throw new CommandError('not_available', 'Cette coque n\'est pas amarrée à un Crusader');
+    if (!ship.follow_ship_id || !['docked', 'hovering'].includes(ship.status)) {
+      throw new CommandError('not_available', "Cette coque n'est ni amarrée ni en escorte d'un Crusader");
     }
     await client.query(
       `UPDATE ships SET status = 'idle', follow_ship_id = NULL WHERE id = $1`,

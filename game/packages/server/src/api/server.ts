@@ -66,6 +66,7 @@ import {
   anchorTransferFuel,
   cancelAnchorTransfer,
   dockAtCrusader,
+  hoverAtCrusader,
   undockFromCrusader,
   morphShield,
   setProbeFuelOrder,
@@ -692,6 +693,15 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
     return wrap(reply, () =>
       dockAtCrusader(deps.pool, player.id, id, parsed.data.crusaderId),
+    );
+  });
+  app.post('/ships/:id/hover-crusader', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ crusaderId: z.string().uuid() }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      hoverAtCrusader(deps.pool, player.id, id, parsed.data.crusaderId),
     );
   });
   app.post('/ships/:id/undock-crusader', async (req, reply) => {

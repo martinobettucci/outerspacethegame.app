@@ -4271,3 +4271,19 @@ peut rester en file — pomper avant d'amarrer (flake corrigé).
 
 Preuves : crusader.test.ts 7/7 (×4) ; balayage sériel 335/337 (census
 ×2 = flaky R5 connu) ; build vert. Restent W8d/W8e (plan persisté).
+
+## 2026-07-21 — W8d livré : la flotte-suiveuse du Crusader
+
+Conforme au plan : hoverAtCrusader (≤ 1 pc, les deux à l'arrêt, sondes
+et personnel exclus, v1 vos coques) — le suiveur passe hovering avec
+follow_ship_id, réservoir GELÉ ; le BORD paie son survol (déduction
+quotidienne fuel_<moteur> par suiveur dans crusader_daily, partielle si
+le stock manque [TUNE-v1 annoncé]) et nourrit son équipage (têtes
+comptées). Tout ce qui suit — amarré (W8c) OU en escorte — est
+synchronisé à chaque arrivée du Crusader (positions aux bords,
+philosophie lazy — pas d'interpolation des suiveurs en transit,
+annoncé). Fin d'escorte par undockFromCrusader (élargi) ou départ
+direct (moveShip efface l'escorte).
+
+Preuves : crusader.test.ts 8/8 (×3) ; balayage sériel 338/338 (census
+VERT cette passe) ; build vert. Reste W8e (plan persisté).
