@@ -3895,3 +3895,38 @@ Preuves : engines.test.ts 5/5 stabilité ×5 ; balayage sériel 309/309
 (2e passe — 1re : census ×2, chantier responsable) ; unit 55 ; client
 21 ; E2E engines.spec.ts vert ; captures eng-01..03 OBSERVÉES (natal
 star (default) → retooling « Engine tooling: gas » → quille née gas).
+
+## 2026-07-21 — W3 : plan de chunk (sondes L3, ancrage & transfert)
+
+Spec validée (MASTER_PLAN W3). Interprétations d'implémentation :
+- Migration 029 : `probe_level` étendu à 3 ; colonnes de transfert sur
+  ships (probe donneuse) : `transfer_target_id` (FK ships ON DELETE SET
+  NULL), `transfer_fuel_type`, `transfer_units` (montant choisi),
+  `transfer_started_at`. Le flag « en transfert » (cible valide
+  attaque 0, hook P5) est DÉRIVÉ : transfer_target_id NOT NULL.
+- L3 = L2 (télescope de bord, survol moitié) + capacité tanker ; gate
+  pad L3 [interp], surcoût [TUNE] proposé +40 ore +25 silicon au-delà
+  du L2 ; vitesse/portée/conso de trajet inchangées.
+- Transfert : montant CHOISI, débit 20 u/h-jeu [TUNE], règlement au
+  BORD (événement `fuel_transfer_complete` à T = montant/débit,
+  idempotent via transfer_started_at) : à l'échéance on déplace
+  min(montant, stock du slot donneur, capacité restante du receveur) —
+  partiel annoncé ; le type donné = TYPE MOTEUR du receveur (W2), la
+  sonde doit avoir du stock de ce slot au départ.
+- Annulation par l'un ou l'autre : règlement PRO-RATA (écoulé × débit,
+  mêmes min) — un abandon ne perd pas le carburant déjà pompé.
+- Les deux coques À L'ARRÊT EN OPENSPACE : statut `idle` strict pour la
+  sonde ; receveur `idle` OU `stranded` hors survol/quai (le sauvetage
+  au vide est LE cas d'usage du tanker — interp annoncée, un receveur
+  échoué repart en idle une fois servi). Distance ≤
+  FUEL_TRANSFER_RADIUS_PC existant. moveShip REFUSE toute coque
+  engagée dans un transfert (les deux sens).
+- 1 sonde ancrée par receveur (constante MAX_ANCHORED_PROBES = 1,
+  passera à 2 avec l'accessoire « système de ravitaillement avancé »,
+  W6 — hook config). Sonde→sonde INTERDIT ; coque personnelle exclue.
+- v1 entre VOS coques uniquement (cohérent avec transferFuel v1,
+  annoncé).
+- API : POST /ships/:id/anchor-transfer {toShipId, units},
+  POST /ships/:id/anchor-cancel ; vue flotte : bloc transfer
+  {targetId, endsAt, unitsPlanned}. UI minimale : action sur sonde L3
+  sélectionnée (patron scoop) + annulation ; E2E dédié.
