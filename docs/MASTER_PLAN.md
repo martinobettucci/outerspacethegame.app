@@ -51,19 +51,21 @@ le même commit, tests §15, captures §16, docs.
   031, hôte actif, balance d'items 50×mult AD réveillée), installation
   sur coque ENTREPOSÉE (item consommé à la commande, 12 h immobilisée,
   slots de coque, L3 remplace L2), API + UI. gear.test 6/6, balayage
-  327/327. **Restent** : (a) E2E gear.spec écrit NON exécuté + captures
-  §16 (port 8080 repris par le responsable — R6) ; (b) arbre ADN dédié
-  des accessoires (v1 : gate = bâtiment hôte disponible) ; (c) achat/
-  acheminement par cargo (marché des items) ; (d) conversion des rigs
-  booléens historiques (harvest/junk/claim) en items ; (e) obs/weapon
+  327/327 ; E2E gear.spec VERT + captures gr-01..03 observées
+  (2026-07-21, pile décalée ATG_API_PORT=8081 — le 8080 est squatté par
+  un service Windows étranger). **Restent** : (a) arbre ADN dédié des
+  accessoires (v1 : gate = bâtiment hôte disponible) ; (b) achat/
+  acheminement par cargo (marché des items) ; (c) conversion des rigs
+  booléens historiques (harvest/junk/claim) en items ; (d) obs/weapon
   effectifs (P5). → JOURNAL 2026-07-21
 - [~] **W7 — Usinage partiel (usines L3) — CŒUR LIVRÉ (2026-07-21)** :
   work_orders (migration 032), 20 paliers de 5 % (rien d'avance), FIFO
   strict par usine, starved/reprise auto, naissance par les événements
   existants, vues avec paliers. work-orders.test 3/3, balayage 330/330.
-  **Restent** : (a) BÂTIMENTS en usinage partiel (flux de placement =
-  chantier propre, motif : main de cartes/tuiles/retool) ; (b) E2E +
-  captures §16 (port 8080 — R6). → JOURNAL 2026-07-21
+  E2E work-orders.spec VERT + captures wo-01..02 observées
+  (2026-07-21). **Reste** : BÂTIMENTS en usinage partiel (flux de
+  placement = chantier propre, motif : main de cartes/tuiles/retool).
+  → JOURNAL 2026-07-21
 - [ ] **W8 — Le CRUSADER, petite planète volante** (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt

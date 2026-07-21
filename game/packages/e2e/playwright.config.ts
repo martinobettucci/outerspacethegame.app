@@ -38,14 +38,17 @@ export default defineConfig({
     {
       // TIME_SCALE + endpoints de test : instrumentation §15 (6 h → 3 s ;
       // grants déterministes pour les parcours coûteux type chantier naval).
-      command: 'TIME_SCALE=7200 ATG_TEST_ENDPOINTS=1 pnpm --filter @atg/server dev:api',
+      // API_PORT/ATG_API_PORT 8081 : 8080 peut être squatté par un
+      // service étranger de la machine hôte (WSL réseau miroir).
+      command:
+        'TIME_SCALE=7200 ATG_TEST_ENDPOINTS=1 API_PORT=8081 pnpm --filter @atg/server dev:api',
       cwd: '../..',
-      url: 'http://localhost:8080/health',
+      url: 'http://localhost:8081/health',
       reuseExistingServer: false,
       timeout: 30_000,
     },
     {
-      command: 'pnpm --filter @atg/client dev',
+      command: 'ATG_API_PORT=8081 pnpm --filter @atg/client dev',
       cwd: '../..',
       url: 'http://localhost:5173',
       reuseExistingServer: true,

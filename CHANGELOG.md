@@ -2,6 +2,21 @@
 
 ## [Non publié]
 
+### E2E W6/W7 passés + pile dev décalable (2026-07-21, autorisation responsable)
+
+- Le port 8080 est squatté par un service Windows étranger (WSL réseau
+  miroir, intuable côté WSL) : la pile dev/E2E est désormais DÉCALABLE
+  — `ATG_API_PORT` pour le proxy Vite (défaut 8080 inchangé),
+  Playwright lance l'API sur 8081.
+- **W6** : gear.spec.ts VERT (fabrication au panneau workshop,
+  entreposage, installation UI, accessoire monté) + captures gr-01..03
+  observées — le reste « E2E R6 » de W6 est levé.
+- **W7** : work-orders.spec.ts VERT (mine L3 par vraies commandes,
+  rien débité à la commande, paliers « (n/20) » visibles, item né,
+  total débité exact) + captures wo-01..02 observées — le reste
+  « E2E R6 » de W7 est levé. (Leçon AO : revealCard obligatoire sur les
+  cartes empilées.)
+
 ### W7 — usinage partiel des usines L3 (MASTER_PLAN W7, 2026-07-21) — cœur livré
 
 - Dès qu'UNE industrie L3 ACTIVE existe sur le monde : les commandes

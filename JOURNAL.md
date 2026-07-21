@@ -4204,3 +4204,16 @@ W8e — Fabrication à bord (ADN complet, usinage partiel d'office) et
   vues/UI/E2E — chunk final.
 Interps à trancher en cours de route (annoncées) : quelles « usines »
 fixes exactement (liste DG), montants de seed du stock à la naissance.
+
+## 2026-07-21 — E2E W6/W7 passés, pile dev décalable (GO responsable)
+
+Le responsable a autorisé le redémarrage/reseed du dev. Diagnostic :
+le listener 8080 est un service Windows ÉTRANGER (réponse
+{"detail":"Not Found"}, réseau miroir WSL — intuable d'ici). Décision :
+pile dev/E2E décalable — ATG_API_PORT pour le proxy Vite (défaut 8080
+inchangé pour le responsable), Playwright lance l'API sur 8081.
+gear.spec (W6) et work-orders.spec (W7, nouveau) VERTS ; captures
+gr-01..03 + wo-01..02 OBSERVÉES (§16). Les restes « E2E R6 » de W6/W7
+sont levés au MASTER_PLAN ; restent W6c (arbre ADN dédié, marché des
+items, conversion des rigs, obs/weapon P5) et les bâtiments en usinage
+partiel (chantier propre).
