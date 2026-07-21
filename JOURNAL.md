@@ -4238,3 +4238,21 @@ que je touche (le reste du balayage reste à lui).
 Preuves : shared crusader.test 3 ; crusader.test.ts 2/2 (×3) ; balayage
 sériel 330/332 (census ×2 = flaky R5 connu) ; unit 55 ; shared 199 ;
 build monorepo vert. Restent W8b→W8e (plan persisté).
+
+## 2026-07-21 — W8b livré : la fiche pop v2 vivante à bord du Crusader
+
+Conforme au plan : événement crusader_daily (armé à la naissance,
+quotidien tant que le bord vit), règlement AU STOCK de bord — mêmes
+formules de besoins que le sol (POP_NEEDS/1000, oxygène 0,6/1000),
+horloges eau 3 j / vivres 10 j linéaires à échéance et levées au
+ravitaillement, oxygène à sec = extinction instantanée du bord (canon
+climats hostiles), vieillissement agingFlows, natalité residential L3
+× M_growth (ρ = couverture du jour, efficience neutre 0,7 [TUNE-v1
+annoncé]), chômage vs 400 emplois FIXES [TUNE] (grâce 3 j, γ 0,02),
+overcap 0,25 (cap 2 000), morts proportionnelles + compteurs. Leçon de
+séance : un fichier de test de debug laissé à côté fait TRUNCATE la
+base sous la suite voisine (runs « skipped » en alternance) — supprimé,
+6×5/5 stable.
+
+Preuves : crusader.test.ts 5/5 (×6) ; balayage sériel 333/335 (census
+×2 = flaky R5 connu) ; unit 55 ; build vert. Restent W8c→W8e.

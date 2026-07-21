@@ -19,6 +19,9 @@ export const CRUSADER = {
    *  d'abord : à bord on respire AU STOCK (mort instantanée à sec).
    *  [TUNE-v1 interp annoncée] */
   birthStock: { oxygen: 100, food_1: 50, water: 50 } as Record<string, number>,
+  /** Emplois FIXES à bord (infra figée : ni construire ni upgrader) —
+   *  le chômage se mesure contre CE plafond. [TUNE-v1] */
+  fixedJobs: 400,
   /** Infrastructure FIGÉE (descriptive v1 — les effets s'activent par
    *  sous-chunk W8b→W8e) : residential L3, usines L3 (usinage partiel
    *  d'office), 3 spaceports L3, 3 warehouses L3, ADN complet, PAS de

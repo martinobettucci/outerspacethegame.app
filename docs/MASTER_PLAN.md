@@ -71,8 +71,10 @@ le même commit, tests §15, captures §16, docs.
   survol), naissance en survol + 25 % de pop source (proportions
   d'âges, cap 2 000, staff dégarni), amorçage oxygène/vivres au stock,
   infra figée écrite, atterrissage/entrepôt REFUSÉS. crusader.test 2/2.
-  Restent W8b (pop v2 vivante à bord), W8c (docks volants), W8d
-  (flotte-suiveuse), W8e (fabrication à bord, UI, E2E). (le plus gros —
+  **W8b LIVRÉ (2026-07-21)** : crusader_daily quotidien au stock de
+  bord (conso/horloges/oxygène-instantané/natalité L3/chômage vs 400
+  emplois fixes/overcap 0,25), crusader.test 5/5. Restent W8c (docks
+  volants), W8d (flotte-suiveuse), W8e (fabrication à bord, UI, E2E). (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt
   FORCÉS en hovering, effet immédiat) ; infra FIXE non

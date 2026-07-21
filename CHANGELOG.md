@@ -2,6 +2,27 @@
 
 ## [Non publié]
 
+### W8b — le Crusader : la fiche pop v2 VIVANTE à bord (MASTER_PLAN W8, 2026-07-21)
+
+- Événement `crusader_daily` (armé à la naissance, quotidien tant que
+  le bord vit) : règlement au STOCK de bord (pas de taux lazy à bord
+  v1 [interp annoncée]) — consommation food/water/OXYGÈNE (mêmes
+  formules POP_NEEDS/1000 que le sol), horloges de mort eau 3 j /
+  vivres 10 j (linéaires à échéance, levées au ravitaillement),
+  oxygène à sec = mort INSTANTANÉE de tout le bord (même canon que les
+  climats hostiles), vieillissement 3 âges, natalité residential L3
+  (0,24 × actifs × M_growth, ρ = couverture du jour, efficience neutre
+  0,7 [TUNE-v1 annoncé]), chômage vs emplois FIXES (400 [TUNE], grâce
+  3 j, γ = 0,02), surcapacité parabolique 0,25 (cap 2 000) ; morts
+  réparties proportionnellement, compteurs demo tracés.
+- Tests : crusader.test.ts 5/5 (×6 — un jour à bord fait croître le
+  bord et consomme l'oxygène ; pénurie d'eau pose l'horloge 3 j puis
+  la lève au ravitaillement ; oxygène à sec éteint tout et arrête
+  l'horloge), balayage sériel 333/335 (census ×2 = flaky R5 connu),
+  unit 55, build vert.
+- **Restent (W8c→W8e)** : docks volants, flotte-suiveuse, fabrication à
+  bord, UI/E2E.
+
 ### W8a — le Crusader : schéma & naissance (MASTER_PLAN W8, 2026-07-21) — en cours
 
 - Migration 033 : `crusader_stock`/`crusader_pop`/`crusader_infra`

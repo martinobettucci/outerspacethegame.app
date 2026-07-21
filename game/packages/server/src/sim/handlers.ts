@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and implemented §P2–§P4 event-backed units; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and implemented §P2–§P4 event-backed units; docs/MASTER_PLAN.md §W8; GAME_BOOK.md §10/§15; DESIGN_GUIDE.md §1/§3.2-v2. */
 /**
  * Handlers d'événements de simulation. Chaque handler est idempotent
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
@@ -18,6 +18,12 @@ import {
   CRUSADER,
   crusaderMigrants,
   isCrusader,
+  GROWTH_EFF_NEUTRAL,
+  growthModulator,
+  NATALITY_BY_RESIDENTIAL,
+  OXYGEN_PER_1000_PER_DAY,
+  POP_NEEDS_PER_1000_PER_DAY,
+  weightedHeads,
   GEAR,
   engineSpeedMult,
   hasFullMedicineSupply,
@@ -295,6 +301,177 @@ export const workStep: EventHandler = async (client, event) => {
     orderId,
     stepMs,
   });
+};
+
+
+/**
+ * crusader_daily { shipId } — la fiche pop v2 VIVANTE à bord (W8b,
+ * MASTER_PLAN W8) : règlement QUOTIDIEN sur le stock de bord (pas de
+ * taux lazy à bord v1 [interp annoncée]) — consommation food/water/
+ * OXYGÈNE au stock, horloges de mort (eau 3 j / vivres 10 j, linéaires
+ * à échéance ; oxygène à sec = mort INSTANTANÉE de tout le bord, même
+ * canon que les climats hostiles), vieillissement 3 âges, natalité
+ * residential L3 × M_growth, chômage vs emplois FIXES (grâce 3 j,
+ * γ = 0,02), surcapacité parabolique 0,25 (cap 2 000). Efficience
+ * moyenne v1 = neutre 0,7 [TUNE-v1 simplification annoncée]. Se
+ * replanifie chaque jour tant que le bord vit.
+ */
+export const crusaderDaily: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  if (!shipId) return;
+  const nowMs = event.dueAt.getTime();
+  const { rows } = await client.query(
+    `SELECT * FROM ships WHERE id = $1 AND crusader_pop IS NOT NULL
+     FOR UPDATE`,
+    [shipId],
+  );
+  const ship = rows[0];
+  if (!ship) return; // coque disparue : plus de bord à simuler
+  const popState = ship.crusader_pop as Record<string, unknown>;
+  let pyr: Pyramid = {
+    children: Number(popState.children ?? 0),
+    actives: Number(popState.actives ?? 0),
+    seniors: Number(popState.seniors ?? 0),
+  };
+  const counters = normalizeDemographicCounters(popState.demo_counters);
+  const clocks = { ...((popState.clock_deadlines ?? {}) as Record<string, number>) };
+  const stock = { ...((ship.crusader_stock ?? {}) as Record<string, number>) };
+  const popBefore = pyr.children + pyr.actives + pyr.seniors;
+  if (popBefore <= 1e-9) return; // bord éteint : l'horloge s'arrête
+
+  // 1. Consommation du jour sur le STOCK de bord.
+  const heads = weightedHeads(pyr);
+  const per1000 = heads / 1_000;
+  const needs = {
+    food: POP_NEEDS_PER_1000_PER_DAY.food * per1000,
+    water: POP_NEEDS_PER_1000_PER_DAY.water * per1000,
+    oxygen: OXYGEN_PER_1000_PER_DAY * per1000,
+  };
+  const takeFamily = (resources: readonly string[], want: number): number => {
+    let left = want;
+    for (const res of resources) {
+      const have = Math.max(0, Number(stock[res] ?? 0));
+      const take = Math.min(have, left);
+      if (take > 0) {
+        stock[res] = have - take;
+        left -= take;
+      }
+      if (left <= 1e-12) break;
+    }
+    return want - left; // servi
+  };
+  const served = {
+    food: takeFamily(FOOD_RESOURCES as readonly string[], needs.food),
+    water: takeFamily(['water'], needs.water),
+    oxygen: takeFamily(['oxygen'], needs.oxygen),
+  };
+
+  // 2. Oxygène à sec : mort INSTANTANÉE de tout le bord (on respire AU
+  //    STOCK — même canon que les climats hostiles).
+  if (needs.oxygen > 1e-9 && served.oxygen < needs.oxygen - 1e-9) {
+    addProportionalDeaths(counters, pyr, popBefore);
+    pyr = { children: 0, actives: 0, seniors: 0 };
+    await client.query(
+      `UPDATE ships SET crusader_pop = $2, crusader_stock = $3 WHERE id = $1`,
+      [
+        shipId,
+        JSON.stringify({
+          ...pyr,
+          demo_counters: counters,
+          clock_deadlines: {},
+        }),
+        JSON.stringify(stock),
+      ],
+    );
+    return; // plus personne : l'horloge quotidienne s'arrête
+  }
+
+  // 3. Horloges eau/vivres (linéaires à échéance : eau 3 j, vivres 10 j).
+  let clockDeaths = 0;
+  for (const family of ['water', 'food'] as const) {
+    const shorted = served[family] < needs[family] - 1e-9;
+    if (shorted) {
+      if (!clocks[family]) {
+        clocks[family] = nowMs + CLOCK_DAYS[family] * 86_400_000;
+      }
+      clockDeaths += Math.min(
+        popBefore,
+        clockDeathsPerDay(popBefore, nowMs, Number(clocks[family])),
+      );
+    } else if (clocks[family]) {
+      delete clocks[family]; // ravitaillé : l'horloge se lève
+    }
+  }
+
+  // 4. Chômage vs emplois FIXES (grâce 3 j, γ = 0,02) et surcapacité.
+  const employed = Math.min(pyr.actives, CRUSADER.fixedJobs);
+  const tau = unemploymentRate(employed, pyr.actives);
+  let unempOver = Number(popState.unemp_over_days ?? 0);
+  let unempDeaths = 0;
+  if (tau > UNEMP_TOLERANCE) {
+    unempOver += 1;
+    if (unempOver > UNEMP_GRACE_DAYS) {
+      unempDeaths = unemploymentDeathsPerDay(tau, popBefore);
+    }
+  } else {
+    unempOver = 0;
+  }
+  const overcapDeaths = overcapDeathsPerDay(popBefore, CRUSADER.popCap);
+
+  // 5. Vieillissement + natalité (residential L3 × M_growth ; efficience
+  //    v1 neutre 0,7, ρ = couverture du jour).
+  const flows = agingFlows(pyr, 1);
+  const rhos = [
+    needs.food > 1e-9 ? served.food / needs.food : 1,
+    needs.water > 1e-9 ? served.water / needs.water : 1,
+    needs.oxygen > 1e-9 ? served.oxygen / needs.oxygen : 1,
+  ];
+  const mGrowth = growthModulator(GROWTH_EFF_NEUTRAL, rhos);
+  const births =
+    (NATALITY_BY_RESIDENTIAL[CRUSADER.infra.residential] ?? 0) *
+    pyr.actives *
+    mGrowth;
+  pyr = {
+    children: pyr.children + births - flows.toActives,
+    actives: pyr.actives + flows.toActives - flows.toSeniors,
+    seniors: pyr.seniors + flows.toSeniors - flows.seniorDeaths,
+  };
+  // (Le schéma DemographicCounters ne trace que morts/exode — les
+  // naissances se lisent dans la pyramide, comme au sol.)
+  counters.deaths.seniors += flows.seniorDeaths;
+
+  // 6. Morts (horloges + chômage + surcap) réparties proportionnellement.
+  const deaths = Math.min(
+    pyr.children + pyr.actives + pyr.seniors,
+    clockDeaths + unempDeaths + overcapDeaths,
+  );
+  addProportionalDeaths(counters, pyr, deaths);
+  pyr = applyDeaths(pyr, deaths);
+  pyr = {
+    children: Math.max(0, pyr.children),
+    actives: Math.max(0, pyr.actives),
+    seniors: Math.max(0, pyr.seniors),
+  };
+
+  await client.query(
+    `UPDATE ships SET crusader_pop = $2, crusader_stock = $3 WHERE id = $1`,
+    [
+      shipId,
+      JSON.stringify({
+        ...pyr,
+        demo_counters: counters,
+        clock_deadlines: clocks,
+        unemp_over_days: unempOver,
+      }),
+      JSON.stringify(stock),
+    ],
+  );
+  // 7. Demain, même heure (tant que le bord vit).
+  if (pyr.children + pyr.actives + pyr.seniors > 1e-9) {
+    await enqueue(client, 'crusader_daily', new Date(nowMs + 86_400_000), {
+      shipId,
+    });
+  }
 };
 
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
@@ -1133,9 +1310,24 @@ export const shipBuilt: EventHandler = async (client, event) => {
     ],
   );
   // Un Crusader naît en survol de SON monde : le rebase planétaire
-  // arme les drains (stock servi) et met à jour la pop.
+  // arme les drains (stock servi) et met à jour la pop — et sa fiche
+  // pop v2 de bord démarre (W8b : crusader_daily quotidien).
   if (crusader) {
     await recomputePlanetRates(client, planetId, event.dueAt.getTime());
+    const { rows: born } = await client.query(
+      `SELECT id FROM ships
+       WHERE owner_id = $1 AND hull_category = 'combat' AND hull_size = 'l'
+       ORDER BY created_at DESC LIMIT 1`,
+      [planet[0].owner_id ?? String(p.playerId)],
+    );
+    if (born[0]) {
+      await enqueue(
+        client,
+        'crusader_daily',
+        new Date(event.dueAt.getTime() + 86_400_000),
+        { shipId: born[0].id },
+      );
+    }
   }
 };
 
@@ -1699,6 +1891,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     item_fabricated: itemFabricated,
     item_installed: itemInstalled,
     work_step: workStep,
+    crusader_daily: crusaderDaily,
     ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;

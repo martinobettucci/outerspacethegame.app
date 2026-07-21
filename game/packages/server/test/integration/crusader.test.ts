@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8 (W8a) ; GAME_BOOK.md §14 (amendé 2026-07-21) ; DESIGN_GUIDE.md §8.1. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8 (W8a+W8b) ; GAME_BOOK.md §14 (amendé 2026-07-21) ; DESIGN_GUIDE.md §8.1. */
 /**
  * Intégration W8a : naissance du CRUSADER (MASTER_PLAN W8, JOURNAL
  * 2026-07-21) sur vraie base — le combat_l naît EN SURVOL (jamais à
@@ -159,5 +159,102 @@ describe('W8a — naissance du Crusader', () => {
       FAST,
     );
     expect(r.arrivesAt).toBeTruthy();
+  });
+});
+
+describe('W8b — la fiche pop v2 VIVANTE à bord (crusader_daily)', () => {
+  /** Force l'horloge quotidienne du bord à MAINTENANT puis la traite. */
+  async function tickDaily(): Promise<void> {
+    await pool.query(
+      `UPDATE events SET due_at = now() - interval '1 second'
+       WHERE processed_at IS NULL AND kind = 'crusader_daily'
+         AND payload->>'shipId' = $1`,
+      [crusaderId],
+    );
+    await processDueEvents(pool, baseHandlers());
+  }
+
+  async function board() {
+    const { rows } = await pool.query(
+      `SELECT crusader_pop, crusader_stock FROM ships WHERE id = $1`,
+      [crusaderId],
+    );
+    return rows[0];
+  }
+
+  it('un jour à bord : consommation au STOCK, natalité residential L3, vieillissement', async () => {
+    const before = await board();
+    const popBefore =
+      before.crusader_pop.children +
+      before.crusader_pop.actives +
+      before.crusader_pop.seniors;
+    const oxyBefore = Number(before.crusader_stock.oxygen);
+    await tickDaily();
+    const after = await board();
+    const popAfter =
+      after.crusader_pop.children +
+      after.crusader_pop.actives +
+      after.crusader_pop.seniors;
+    // Le stock d'oxygène de bord a payé la journée.
+    expect(Number(after.crusader_stock.oxygen)).toBeLessThan(oxyBefore);
+    // Natalité 0,24 × actifs × M_growth : le bord CROÎT (servi partout).
+    expect(popAfter).toBeGreaterThan(popBefore);
+    expect(after.crusader_pop.children).toBeGreaterThan(
+      before.crusader_pop.children,
+    );
+    // L'horloge se replanifie (le bord vit).
+    const { rows: next } = await pool.query(
+      `SELECT 1 FROM events WHERE processed_at IS NULL
+         AND kind = 'crusader_daily' AND payload->>'shipId' = $1`,
+      [crusaderId],
+    );
+    expect(next).toHaveLength(1);
+  });
+
+  it("pénurie d'EAU : horloge 3 j posée et morts linéaires ; ravitaillé, elle se lève", async () => {
+    await pool.query(
+      `UPDATE ships SET crusader_stock = crusader_stock || '{"water": 0}'
+       WHERE id = $1`,
+      [crusaderId],
+    );
+    const before = await board();
+    const popBefore =
+      before.crusader_pop.children +
+      before.crusader_pop.actives +
+      before.crusader_pop.seniors;
+    await tickDaily();
+    const mid = await board();
+    expect(mid.crusader_pop.clock_deadlines.water).toBeTruthy();
+    // Ravitaillé : l'horloge se lève au jour suivant.
+    await pool.query(
+      `UPDATE ships SET crusader_stock = crusader_stock || '{"water": 50}'
+       WHERE id = $1`,
+      [crusaderId],
+    );
+    await tickDaily();
+    const after = await board();
+    expect(after.crusader_pop.clock_deadlines.water).toBeUndefined();
+    expect(popBefore).toBeGreaterThan(0); // garde de scénario
+  });
+
+  it("OXYGÈNE à sec : mort instantanée de tout le bord, l'horloge s'arrête", async () => {
+    await pool.query(
+      `UPDATE ships SET crusader_stock = crusader_stock || '{"oxygen": 0}'
+       WHERE id = $1`,
+      [crusaderId],
+    );
+    await tickDaily();
+    const after = await board();
+    expect(after.crusader_pop.children).toBe(0);
+    expect(after.crusader_pop.actives).toBe(0);
+    expect(after.crusader_pop.seniors).toBe(0);
+    // Les morts sont tracées ; plus d'horloge quotidienne.
+    expect(after.crusader_pop.demo_counters.deaths.actives).toBeGreaterThan(0);
+    const { rows: next } = await pool.query(
+      `SELECT 1 FROM events WHERE processed_at IS NULL
+         AND kind = 'crusader_daily' AND payload->>'shipId' = $1`,
+      [crusaderId],
+    );
+    expect(next).toHaveLength(0);
   });
 });
