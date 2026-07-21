@@ -4287,3 +4287,29 @@ direct (moveShip efface l'escorte).
 
 Preuves : crusader.test.ts 8/8 (×3) ; balayage sériel 338/338 (census
 VERT cette passe) ; build vert. Reste W8e (plan persisté).
+
+## 2026-07-22 — ERRATUM W6 (décision responsable) : les rigs SONT des accessoires
+
+Correction du responsable : les rigs booléens historiques (harvest
+rig, junk collector, claim rig) ne sont PAS un chemin parallèle — ce
+sont des ACCESSOIRES du pipeline W6, comme l'advanced refueling
+system : fabriqués au workshop (coût + temps), entreposés dans la
+balance d'items, INSTALLÉS sur coque entreposée (coût + temps), et ils
+OCCUPENT UN SLOT ACCESSOIRE de la coque. Conséquence canon : une coque
+cargo_s (1 slot accessoire) choisit UN seul équipement.
+
+Plan d'implémentation (chunk immédiat) :
+- GEAR += harvest_rig / junk_collector / claim_rig (fabricator
+  workshop, coûts des rigs existants, 24 h de fabrication [TUNE]) ;
+- item_installed écrit AUSSI le booléen hérité (les effets existants
+  le lisent — une seule vérité d'effet, l'inventaire dans accessories) ;
+- migration 034 : backfill des booléens posés → accessories[] (le
+  comptage de slots devient honnête ; les coques héritées sur-remplies
+  sont tolérées telles quelles, annoncé) ;
+- SUPPRESSION des fit* directs (services, routes, boutons UI) — la
+  seule voie est le pipeline ;
+- tests d'intégration : fixtures par SQL (flag + accessories) là où le
+  rig n'est pas l'objet du test ; E2E harvest/junk/claim réécrits sur
+  le flux fabrique→entrepose→installe ;
+- terraform core / colony kit : hors périmètre de cet erratum (flux
+  colonial), à trancher séparément si souhaité.
