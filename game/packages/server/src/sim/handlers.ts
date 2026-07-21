@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and implemented §P2–§P4 event-backed units; GAME_BOOK.md §15; DESIGN_GUIDE.md §1. */
 /**
  * Handlers d'événements de simulation. Chaque handler est idempotent
  * (at-least-once) et ne manipule que l'état passé par sa transaction.
@@ -14,6 +15,9 @@ import {
   clockDeathsPerDay,
   COLONY_SEED_STOCK,
   FOOD_RESOURCES,
+  CRUSADER,
+  crusaderMigrants,
+  isCrusader,
   GEAR,
   engineSpeedMult,
   hasFullMedicineSupply,
@@ -1016,11 +1020,97 @@ export const shipBuilt: EventHandler = async (client, event) => {
       }
     }
   }
+  // W8a : le CRUSADER (combat L) ne se pose JAMAIS — il naît en SURVOL,
+  // 25 % de la population source migre à bord (proportions d'âges, cap
+  // 2 000), l'oxygène/vivres d'amorçage sont puisés au stock (partiel
+  // annoncé), l'infrastructure est FIGÉE.
+  const crusader = isCrusader(String(p.category), String(p.size));
+  let crusaderPop: Record<string, unknown> | null = null;
+  let crusaderStock: Record<string, number> | null = null;
+  if (crusader) {
+    const { rows: popRows } = await client.query(
+      `SELECT population, pop_children, pop_seniors FROM bodies
+       WHERE id = $1 FOR UPDATE`,
+      [planetId],
+    );
+    const src = popRows[0];
+    const pyramid = {
+      children: Number(src?.pop_children ?? 0),
+      seniors: Number(src?.pop_seniors ?? 0),
+      actives: Math.max(
+        0,
+        Number(src?.population ?? 0) -
+          Number(src?.pop_children ?? 0) -
+          Number(src?.pop_seniors ?? 0),
+      ),
+    };
+    const m = crusaderMigrants(pyramid);
+    crusaderPop = {
+      children: m.children,
+      actives: m.actives,
+      seniors: m.seniors,
+      demo_counters: {},
+      clock_deadlines: {},
+    };
+    if (m.total > 0) {
+      await client.query(
+        `UPDATE bodies
+            SET population = population - $2,
+                pop_children = pop_children - $3,
+                pop_seniors = pop_seniors - $4
+          WHERE id = $1`,
+        [planetId, m.total, m.children, m.seniors],
+      );
+      // Staff source : si les actifs restants ne couvrent plus les
+      // postes, on dégarnit les bâtiments (du plus grand effectif au
+      // plus petit) [interp annoncée].
+      const remainingActives = pyramid.actives - m.actives;
+      const { rows: staffed } = await client.query(
+        `SELECT id, workforce FROM buildings
+         WHERE body_id = $1 AND workforce > 0
+         ORDER BY workforce DESC`,
+        [planetId],
+      );
+      let assigned = staffed.reduce((s, b) => s + Number(b.workforce), 0);
+      for (const b of staffed) {
+        if (assigned <= remainingActives) break;
+        const cut = Math.min(Number(b.workforce), assigned - remainingActives);
+        await client.query(
+          `UPDATE buildings SET workforce = workforce - $2 WHERE id = $1`,
+          [b.id, cut],
+        );
+        assigned -= cut;
+      }
+    }
+    // Amorçage du stock de bord (oxygène d'abord — on respire AU STOCK).
+    crusaderStock = {};
+    const nowMs = event.dueAt.getTime();
+    for (const [resource, want] of Object.entries(CRUSADER.birthStock)) {
+      const { rows: stockRows } = await client.query(
+        `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+         WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+        [planetId, resource],
+      );
+      if (!stockRows[0]) continue;
+      const available = evalLazyStock(stockRows[0], nowMs);
+      const take = Math.min(want, available);
+      if (take > 0) {
+        await client.query(
+          `UPDATE planet_stock SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+           WHERE body_id = $1 AND resource = $2`,
+          [planetId, resource, available - take, nowMs],
+        );
+        crusaderStock[resource] = take;
+      }
+    }
+  }
   await client.query(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-                        status, docked_body_id, docked_at, fuel, cargo,
-                        engine_type)
-     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, now(), $8, '{}', $9)`,
+                        status, docked_body_id, docked_at, hover_body_id,
+                        fuel, cargo, engine_type,
+                        crusader_pop, crusader_stock, crusader_infra)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, '{}', $12,
+             $13, $14, $15)`,
     [
       // Le vaisseau appartient au PROPRIÉTAIRE ACTUEL du monde (une
       // conquête pendant le chantier capture la production — GB §9,
@@ -1031,11 +1121,22 @@ export const shipBuilt: EventHandler = async (client, event) => {
       String(p.name),
       planet[0].x,
       planet[0].y,
-      planetId,
+      crusader ? 'hovering' : 'docked',
+      crusader ? null : planetId,
+      crusader ? null : new Date(event.dueAt),
+      crusader ? planetId : null,
       JSON.stringify({ [fuelType]: birthUnits }),
       fuelType,
+      crusaderPop ? JSON.stringify(crusaderPop) : null,
+      crusaderStock ? JSON.stringify(crusaderStock) : null,
+      crusader ? JSON.stringify(CRUSADER.infra) : null,
     ],
   );
+  // Un Crusader naît en survol de SON monde : le rebase planétaire
+  // arme les drains (stock servi) et met à jour la pop.
+  if (crusader) {
+    await recomputePlanetRates(client, planetId, event.dueAt.getTime());
+  }
 };
 
 /** Évalue paresseusement une ligne de stock (helper local naissance). */

@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §2 “Shared package”; docs/BACKLOG.md §P1 “Monorepo/app scaffolding”. */
 export * from './constants.js';
 export * from './types.js';
 export * from './resources.js';
@@ -5,6 +6,7 @@ export * from './formulas.js';
 export * from './rng.js';
 export * from './buildings.js';
 export * from './units.js';
+export * from './crusader.js';
 export * from './items.js';
 export * from './ships.js';
 export * from './recipes.js';

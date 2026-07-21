@@ -46,6 +46,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 30 | `game/packages/server/migrations/030_star_fields_morph.sql` | W5 coque morphique : `ships.morphing_shield` + `morph_started_at` (adaptation = temps seul, une chimie active) | 001 | DROP des 2 colonnes |
 | 31 | `game/packages/server/migrations/031_gear_items.sql` | W6 items non-fongibles : table `planet_items` + `ships.accessories`/`upgrades`/`installing_item`/`install_started_at` | 001 | DROP TABLE + DROP des 4 colonnes |
 | 32 | `game/packages/server/migrations/032_work_orders.sql` | W7 usinage partiel : table `work_orders` (paliers 5 % × 20, FIFO par usine L3) | 001 | DROP TABLE |
+| 33 | `game/packages/server/migrations/033_crusader.sql` | W8a Crusader : `crusader_stock`/`_pop`/`_infra` + `follow_ship_id` sur ships ; combat_l posés/entreposés FORCÉS en survol | 001 | DROP des 4 colonnes (le forçage hovering n'est pas réversible — assumé) |
 
 ## Services à déployer (au premier déploiement)
 

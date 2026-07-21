@@ -4217,3 +4217,24 @@ gr-01..03 + wo-01..02 OBSERVÉES (§16). Les restes « E2E R6 » de W6/W7
 sont levés au MASTER_PLAN ; restent W6c (arbre ADN dédié, marché des
 items, conversion des rigs, obs/weapon P5) et les bâtiments en usinage
 partiel (chantier propre).
+
+## 2026-07-21 — W8a livré : le Crusader, schéma & naissance
+
+Conforme au plan de chunk : migration 033 (crusader_stock/pop/infra +
+follow_ship_id ; combat_l posés/entreposés FORCÉS en survol — décision
+« il n'aurait jamais dû pouvoir atterrir »), naissance en SURVOL dans
+shipBuilt (25 % de pop source via crusaderMigrants — proportions d'âges
+exactes, arrondis réparés sur les actifs, cap 2 000 ; compteurs planète
+décrémentés ; staff dégarni du plus grand effectif au plus petit si les
+actifs restants ne couvrent plus [interp annoncée] ; amorçage
+oxygène 100 / vivres 50+50 T [TUNE-v1] puisés au stock, partiel
+annoncé ; infra FIGÉE descriptive v1), landShip/warehouseShip refusent.
+Cassure assumée : warehouse.test prouvait la balance L au combat_l —
+basculé cargo_l (le Crusader ne s'entrepose plus). NB : le balayage
+d'annotations @spec/@verifies du responsable est EN COURS sur tout le
+dépôt — mes commits n'embarquent que l'en-tête d'une ligne des fichiers
+que je touche (le reste du balayage reste à lui).
+
+Preuves : shared crusader.test 3 ; crusader.test.ts 2/2 (×3) ; balayage
+sériel 330/332 (census ×2 = flaky R5 connu) ; unit 55 ; shared 199 ;
+build monorepo vert. Restent W8b→W8e (plan persisté).

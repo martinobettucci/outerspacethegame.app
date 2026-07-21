@@ -66,7 +66,13 @@ le même commit, tests §15, captures §16, docs.
   (2026-07-21). **Reste** : BÂTIMENTS en usinage partiel (flux de
   placement = chantier propre, motif : main de cartes/tuiles/retool).
   → JOURNAL 2026-07-21
-- [ ] **W8 — Le CRUSADER, petite planète volante** (le plus gros —
+- [~] **W8 — Le CRUSADER — W8a LIVRÉ (2026-07-21)** : migration 033
+  (stock/pop/infra + follow_ship_id, combat_l existants forcés en
+  survol), naissance en survol + 25 % de pop source (proportions
+  d'âges, cap 2 000, staff dégarni), amorçage oxygène/vivres au stock,
+  infra figée écrite, atterrissage/entrepôt REFUSÉS. crusader.test 2/2.
+  Restent W8b (pop v2 vivante à bord), W8c (docks volants), W8d
+  (flotte-suiveuse), W8e (fabrication à bord, UI, E2E). (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt
   FORCÉS en hovering, effet immédiat) ; infra FIXE non

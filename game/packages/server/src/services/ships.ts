@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”/“Free flight”/“Hovering”/“Sondes L3”/“Vehicle warehouse”/“Survival clocks”; docs/MASTER_PLAN.md §W1–§W6; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §3.5/§7–§9. */
 /**
  * Flotte & vol libre — GB §6/§14/§21, DG §8/§9.1.
  *
@@ -16,6 +17,7 @@ import {
   BUILD_FUEL_FRACTION,
   effectiveTankU,
   engineSpeedMult,
+  isCrusader,
   ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
   recipeEngine,
@@ -1373,6 +1375,10 @@ export async function landShip(
     if (ship.hull_category === 'probe') {
       throw new CommandError('not_available', 'Une sonde ne se pose pas');
     }
+    // W8 : le CRUSADER ne se pose JAMAIS (GB amendé, 2026-07-21).
+    if (isCrusader(ship.hull_category, ship.hull_size)) {
+      throw new CommandError('not_available', 'Le Crusader ne se pose jamais');
+    }
     if (ship.status !== 'hovering' || ship.hover_body_id !== body.id) {
       throw new CommandError('not_available', 'Aucun monde sous la coque');
     }
@@ -2023,6 +2029,10 @@ export async function warehouseShip(
   try {
     await client.query('BEGIN');
     const ship = await lockOwnedShip(client, playerId, shipId);
+    // W8 : le CRUSADER ne s'entrepose pas (il ne touche jamais le sol).
+    if (isCrusader(ship.hull_category, ship.hull_size)) {
+      throw new CommandError('not_available', 'Le Crusader ne se pose jamais');
+    }
     if (['personal', 'probe'].includes(ship.hull_category)) {
       throw new CommandError('not_available', 'Cette coque ne se remise pas');
     }

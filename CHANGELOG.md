@@ -2,6 +2,28 @@
 
 ## [Non publié]
 
+### W8a — le Crusader : schéma & naissance (MASTER_PLAN W8, 2026-07-21) — en cours
+
+- Migration 033 : `crusader_stock`/`crusader_pop`/`crusader_infra`
+  jsonb + `follow_ship_id` (fondation W8d) ; **les combat_l existants à
+  quai/en entrepôt sont FORCÉS en survol** (décision responsable).
+- Naissance : le Crusader naît EN SURVOL (jamais à quai) — **25 % de la
+  population source migre à bord** (proportions d'âges exactes via
+  `crusaderMigrants`, cap 2 000 [TUNE], compteurs planète décrémentés,
+  staff dégarni si les actifs restants ne couvrent plus les postes
+  [interp]) ; oxygène/vivres d'amorçage puisés au stock (100/50/50 T
+  [TUNE-v1], partiel annoncé — à bord on respire AU STOCK) ;
+  infrastructure FIGÉE écrite (residential L3, usines L3, 3 spaceports
+  L3, 3 warehouses L3, ADN complet, pas de markets — descriptive v1,
+  effets activés par W8b→W8e).
+- Interdictions : `landShip` et `warehouseShip` REFUSENT le Crusader
+  (« ne se pose jamais ») ; il vole normalement.
+- Tests : crusader.test.ts 2/2 (×3), warehouse.test adapté (balance L
+  prouvée au cargo_l), balayage sériel 330/332 (census ×2 = flaky R5
+  connu, passe seul), unit 55 + shared 199, build vert.
+- **Restent (W8b→W8e)** : fiche pop v2 vivante à bord, docks volants,
+  flotte-suiveuse, fabrication à bord, UI/E2E.
+
 ### E2E W6/W7 passés + pile dev décalable (2026-07-21, autorisation responsable)
 
 - Le port 8080 est squatté par un service Windows étranger (WSL réseau

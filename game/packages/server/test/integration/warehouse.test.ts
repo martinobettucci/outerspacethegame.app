@@ -1,3 +1,4 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Vehicle warehouse” and §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3b/§6. */
 /**
  * Intégration entrepôt de véhicules (GB §9, DG §6 round 6) sur vraie base :
  * balances SÉPARÉES par taille (tampon au sol 2M/2S, jamais de L sans
@@ -169,7 +170,9 @@ describe('warehouse actif : base 6S/4M/2L × mult(niveau), cumul', () => {
     );
     const v = await vehiclesOf(ownerStarter);
     expect(v.capacity).toEqual({ s: 8, m: 6, l: 2 });
-    const l1 = await dockedShip(owner, 'combat', 'l', ownerStarter);
+    // W8 : le combat_l (Crusader) ne s'entrepose plus JAMAIS — la
+    // balance L se prouve avec un cargo_l.
+    const l1 = await dockedShip(owner, 'cargo', 'l', ownerStarter);
     await warehouseShip(pool, owner, l1);
     expect((await ship(l1)).status).toBe('warehoused');
     expect((await vehiclesOf(ownerStarter)).stored).toEqual({ s: 2, m: 1, l: 1 });
