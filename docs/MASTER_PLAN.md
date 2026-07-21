@@ -57,12 +57,13 @@ le même commit, tests §15, captures §16, docs.
   acheminement par cargo (marché des items) ; (d) conversion des rigs
   booléens historiques (harvest/junk/claim) en items ; (e) obs/weapon
   effectifs (P5). → JOURNAL 2026-07-21
-- [ ] **W7 — Usinage partiel (usines L3)** : fabrication (véhicules,
-  accessoires, BÂTIMENTS) débitée par paliers de 5 % (20 étapes) au
-  lieu du paiement à la commande, dès qu'UNE usine L3 (n'importe
-  laquelle) existe sur la planète ; arrêt « starved », reprise auto ;
-  concurrence : un palier par usine en cours, ordre d'insertion BDD.
-  → JOURNAL 2026-07-21
+- [~] **W7 — Usinage partiel (usines L3) — CŒUR LIVRÉ (2026-07-21)** :
+  work_orders (migration 032), 20 paliers de 5 % (rien d'avance), FIFO
+  strict par usine, starved/reprise auto, naissance par les événements
+  existants, vues avec paliers. work-orders.test 3/3, balayage 330/330.
+  **Restent** : (a) BÂTIMENTS en usinage partiel (flux de placement =
+  chantier propre, motif : main de cartes/tuiles/retool) ; (b) E2E +
+  captures §16 (port 8080 — R6). → JOURNAL 2026-07-21
 - [ ] **W8 — Le CRUSADER, petite planète volante** (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt

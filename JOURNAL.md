@@ -4151,3 +4151,19 @@ Spec validée (MASTER_PLAN W7). Interprétations d'implémentation :
   partiel — le flux de placement (main de cartes, tuiles, retool) est
   un chantier propre ; listé au MASTER_PLAN avec motif, à couvrir dans
   un chunk dédié. E2E/captures suivant la disponibilité du port (R6).
+
+## 2026-07-21 — W7 cœur livré : usinage partiel des usines L3 (+ correctif)
+
+Livré conformément au plan : table work_orders (migration 032), gate =
+une industrie L3 active, affectation à l'usine la moins chargée, FIFO
+strict par usine, paliers de 5 % ATOMIQUES (rien débité si UNE
+ressource manque), starved + retry à la cadence du palier [TUNE-v1
+annoncé], reprise auto, 20e palier → ship_built/item_fabricated (voie
+existante). Vues avec « (n/20) ». LIMITES ANNONCÉES : bâtiments en
+partiel = chantier propre (MASTER_PLAN) ; E2E + captures §16 = port
+8080 (R6). RÉCIDIVE de la faute de cwd du commit W4 sur ac0bd4a
+(game/JOURNAL.md recréé, docs racine manquantes) — corrigée ici ;
+leçon : plus JAMAIS de docs sans `cd` absolu vérifié.
+
+Preuves : work-orders.test 3/3 (×3) ; balayage sériel 330/330 (43
+fichiers) ; unit 55 ; build monorepo vert.

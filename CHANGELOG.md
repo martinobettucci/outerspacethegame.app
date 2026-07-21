@@ -2,6 +2,23 @@
 
 ## [Non publié]
 
+### W7 — usinage partiel des usines L3 (MASTER_PLAN W7, 2026-07-21) — cœur livré
+
+- Dès qu'UNE industrie L3 ACTIVE existe sur le monde : les commandes
+  buildShip et fabricateGear ne paient RIEN d'avance — table
+  work_orders (migration 032), 20 paliers de 5 % du coût, un palier =
+  durée totale/20, affectation à l'usine L3 la moins chargée, FIFO
+  STRICT par usine (ordre d'insertion BDD), palier impayable →
+  `starved` + retry à la cadence du palier [TUNE-v1 annoncé], reprise
+  AUTO ; 20e palier → événement terminal EXISTANT (ship_built /
+  item_fabricated). Sans usine L3 : chemin historique intact.
+- Vues : pendingShipBuilds et l'inventaire d'items agrègent les ordres
+  avec leurs paliers « (n/20[, starved]) ».
+- Tests : work-orders.test.ts 3/3 (×3), balayage sériel 330/330 (43
+  fichiers), unit 55, build vert.
+- **RESTES ANNONCÉS** : BÂTIMENTS en usinage partiel (flux de placement
+  = chantier propre, MASTER_PLAN) ; E2E + captures §16 (port 8080 — R6).
+
 ### W6 — pipeline accessoires & upgrades-items (MASTER_PLAN W6, 2026-07-21) — cœur livré
 
 - Catalogue partagé `items.ts` (GEAR, 11 items exhaustifs) :

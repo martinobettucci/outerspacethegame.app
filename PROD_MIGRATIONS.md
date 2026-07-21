@@ -45,6 +45,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 29 | `game/packages/server/migrations/029_probe_l3_transfer.sql` | W3 sondes L3 : `probe_level` étendu à 3, colonnes de transfert ancré (`transfer_target_id`/`_fuel_type`/`_units`/`_started_at`) + index partiel | 026 | Recréer la contrainte (1,2) après rétrogradage des L3, DROP des 4 colonnes + index |
 | 30 | `game/packages/server/migrations/030_star_fields_morph.sql` | W5 coque morphique : `ships.morphing_shield` + `morph_started_at` (adaptation = temps seul, une chimie active) | 001 | DROP des 2 colonnes |
 | 31 | `game/packages/server/migrations/031_gear_items.sql` | W6 items non-fongibles : table `planet_items` + `ships.accessories`/`upgrades`/`installing_item`/`install_started_at` | 001 | DROP TABLE + DROP des 4 colonnes |
+| 32 | `game/packages/server/migrations/032_work_orders.sql` | W7 usinage partiel : table `work_orders` (paliers 5 % × 20, FIFO par usine L3) | 001 | DROP TABLE |
 
 ## Services à déployer (au premier déploiement)
 
