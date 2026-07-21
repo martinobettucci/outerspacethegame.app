@@ -3952,3 +3952,20 @@ E2E anchor.spec vert ×4 (leçons : l'ADN du seed gate le pad L3 →
 prédicat pickEmailByDna ; carbon seedé variable → granté ; capture
 « settled » attendait la resynchronisation du panneau au poll 5 s) ;
 captures anc-01..03 OBSERVÉES.
+
+## 2026-07-21 — W4 : plan de chunk (vue de bord des sondes L2/L3)
+
+Spec validée (MASTER_PLAN W4, décision 2026-07-20). Interprétations :
+- `visibleBodies` (world.ts, désormais libre) : le scope d'une sonde
+  L2+ passe de PROBE_SCAN_PC (60) à BASE_SKY_PC + 200 = **260 pc**
+  (ciel L1), CONTINU « où qu'elle soit » : y compris EN TRANSIT
+  (position interpolée en SQL sur les colonnes de mission — c'est le
+  sens de « continu », l'éclaireur balaie en volant). L1 reste 60 pc à
+  l'arrêt (scan d'arrivée), vaisseaux 20 pc, statuts à l'arrêt inchangés.
+- L'INTEL par paliers (bodyIntel) ne bouge PAS : la vue de bord est de
+  la VISIBILITÉ (scope), le scan riche des sondes reste R4 (annoncé).
+- UI : la sélection d'une sonde L2+ affiche le halo de scan (même
+  visuel que le télescope planétaire, rayon 260 pc).
+- Tests : intégration (L1 60 pc vs L2 260 pc au même point du vide,
+  transit continu) + E2E léger (corps invisible → visible après envoi
+  d'une sonde L2, /api/galaxy) + capture halo observée.
