@@ -3748,3 +3748,59 @@ Tour de Q/R clos. Décisions FERMES :
 - Peut TOUT fabriquer sur place.
 - Équivalent 3 warehouses L3 + 3 spaceports L3 — les petits vaisseaux
   peuvent DOCK SUR le crusader.
+
+## 2026-07-21 — Réponses responsable : boucliers morphiques, upgrades-items, usinage partiel, Crusader complet
+
+Persisté avant validation groupée (§5). Décisions du responsable :
+
+### Slots & accessoires
+- **PAS de rnd de slots** — mauvaise idée, on garde le canon (aucun dé
+  vivant) : les slots restent ceux de la coque (DG §8.1).
+- **Upgrades = accessoires** (moteur, armure, OBS, armes…) : on ne
+  « monte » plus L2→L3, on INSTALLE un item — un engine L3 en stock
+  s'installe DIRECTEMENT. Non-fongibles : à DÉCOUVRIR (ADN — si on veut
+  les fabriquer soi-même), à FABRIQUER et stocker (warehouse ; ou
+  ACHETER ailleurs et acheminer par cargo), à INSTALLER (coût ressources
+  + temps, vaisseau immobilisé DANS l'entrepôt).
+- **Système de ravitaillement avancé** : permet d'attacher 2 sondes
+  (1 = de base).
+
+### Bouclier climatique — EXCEPTION (plus un accessoire)
+- Lore : la coque de tout vaisseau est MORPHIQUE — elle s'adapte à tout
+  climat via une « récriture moléculaire ». Le bouclier climatique est
+  un RETOOLING SUR PLACE : coût en TEMPS seulement (pas de ressources).
+- **Champs climatiques stellaires** : une étoile diffuse son influence
+  climatique dans l'openspace autour d'elle (champ visualisé au CLIC
+  sur l'étoile). Traverser de près le champ d'une étoile froide
+  endommage les coques sans bouclier cold PENDANT la traversée. Survol
+  ou dock sur planète cold sans bouclier cold = dégâts aussi (déjà le
+  cas depuis le chunk AG). Rayon de diffusion [TUNE à proposer].
+
+### Usinage partiel (NOUVELLE mécanique, usines L3)
+- Une planète à l'ADN découvert peut LANCER une fabrication qui coûte
+  plus que son stock : avec des usines L3, la fabrication (véhicules,
+  accessoires ET bâtiments eux-mêmes) ne débite pas à la commande mais
+  par PALIERS de 5 % (20 étapes), débit par étape, s'arrête « starved »
+  si la ressource manque, REPREND dès disponibilité.
+- Concurrence : un palier par usine en cours, dans l'ORDRE D'INSERTION
+  en BDD.
+
+### Le Crusader — complet
+- **Fonctionne comme une PETITE PLANÈTE** : il lui faut de la
+  POPULATION et il faut gérer ses ressources — mais ses infrastructures
+  sont FIXES : on ne peut ni les détruire, ni en placer, ni les
+  upgrader.
+- Dotation d'office : residential L3 + usines L3 + docks (3 spaceports
+  L3) + 3 warehouses L3 ; arbre ADN COMPLET ; fabrique TOUT sur place
+  (usinage partiel D'OFFICE) ; PAS de markets (pas de vente).
+- Stocks fongibles = équivalent planète S (800 T [TUNE]) — acheminés
+  par cargos.
+- **Flotte en orbite** : les vaisseaux peuvent orbiter le Crusader et
+  profiter de la consommation réduite et de l'usage de ses ressources
+  « au sol » ; si le Crusader BOUGE, TOUT CE QUI HOVER AVEC LUI bouge
+  en même temps, en consommant comme en hovering (porte-avions mobile).
+- **Jamais atterrir** : défaut de conformité relevé par le responsable
+  (intention du gamebook première draft) — le texte GB actuel ne
+  l'explicite pas : à AMENDER au GB lors de la validation. Correctif :
+  les Crusaders à quai/en entrepôt sont FORCÉS en hovering sur leur
+  planète, effet immédiat (migration).
