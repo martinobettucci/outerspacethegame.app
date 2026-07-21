@@ -199,6 +199,20 @@ export function GalaxyMap() {
   } | null>(null);
   useEffect(() => {
     if (!selected?.owned || selected.bodyType !== 'planet') {
+      // W4 : une sonde L2+ sélectionnée montre SON ciel de bord
+      // (télescope L1 embarqué, 260 pc) — même visuel que le télescope.
+      if (
+        selectedShip?.hullCategory === 'probe' &&
+        selectedShip.probeLevel >= 2 &&
+        selectedShip.status !== 'transit'
+      ) {
+        setScanHalo({
+          x: selectedShip.x,
+          y: selectedShip.y,
+          radiusPc: telescopeHaloRadiusPc(1),
+        });
+        return;
+      }
       setScanHalo(null);
       return;
     }
@@ -224,7 +238,7 @@ export function GalaxyMap() {
     return () => {
       cancelled = true;
     };
-  }, [selected]);
+  }, [selected, selectedShip]);
   const [npcs, setNpcs] = useState<
     Awaited<ReturnType<typeof api.npcs>>['npcs']
   >([]);

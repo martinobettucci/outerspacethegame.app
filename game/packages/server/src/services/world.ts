@@ -69,11 +69,33 @@ export async function visibleBodies(
       WHERE b.owner_id = $1
       UNION ALL
       -- Sondes et vaisseaux hors transit : vision locale (GB §4 —
-      -- « on découvre en y allant ou par sonde »).
+      -- « on découvre en y allant ou par sonde »). W4 (2026-07-21) :
+      -- une sonde L2+ embarque un télescope L1 — ciel 60 + 200 = 260 pc.
       SELECT s.x, s.y,
-             CASE WHEN s.hull_category = 'probe' THEN $4::float ELSE $5::float END
+             CASE
+               WHEN s.hull_category = 'probe' AND COALESCE(s.probe_level, 1) >= 2
+                 THEN $2::float + $3::float
+               WHEN s.hull_category = 'probe' THEN $4::float
+               ELSE $5::float
+             END
       FROM ships s
       WHERE s.owner_id = $1 AND s.status IN ('hovering', 'idle', 'docked', 'stranded')
+      UNION ALL
+      -- W4 : la vue de bord est CONTINUE, « où que soit » la sonde —
+      -- y compris en transit (position interpolée sur la mission).
+      SELECT s.origin_x + (s.dest_x - s.origin_x) * frac.f,
+             s.origin_y + (s.dest_y - s.origin_y) * frac.f,
+             $2::float + $3::float
+      FROM ships s
+      CROSS JOIN LATERAL (
+        SELECT GREATEST(0, LEAST(1,
+          EXTRACT(EPOCH FROM (now() - s.departed_at)) /
+          NULLIF(EXTRACT(EPOCH FROM (s.arrives_at - s.departed_at)), 0)
+        ))::float AS f
+      ) frac
+      WHERE s.owner_id = $1 AND s.status = 'transit'
+        AND s.hull_category = 'probe' AND COALESCE(s.probe_level, 1) >= 2
+        AND s.departed_at IS NOT NULL AND s.arrives_at IS NOT NULL
     )
     SELECT DISTINCT ON (b.id)
            b.id, b.body_type, b.name, b.x, b.y, b.size, b.climate, b.quality,
