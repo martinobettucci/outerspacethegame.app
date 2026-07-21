@@ -3804,3 +3804,12 @@ Persisté avant validation groupée (§5). Décisions du responsable :
   l'explicite pas : à AMENDER au GB lors de la validation. Correctif :
   les Crusaders à quai/en entrepôt sont FORCÉS en hovering sur leur
   planète, effet immédiat (migration).
+
+### Addendum responsable (même session) : le Crusader a sa FICHE COMPLÈTE
+- Le Crusader a droit à sa fiche de stats COMPLÈTE : pyramide/natalité
+  (residential L3 d'office), taux de chômage (emplois = ses usines
+  fixes), taux d'efficience, mortalité, horloges de survie — TOUTE la
+  mécanique population v2 tourne à bord comme sur une planète.
+- Implication (interp à valider) : dans l'espace, l'OXYGÈNE se respire
+  AU STOCK (pas d'« ambiant » à bord) ; cap de population [TUNE —
+  proposé : cap d'une planète S de qualité F = 2 000].
