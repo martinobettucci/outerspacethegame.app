@@ -15,8 +15,15 @@ import {
   COLONY_SEED_STOCK,
   FOOD_RESOURCES,
   hasFullMedicineSupply,
+  HULL_WEAR_FLOOR_HP,
+  HULL_WEAR_FRACTION_PER_DAY,
   HULLS,
   illnessDeathsPerDay,
+  PROBE,
+  segmentCircleCrossingPc,
+  SHIELD_KINDS,
+  shieldForStarField,
+  starFieldRadiusPc,
   illnessDeltaV2,
   isAmmSlot,
   JUNK_CARCASS_T,
@@ -45,7 +52,7 @@ import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
-import { evalShipFuel, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from './shipDrain.js';
+import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipHull, rebaseShipSurvival, shipMaxHp } from './shipDrain.js';
 
 /**
  * construction_complete { buildingId } — active un bâtiment échu puis
@@ -109,6 +116,46 @@ export const fuelTransferComplete: EventHandler = async (client, event) => {
     event.dueAt.getTime(),
     Number(rows[0].transfer_units ?? 0),
   );
+};
+
+/**
+ * shield_morph_complete { shipId, startedAtMs } — fin de morphose (W5) :
+ * l'adaptation demandée devient LA SEULE active (coque morphique — une
+ * chimie à la fois), l'usure re-basée sur le nouvel état. Idempotence :
+ * ne règle que si la coque porte encore CETTE morphose.
+ */
+export const shieldMorphComplete: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  const startedAtMs = Number(event.payload.startedAtMs ?? 0);
+  if (!shipId || !startedAtMs) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships
+     WHERE id = $1 AND morphing_shield IS NOT NULL
+       AND morph_started_at = to_timestamp($2 / 1000.0)
+     FOR UPDATE`,
+    [shipId, startedAtMs],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  const kind = String(ship.morphing_shield);
+  const flags = Object.fromEntries(
+    SHIELD_KINDS.map((k) => [`shield_${k}`, k === kind]),
+  );
+  await client.query(
+    `UPDATE ships
+       SET shield_hot = $2, shield_cold = $3, shield_radio = $4,
+           morphing_shield = NULL, morph_started_at = NULL
+     WHERE id = $1`,
+    [shipId, flags.shield_hot, flags.shield_cold, flags.shield_radio],
+  );
+  // Le péage cesse (ou commence) immédiatement selon la nouvelle chimie.
+  const { rows: fresh } = await client.query(
+    `SELECT * FROM ships WHERE id = $1`,
+    [shipId],
+  );
+  if (fresh[0]) {
+    await rebaseShipHull(client, fresh[0], event.dueAt.getTime());
+  }
 };
 
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
@@ -499,6 +546,57 @@ export const shipArrival: EventHandler = async (client, event) => {
          WHERE origin_body_id = $1 AND dest_body_id = $2`,
         [ship.settlers_origin_body_id, ship.dest_body_id, carryOut],
       );
+    }
+  }
+
+  // W5 : traversée des CHAMPS climatiques stellaires (0,5 × r_nova) —
+  // dégâts réglés AU BORD : longueur d'intersection du segment avec
+  // chaque champ non blindé, jours = longueur/vitesse, 5 % HP max/jour,
+  // PLANCHER 1 HP (un péage, jamais une mort — GB §27).
+  if (ship.origin_x !== null && ship.dest_x !== null) {
+    const ox = Number(ship.origin_x);
+    const oy = Number(ship.origin_y);
+    const dxx = Number(ship.dest_x);
+    const dyy = Number(ship.dest_y);
+    const speed =
+      ship.hull_category === 'probe'
+        ? PROBE.speedPcPerDay
+        : (HULLS[
+            `${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS
+          ]?.speedPcPerDay ?? 0);
+    if (speed > 0) {
+      const pad = 51; // ≥ champ L ≈ 50,4 pc
+      const { rows: fieldStars } = await client.query(
+        `SELECT x, y, star_fuel_type, r_nova FROM bodies
+         WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+           AND x BETWEEN LEAST($1::float8, $3::float8) - $5::float8
+                     AND GREATEST($1::float8, $3::float8) + $5::float8
+           AND y BETWEEN LEAST($2::float8, $4::float8) - $5::float8
+                     AND GREATEST($2::float8, $4::float8) + $5::float8`,
+        [ox, oy, dxx, dyy, pad],
+      );
+      let crossingDays = 0;
+      for (const s of fieldStars) {
+        const kind = shieldForStarField(s.star_fuel_type);
+        if (!kind || ship[`shield_${kind}`]) continue;
+        const radius = starFieldRadiusPc(Number(s.r_nova ?? 0));
+        if (radius <= 0) continue;
+        crossingDays +=
+          segmentCircleCrossingPc(ox, oy, dxx, dyy, Number(s.x), Number(s.y), radius) /
+          speed;
+      }
+      if (crossingDays > 0) {
+        const maxHp = shipMaxHp(ship);
+        const { hp } = evalShipHull(ship, event.dueAt.getTime());
+        const toll = HULL_WEAR_FRACTION_PER_DAY * maxHp * crossingDays;
+        const newHp = Math.max(Math.min(HULL_WEAR_FLOOR_HP, maxHp), hp - toll);
+        await client.query(
+          `UPDATE ships SET hull_hp = $2, hull_as_of = to_timestamp($3 / 1000.0)
+           WHERE id = $1`,
+          [shipId, newHp, event.dueAt.getTime()],
+        );
+        ship.hull_hp = newHp;
+      }
     }
   }
 
@@ -1361,6 +1459,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     dock_eviction: dockEviction,
     retool_complete: retoolComplete,
     fuel_transfer_complete: fuelTransferComplete,
+    shield_morph_complete: shieldMorphComplete,
     ship_retrieved: shipRetrieved,
     survival_out: survivalOut,
     // survival_low exige timeScale : injecté par le worker (survivalLow) ;

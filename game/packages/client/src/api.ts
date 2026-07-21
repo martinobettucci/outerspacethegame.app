@@ -93,6 +93,8 @@ export interface GalaxyBody {
   flaring: boolean;
   /** Monde annihilé par supernova (cendre). */
   annihilated: boolean;
+  /** W5 : rayon du champ climatique d'une étoile (pc), sinon null. */
+  starFieldPc: number | null;
   owned: boolean;
 }
 
@@ -291,6 +293,9 @@ export interface ShipView {
   /** Coque (GB §27) : HP évalués, max, usure/jour (péage, plancher 1). */
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
+  /** W5 : morphose d'adaptation en cours (coque immobilisée). */
+  morphingShield: string | null;
+  morphCompletesAt: string | null;
   junkCollector: boolean;
   claimRig: boolean;
   claimingTargetId: string | null;

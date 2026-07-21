@@ -1090,6 +1090,63 @@ export function GalaxyMap() {
     };
   }, [scanHalo, bodies]);
 
+  // W5 : champ climatique stellaire — au clic sur une étoile, le disque
+  // 0,5 × r_nova teinté selon le type (hot/cold/gas) : traverser sans le
+  // bouclier apparié use la coque.
+  useEffect(() => {
+    const refs = sceneRef.current;
+    if (
+      !refs ||
+      !selected ||
+      selected.bodyType !== 'star' ||
+      !selected.starFieldPc
+    )
+      return;
+    const { scene } = refs;
+    const r = selected.starFieldPc;
+    const tint =
+      selected.starFuelType === 'hot'
+        ? 0xf25441
+        : selected.starFuelType === 'cold'
+          ? 0x58a8f2
+          : 0xd9cf4a; // gas → radiatif (jaune accent)
+    const disposables: (THREE.BufferGeometry | THREE.Material)[] = [];
+    const mk = (geo: THREE.BufferGeometry, mat: THREE.Material) => {
+      disposables.push(geo, mat);
+      return new THREE.Mesh(geo, mat);
+    };
+    const fill = mk(
+      new THREE.CircleGeometry(r, 96),
+      new THREE.MeshBasicMaterial({
+        color: tint,
+        transparent: true,
+        opacity: 0.07,
+        depthWrite: false,
+      }),
+    );
+    const rim = mk(
+      new THREE.RingGeometry(r * 0.98, r, 96),
+      new THREE.MeshBasicMaterial({
+        color: tint,
+        transparent: true,
+        opacity: 0.28,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    for (const [obj, z] of [
+      [fill, 0.35],
+      [rim, 0.36],
+    ] as const) {
+      obj.position.set(selected.x, selected.y, z);
+      scene.add(obj);
+    }
+    return () => {
+      scene.remove(fill, rim);
+      disposables.forEach((d) => d.dispose());
+    };
+  }, [selected, bodies]);
+
   // Cercles d'autonomie du vaisseau sélectionné (décision 2026-07-20) :
   // pointillés ROUGE = panne sèche (0,95 × autonomie), VERT =
   // aller-retour (0,45 ×). personal/probe : pas de conso → pas de cercle.
@@ -3303,12 +3360,27 @@ export function GalaxyMap() {
                 <Sun size={14} aria-hidden /> {t.galaxy.fitHarvestRig}
               </button>
             )}
-          {selectedShip.status === 'docked' &&
-            selectedShip.hullCategory !== 'probe' &&
-            selectedShip.dockedBodyId &&
-            bodies.some(
-              (b) => b.id === selectedShip.dockedBodyId && b.owned,
+          {/* W5 : coque MORPHIQUE — adaptation sur place, temps seul,
+              une chimie à la fois (plus d'accessoire d'atelier). */}
+          {selectedShip.morphingShield && (
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <ShieldIcon size={12} aria-hidden />{' '}
+              {t.galaxy.morphInProgress} → {selectedShip.morphingShield}
+            </span>
+          )}
+          {!selectedShip.morphingShield &&
+            ['docked', 'hovering', 'idle', 'stranded'].includes(
+              selectedShip.status,
             ) &&
+            selectedShip.hullCategory !== 'probe' &&
             (
               [
                 ['hot', t.galaxy.fitShieldHot],

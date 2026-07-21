@@ -8,6 +8,7 @@
  */
 import {
   intelTierFromSources,
+  starFieldRadiusPc,
   normalizeDemographicCounters,
   planetTechAvailability,
   projectPlanetIntel,
@@ -45,6 +46,8 @@ export interface VisibleBody {
   flaring: boolean;
   /** Monde annihilé par supernova (cendre — jamais recolonisable). */
   annihilated: boolean;
+  /** W5 : rayon du champ climatique d'une étoile (pc), sinon null. */
+  starFieldPc: number | null;
 }
 
 /**
@@ -100,7 +103,7 @@ export async function visibleBodies(
     SELECT DISTINCT ON (b.id)
            b.id, b.body_type, b.name, b.x, b.y, b.size, b.climate, b.quality,
            b.owner_id, p.display_name AS owner_name, b.is_starter,
-           b.star_class, b.star_fuel_type,
+           b.star_class, b.star_fuel_type, b.r_nova,
            b.star_fuel_stock, b.star_fuel_rate_u_per_day, b.star_fuel_as_of,
            b.star_fuel_initial,
            (b.config->>'annihilated') IS NOT NULL AS annihilated
@@ -142,6 +145,10 @@ export async function visibleBodies(
           )
         : false,
     annihilated: !!r.annihilated,
+    // W5 : le champ climatique est PUBLIC dès que l'étoile est visible
+    // (comme le flare) — un rayon, jamais le stock.
+    starFieldPc:
+      r.body_type === 'star' ? starFieldRadiusPc(Number(r.r_nova ?? 0)) : null,
     owned: r.owner_id === playerId,
   }));
 }

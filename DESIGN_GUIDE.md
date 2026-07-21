@@ -984,16 +984,34 @@ proportional to HP restored; policy: whom to serve (canon).
 - **Junk collector** — 15 steelL + 5 silicon [TUNE]: 30 T junk/day.
 - **Claim rig** — 25 steelL + 5 gold [TUNE]: claims ownerless hulls after 2 h
   proximity [TUNE].
-- **Climate shields** — `shield_hot` / `shield_cold` / `shield_radio`
-  (workshop L2, politics-free, 15 steelL + 5 matching crystal [TUNE]).
+- **Climate adaptation — MORPHIC HULL (W5, 2026-07-21 — supersedes the
+  workshop accessory)** — `shield_hot` / `shield_cold` / `shield_radio`
+  are no longer fitted items: the hull is molecularly REWRITTEN on the
+  spot. Morphing costs **time only** (24 h [TUNE]), needs no workshop, no
+  resources, works at any stopped status (docked/hovering/idle/stranded);
+  the hull is **held immobile** during the rewrite; **one chemistry
+  active at a time** (finishing a morph clears the others; legacy
+  multi-shield hulls are grandfathered until their first morph). Probes
+  never morph (no shields — closeness to stars wears them, coherent with
+  the scoop).
   **Rule (closes GAMEBOOK §27):** a ship landing on/hovering over a hot or
   cold planet, harvesting a poison deposit, or operating within 5 pc of a
-  black hole or flaring star, without the matching shield, takes
+  black hole or flaring star, without the matching adaptation, takes
   **deterministic hull wear 5 % max-HP/day pro-rated per tick** [TUNE] — a
   toll, never a kill nor a movement block. **Temperate worlds never require
   shields** (starters are temperate ⇒ no starter grief). Buildings never
   need shields (climate-adaptation art is cosmetic; canon: climate gates
   resources, not operation). Combat unaffected — environmental only.
+- **Star climate fields (W5, 2026-07-21)** — every star radiates its
+  climate into openspace over **0.5 × R_nova** [TUNE] (S 20 / M ~31.7 /
+  L ~50.4 pc; field kind: hot→hot, cold→cold, gas→radio [interp]). A hull
+  STOPPED in space inside an unmatched field wears +5 % max-HP/day per
+  field (additive with the other sources above); docked hulls are exempt
+  (the world's own climate already rules them [interp]). CROSSING a field
+  in transit settles a toll at the arrival edge: crossing length ÷ speed
+  days × 5 % max-HP/day, floored at 1 HP (a toll, never a kill). The
+  field disc is PUBLIC — visualized on star click (like the flare, a
+  radius, never the stock).
 - Scanner, terraform core (§6): same slot family.
 
 ---

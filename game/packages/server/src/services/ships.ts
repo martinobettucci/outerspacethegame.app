@@ -36,6 +36,9 @@ import {
   occupiesDock,
   PROBE,
   type ResourceId,
+  SHIELD_KINDS,
+  SHIELD_MORPH_HOURS,
+  type ShieldKind,
   SHIP_BUILD_HOURS,
   SHIP_RETRIEVE_HOURS,
   shipBuildCost,
@@ -82,6 +85,9 @@ export interface ShipView {
   /** Coque : HP évalués, max, usure/jour (GB §27 — péage, plancher 1). */
   hull: { hp: number; maxHp: number; wearPerDay: number };
   shields: { hot: boolean; cold: boolean; radio: boolean };
+  /** W5 : morphose d'adaptation en cours (coque immobilisée). */
+  morphingShield: string | null;
+  morphCompletesAt: string | null;
   junkCollector: boolean;
   claimRig: boolean;
   /** Épave en cours de réclamation (id) + échéance ISO, sinon null. */
@@ -202,6 +208,14 @@ export async function fleet(
   const transferEndsBy = new Map(
     transferring.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
   );
+  // W5 : échéances des morphoses d'adaptation (bords non traités).
+  const { rows: morphing } = await pool.query(
+    `SELECT payload->>'shipId' AS ship_id, due_at FROM events
+     WHERE kind = 'shield_morph_complete' AND processed_at IS NULL`,
+  );
+  const morphEndsBy = new Map(
+    morphing.map((e) => [e.ship_id, new Date(e.due_at).toISOString()]),
+  );
   // W3 : sonde ancrée par receveur (flag dérivé côté receveur).
   const anchoredBy = new Map(
     rows
@@ -261,6 +275,8 @@ export async function fleet(
         cold: !!r.shield_cold,
         radio: !!r.shield_radio,
       },
+      morphingShield: r.morphing_shield ?? null,
+      morphCompletesAt: morphEndsBy.get(String(r.id)) ?? null,
       junkCollector: !!r.junk_collector,
       claimRig: !!r.claim_rig,
       claimingTargetId: r.claiming_target_id ?? null,
@@ -376,6 +392,13 @@ export async function moveShip(
     }
     if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
       throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    // W5 : coque immobilisée pendant sa MORPHOSE d'adaptation.
+    if (ship.morphing_shield) {
+      throw new CommandError(
+        'not_available',
+        'Morphose de coque en cours — la réécriture moléculaire immobilise',
+      );
     }
     // W3 : une coque ENGAGÉE dans un transfert ancré ne bouge pas — ni
     // la sonde donneuse, ni le receveur (annuler d'abord).
@@ -1136,6 +1159,70 @@ export async function cancelAnchorTransfer(
     const r = await settleAnchorTransfer(client, probe, nowMs, pumped);
     await client.query('COMMIT');
     return r;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * W5 — coque MORPHIQUE (MASTER_PLAN W5, JOURNAL 2026-07-21) : le
+ * bouclier climatique n'est plus un accessoire. L'adaptation est une
+ * réécriture moléculaire SUR PLACE : TEMPS SEUL (24 h-jeu [TUNE]),
+ * aucun coût, aucun atelier, n'importe quel statut à l'ARRÊT. UNE
+ * adaptation active à la fois (la fin de morphose écrit {kind} seul) ;
+ * les coques multi-boucliers héritées sont conservées jusqu'à leur
+ * première morphose (grandfather annoncé). Coque immobilisée pendant la
+ * morphose. Sondes exclues (aucun bouclier).
+ */
+export async function morphShield(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  kind: ShieldKind,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  if (!(SHIELD_KINDS as readonly string[]).includes(kind)) {
+    throw new CommandError('not_available', 'Adaptation inconnue');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (ship.hull_category === 'probe') {
+      throw new CommandError('not_available', 'Une sonde ne porte pas de bouclier');
+    }
+    if (!['docked', 'hovering', 'idle', 'stranded'].includes(ship.status)) {
+      throw new CommandError(
+        'not_available',
+        `La morphose se fait à l'arrêt (${ship.status})`,
+      );
+    }
+    if (ship.morphing_shield) {
+      throw new CommandError('not_available', 'Une morphose est déjà en cours');
+    }
+    if (ship[`shield_${kind}`]) {
+      throw new CommandError('not_available', 'Cette adaptation est déjà active');
+    }
+    const completesAt = new Date(
+      nowMs + (SHIELD_MORPH_HOURS * 3_600_000) / timeScale,
+    );
+    await client.query(
+      `UPDATE ships
+         SET morphing_shield = $2, morph_started_at = to_timestamp($3 / 1000.0)
+       WHERE id = $1`,
+      [shipId, kind, nowMs],
+    );
+    await enqueue(client, 'shield_morph_complete', completesAt, {
+      shipId,
+      startedAtMs: nowMs,
+    });
+    await client.query('COMMIT');
+    return { completesAt };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

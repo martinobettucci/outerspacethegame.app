@@ -5,9 +5,14 @@ import {
   hullWearPerDay,
   repairHpPerDay,
   REPAIR_STEEL_T_PER_HP,
+  segmentCircleCrossingPc,
   SHIELD_COST,
   SHIELD_KINDS,
+  SHIELD_MORPH_HOURS,
   shieldForClimate,
+  shieldForStarField,
+  STAR_FIELD_NOVA_FRACTION,
+  starFieldRadiusPc,
 } from './wear.js';
 import { harvestHullDamagePerDay } from './stars.js';
 
@@ -65,5 +70,63 @@ describe('repairHpPerDay — 5 %/h × mult(1/2/4) [TUNE]', () => {
 
   it('acier proportionnel : 0,1 T/HP [TUNE-v1]', () => {
     expect(REPAIR_STEEL_T_PER_HP).toBe(0.1);
+  });
+});
+
+describe('W5 — champs climatiques stellaires (0,5 × R_nova)', () => {
+  it('rayons : S 20 / M ~31,7 / L ~50,4 pc (r_nova = 40×∛mult)', () => {
+    expect(STAR_FIELD_NOVA_FRACTION).toBe(0.5);
+    expect(starFieldRadiusPc(40)).toBeCloseTo(20, 9);
+    expect(starFieldRadiusPc(40 * Math.cbrt(4))).toBeCloseTo(31.748, 3);
+    expect(starFieldRadiusPc(40 * Math.cbrt(16))).toBeCloseTo(50.397, 3);
+    expect(starFieldRadiusPc(-5)).toBe(0);
+  });
+
+  it('bouclier apparié au TYPE d\'étoile : hot→hot, cold→cold, gas→radio [interp]', () => {
+    expect(shieldForStarField('hot')).toBe('hot');
+    expect(shieldForStarField('cold')).toBe('cold');
+    expect(shieldForStarField('gas')).toBe('radio');
+    expect(shieldForStarField(null)).toBeNull();
+    expect(shieldForStarField('plasma')).toBeNull();
+  });
+
+  it('hullWearPerDay : chaque champ non blindé ajoute 5 %/j (additif)', () => {
+    expect(hullWearPerDay(80, { starFieldsUnshielded: 1 })).toBeCloseTo(4, 9);
+    expect(hullWearPerDay(80, { starFieldsUnshielded: 2 })).toBeCloseTo(8, 9);
+    expect(
+      hullWearPerDay(80, { hostileClimateUnshielded: true, starFieldsUnshielded: 1 }),
+    ).toBeCloseTo(8, 9);
+    expect(hullWearPerDay(80, { starFieldsUnshielded: 0 })).toBe(0);
+  });
+
+  it('morphose : 24 h-jeu [TUNE]', () => {
+    expect(SHIELD_MORPH_HOURS).toBe(24);
+  });
+});
+
+describe('W5 — segmentCircleCrossingPc (géométrie pure de traversée)', () => {
+  it('diamètre complet : segment traversant le centre = 2r', () => {
+    expect(segmentCircleCrossingPc(-100, 0, 100, 0, 0, 0, 20)).toBeCloseTo(40, 9);
+  });
+
+  it('corde décalée : |y|=12, r=20 → 2×√(400−144) = 32', () => {
+    expect(segmentCircleCrossingPc(-100, 12, 100, 12, 0, 0, 20)).toBeCloseTo(32, 9);
+  });
+
+  it('hors du disque / tangent : 0', () => {
+    expect(segmentCircleCrossingPc(-100, 25, 100, 25, 0, 0, 20)).toBe(0);
+    expect(segmentCircleCrossingPc(-100, 20, 100, 20, 0, 0, 20)).toBe(0);
+  });
+
+  it('segment finissant DANS le disque : clampé au bout', () => {
+    expect(segmentCircleCrossingPc(-100, 0, 0, 0, 0, 0, 20)).toBeCloseTo(20, 9);
+  });
+
+  it('segment entièrement DANS le disque : sa longueur', () => {
+    expect(segmentCircleCrossingPc(-5, 0, 5, 0, 0, 0, 20)).toBeCloseTo(10, 9);
+  });
+
+  it('segment dégénéré (a = b) : 0', () => {
+    expect(segmentCircleCrossingPc(3, 3, 3, 3, 0, 0, 20)).toBe(0);
   });
 });

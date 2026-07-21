@@ -40,6 +40,70 @@ export function shieldForClimate(climate: Climate | string | null): ShieldKind |
 }
 
 /**
+ * W5 (2026-07-21) — champs climatiques stellaires : une étoile diffuse
+ * son climat en openspace sur 0,5 × R_nova [TUNE] (S 20 / M ~31,7 /
+ * L ~50,4 pc). Traverser ou stationner dans le champ sans le bouclier
+ * apparié = usure standard (5 %/j au prorata, plancher 1 HP).
+ */
+export const STAR_FIELD_NOVA_FRACTION = 0.5;
+
+/** Rayon du champ climatique d'une étoile (pc) depuis son r_nova. */
+export function starFieldRadiusPc(rNovaPc: number): number {
+  return Math.max(0, rNovaPc) * STAR_FIELD_NOVA_FRACTION;
+}
+
+/** Bouclier exigé par le champ d'une étoile selon son TYPE de carburant.
+ *  [TUNE interp annoncée] : hot→hot, cold→cold, gas→radio (le champ
+ *  d'une étoile à gaz est l'environnement radiatif par excellence). */
+export function shieldForStarField(
+  starFuelType: string | null,
+): ShieldKind | null {
+  if (starFuelType === 'hot') return 'hot';
+  if (starFuelType === 'cold') return 'cold';
+  if (starFuelType === 'gas') return 'radio';
+  return null;
+}
+
+/** Durée d'une morphose de coque (adaptation climatique), h-jeu. [TUNE] */
+export const SHIELD_MORPH_HOURS = 24;
+
+/**
+ * Longueur (pc) de l'intersection d'un SEGMENT [a→b] avec un DISQUE de
+ * centre c et rayon r — géométrie pure pour la traversée des champs
+ * stellaires (dégâts au prorata du temps passé dedans).
+ */
+export function segmentCircleCrossingPc(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  r: number,
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.hypot(dx, dy);
+  if (len <= 1e-12) {
+    // Segment dégénéré : dedans ou dehors, longueur nulle.
+    return 0;
+  }
+  // Paramétrage p(t) = a + t·d, t ∈ [0, 1] ; |p(t) − c|² = r².
+  const fx = ax - cx;
+  const fy = ay - cy;
+  const A = dx * dx + dy * dy;
+  const B = 2 * (fx * dx + fy * dy);
+  const C = fx * fx + fy * fy - r * r;
+  const disc = B * B - 4 * A * C;
+  if (disc <= 0) return 0; // pas d'intersection (ou tangence : longueur 0)
+  const sq = Math.sqrt(disc);
+  const t1 = Math.max(0, (-B - sq) / (2 * A));
+  const t2 = Math.min(1, (-B + sq) / (2 * A));
+  if (t2 <= t1) return 0;
+  return (t2 - t1) * len;
+}
+
+/**
  * Taux d'usure total (HP/jour, ≥ 0) — chaque source hostile NON blindée
  * contribue 5 % des HP max/jour [TUNE-v1 : cumul additif, annoncé] ; les
  * dégâts de proximité du harvest rig (d < d_safe) s'ajoutent tels quels
@@ -51,11 +115,17 @@ export function hullWearPerDay(
     hostileClimateUnshielded?: boolean;
     hazardZoneUnshielded?: boolean;
     harvestDamagePerDay?: number;
+    /** W5 : nombre de CHAMPS stellaires non blindés où la coque baigne. */
+    starFieldsUnshielded?: number;
   },
 ): number {
   let wear = 0;
   if (opts.hostileClimateUnshielded) wear += HULL_WEAR_FRACTION_PER_DAY * maxHp;
   if (opts.hazardZoneUnshielded) wear += HULL_WEAR_FRACTION_PER_DAY * maxHp;
+  wear +=
+    Math.max(0, opts.starFieldsUnshielded ?? 0) *
+    HULL_WEAR_FRACTION_PER_DAY *
+    maxHp;
   wear += Math.max(0, opts.harvestDamagePerDay ?? 0);
   return wear;
 }

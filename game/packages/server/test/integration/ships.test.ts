@@ -270,7 +270,11 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
     const first = await scoopProbeFuel(pool, playerId, probeId);
     expect(first.destroyed).toBe(false);
     expect(first.fuelUnits).toBe(70); // plein
-    expect(first.hp).toBe(50 - 10);
+    // W5 : la sonde a TRAVERSÉ le champ climatique de l'étoile
+    // (0,5 × r_nova) sans bouclier — péage de bord ≈ rayon/120 × 2,5 HP/j
+    // en sus des 10 HP du scoop.
+    expect(first.hp).toBeLessThanOrEqual(50 - 10);
+    expect(first.hp).toBeGreaterThan(50 - 10 - 2);
     // 3 scoops de plus → 10 HP ; le 5e fait céder la coque : PERDUE.
     for (let i = 0; i < 3; i++) await scoopProbeFuel(pool, playerId, probeId);
     const last = await scoopProbeFuel(pool, playerId, probeId);

@@ -31,6 +31,7 @@ export type EventKind =
   | 'auto_trade_check'
   | 'pop_clock'
   | 'fuel_transfer_complete'
+  | 'shield_morph_complete'
   | 'noop';
 
 export interface GameEvent {

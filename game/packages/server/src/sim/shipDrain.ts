@@ -19,6 +19,8 @@ import {
   HULLS,
   hullWearPerDay,
   shieldForClimate,
+  shieldForStarField,
+  starFieldRadiusPc,
   starIsFlaring,
   SURVIVAL_ALARM_FRACTION,
   survivalCapacityT,
@@ -317,6 +319,7 @@ export async function rebaseShipHull(
   let hostileClimateUnshielded = false;
   let hazardZoneUnshielded = false;
   let harvestDamagePerDay = 0;
+  let starFieldsUnshielded = 0;
   if (['docked', 'hovering', 'idle', 'stranded'].includes(ship.status)) {
     const bodyId = ship.docked_body_id ?? ship.hover_body_id;
     if (bodyId) {
@@ -366,6 +369,29 @@ export async function rebaseShipHull(
         }
       }
     }
+    // W5 : champs climatiques stellaires (0,5 × r_nova) — une coque À
+    // L'ARRÊT DANS L'ESPACE baignant dans un champ sans le bouclier
+    // apparié use (+5 %/j PAR champ, additif). À quai : exempt [interp
+    // annoncée — la coque posée est sous le champ du MONDE, dont le
+    // climat fait déjà loi]. Sondes concernées (aucun bouclier possible).
+    if (ship.status !== 'docked') {
+      const sx = Number(ship.x);
+      const sy = Number(ship.y);
+      const maxField = 51; // ≥ starFieldRadiusPc(r_nova L ≈ 100,8) = 50,4
+      const { rows: fieldStars } = await client.query(
+        `SELECT x, y, star_fuel_type, r_nova FROM bodies
+         WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+           AND x BETWEEN $1 AND $2 AND y BETWEEN $3 AND $4`,
+        [sx - maxField, sx + maxField, sy - maxField, sy + maxField],
+      );
+      for (const s of fieldStars) {
+        const radius = starFieldRadiusPc(Number(s.r_nova ?? 0));
+        if (radius <= 0) continue;
+        if (Math.hypot(Number(s.x) - sx, Number(s.y) - sy) > radius) continue;
+        const kind = shieldForStarField(s.star_fuel_type);
+        if (kind && !ship[`shield_${kind}`]) starFieldsUnshielded += 1;
+      }
+    }
     // Champ de junk dans la cellule (DG §10.4) : dégâts de présence —
     // aucun bouclier n'atténue (cinétique) [TUNE-v1]. Taux gelé entre
     // rebases (la décroissance affine au prochain point d'état, annoncé).
@@ -401,6 +427,7 @@ export async function rebaseShipHull(
     hostileClimateUnshielded,
     hazardZoneUnshielded,
     harvestDamagePerDay,
+    starFieldsUnshielded,
   });
   // Réparation d'atelier (DG §8.7) : taux SERVI transmis par le recompute
   // planétaire (défaut pessimiste 0) — nul si la coque est déjà pleine.

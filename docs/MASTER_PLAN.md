@@ -36,14 +36,14 @@ le même commit, tests §15, captures §16, docs.
   scope 260 pc continu (y compris transit interpolé en SQL), halo UI à
   la sélection, intel par paliers inchangé (scan riche → R4).
   onboard-sight.test 4/4, E2E vert, capture obs-01. → JOURNAL 2026-07-21
-- [ ] **W5 — Champs climatiques stellaires + bouclier morphique** :
-  (a) une étoile diffuse son climat en openspace, rayon **0,5 ×
-  R_nova** [TUNE] (S 20 / M 32 / L 50 pc), champ VISUALISÉ au clic sur
-  l'étoile, traversée sans le bon bouclier = dégâts pendant la
-  traversée (extension de wear.ts) ; (b) le bouclier climatique N'EST
-  PLUS un accessoire : coque MORPHIQUE, adaptation = RETOOLING sur
-  place en TEMPS SEUL [TUNE] (fitShield actuel à convertir).
-  → JOURNAL 2026-07-21
+- [x] **W5 — Champs climatiques stellaires + bouclier morphique —
+  LIVRÉ (2026-07-21)** : (a) champ 0,5 × r_nova (S 20 / M ~31,7 /
+  L ~50,4 pc, hot/cold/gas→radio), à l'arrêt +5 %/j additif (à quai
+  exempt), traversée réglée au bord (plancher 1 HP), visualisé au clic ;
+  (b) coque morphique temps-seul 24 h (migration 030), une chimie
+  active, immobilisée pendant, fitShield supprimé. star-fields 3/3,
+  wear 9/9, balayage 321/321, E2E shields réécrit vert, captures
+  sh-00..03. → JOURNAL 2026-07-21
 - [ ] **W6 — Pipeline ACCESSOIRES & upgrades-items** : (a) arbre ADN
   des accessoires (découverte) ; (b) fabrication = items NON-FONGIBLES
   occupant la balance d'items des warehouses (50/niveau — dormante

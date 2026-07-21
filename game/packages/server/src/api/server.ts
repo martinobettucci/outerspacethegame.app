@@ -50,7 +50,6 @@ import {
 } from '../services/world.js';
 import {
   fitHarvestRig,
-  fitShield,
   setStarStockForTest,
   startHarvest,
   stopHarvest,
@@ -64,6 +63,7 @@ import {
   scoopProbeFuel,
   anchorTransferFuel,
   cancelAnchorTransfer,
+  morphShield,
   setProbeFuelOrder,
   sendProbe,
   listNpcs,
@@ -1229,6 +1229,8 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     );
   });
 
+  // W5 : coque MORPHIQUE — l'adaptation climatique est une morphose sur
+  // place, temps seul (plus un accessoire d'atelier).
   app.post('/ships/:id/shield', async (req, reply) => {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
@@ -1237,7 +1239,9 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       .safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
     return wrap(reply, () =>
-      fitShield(deps.pool, player.id, id, parsed.data.kind),
+      morphShield(deps.pool, player.id, id, parsed.data.kind, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
     );
   });
 

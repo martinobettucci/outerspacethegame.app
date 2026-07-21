@@ -4025,3 +4025,30 @@ Spec validée (MASTER_PLAN W5). Interprétations d'implémentation :
 - fitShield (workshop L2 + coût) devient morphShield ; la route
   POST /ships/:id/shield garde son chemin mais rend completesAt.
 - Sondes toujours exclues (pas de bouclier).
+
+## 2026-07-21 — W5 livré : champs climatiques stellaires & coque morphique
+
+(a) Champs : rayon 0,5 × r_nova (colonne existante), mapping type
+d'étoile → adaptation (hot/cold ; gas→radio [interp]), source additive
++5 %/j dans rebaseShipHull pour les coques à l'arrêt DANS L'ESPACE (à
+quai exempt — le climat du monde fait loi), péage de TRAVERSÉE réglé au
+bord dans shipArrival (géométrie pure segmentCircleCrossingPc, jours =
+longueur/vitesse, plancher 1 HP), champ public visualisé au clic
+(disque teinté). Leçon SQL : LEAST($1,$3) infère text — casts ::float8.
+(b) Coque morphique : migration 030 (morphing_shield/morph_started_at),
+morphShield temps-seul 24 h [TUNE] à l'arrêt n'importe où, une chimie
+active à la fois (le bord shield_morph_complete écrit {kind} seul),
+grandfather des multi-boucliers hérités, moveShip refuse pendant,
+fitShield SUPPRIMÉ (route conservée → morphose).
+
+Effets assumés et démontrés dans les suites existantes : le scoop d'une
+sonde implique la traversée du champ (−0,42 HP exacts au bord sur
+20 pc/120 pc/j), le flare DOUBLE près de l'étoile (4+4), le rallumage
+laisse le champ ; fixtures de wear.test posées sur des points CLAIRS
+(≥ 52 pc de toute étoile) pour rester déterministes par seed.
+
+Preuves : unit wear 17 ; star-fields.test 3/3 (×3) ; wear.test 9/9
+(×3) ; balayage sériel 321/321 (41 fichiers) ; unit serveur 55 ; client
+21 ; E2E shields.spec réécrit vert ×2 ; captures sh-00..03 OBSERVÉES
+(champ teinté au clic, −4.0 HP/day, « Hull morphing → hot », péage
+éteint après morphose).

@@ -2,6 +2,34 @@
 
 ## [Non publié]
 
+### W5 — champs climatiques stellaires & coque morphique (MASTER_PLAN W5, 2026-07-21)
+
+- **Champs stellaires** : chaque étoile diffuse son climat sur
+  **0,5 × r_nova** [TUNE] (S 20 / M ~31,7 / L ~50,4 pc ; hot→hot,
+  cold→cold, gas→radio [interp]). À l'arrêt dans l'espace sans
+  l'adaptation appariée : +5 % HP max/j PAR champ (additif) ; à quai :
+  exempt [interp] ; sondes concernées. TRAVERSÉE en transit : péage
+  réglé au bord (longueur d'intersection ÷ vitesse, plancher 1 HP) —
+  géométrie pure `segmentCircleCrossingPc` testée. Champ PUBLIC,
+  visualisé au clic sur l'étoile (disque teinté par type).
+- **Coque morphique** (le bouclier n'est plus un accessoire) :
+  adaptation = réécriture moléculaire SUR PLACE, TEMPS SEUL (24 h-jeu
+  [TUNE], migration 030), aucun atelier, aucun coût, une chimie active
+  à la fois, coque immobilisée pendant la morphose (moveShip refuse),
+  grandfather des multi-boucliers hérités ; fitShield (workshop L2 +
+  coût) SUPPRIMÉ, route /ships/:id/shield → morphose.
+- Effets W5 assumés dans les suites : scoop d'une sonde = traversée du
+  champ (péage au bord démontré), près d'une étoile en flare le péage
+  DOUBLE (flare + champ), le rallumage laisse le champ.
+- Tests : unit wear 17 (géométrie + rayons + mapping), intégration
+  star-fields.test 3/3 (×3) + wear.test 9/9 (morphose, fixtures posées
+  hors champ pour rester déterministes) + ships/harvest ajustés,
+  balayage sériel 321/321 (41 fichiers), client 21, E2E shields.spec
+  réécrit (champ visualisé, −4 HP/day, morphose sur place, moveShip 409
+  pendant, péage éteint) vert ×2 + captures sh-00..03 observées (§16).
+- Docs : DG §8.8 accessoires → coque morphique + section champs
+  stellaires ; PROD_MIGRATIONS 030.
+
 ### W4 — vue de bord des sondes L2/L3 (MASTER_PLAN W4, 2026-07-21)
 
 - `visibleBodies` : une sonde L2+ porte un ciel de bord de **260 pc**
