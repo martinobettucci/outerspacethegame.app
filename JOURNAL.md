@@ -3988,3 +3988,40 @@ CHANGELOG/DG/MASTER_PLAN/BACKLOG manquaient (appliquées ici).
 Preuves : onboard-sight.test 4/4 (×3) ; balayage sériel 318/318 (40
 fichiers, census vert) ; unit 55 ; client 21 ; E2E onboard-sight.spec
 vert ; capture obs-01 OBSERVÉE (halo + sweep + panneau idle).
+
+## 2026-07-21 — W5 : plan de chunk (champs stellaires + coque morphique)
+
+Spec validée (MASTER_PLAN W5). Interprétations d'implémentation :
+
+(a) Champs climatiques stellaires :
+- Rayon du champ = 0,5 × r_nova (colonne existante, 40×∛mult) → S 20 /
+  M ~31,7 / L ~50,4 pc [TUNE]. Helper pur partagé starFieldRadiusPc +
+  mapping type d'étoile → bouclier requis [TUNE interp annoncée] :
+  hot→hot, cold→cold, gas→radio (l'environnement radiatif).
+- Coques À L'ARRÊT DANS L'ESPACE (hovering/idle/stranded) dans le champ
+  sans le bouclier apparié : source hostile additive de +5 % HP max/j
+  dans rebaseShipHull (même patron que la zone de hasard). À QUAI :
+  exempt [interp annoncée : la coque posée est sous le champ du MONDE,
+  dont le climat fait déjà loi]. Sondes : concernées (pas de bouclier
+  possible — s'approcher des étoiles use, cohérent avec le scoop).
+- TRAVERSÉE en transit : dégâts réglés AU BORD (shipArrival) —
+  longueur d'intersection segment×disque par champ non blindé,
+  jours = longueur/vitesse, dégâts = Σ 5 % HP max × jours, PLANCHER
+  1 HP (un péage, jamais une mort — GB §27). Géométrie pure partagée
+  (segmentCircleCrossingPc) testée unitairement.
+- Visualisation : au clic sur une étoile, cercle du champ teinté selon
+  le type (UI GalaxyMap), rayon 0,5 × r_nova.
+
+(b) Coque MORPHIQUE (le bouclier n'est plus un accessoire) :
+- Adaptation = réécriture moléculaire SUR PLACE, TEMPS SEUL [TUNE
+  24 h-jeu, patron retool], AUCUN coût, AUCUN workshop, n'importe quel
+  statut à l'arrêt (docked/hovering/idle/stranded). UNE adaptation
+  active à la fois : la fin de morphose écrit {kind: true, autres:
+  false}. Les coques existantes multi-boucliers sont conservées telles
+  quelles (grandfather, annoncé) jusqu'à leur première morphose.
+- Pendant la morphose : coque immobilisée (moveShip refuse), événement
+  shield_morph_complete idempotent (colonne morphing_shield +
+  morph_started_at, migration 030).
+- fitShield (workshop L2 + coût) devient morphShield ; la route
+  POST /ships/:id/shield garde son chemin mais rend completesAt.
+- Sondes toujours exclues (pas de bouclier).
