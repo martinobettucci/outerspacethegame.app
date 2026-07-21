@@ -16,12 +16,14 @@ le même commit, tests §15, captures §16, docs.
   par type dans le jsonb `fuel`, ordre de consommation configurable PAR
   SONDE (UI patron auto-trade), drains/évaluations consommant type par
   type dans l'ordre. Fondation de W3. → JOURNAL 2026-07-21
-- [ ] **W2 — Moteurs typés à l'usinage** : `engine_type` FIGÉ au build
-  (défaut = étoile natale, migration : type courant des coques
-  existantes), sélection au chantier, le chantier usine tout moteur via
-  RETOOLING (patron industrie, 24 h [TUNE]) ; refuel/transferts
-  contraints au type moteur. Donne enfin son sens à la matrice
-  fuel×moteur DG §8.3 (aujourd'hui 1.0). → JOURNAL 2026-07-21
+- [x] **W2 — Moteurs typés à l'usinage — LIVRÉ (2026-07-21)** :
+  `engine_type` FIGÉ au build (migration 028, backfill du type courant),
+  défaut étoile natale, chantier outillé recipe `engine_<type>` (patron
+  industrie, retool 24 h, instantané toute-Industrialist),
+  refuel/transferts/vol contraints au moteur, plein de naissance typé
+  moteur, UI outillage+retool+quille, DG §8.3 consolidé (matrice
+  hors-diagonale [TUNE]-dormante → programme D). engines.test 5/5,
+  E2E engines.spec vert, captures eng-01..03. → JOURNAL 2026-07-21
 - [ ] **W3 — Sondes L3 : ancrage & transfert** : niveau 3 (= L2 +
   capacité tanker ; gate pad L3 [interp], surcoût [TUNE]) ;
   `anchorShip`/transfert LENT [TUNE 20 u/h] à montant choisi, les deux
@@ -89,9 +91,10 @@ le même commit, tests §15, captures §16, docs.
   par staffing [TUNE-v1] ; E2E visuel du spawn ; cas « univers
   saturé » ; scan riche des sondes (ADN/gisements, intel
   scientifique) ; intel des VAISSEAUX L1/L2/L3 (chunk flotte).
-- [ ] **R5 — Stabiliser census + hover** : tests ordonno-dépendants (census ×2, hover ×3 au balayage) au
-  balayage complet (totaux GLOBAUX pollués par l'ordre des fichiers —
-  passent seuls) : isoler par fenêtre/univers dédié.
+- [ ] **R5 — Stabiliser census** : ×2 flaky au balayage (totaux
+  GLOBAUX/lazy — passent souvent, chantier responsable) : isoler par
+  fenêtre/univers dédié. (Erratum W2 : hover n'était PAS
+  ordonno-dépendant — régression W1 seed-dépendante, corrigée.)
 - [ ] **R6 — Captures §16 en attente de port 8080** : V1 halo/cercles,
   V2 UI sondes, V3 chapitre Codex, zoom galaxie, key BuildingPanel.
 - [ ] **R7 — Quirk cap sondes** [TUNE-v1 à trancher] : le cap 5/j/pad

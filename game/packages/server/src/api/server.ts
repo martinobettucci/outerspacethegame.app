@@ -258,6 +258,8 @@ const buildShipSchema = z.object({
   category: z.enum(['combat', 'cargo', 'civil']),
   size: z.enum(['s', 'm', 'l']),
   name: z.string().min(2).max(40),
+  // W2 : moteur figé au build (défaut serveur = étoile natale).
+  engine: z.enum(['cold', 'hot', 'gas']).optional(),
 });
 const settlersSchema = z
   .object({

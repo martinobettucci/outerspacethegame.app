@@ -38,6 +38,10 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 22 | `game/packages/server/migrations/022_pop_v2.sql` | Population v2 chunk BA (DG §3.2-v2) : pyramide (`pop_children`/`pop_seniors`, backfill 18,2/27,3 %), `clock_deadlines`, `demo_counters` | 001 | DROP des colonnes |
 | 23 | `game/packages/server/migrations/023_pop_v2_unemployment.sql` | Population v2 chunk BB : `unemp_over_days` (grâce de chômage §3.2-v2 g) | 022 | DROP de la colonne |
 | 24 | `game/packages/server/migrations/024_pop_v2_settler_categories.sql` | Population v2 chunk BD : manifeste C/A/S sur les coques, backfill fidèle des settlers historiques en actifs, contrainte total = somme des cohortes | 007, 022 | DROP contrainte puis DROP des trois colonnes |
+| 25 | `game/packages/server/migrations/025_telescope_tile.sql` | Télescope unique SUR TUILE (décision 2026-07-20) : placement des legacy sur tuile libre (préflight bloquant sinon), contrat de tuile (probe_pad seul hors tuile), index unique 1 télescope/monde | 001 | DROP contrainte `buildings_tile_contract` + DROP INDEX `buildings_one_telescope_per_body` (les tile_index posés restent) |
+| 26 | `game/packages/server/migrations/026_probe_levels.sql` | Sondes v3 (GB §4/§14) : `ships.probe_level` (1\|2, défaut 1) | 001 | DROP de la colonne |
+| 27 | `game/packages/server/migrations/027_probe_fuel_order.sql` | W1 multi-fuel : `ships.fuel_order` (ordre de consommation par sonde) | 001 | DROP de la colonne |
+| 28 | `game/packages/server/migrations/028_engine_types.sql` | W2 moteurs typés : `ships.engine_type` ('cold'\|'hot'\|'gas', NULL sondes/personnelles) + backfill du type courant | 001 | DROP de la colonne |
 
 ## Services à déployer (au premier déploiement)
 

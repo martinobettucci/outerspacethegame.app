@@ -3868,3 +3868,30 @@ Spec validée (MASTER_PLAN W2). Interprétations d'implémentation :
   entre moteurs différents ; slot actif (shipDrain) = engine_type pour
   les coques typées ; le pré-brûlage ordonné W1 reste réservé sondes.
 - DG §8.3 consolidé dans le même commit. Tests intégration dédiés.
+
+## 2026-07-21 — W2 livré : moteurs typés à l'usinage (+ erratum W1)
+
+Livré conformément au plan de chunk du jour : `engine_type` figé au
+build (migration 028, backfill), chantier outillé par recipe
+`engine_<type>` (patron industrie réutilisé tel quel — retool 24 h,
+instantané toute-Industrialist, chantier en pause), défaut étoile
+natale, plein de naissance du type moteur, refuel/transferts/vol
+contraints au moteur, UI outillage + retool + quille typée. DG §8.3
+consolidé (la matrice hors-diagonale reste [TUNE]-dormante jusqu'à la
+décision « effets de voyage » du programme D).
+
+ERRATUM W1 : les échecs de hover.test au balayage n'étaient PAS de
+l'ordonno-dépendance mais une régression W1 seed-dépendante —
+`activeFuelSlot` faisait retomber un réservoir mono-type À SEC
+(`{gas: 0}`) sur 'cold', et le test ne passait que quand l'étoile
+natale tirait cold. Corrigé (un slot existant garde son type à sec) ;
+R5 recentré sur census seul. Décoré au passage : buildShip ne
+remontait pas x/y de la planète (étoile natale indéterminée), harvest
+et survival adaptés (le type d'une coque typée EST son moteur), spawn
+du hauler de départ typé natal, PROD_MIGRATIONS rattrapé (025–027
+manquaient : faute réparée, 025→028 documentées).
+
+Preuves : engines.test.ts 5/5 stabilité ×5 ; balayage sériel 309/309
+(2e passe — 1re : census ×2, chantier responsable) ; unit 55 ; client
+21 ; E2E engines.spec.ts vert ; captures eng-01..03 OBSERVÉES (natal
+star (default) → retooling « Engine tooling: gas » → quille née gas).

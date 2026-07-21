@@ -2,7 +2,8 @@
  * Récolte stellaire (GB §22, DG §8.8) — le rig s'équipe à l'atelier, la
  * récolte se fait IMMOBILE (statut idle [interp annoncée : l'image canon
  * est un gréement déployé dans le vide]) à ≤ 8 pc d'une étoile du MÊME
- * type de carburant que le réservoir (mono-type v1). Deux ledgers
+ * type de carburant que le MOTEUR (W2 : le slot actif d'une coque typée
+ * EST son type moteur — mono-type v1 pour l'héritage). Deux ledgers
  * paresseux se répondent : le réservoir de la coque monte à
  * net = rendement − entretien idle, le stock CACHÉ de l'étoile descend de
  * Σ rendements. Bords : harvest_full (réservoir plein → la récolte

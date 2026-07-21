@@ -37,6 +37,7 @@ import {
   popCap,
   type Quality,
   type RecipeId,
+  recipeEngine,
   RECIPES,
   resolveCost,
   type ResourceBundle,
@@ -942,7 +943,11 @@ export async function retoolBuilding(
     const b = rows[0];
     if (!b) throw new CommandError('not_found', 'Bâtiment inconnu');
     const def = BUILDINGS[b.key as BuildingKey];
-    if (!def?.batchesPerDayByLevel) {
+    // W2 : le CHANTIER NAVAL s'outille pour un type moteur via le même
+    // patron (recipe `engine_<type>`, retool 24 h, instantané
+    // toute-Industrialist) — recipe NULL = accordé à l'étoile natale.
+    const isYard = b.key === 'shipyard';
+    if (!def?.batchesPerDayByLevel && !isYard) {
       throw new CommandError('not_available', 'Seule une industrie se rééquipe');
     }
     if (b.status !== 'active') {
@@ -954,9 +959,18 @@ export async function retoolBuilding(
     if (b.recipe === recipe) {
       throw new CommandError('recipe_invalid', 'Cette recette est déjà montée');
     }
-    await validateRecipe(client, bodyId, b.key as BuildingKey, recipe, {
-      excludeBuildingId: buildingId,
-    });
+    if (isYard) {
+      if (!recipeEngine(recipe)) {
+        throw new CommandError(
+          'recipe_invalid',
+          'Outillage chantier inconnu (engine_cold | engine_hot | engine_gas)',
+        );
+      }
+    } else {
+      await validateRecipe(client, bodyId, b.key as BuildingKey, recipe, {
+        excludeBuildingId: buildingId,
+      });
+    }
 
     // Chemin instantané : gouvernance TOUTE Industrialist, fenêtre libre.
     const archetypes = await governingArchetypes(client, bodyId, playerId);

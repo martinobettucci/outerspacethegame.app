@@ -14,7 +14,9 @@
 import {
   ALL_RESOURCE_IDS,
   BUILD_FUEL_FRACTION,
+  ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
+  recipeEngine,
   totalFuelUnits,
   buildableSizes,
   canAcceptLanding,
@@ -87,6 +89,8 @@ export interface ShipView {
   /** Réservoir ÉVALUÉ à la lecture (mono-type v1). */
   fuel: Record<string, number>;
   fuelType: string;
+  /** W2 : moteur FIGÉ au build (null : sonde multicarburant/personnelle). */
+  engineType: string | null;
   fuelRatePerDay: number;
   fuelAsOf: string | null;
   tankU: number;
@@ -254,6 +258,7 @@ export async function fleet(
         return slots;
       })(),
       fuelType: tank.type,
+      engineType: r.engine_type ?? null,
       fuelRatePerDay: Number(r.fuel_rate_u_per_day ?? 0),
       fuelAsOf: r.fuel_as_of ? new Date(r.fuel_as_of).toISOString() : null,
       tankU:
@@ -414,7 +419,10 @@ export async function moveShip(
         ...((ship.fuel ?? {}) as Record<string, number>),
         [fuelType]: tank.units,
       };
-      let inTank = totalFuelUnits(fuelObj);
+      // W2 : une coque à moteur TYPÉ ne vole que sur SON carburant — un
+      // résidu d'un autre type (héritage) ne finance pas le trajet.
+      const typedEngine = !!ship.engine_type;
+      let inTank = typedEngine ? (fuelObj[fuelType] ?? 0) : totalFuelUnits(fuelObj);
       // Auto-chargement au départ d'un monde possédé (v1 documentée) :
       // PLEIN réservoir — charger juste le trajet échouerait la coque dès
       // l'arrivée (le loitering consomme, GB §7).
@@ -465,13 +473,15 @@ export async function moveShip(
       // Tirage ORDONNÉ à travers les slots (multi-fuel W1) — une coque
       // mono-type n'a qu'un slot, comportement inchangé.
       let toBurn = needed;
-      const order = [
-        fuelType,
-        ...FUEL_ORDER_DEFAULT.filter((t) => t !== fuelType),
-        ...Object.keys(fuelObj).filter(
-          (t) => t !== fuelType && !FUEL_ORDER_DEFAULT.includes(t as never),
-        ),
-      ];
+      const order = typedEngine
+        ? [fuelType] // W2 : moteur figé, un seul slot légitime
+        : [
+            fuelType,
+            ...FUEL_ORDER_DEFAULT.filter((t) => t !== fuelType),
+            ...Object.keys(fuelObj).filter(
+              (t) => t !== fuelType && !FUEL_ORDER_DEFAULT.includes(t as never),
+            ),
+          ];
       for (const t of order) {
         if (toBurn <= 1e-9) break;
         const take = Math.min(fuelObj[t] ?? 0, toBurn);
@@ -1363,10 +1373,12 @@ export async function transferFuel(
     }
     const fromTank = evalShipFuel(from, nowMs);
     const toTank = evalShipFuel(to, nowMs);
+    // W2 : les slots actifs des coques typées SONT leur type moteur
+    // (shipFuelState) — le refus couvre donc moteurs ET carburants.
     if (fromTank.type !== toTank.type) {
       throw new CommandError(
         'not_available',
-        `Types de carburant incompatibles (${fromTank.type} → ${toTank.type})`,
+        `Moteurs/carburants incompatibles (${fromTank.type} → ${toTank.type})`,
       );
     }
     const a = shipPosition(from, nowMs);
@@ -1938,13 +1950,19 @@ export async function buildShip(
   pool: pg.Pool,
   playerId: string,
   planetId: string,
-  input: { category: string; size: string; name: string },
+  input: { category: string; size: string; name: string; engine?: string },
   opts: { nowMs?: number; timeScale?: number } = {},
-): Promise<{ completesAt: Date; cost: Record<string, number> }> {
+): Promise<{ completesAt: Date; cost: Record<string, number>; engine: string }> {
   const nowMs = opts.nowMs ?? Date.now();
   const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
   if (!['combat', 'cargo', 'civil'].includes(input.category)) {
     throw new CommandError('not_found', 'Catégorie de coque inconnue');
+  }
+  if (
+    input.engine !== undefined &&
+    !(ENGINE_TYPES as readonly string[]).includes(input.engine)
+  ) {
+    throw new CommandError('not_available', 'Type de moteur inconnu');
   }
   const hull =
     HULLS[`${input.category}_${input.size}` as `${HullCategory}_${HullSize}`];
@@ -1957,7 +1975,7 @@ export async function buildShip(
   try {
     await client.query('BEGIN');
     const { rows: planet } = await client.query(
-      `SELECT id, owner_id FROM bodies
+      `SELECT id, owner_id, x, y FROM bodies
        WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
       [planetId],
     );
@@ -1965,16 +1983,36 @@ export async function buildShip(
     if (planet[0].owner_id !== playerId) {
       throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
     }
+    // W2 : moteur demandé (défaut = étoile NATALE) ; il faut un chantier
+    // ACTIF dont l'outillage (recipe engine_<type>, NULL = natal) couvre
+    // ce moteur ET dont le niveau couvre la taille.
+    const { rows: natal } = await client.query(
+      `SELECT star_fuel_type FROM bodies
+       WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+       ORDER BY (x - $1)^2 + (y - $2)^2 LIMIT 1`,
+      [planet[0].x, planet[0].y],
+    );
+    const natalType = String(natal[0]?.star_fuel_type ?? 'cold');
+    const engine = input.engine ?? natalType;
     const { rows: yards } = await client.query(
-      `SELECT level FROM buildings
+      `SELECT level, recipe FROM buildings
        WHERE body_id = $1 AND key = 'shipyard' AND status = 'active'
-       ORDER BY level DESC LIMIT 1`,
+       ORDER BY level DESC`,
       [planetId],
     );
     if (!yards[0]) {
       throw new CommandError('not_available', 'Aucun chantier naval actif ici');
     }
-    const level = yards[0].level as 1 | 2 | 3;
+    const tooled = yards.filter(
+      (y) => (recipeEngine(y.recipe) ?? natalType) === engine,
+    );
+    if (!tooled[0]) {
+      throw new CommandError(
+        'not_available',
+        `Aucun chantier outillé moteur ${engine} ici — rééquipez un chantier (retool)`,
+      );
+    }
+    const level = tooled[0].level as 1 | 2 | 3;
     if (!buildableSizes(level).includes(hull.size)) {
       throw new CommandError(
         'not_available',
@@ -2020,9 +2058,10 @@ export async function buildShip(
       category: input.category,
       size: input.size,
       name,
+      engine,
     });
     await client.query('COMMIT');
-    return { completesAt, cost: cost as Record<string, number> };
+    return { completesAt, cost: cost as Record<string, number>, engine };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

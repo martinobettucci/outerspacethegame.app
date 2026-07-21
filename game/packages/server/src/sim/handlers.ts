@@ -718,16 +718,19 @@ export const shipBuilt: EventHandler = async (client, event) => {
     [planetId],
   );
   if (!planet[0]) return;
-  // Le moteur est accordé au carburant de l'étoile NATALE (esprit GB §14 /
-  // DG §8.3) : réservoir vide mais TYPÉ, sinon l'auto-chargement au départ
-  // ne saurait pas quoi pomper.
-  const { rows: star } = await client.query(
-    `SELECT star_fuel_type FROM bodies
-     WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
-     ORDER BY (x - $1)^2 + (y - $2)^2 LIMIT 1`,
-    [planet[0].x, planet[0].y],
-  );
-  const fuelType = star[0]?.star_fuel_type ?? 'cold';
+  // W2 : le moteur est FIGÉ au build — le payload le porte (chantier
+  // outillé) ; les événements d'avant W2 retombent sur l'étoile NATALE
+  // (défaut historique, DG §8.3). Le plein de naissance suit le MOTEUR.
+  let fuelType = String(p.engine ?? '');
+  if (!fuelType) {
+    const { rows: star } = await client.query(
+      `SELECT star_fuel_type FROM bodies
+       WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+       ORDER BY (x - $1)^2 + (y - $2)^2 LIMIT 1`,
+      [planet[0].x, planet[0].y],
+    );
+    fuelType = String(star[0]?.star_fuel_type ?? 'cold');
+  }
   // Naissance à 25 % de plein (décision responsable 2026-07-20) — puisé
   // au stock du monde, PARTIEL si le stock est court (annoncé).
   const hull =
@@ -756,8 +759,9 @@ export const shipBuilt: EventHandler = async (client, event) => {
   }
   await client.query(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-                        status, docked_body_id, docked_at, fuel, cargo)
-     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, now(), $8, '{}')`,
+                        status, docked_body_id, docked_at, fuel, cargo,
+                        engine_type)
+     VALUES ($1, $2, $3, $4, $5, $6, 'docked', $7, now(), $8, '{}', $9)`,
     [
       // Le vaisseau appartient au PROPRIÉTAIRE ACTUEL du monde (une
       // conquête pendant le chantier capture la production — GB §9,
@@ -770,6 +774,7 @@ export const shipBuilt: EventHandler = async (client, event) => {
       planet[0].y,
       planetId,
       JSON.stringify({ [fuelType]: birthUnits }),
+      fuelType,
     ],
   );
 };

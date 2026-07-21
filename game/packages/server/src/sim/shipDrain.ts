@@ -37,6 +37,12 @@ export type ShipRow = Record<string, any>;
 /** Type + montant BRUT (as-of) du réservoir mono-type v1. */
 export function shipFuelState(ship: ShipRow): { type: string; units: number } {
   const fuelObj: Record<string, number> = ship.fuel ?? {};
+  // W2 : une coque à moteur TYPÉ n'a qu'un slot légitime — son type
+  // moteur (même à sec, contrairement au fallback W1 qui retomberait
+  // sur 'cold').
+  if (ship.engine_type) {
+    return { type: String(ship.engine_type), units: fuelObj[ship.engine_type] ?? 0 };
+  }
   // W1 multi-fuel (sondes) : le slot ACTIF est le premier de l'ordre
   // configuré avec du stock — les coques mono-type retombent sur leur
   // unique clé naturellement.

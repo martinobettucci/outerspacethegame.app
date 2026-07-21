@@ -492,6 +492,13 @@ export const t = {
     yardStarted: 'Keel laid — the yard is at work.',
     yardPending: 'Under construction',
     yardSizeLocked: 'L hulls need a level 3 yard',
+    yardEngine: 'Engine tooling',
+    yardEngineNatal: 'natal star (default)',
+    yardEngineHint:
+      'Engines are fixed at build — every hull leaves this yard with its current engine tooling. Refuel and transfers only accept the engine’s fuel.',
+    yardRetool: 'Retool engines',
+    yardRetoolStarted:
+      'Yard retooling — keel laying paused until the new engine tooling is ready.',
     hospitality: 'Hospitality (Mercantile)',
     hospitalityHint:
       'A merchant world sells survival & fuel innately — no market building.',

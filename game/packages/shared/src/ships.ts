@@ -200,6 +200,12 @@ export function activeFuelSlot(
   for (const t of seq) if ((fuel[t] ?? 0) > 1e-9) return t;
   // Types hors ordre (défensif) puis défaut.
   for (const t of Object.keys(fuel)) if ((fuel[t] ?? 0) > 1e-9) return t;
+  // Réservoir à SEC : un slot EXISTANT (même vide) garde son type — une
+  // coque mono-type `{gas: 0}` reste 'gas' (régression W1 corrigée : le
+  // fallback 'cold' faisait ravitailler le mauvais carburant).
+  for (const t of seq) if (t in fuel) return t;
+  const present = Object.keys(fuel);
+  if (present[0]) return present[0];
   return seq[0] ?? 'cold';
 }
 
@@ -210,6 +216,30 @@ export function totalFuelUnits(fuel: Record<string, number>): number {
 
 /** Fraction de plein à la NAISSANCE de tout véhicule (2026-07-20). [TUNE] */
 export const BUILD_FUEL_FRACTION = 0.25;
+
+/**
+ * W2 — moteurs typés à l'usinage (2026-07-21) : le moteur d'une coque
+ * (hors sonde/personnelle) est FIGÉ au build ; refuel et transferts sont
+ * contraints à son type. Le chantier naval s'outille via le patron
+ * industrie (recipe `engine_<type>`, retool 24 h [TUNE]) ; recipe NULL =
+ * accordé à l'étoile NATALE du monde.
+ */
+export const ENGINE_TYPES = ['cold', 'hot', 'gas'] as const;
+export type EngineType = (typeof ENGINE_TYPES)[number];
+
+/** Recette d'outillage chantier pour un type moteur. */
+export function engineRecipe(type: EngineType): string {
+  return `engine_${type}`;
+}
+
+/** Type moteur d'une recette d'outillage chantier (null si étrangère). */
+export function recipeEngine(recipe: string | null | undefined): EngineType | null {
+  if (!recipe) return null;
+  const t = recipe.startsWith('engine_') ? recipe.slice('engine_'.length) : null;
+  return t && (ENGINE_TYPES as readonly string[]).includes(t)
+    ? (t as EngineType)
+    : null;
+}
 
 /** Équipage minimal par taille de coque. [TUNE] DG §8.5 */
 export const MIN_CREW: Record<HullSize, number> = { s: 1, m: 3, l: 8 };

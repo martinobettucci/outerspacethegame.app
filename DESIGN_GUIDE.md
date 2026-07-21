@@ -928,6 +928,20 @@ Each engine is **tuned** at install to one fuel chemistry:
 Efficiency divides the burn rate. Mixed tanks burn worst-first by default;
 policy-configurable.
 
+**v1 implemented (W2, 2026-07-21) — engines typed at build.** Every hull
+except probes (multi-fuel, §8.1-v3) and the personal ship (no tank) has an
+`engine_type` **frozen at build**. Default = the natal star's fuel type.
+The shipyard carries an **engine tooling** (industry retool pattern:
+recipe `engine_<type>`, 24 h retool [TUNE], all-Industrialist governance =
+instant; NULL tooling = natal default) and every keel leaves the yard with
+its current tooling; laying a keel for another engine requires a yard
+tooled for it. Birth fuel (25 % of tank, §8.1-v3) is drawn in the ENGINE's
+type. **Refuel and ship-to-ship transfers only accept the engine's fuel**;
+a typed hull flies only on its own fuel type. The cross-chemistry
+efficiency table above (off-diagonal burns) stays [TUNE]-dormant until the
+travel-effects decision (Program D): today a typed hull simply cannot load
+foreign fuel, matrix 1.0 on the diagonal.
+
 ### 8.4 Range (derived, canon)
 `range = tank × matrixEff / burnEff` (Cargo-S base ≈ 240 pc; tanks L2 ≈
 480 pc). Crewed ships also show `rangeSurvival = survivalDays × speedEff`

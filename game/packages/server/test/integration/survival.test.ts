@@ -149,8 +149,12 @@ describe('alarme 25 % : auto-flee-home (anti-extorsion DG §3.5)', () => {
     // Provisions au-dessus du seuil (cap Cargo S = 14 j × 0.01 = 0.14 T ;
     // seuil 25 % = 0.035 T) — l'alarme est planifiée, on la force à MAINTENANT.
     await setShipSurvivalForTest(pool, owner, cargo, { foodT: 0.05, waterT: 0.05 });
+    // W2 : la coque ne vole que sur le carburant de SON moteur (figé au
+    // build, ici l'étoile natale) — le plein de fuite suit le moteur.
     await pool.query(
-      `UPDATE ships SET fuel = '{"cold": 40}' WHERE id = $1`,
+      `UPDATE ships
+         SET fuel = jsonb_build_object(engine_type, 40)
+       WHERE id = $1`,
       [cargo],
     );
     await pool.query(

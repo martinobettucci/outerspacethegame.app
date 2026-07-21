@@ -530,9 +530,15 @@ export const api = {
     ),
   buildShip: (
     planetId: string,
-    input: { category: 'combat' | 'cargo' | 'civil'; size: 's' | 'm' | 'l'; name: string },
+    input: {
+      category: 'combat' | 'cargo' | 'civil';
+      size: 's' | 'm' | 'l';
+      name: string;
+      /** W2 : moteur figé au build (défaut serveur = étoile natale). */
+      engine?: 'cold' | 'hot' | 'gas';
+    },
   ) =>
-    call<{ completesAt: string; cost: Record<string, number> }>(
+    call<{ completesAt: string; cost: Record<string, number>; engine: string }>(
       'POST',
       `/planets/${planetId}/ships`,
       input,

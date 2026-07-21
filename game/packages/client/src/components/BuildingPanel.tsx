@@ -19,7 +19,10 @@ import {
   ammLpFeeBp,
   buildableSizes,
   BUILDINGS,
+  ENGINE_TYPES,
+  engineRecipe,
   HULLS,
+  recipeEngine,
   shipBuildCost,
   type CostBundle,
   type HullCategory,
@@ -56,6 +59,7 @@ export function BuildingPanel({
   onSeedAmm,
   onAmmLiquidity,
   onBuildShip,
+  onRetoolRecipe,
   shipBuilds,
   onRetool,
   onLevelUp,
@@ -121,7 +125,11 @@ export function BuildingPanel({
     category: 'combat' | 'cargo' | 'civil';
     size: 's' | 'm' | 'l';
     name: string;
+    /** W2 : moteur de CE chantier (outillage courant). */
+    engine?: 'cold' | 'hot' | 'gas';
   }) => void;
+  /** W2 : rééquipage direct du chantier naval (recipe `engine_<type>`). */
+  onRetoolRecipe?: (recipe: string) => void;
   shipBuilds?: {
     name: string;
     category: string;
@@ -163,6 +171,11 @@ export function BuildingPanel({
   >('cargo');
   const [yardSize, setYardSize] = useState<'s' | 'm' | 'l'>('s');
   const [yardName, setYardName] = useState('');
+  // W2 : outillage moteur du chantier (recipe engine_<type>, NULL = natal).
+  const yardEngine = recipeEngine(building.recipe);
+  const [yardEngineSel, setYardEngineSel] = useState<'cold' | 'hot' | 'gas'>(
+    yardEngine ?? 'cold',
+  );
   const def = BUILDINGS[building.key];
   const isIndustry = !!def.batchesPerDayByLevel;
   const levelCap = Math.min(3, maxLevelBySeed);
@@ -242,7 +255,10 @@ export function BuildingPanel({
           <strong>
             {building.recipe.startsWith('extract:')
               ? `Extracting ${building.recipe.slice(8).replace('_', ' ')}`
-              : `Minting ${building.recipe.replace(/_/g, ' ')}`}
+              : building.key === 'shipyard'
+                ? // W2 : la recette d'un chantier est un OUTILLAGE moteur.
+                  `${t.planet.yardEngine}: ${recipeEngine(building.recipe) ?? building.recipe}`
+                : `Minting ${building.recipe.replace(/_/g, ' ')}`}
             {building.effBatchesPerDay !== null
               ? ` — ${building.effBatchesPerDay} ${t.planet.perDay}`
               : ''}
@@ -576,6 +592,47 @@ export function BuildingPanel({
               </label>
             </div>
 
+            {/* W2 : moteurs figés au build — outillage courant + retool. */}
+            <div className="ls-section-heading">
+              <Gauge size={13} aria-hidden /> {t.planet.yardEngine}
+              {' — '}
+              <span className="ls-mono-line">
+                {yardEngine ?? t.planet.yardEngineNatal}
+              </span>
+            </div>
+            <p className="ls-section-subtitle">{t.planet.yardEngineHint}</p>
+            {onRetoolRecipe && (
+              <div className="ls-inline-fields">
+                <label className="ls-field">
+                  <span>{t.planet.yardRetool}</span>
+                  <select
+                    aria-label={t.planet.yardRetool}
+                    className="ls-select"
+                    value={yardEngineSel}
+                    onChange={(event) =>
+                      setYardEngineSel(
+                        event.target.value as typeof yardEngineSel,
+                      )
+                    }
+                  >
+                    {ENGINE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="ls-button ls-button--violet"
+                  disabled={yardEngineSel === yardEngine}
+                  onClick={() => onRetoolRecipe(engineRecipe(yardEngineSel))}
+                >
+                  <Gauge size={13} aria-hidden /> {t.planet.yardRetool}
+                </button>
+              </div>
+            )}
+
             <span className="ls-mono-line">
               {costText(
                 shipBuildCost(
@@ -605,6 +662,9 @@ export function BuildingPanel({
                   category: yardCategory,
                   size: yardSize,
                   name: yardName,
+                  // W2 : la coque naît avec l'outillage de CE chantier
+                  // (undefined = natal, le serveur résout).
+                  engine: yardEngine ?? undefined,
                 })
               }
             >

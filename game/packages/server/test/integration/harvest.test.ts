@@ -154,11 +154,21 @@ describe('démarrage : gardes de distance, type, statut, net', () => {
   });
 
   it('type de carburant non apparié : refus (mono-type v1)', async () => {
+    // W2 : le type d'une coque typée est son MOTEUR, plus le contenu du
+    // jsonb — on désaccorde le moteur (puis on le restaure).
     const wrong = starType === 'cold' ? 'hot' : 'cold';
     await idleAt(cargo, starX + 1, starY, { [wrong]: 5 });
+    await pool.query(`UPDATE ships SET engine_type = $2 WHERE id = $1`, [
+      cargo,
+      wrong,
+    ]);
     await expect(startHarvest(pool, owner, cargo, starId)).rejects.toThrow(
       /mono-type v1/,
     );
+    await pool.query(`UPDATE ships SET engine_type = $2 WHERE id = $1`, [
+      cargo,
+      starType,
+    ]);
   });
 
   it('net ≤ 0 (rendement < entretien idle à ~7,9 pc) : refus', async () => {

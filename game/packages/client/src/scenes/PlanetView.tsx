@@ -977,6 +977,17 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 onRetool={() =>
                   setRetoolFor({ buildingId: b.id, key: b.key })
                 }
+                onRetoolRecipe={async (recipe) => {
+                  // W2 : rééquipage moteur du chantier naval (patron
+                  // industrie, recipe engine_<type>).
+                  try {
+                    await api.retoolBuilding(planetId, b.id, recipe);
+                    setNotice(t.planet.yardRetoolStarted);
+                    await refresh();
+                  } catch (err) {
+                    setNotice((err as ApiError).message ?? t.errors.generic);
+                  }
+                }}
                 onLevelUp={async () => {
                   try {
                     await api.levelUp(planetId, b.id);

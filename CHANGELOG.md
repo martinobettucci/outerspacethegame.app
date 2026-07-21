@@ -2,6 +2,32 @@
 
 ## [Non publié]
 
+### W2 — moteurs typés à l'usinage (MASTER_PLAN W2, 2026-07-21)
+
+- `ships.engine_type` FIGÉ au build (migration 028, backfill du type
+  courant ; NULL pour sondes multicarburant et coque personnelle) ;
+  défaut = étoile natale, plein de naissance 25 % du type MOTEUR.
+- Le chantier naval s'outille par le patron industrie : recipe
+  `engine_<type>`, retool 24 h [TUNE] (instantané toute-Industrialist),
+  chantier en pause pendant le rééquipage ; poser une quille exige un
+  chantier outillé pour le moteur demandé.
+- Contraintes serveur : refuel = `fuel_<moteur>` uniquement, transferts
+  refusés entre moteurs différents, une coque typée ne vole que sur SON
+  carburant (le pré-brûlage ordonné W1 reste réservé aux sondes).
+- UI panneau chantier : outillage courant (« natal star (default) » ou
+  type), sélecteur + « Retool engines », libellé de route de production
+  dédié ; la quille part avec le moteur du chantier.
+- Correction W1 (régression seed-dépendante) : un réservoir mono-type À
+  SEC garde son type (`{gas: 0}` ne retombe plus sur `cold`) — les
+  échecs de `hover.test` au balayage étaient CE bug, pas de
+  l'ordonno-dépendance (R5 recentré census).
+- Tests : intégration `engines.test.ts` 5/5 (stabilité ×5), harvest et
+  survival adaptés au type moteur, balayage sériel 309/309 (2e passe ;
+  1re passe : census ×2, chantier responsable R5), unit 55 + client 21,
+  E2E `engines.spec.ts` vert + captures eng-01..03 observées (§16).
+- Docs : DG §8.3 consolidé (v1 implémentée), PROD_MIGRATIONS 025→028
+  (025–027 manquaient — réparé), MASTER_PLAN/BACKLOG/JOURNAL.
+
 ### Spawn §2.2b — pocket luck & frontière latente (directive responsable 2026-07-20)
 
 - **Pocket luck** : le spawn tire d'abord la luck sur le flux de poche

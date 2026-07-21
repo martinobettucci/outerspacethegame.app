@@ -503,8 +503,8 @@ export async function spawnStarterSystem(
   );
   const { rows: csRows } = await client.query<{ id: string }>(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-        status, docked_body_id, docked_at, fuel, survival)
-     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, now(), $5, $6)
+        status, docked_body_id, docked_at, fuel, survival, engine_type)
+     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, now(), $5, $6, $7)
      RETURNING id`,
     [
       opts.playerId,
@@ -513,6 +513,9 @@ export async function spawnStarterSystem(
       starterPlanetId,
       JSON.stringify({ [star.fuelType]: 0 }),
       JSON.stringify({ water: 2, food: 2, oxygen: 2 }),
+      // W2 : moteur figé au build — le hauler de départ naît accordé à
+      // son étoile natale.
+      star.fuelType,
     ],
   );
 
