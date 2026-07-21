@@ -668,18 +668,22 @@
   transform: translateY(-5px);
 }
 
-/* AO (directive responsable 2026-07-19) : main filtrée en ÉVENTAIL
-   SEMI-REPLIÉ — les cartes se chevauchent (tranche visible), légèrement
-   inclinées ; au survol OU au focus clavier, la carte se déplie, se
-   redresse et passe DEVANT les autres. Le chevauchement laisse le centre
-   du bouton d'action visible au repos (clic direct + Playwright hover). */
+/* AO (directive responsable 2026-07-19, contrat final 2026-07-20) : main
+   filtrée en ÉVENTAIL REPLIÉ. Chaque carte non finale ne laisse qu'une
+   tranche NOMMÉE de 64 px (cible > 44 px) ; au survol, au focus clavier/
+   tactile OU en sélection, elle se déplie, se redresse et passe DEVANT.
+   Le contenu/action reste intégral dans le DOM : le repli n'est jamais une
+   suppression d'information. */
 .ls-card-dock[data-fan='true'] {
+  --card-width: 190px;
+  --card-spine: 64px;
   gap: 0;
   padding-left: 34px;
+  padding-right: 34px;
 }
 
 .ls-card-dock[data-fan='true'] .ls-construction-card {
-  margin-left: -58px;
+  margin-left: calc(var(--card-spine) - var(--card-width));
   transform: translateY(7px) rotate(calc((var(--card-i, 0) - 1.5) * 0.55deg));
 }
 
@@ -694,6 +698,59 @@
   transform: translateY(-7px) rotate(0deg) scale(1.02);
 }
 
+.ls-card-spine {
+  display: none;
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:not(:last-child) .ls-card-spine {
+  position: absolute;
+  z-index: 5;
+  inset: 0 auto 0 0;
+  display: grid;
+  width: var(--card-spine);
+  place-items: center;
+  overflow: hidden;
+  color: var(--text-primary);
+  background:
+    linear-gradient(90deg, rgba(110, 150, 232, 0.15), transparent 72%),
+    linear-gradient(180deg, rgba(24, 36, 65, 0.98), rgba(8, 12, 23, 0.98));
+  border-right: 1px solid rgba(110, 150, 232, 0.24);
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 110ms ease;
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:not(:last-child) .ls-card-spine > span {
+  max-height: 205px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card[data-blocked='true'] .ls-card-spine {
+  color: var(--warning-500);
+  border-right-color: rgba(217, 207, 74, 0.28);
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:hover .ls-card-spine,
+.ls-card-dock[data-fan='true'] .ls-construction-card:focus-within .ls-card-spine,
+.ls-card-dock[data-fan='true'] .ls-construction-card[data-selected='true'] .ls-card-spine {
+  opacity: 0;
+}
+
+.ls-card-dock[data-fan='true'] .ls-construction-card:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
 .ls-card-dock-empty {
   align-self: center;
   margin: 0 auto;
@@ -704,7 +761,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ls-card-dock[data-fan='true'] .ls-construction-card {
+  .ls-card-dock[data-fan='true'] .ls-construction-card,
+  .ls-card-dock[data-fan='true'] .ls-card-spine {
     transition: none;
   }
 }
@@ -1545,6 +1603,12 @@
 @media (max-width: 1450px) {
   .ls-card-dock {
     gap: 10px;
+  }
+
+  /* Keep the AO overlap contract in sync with the responsive card width:
+     182 px - 118 px overlap = one exact 64 px named spine. */
+  .ls-card-dock[data-fan='true'] {
+    --card-width: 182px;
   }
 
   .ls-construction-card {

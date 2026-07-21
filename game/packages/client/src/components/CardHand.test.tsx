@@ -103,4 +103,43 @@ describe('computeCardStates — blocages POST-unlock à tuile', () => {
     expect(card.unlocked).toBe(true);
     expect(inHand(card)).toBe(true);
   });
+
+  it('télescope unique sur tuile : sans tuile libre puis au plafond, il reste visible', () => {
+    const KEY: BuildingKey = 'telescope';
+    expect(BUILDINGS[KEY].usesTile).toBe(true);
+    expect(BUILDINGS[KEY].maxInstances).toBe(1);
+    const common = {
+      available: [KEY],
+      unlocked: [KEY],
+      maskAllowed: [KEY],
+      stock: { ore: 999, silicon: 999 },
+      tiles: 1,
+    };
+
+    const noTile = computeCardStates(
+      planet({
+        ...common,
+        buildings: [{ key: 'mine', tileIndex: 0 }],
+      }),
+    ).find((card) => card.key === KEY)!;
+    expect(noTile).toMatchObject({
+      status: 'blocked',
+      unlocked: true,
+    });
+    expect(noTile.reason).toMatch(/tile/i);
+    expect(inHand(noTile)).toBe(true);
+
+    const maxed = computeCardStates(
+      planet({
+        ...common,
+        buildings: [{ key: KEY, tileIndex: 0 }],
+      }),
+    ).find((card) => card.key === KEY)!;
+    expect(maxed).toMatchObject({
+      status: 'blocked',
+      unlocked: true,
+      reason: 'max 1',
+    });
+    expect(inHand(maxed)).toBe(true);
+  });
 });

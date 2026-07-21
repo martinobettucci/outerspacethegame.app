@@ -90,9 +90,6 @@ export function computeCardStates(planet: PlanetDetail): CardState[] {
     }
     // Déverrouillée → plaçable ? Les blocages ci-dessous sont POST-unlock :
     // la carte reste dans la main (unlocked: true), désactivée avec sa raison.
-    if (def.usesTile && freeTiles <= 0) {
-      return { key, status: 'blocked', unlocked: true, reason: t.planet.noFreeTile, cost: def.placementCost };
-    }
     const count = planet.buildings.filter((b) => b.key === key).length;
     if (def.maxInstances && count >= def.maxInstances) {
       return {
@@ -102,6 +99,9 @@ export function computeCardStates(planet: PlanetDetail): CardState[] {
         reason: `max ${def.maxInstances}`,
         cost: def.placementCost,
       };
+    }
+    if (def.usesTile && freeTiles <= 0) {
+      return { key, status: 'blocked', unlocked: true, reason: t.planet.noFreeTile, cost: def.placementCost };
     }
     if (!enough(def.placementCost)) {
       return { key, status: 'blocked', unlocked: true, reason: t.planet.tooExpensive, cost: def.placementCost };
@@ -157,11 +157,15 @@ export function CardHand({
           <article
             key={card.key}
             title={card.reason ? `${card.reason} — ${def.effects}` : def.effects}
+            tabIndex={0}
             className="ls-construction-card"
             style={{ '--card-i': i } as React.CSSProperties}
             data-selected={isSelected ? 'true' : 'false'}
             data-blocked={card.status === 'blocked' ? 'true' : undefined}
           >
+            <span className="ls-card-spine" aria-hidden="true">
+              <span>{card.key.replace(/_/g, ' ')}</span>
+            </span>
             <div className="ls-card-body">
               <strong className="ls-card-title">
                 {card.key.replace(/_/g, ' ')}
