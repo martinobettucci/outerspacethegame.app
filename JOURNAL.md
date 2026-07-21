@@ -4345,3 +4345,34 @@ durcie pour la suite : plus JAMAIS de `git add -A` tant qu'un chantier
 parallèle est ouvert — liste explicite de fichiers uniquement. Le
 MASTER_PLAN (édition manquée par l'échec d'ancre du script) est réparé
 dans ce commit.
+
+## 2026-07-22 — Décisions responsable : accessoires de conversion + coque métamorphose
+
+Nouveau brainstorm validé par le responsable (persisté avant tout
+code) — trois accessoires + une généralisation :
+
+1. ÉLECTROLYSEUR (accessoire, fabriqué au workshop) : une fois monté,
+   NOUVELLE COMMANDE de bord — on sacrifie un montant d'EAU, réglage
+   d'efficience 0–100 % : la conversion consomme PROGRESSIVEMENT l'eau
+   et produit oxygène + hydrogène À PARTS ÉGALES (20 eau → 20 O2 +
+   20 H). Vitesse ∝ efficience : 20 T à 10 % = 10 h ; à 50 % = 2 h
+   (débit = 20 × runPct T/h [TUNE]) ; à 0 % = OFF. EN MARCHE, il BRÛLE
+   du carburant (taux [TUNE], type moteur). L2 : sait AUSSI faire
+   l'INVERSE (O2 + H → eau).
+2. VIVARIUM (accessoire, workshop, SANS niveaux) : même principe —
+   consomme carburant + oxygène, produit de la NOURRITURE.
+3. Tout accessoire OCCUPE UN SLOT si monté (canon confirmé).
+4. COQUE MÉTAMORPHOSE = un ACCESSOIRE comme les autres (fabricable,
+   montable, DÉMONTABLE et désassemblable) SAUF qu'il est INSTALLÉ
+   D'OFFICE sur tout vaisseau à la construction, SANS surcoût — le
+   joueur peut le démonter pour arbitrer ses slots ; SANS cet
+   accessoire, PAS de bouclier morphique (la morphose W5 l'exige).
+   Généralisation induite : DÉMONTAGE (l'item retourne à la balance du
+   monde, coque entreposée, temps [TUNE]) et DÉSASSEMBLAGE
+   (destruction de l'item [interp : remboursement partiel à trancher])
+   deviennent des commandes du pipeline pour TOUS les accessoires.
+
+Interps à annoncer à l'implémentation : ratio 1:1:1 en tonnes ;
+carburant de fonctionnement puisé au réservoir de la coque ; commandes
+de conversion à l'ARRÊT [à confirmer] ; le manifest des coques
+existantes reçoit la coque métamorphose au backfill (migration).
