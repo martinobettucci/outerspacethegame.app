@@ -95,6 +95,30 @@ le même commit, tests §15, captures §16, docs.
   orbite consomment « comme au sol » sur SES ressources et SUIVENT ses
   déplacements (conso hovering). → JOURNAL 2026-07-21
 
+## Programme W9 — Accessoires de conversion & coque métamorphose (VALIDÉ 2026-07-22)
+
+- [ ] **W9a — Démontage/désassemblage + coque métamorphose d'office** :
+  commandes pipeline UNINSTALL (coque entreposée, temps [TUNE], l'item
+  retourne à la balance du monde — refus si pleine) et DISASSEMBLE
+  (item ENTREPOSÉ détruit, remboursement 50 % du coût de fabrication
+  [TUNE-v1 interp]) ; GEAR += metamorphic_hull (workshop) INSTALLÉ
+  D'OFFICE sans surcoût sur toute coque à slots à la construction
+  (migration 035 backfill des coques existantes) ; morphShield (W5)
+  EXIGE l'accessoire ; le démonter EFFACE l'adaptation active [interp
+  annoncée]. → JOURNAL 2026-07-22
+- [ ] **W9b — Électrolyseur** : accessoire workshop, commande de bord
+  {eau sacrifiée, efficience 0–100 %} — entrée prise à la SOUTE au
+  lancement, débit = 20 × runPct T/h [TUNE], règlement au BORD
+  (conversion_complete) + annulation pro-rata (patron W3) ; sorties
+  O2 + H à parts égales en soute (refus au lancement si la soute ne
+  couvre pas les sorties) ; BRÛLE du carburant en marche [TUNE] ;
+  réglage figé au lancement [interp annoncée] ; electrolyzer_l2 = item
+  distinct qui sait AUSSI l'inverse (O2+H→eau), un seul électrolyseur
+  monté à la fois. → JOURNAL 2026-07-22
+- [ ] **W9c — Vivarium** : accessoire workshop sans niveaux — consomme
+  carburant + oxygène, produit de la nourriture (mêmes mécaniques).
+  → JOURNAL 2026-07-22
+
 ## Programme R — Restes figés d'avant les sondes L3
 
 - [ ] **R1 — Fold final de la main de cartes (chunk AO)** : contrat
