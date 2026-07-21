@@ -1,5 +1,10 @@
 # BACKLOG — ATG / Across The Galaxies
 
+> **Plan d'exécution global : [`docs/MASTER_PLAN.md`](MASTER_PLAN.md)** —
+> l'index de tout ce qui est FIGÉ et attend l'implémentation (programmes
+> W flotte/sondes/accessoires/Crusader, R restes, D discussions),
+> demandé par le responsable le 2026-07-21.
+
 > Statuses (CLAUDE.md §5): `[ ]` not started · `[~]` in progress or
 > insufficiently verified · `[x]` done **and fully verified** (Definition of
 > Done, CLAUDE.md §17).

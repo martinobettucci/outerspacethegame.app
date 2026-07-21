@@ -3813,3 +3813,24 @@ Persisté avant validation groupée (§5). Décisions du responsable :
 - Implication (interp à valider) : dans l'espace, l'OXYGÈNE se respire
   AU STOCK (pas d'« ambiant » à bord) ; cap de population [TUNE —
   proposé : cap d'une planète S de qualité F = 2 000].
+
+## 2026-07-21 — Réponses finales responsable (5 points) — tout est FIGÉ
+
+1. Crusader : oxygène AU STOCK à bord ✓ ; cap de population 2 000
+   (équivalent S-F) [TUNE] ✓.
+2. Population à bord : à la FABRICATION, le Crusader naît directement
+   en hovering et 25 % de la population de la planète source Y MIGRE —
+   proportions des ÂGES respectées, les employés partants deviennent
+   des postes vacants (staff décrémenté côté planète).
+3. Usinage partiel : gated par N'IMPORTE quelle usine L3.
+4. Champ climatique stellaire : PLUS PETIT que le champ de supernova.
+   R_nova actuel = 40 × ∛(mult) → S 40 / M ≈ 63,5 / L ≈ 100,8 pc.
+   Proposé : champ = 0,5 × R_nova (S 20 / M 32 / L 50 pc) [TUNE].
+5. Combat M atterrit sans problème ; échelle des docks CONFIRMÉE telle
+   qu'implémentée (L1 = S, L2 = +M, L3 = +L) ; seul le Crusader ne se
+   pose jamais.
+
+→ L'ensemble sondes L3 / accessoires / usinage partiel / Crusader est
+considéré VALIDÉ D'UN COUP par le responsable. Plan total demandé :
+docs/MASTER_PLAN.md créé (tout ce qui est figé et attend l'implé-
+mentation + ce qui reste au stade de discussion).
