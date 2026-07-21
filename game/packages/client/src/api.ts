@@ -575,7 +575,15 @@ export const api = {
   bodyIntel: (bodyId: string) =>
     call<{ intel: PlanetIntel }>('GET', `/bodies/${bodyId}/intel`),
   podPrices: () =>
-    call<{ censusTakenAt: string; prices: Record<string, number> }>(
+    call<{
+      censusTakenAt: string;
+      prices: Record<string, number>;
+      eligibility: {
+        eligible: boolean;
+        minAccountAgeDays: number;
+        eligibleAt: string;
+      };
+    }>(
       'GET',
       '/pods/prices',
     ),

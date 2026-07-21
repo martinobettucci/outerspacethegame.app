@@ -29,6 +29,41 @@ export interface PodPricing {
   prices: Record<ResourceId, number>;
 }
 
+export interface PodEligibility {
+  /** Projection informative pour le joueur authentifié — jamais une autorité. */
+  eligible: boolean;
+  minAccountAgeDays: number;
+  eligibleAt: string;
+}
+
+/**
+ * Éligibilité d'âge du joueur courant. `lock` n'est utilisé que dans la
+ * transaction d'ouverture : le GET reste une projection, le POST sérialise
+ * et revérifie la même ligne au moment exact de la commande.
+ */
+export async function podEligibility(
+  db: pg.Pool | pg.PoolClient,
+  playerId: string,
+  nowMs = Date.now(),
+  options: { lock?: boolean } = {},
+): Promise<PodEligibility> {
+  const { rows } = await db.query(
+    `SELECT created_at FROM players WHERE id = $1${
+      options.lock ? ' FOR UPDATE' : ''
+    }`,
+    [playerId],
+  );
+  if (!rows[0]) throw new CommandError('not_found', 'Joueur inconnu');
+  const eligibleAtMs =
+    new Date(rows[0].created_at).getTime() +
+    POD_MIN_ACCOUNT_AGE_DAYS * GAME_DAY_SECONDS * 1000;
+  return {
+    eligible: nowMs >= eligibleAtMs,
+    minAccountAgeDays: POD_MIN_ACCOUNT_AGE_DAYS,
+    eligibleAt: new Date(eligibleAtMs).toISOString(),
+  };
+}
+
 /**
  * Barème courant : S_r du dernier census MOINS les tonnes de pods payées
  * en `r` depuis ce snapshot (impact immédiat, canon). Client optionnel :
@@ -101,17 +136,14 @@ export async function openPod(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const { rows: players } = await client.query(
-      `SELECT created_at FROM players WHERE id = $1 FOR UPDATE`,
-      [playerId],
-    );
-    if (!players[0]) throw new CommandError('not_found', 'Joueur inconnu');
+    const eligibility = await podEligibility(client, playerId, nowMs, {
+      lock: true,
+    });
     // Âge de compte (GB : « accounts < 45 days cannot buy pods »).
-    const ageMs = nowMs - new Date(players[0].created_at).getTime();
-    if (ageMs < POD_MIN_ACCOUNT_AGE_DAYS * GAME_DAY_SECONDS * 1000) {
+    if (!eligibility.eligible) {
       throw new CommandError(
         'forbidden',
-        `Compte trop jeune : ${POD_MIN_ACCOUNT_AGE_DAYS} jours requis pour recruter`,
+        `Compte trop jeune : ${eligibility.minAccountAgeDays} jours requis pour recruter`,
       );
     }
     // Cap quotidien (10/jour [TUNE] — jour de jeu = jour réel, DG §0).

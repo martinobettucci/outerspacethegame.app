@@ -85,7 +85,7 @@ import {
   transferSettlers,
 } from '../services/colonization.js';
 import { latestCensus } from '../services/census.js';
-import { openPod, podPricing } from '../services/pods.js';
+import { openPod, podEligibility, podPricing } from '../services/pods.js';
 import {
   ammLiquidity,
   executeAmmRoute,
@@ -1238,8 +1238,11 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   // census (impact immédiat des achats), ouverture payée depuis un
   // monde possédé — règles d'âge et de cap côté serveur.
   app.get('/pods/prices', async (req, reply) => {
-    await requirePlayer(req);
-    return wrap(reply, () => podPricing(deps.pool));
+    const player = await requirePlayer(req);
+    return wrap(reply, async () => ({
+      ...(await podPricing(deps.pool)),
+      eligibility: await podEligibility(deps.pool, player.id),
+    }));
   });
 
   app.post('/pods/open', async (req, reply) => {

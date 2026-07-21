@@ -8,6 +8,7 @@ import {
   BarChart3,
   Database,
   Gavel,
+  LockKeyhole,
   PackageOpen,
   ScanLine,
   Sparkles,
@@ -46,6 +47,9 @@ export function MarketScreen() {
   const [tab, setTab] = useState<'census' | 'recruit'>('census');
   const [state, setState] = useState<CensusState>({ kind: 'loading' });
   const [prices, setPrices] = useState<Record<string, number> | null>(null);
+  const [eligibility, setEligibility] = useState<
+    Awaited<ReturnType<typeof api.podPrices>>['eligibility'] | null
+  >(null);
   const [payWith, setPayWith] = useState('ore');
   const [fromPlanet, setFromPlanet] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
@@ -67,7 +71,10 @@ export function MarketScreen() {
   const refreshRecruit = useCallback(() => {
     api
       .podPrices()
-      .then((r) => setPrices(r.prices))
+      .then((r) => {
+        setPrices(r.prices);
+        setEligibility(r.eligibility);
+      })
       .catch(() => setPrices(null));
     api
       .npcs()
@@ -198,6 +205,25 @@ export function MarketScreen() {
             </div>
 
             <div className="recruit-console ops-panel">
+              {eligibility && !eligibility.eligible && (
+                <div
+                  id="recruit-age-lock"
+                  role="note"
+                  className="recruit-age-lock"
+                  data-testid="recruit-age-lock"
+                >
+                  <LockKeyhole size={18} aria-hidden="true" />
+                  <span>
+                    <strong>{t.market.recruitAgeLockTitle}</strong>
+                    <span>
+                      {t.market.recruitAgeLockHint(
+                        eligibility.minAccountAgeDays,
+                        new Date(eligibility.eligibleAt).toLocaleDateString('en-US'),
+                      )}
+                    </span>
+                  </span>
+                </div>
+              )}
               {prices === null ? (
                 <p className="ops-state ops-state--compact">{t.market.censusEmpty}</p>
               ) : (
@@ -231,6 +257,17 @@ export function MarketScreen() {
                   <button
                     type="button"
                     className="ops-button ops-button--historic recruit-open"
+                    disabled={eligibility?.eligible === false}
+                    aria-describedby={
+                      eligibility?.eligible === false
+                        ? 'recruit-age-lock'
+                        : undefined
+                    }
+                    title={
+                      eligibility?.eligible === false
+                        ? t.market.recruitAgeLockTitle
+                        : undefined
+                    }
                     onClick={() => {
                       const planetId = fromPlanet || me?.planets[0]?.id;
                       if (!planetId) return;

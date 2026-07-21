@@ -53,6 +53,9 @@ export const t = {
     recruitOpen: 'Open pod',
     recruitOpened: 'Pod opened — a recruit steps out.',
     recruitRefused: 'Recruitment refused',
+    recruitAgeLockTitle: 'New-account protection — recruitment locked',
+    recruitAgeLockHint: (days: number, date: string) =>
+      `Accounts must be at least ${days} days old. Recruitment unlocks on ${date}.`,
     recruitPriceLine: 'Current price',
     recruitRoster: 'Your characters',
     recruitRosterEmpty: 'No characters yet — open a pod.',

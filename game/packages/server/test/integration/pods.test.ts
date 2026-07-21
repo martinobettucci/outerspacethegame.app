@@ -12,6 +12,7 @@ import {
   ALL_RESOURCE_IDS,
   GAME_DAY_SECONDS,
   POD_DAILY_CAP,
+  POD_MIN_ACCOUNT_AGE_DAYS,
   POD_NPC_ACCOUNT_BIND_DAYS,
   POD_PRICE_FLOOR_T,
   podPrices,
@@ -22,7 +23,7 @@ import {
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers, censusRun } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { openPod, podPricing } from '../../src/services/pods.js';
+import { openPod, podEligibility, podPricing } from '../../src/services/pods.js';
 import { createTestPool } from './helpers.js';
 
 let pool: pg.Pool;
@@ -100,6 +101,15 @@ describe('pods de recrutement (DG §11.4)', () => {
   });
 
   it('âge de compte : < 45 jours ⇒ refus (requête directe)', async () => {
+    const eligibility = await podEligibility(pool, buyer);
+    expect(eligibility.eligible).toBe(false);
+    expect(eligibility.minAccountAgeDays).toBe(POD_MIN_ACCOUNT_AGE_DAYS);
+    expect(new Date(eligibility.eligibleAt).getTime()).toBeGreaterThan(
+      Date.now() + 44 * GAME_DAY_SECONDS * 1000,
+    );
+    const threshold = new Date(eligibility.eligibleAt).getTime();
+    expect((await podEligibility(pool, buyer, threshold - 1)).eligible).toBe(false);
+    expect((await podEligibility(pool, buyer, threshold)).eligible).toBe(true);
     await expect(
       openPod(pool, buyer, { planetId: starter, resource: 'ore' }, {
         universeSeed: UNIVERSE,
@@ -109,6 +119,7 @@ describe('pods de recrutement (DG §11.4)', () => {
 
   it('ouverture : payé du stock, PNJ lié 60 j, roll DÉTERMINISTE, impact de prix', async () => {
     await ageAccount(buyer, 46);
+    expect((await podEligibility(pool, buyer)).eligible).toBe(true);
     const before = await podPricing(pool);
     const { rows: stockBefore } = await pool.query(
       `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = 'ore'`,

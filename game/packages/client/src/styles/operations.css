@@ -797,7 +797,36 @@
 }
 
 .recruit-console {
+  display: grid;
+  gap: 14px;
   padding: 16px;
+}
+
+.recruit-age-lock {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  color: var(--warning-500);
+  background: rgba(217, 207, 74, 0.08);
+  border: 1px solid rgba(217, 207, 74, 0.3);
+  border-radius: var(--radius-button);
+}
+
+.recruit-age-lock > span {
+  display: grid;
+  gap: 3px;
+}
+
+.recruit-age-lock strong {
+  color: var(--accent-200);
+  font-size: 12px;
+}
+
+.recruit-age-lock span span {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .recruit-controls {

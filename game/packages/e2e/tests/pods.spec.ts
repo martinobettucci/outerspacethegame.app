@@ -35,20 +35,31 @@ test('pods : le puits de ressources produit un personnage', async ({ page }) => 
     await expect(page.getByLabel(/Pay with/)).toBeVisible({ timeout: 3_000 });
   }).toPass({ timeout: 30_000 });
 
-  // 2. Compte neuf : la règle canon des 45 jours refuse — et l'UI montre
-  // la raison du serveur, verbatim.
+  // 2. Compte neuf : le verrou est EXPLIQUÉ avant toute interaction.
   await page.getByLabel(/Pay with/).selectOption('ore');
-  await page.getByRole('button', { name: /Open pod/ }).click();
-  await expect(page.getByRole('status')).toContainText('Compte trop jeune', {
-    timeout: 10_000,
-  });
+  const ageLock = page.getByTestId('recruit-age-lock');
+  await expect(ageLock).toContainText('at least 45 days old');
+  await expect(ageLock).toContainText('Recruitment unlocks on');
+  await expect(page.getByRole('button', { name: /Open pod/ })).toBeDisabled();
   await shot(page, 'pod-01-too-young');
+
+  // Refus direct (§10) : désactiver le bouton ne remplace jamais la règle
+  // serveur autoritative.
+  const refused = await page.request.post('/api/pods/open', {
+    data: { planetId, resource: 'ore' },
+  });
+  expect(refused.status()).toBe(403);
+  expect((await refused.json()).message).toContain('Compte trop jeune');
 
   // 3. Instrumentation §15 : vieillir LE compte courant, puis ouvrir.
   const aged = await page.request.post('/api/test/age-account', {
     data: { days: 46 },
   });
   expect(aged.ok()).toBe(true);
+  await page.getByRole('button', { name: 'Census' }).click();
+  await page.getByRole('button', { name: 'Recruitment' }).click();
+  await expect(ageLock).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Open pod/ })).toBeEnabled();
   await page.getByRole('button', { name: /Open pod/ }).click();
   await expect(page.getByRole('status')).toContainText(
     'Pod opened — a recruit steps out.',
