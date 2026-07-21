@@ -55,9 +55,10 @@ le même commit, tests §15, captures §16, docs.
   (2026-07-21, pile décalée ATG_API_PORT=8081 — le 8080 est squatté par
   un service Windows étranger). **Restent** : (a) arbre ADN dédié des
   accessoires (v1 : gate = bâtiment hôte disponible) ; (b) achat/
-  acheminement par cargo (marché des items) ; (c) conversion des rigs
-  booléens historiques (harvest/junk/claim) en items ; (d) obs/weapon
-  effectifs (P5). → JOURNAL 2026-07-21
+  acheminement par cargo (marché des items) ; (c) ✔ rigs convertis en
+  accessoires (erratum responsable 2026-07-22 — slots occupés, montage
+  direct SUPPRIMÉ, migration 034) ; (d) obs/weapon effectifs (P5).
+  → JOURNAL 2026-07-21/22
 - [~] **W7 — Usinage partiel (usines L3) — CŒUR LIVRÉ (2026-07-21)** :
   work_orders (migration 032), 20 paliers de 5 % (rien d'avance), FIFO
   strict par usine, starved/reprise auto, naissance par les événements

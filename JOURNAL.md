@@ -4332,3 +4332,16 @@ Preuves : shared items 3 ; gear.test 7/7 ; harvest 12 + junk + claim +
 wear adaptés (fixtures §15) ; balayage sériel 335/337 (census ×2 =
 flaky R5) ; E2E harvest/junk/claim 3/3 sériels ; client 21 ; build
 vert.
+
+## 2026-07-22 — FAUTE de staging sur 8ffb1f7 (consignée)
+
+Le commit de l'erratum (8ffb1f7) a été stagé avec `git add -A` : il a
+EMBARQUÉ ~270 fichiers du balayage d'annotations @spec/@verifies du
+responsable (chantier parallèle, potentiellement inachevé au moment du
+commit). L'historique n'est PAS réécrit (branche partagée, commit déjà
+poussé) : les annotations restent attribuées à tort à ce commit —
+cette entrée fait foi de la paternité réelle (responsable). Règle
+durcie pour la suite : plus JAMAIS de `git add -A` tant qu'un chantier
+parallèle est ouvert — liste explicite de fichiers uniquement. Le
+MASTER_PLAN (édition manquée par l'échec d'ancre du script) est réparé
+dans ce commit.
