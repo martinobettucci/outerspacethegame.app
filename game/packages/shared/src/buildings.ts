@@ -3,8 +3,9 @@
  * Clés = contrat d'assets (`building_{key}_l{n}.gif`).
  *
  * Règles transverses (canon/§6) :
- * - 1 bâtiment = 1 tuile exactement, sauf `telescope` et `probe_pad`
- *   (infrastructure, 0 tuile) ;
+ * - 1 bâtiment = 1 tuile exactement, sauf `probe_pad` (infrastructure,
+ *   0 tuile) ; `telescope` est unique et sur tuile depuis la décision
+ *   responsable 2026-07-20 ;
  * - 3 niveaux, montée de niveau sur place ;
  * - HP par niveau : 1 500 / 3 000 / 6 000 [round 4b] ;
  * - démolition : remboursement 50 %, tuile libérée, 6 h [TUNE] ;
@@ -61,7 +62,7 @@ export interface BuildingDef {
   politics: Archetype | null;
   /** Politique requise à partir d'un niveau donné (ex. market L2+ Mercantile). */
   politicsFromLevel?: { level: 2 | 3; archetype: Archetype };
-  /** Consomme une tuile ? (telescope/probe_pad : non — infrastructure). */
+  /** Consomme une tuile ? (`probe_pad` seul : non — infrastructure). */
   usesTile: boolean;
   /** Coût d'unlock du nœud tech (une fois par planète). [TUNE] */
   unlockCost: CostBundle;
@@ -69,7 +70,7 @@ export interface BuildingDef {
   placementCost: CostBundle;
   /** Coûts de montée de niveau [L2, L3]. */
   levelUpCost: [CostBundle, CostBundle];
-  /** Nombre maximal d'instances par planète (telescope : 3). */
+  /** Nombre maximal d'instances par planète (telescope/clinic : 1). */
   maxInstances?: number;
   /**
    * Débit industriel par niveau (lots/jour × E) — uniquement pour les
@@ -131,10 +132,10 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
     key: 'telescope',
     tier: 0,
     politics: null,
-    usesTile: false,
+    usesTile: true,
     unlockCost: { ore: 20, silicon: 10 },
-    maxInstances: 3,
-    effects: 'scope +200 pc/level (max 3 instances); no tile',
+    maxInstances: 1,
+    effects: 'scope +200 pc/level; max 1 instance; exactly 1 tile',
   }),
   probe_pad: def({
     key: 'probe_pad',

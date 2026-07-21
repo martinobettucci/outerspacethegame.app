@@ -1,7 +1,7 @@
 /**
  * Visibilité & brouillard de guerre — GAMEBOOK §4.
  * Scope = union des cercles par planète possédée :
- * rayon = BASE_SKY_PC + Σ(200 pc × niveau) des télescopes actifs du monde.
+ * rayon = BASE_SKY_PC + 200 pc × niveau de l'unique télescope actif du monde.
  * BASE_SKY_PC = 60 pc [TUNE-GAP : « ciel local » non chiffré par le guide —
  * permet de voir sa propre poche (étoile 40 pc, sauvages ≤ 60 pc) sans
  * télescope ; le voisin garanti (150–240 pc) exige un télescope].
@@ -60,7 +60,7 @@ export async function visibleBodies(
     WITH scopes AS (
       SELECT b.x, b.y,
              $2::float + COALESCE((
-               SELECT sum($3::float * t.level)
+               SELECT max($3::float * t.level)
                FROM buildings t
                WHERE t.body_id = b.id AND t.key = 'telescope'
                  AND t.status = 'active'
@@ -162,7 +162,7 @@ export async function bodyIntel(
             (SELECT max(t.level) FROM buildings t
              WHERE t.body_id = w.id AND t.key = 'telescope'
                AND t.status = 'active') AS best_level,
-            $3::float + COALESCE((SELECT sum($4::float * t.level)
+            $3::float + COALESCE((SELECT max($4::float * t.level)
              FROM buildings t
              WHERE t.body_id = w.id AND t.key = 'telescope'
                AND t.status = 'active'), 0) AS radius,

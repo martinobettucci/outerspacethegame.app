@@ -822,6 +822,18 @@ export async function placeBuilding(
     if (!effectiveMask(archetypes).has(buildingKey)) {
       throw new CommandError('mask_denied', 'Masque de gouvernance : construction interdite');
     }
+    // Le plafond est indépendant de la tuile proposée et constitue le refus
+    // le plus fort : une UI doit pouvoir annoncer « max 1 » même sur un monde
+    // également plein, sans laisser croire qu'une tuile libérée suffirait.
+    if (def.maxInstances) {
+      const { rows: count } = await client.query(
+        'SELECT count(*)::int AS n FROM buildings WHERE body_id = $1 AND key = $2',
+        [bodyId, buildingKey],
+      );
+      if (count[0].n >= def.maxInstances) {
+        throw new CommandError('max_instances', `Maximum ${def.maxInstances} instances`);
+      }
+    }
     if (def.usesTile) {
       if (
         tileIndex === null ||
@@ -838,15 +850,6 @@ export async function placeBuilding(
       if (taken[0]) throw new CommandError('tile_taken', 'Tuile déjà occupée');
     } else if (tileIndex !== null) {
       throw new CommandError('tile_invalid', 'Ce bâtiment est une infrastructure sans tuile');
-    }
-    if (def.maxInstances) {
-      const { rows: count } = await client.query(
-        'SELECT count(*)::int AS n FROM buildings WHERE body_id = $1 AND key = $2',
-        [bodyId, buildingKey],
-      );
-      if (count[0].n >= def.maxInstances) {
-        throw new CommandError('max_instances', `Maximum ${def.maxInstances} instances`);
-      }
     }
     const recipe = await validateRecipe(client, bodyId, buildingKey, opts.recipe ?? null);
 

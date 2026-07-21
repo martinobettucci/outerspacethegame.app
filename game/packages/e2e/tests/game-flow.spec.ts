@@ -11,6 +11,7 @@ import {
   boardHelpers,
   galaxyLabel,
   pickEmailByDna,
+  revealCard,
   selectFleetShip,
 } from './lib.js';
 
@@ -139,6 +140,7 @@ test('unlock depot → pose sur une tuile → chantier visible → persistance',
   const hand = page.getByRole('region', { name: 'Construction cards' });
   const depotCard = hand.getByRole('article').filter({ hasText: 'depot' }).first();
   // Savoir de départ (GB §19) : le depot naît débloqué — pose directe.
+  await revealCard(depotCard);
   await depotCard.getByRole('button', { name: 'Place' }).click();
   await expect(
     page.getByText('Select a card, then click a free tile to build.'),
@@ -191,6 +193,7 @@ test('boucle colonie : mine + recette → production réelle → réglages du b�
     .getByRole('article')
     .filter({ hasText: /^mine/ })
     .first();
+  await revealCard(mineCard);
   await mineCard.getByRole('button', { name: 'Place' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -264,6 +267,7 @@ test('niveaux & démolition : mine L1→L2, page stats, démolition remboursée'
   // Mine née débloquée (GB §19) : recette ore → pose au centre.
   const hand = page.getByRole('region', { name: 'Construction cards' });
   const mineCard = hand.getByRole('article').filter({ hasText: /^mine/ }).first();
+  await revealCard(mineCard);
   await mineCard.getByRole('button', { name: 'Place' }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Extract ore/ }).click();
   const canvas = page.getByTestId('planet-canvas');
@@ -381,31 +385,49 @@ test('la Silence se brise : télescope → ping → ping-back → canal (GB §5)
     .click();
   await expect(page.getByTestId('planet-canvas')).toBeVisible();
 
-  // Télescope L1 — infrastructure sans tuile : « Place » construit
-  // directement, et le bâtiment apparaît dans le panneau Infrastructure.
-  const infra = page.getByRole('region', { name: 'Infrastructure' });
-  await expect(infra).toBeVisible();
-  if (!(await infra.getByText(/telescope L1/).isVisible().catch(() => false))) {
-    const hand = page.getByRole('region', { name: 'Construction cards' });
-    const teleCard = hand
-      .getByRole('article')
-      .filter({ hasText: 'telescope' })
-      .first();
-    const unlockBtn = teleCard.getByRole('button', { name: 'Unlock' });
-    if (await unlockBtn.isVisible().catch(() => false)) {
-      await unlockBtn.click();
-      await expect(page.getByRole('status')).toContainText('Card unlocked.');
-    }
-    await teleCard.getByRole('button', { name: 'Place' }).click();
-    await expect(page.getByRole('status')).toContainText('Construction started.');
+  // Télescope L1 — bâtiment UNIQUE sur une vraie tuile. Test tolérant aux
+  // reruns : on réutilise l'instance existante, sinon première tuile libre.
+  const me = (await page.request.get('/api/me').then((r) => r.json())) as {
+    planets: { id: string }[];
+  };
+  const planetId = me.planets[0]!.id;
+  const board = await boardHelpers(page, planetId);
+  let detail = (await page.request
+    .get(`/api/planets/${planetId}`)
+    .then((r) => r.json())) as {
+    tiles: number;
+    buildings: { key: string; tileIndex: number | null; status: string }[];
+  };
+  let telescope = detail.buildings.find((building) => building.key === 'telescope');
+  if (!telescope) {
+    const used = new Set(
+      detail.buildings
+        .map((building) => building.tileIndex)
+        .filter((tile): tile is number => tile !== null),
+    );
+    const freeTile = Array.from({ length: detail.tiles }, (_, index) => index).find(
+      (index) => !used.has(index),
+    )!;
+    await board.unlockCard('telescope');
+    await board.placeCard('telescope', board.tilePx(freeTile));
+    detail = await page.request
+      .get(`/api/planets/${planetId}`)
+      .then((response) => response.json());
+    telescope = detail.buildings.find((building) => building.key === 'telescope');
   }
-  // Activation : chantier 6 h / TIME_SCALE + tick 0,5 s + polling UI 4 s.
-  await expect(infra.getByText(/telescope L1/)).toBeVisible({ timeout: 30_000 });
-  await expect(infra.getByText('active', { exact: true }).first()).toBeVisible({
-    timeout: 30_000,
-  });
-  await infra.scrollIntoViewIfNeeded(); // la capture doit MONTRER la preuve
-  await shot(page, '19-telescope-infrastructure');
+  await expect
+    .poll(async () => {
+      const current = (await page.request
+        .get(`/api/planets/${planetId}`)
+        .then((response) => response.json())) as {
+        buildings: { key: string; status: string }[];
+      };
+      return current.buildings.find((building) => building.key === 'telescope')?.status;
+    }, { timeout: 30_000 })
+    .toBe('active');
+  await board.openPanel(board.tilePx(telescope!.tileIndex!), /^telescope$/i);
+  await expect(board.panel).toContainText('Surface unit / telescope');
+  await shot(page, '19-telescope-on-tile');
 
   // Carte galaxie : le monde du voisin est entré dans le ciel. Son nom
   // vient de l'API (seed déterministe — rien de codé en dur).
@@ -604,6 +626,7 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
       // La main se re-trie après chaque unlock (re-render) : un clic peut
       // être avalé. On re-clique jusqu'à la PREUVE d'état (bouton Place).
       await expect(async () => {
+        await revealCard(card);
         const unlockBtn = card.getByRole('button', { name: 'Unlock' });
         if (await unlockBtn.isVisible().catch(() => false)) {
           await unlockBtn.click().catch(() => undefined);
@@ -616,11 +639,12 @@ test('marché L1 taux fixe : poster une offre → échanger à quai (GB §9/§13
     // Pose au centre — re-tentée tant que le plateau Pixi n'est pas
     // interactif (le succès est prouvé par la notice).
     await expect(async () => {
-      const placeBtn = hand
+      const marketCard = hand
         .getByRole('article')
         .filter({ hasText: /^market/ })
-        .first()
-        .getByRole('button', { name: 'Place' });
+        .first();
+      await revealCard(marketCard);
+      const placeBtn = marketCard.getByRole('button', { name: 'Place' });
       if ((await placeBtn.getAttribute('aria-pressed')) !== 'true') {
         await placeBtn.click();
       }
@@ -838,6 +862,7 @@ test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §1
         .filter({ hasText: new RegExp(`^${key}`) })
         .first();
       await expect(async () => {
+        await revealCard(card);
         const unlockBtn = card.getByRole('button', { name: 'Unlock' });
         if (await unlockBtn.isVisible().catch(() => false)) {
           await unlockBtn.click().catch(() => undefined);
@@ -848,11 +873,12 @@ test('chantier naval : poser la quille → le vaisseau rejoint la flotte (GB §1
       }).toPass({ timeout: 30_000 });
     }
     await expect(async () => {
-      const placeBtn = hand
+      const shipyardCard = hand
         .getByRole('article')
         .filter({ hasText: /^shipyard/ })
-        .first()
-        .getByRole('button', { name: 'Place' });
+        .first();
+      await revealCard(shipyardCard);
+      const placeBtn = shipyardCard.getByRole('button', { name: 'Place' });
       if ((await placeBtn.getAttribute('aria-pressed')) !== 'true') {
         await placeBtn.click();
       }

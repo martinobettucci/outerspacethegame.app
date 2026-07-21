@@ -197,6 +197,48 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
     expect(rows[0].n).toBeGreaterThanOrEqual(1);
   });
 
+  it('télescope : tuile obligatoire, une seule instance par planète', async () => {
+    // Savoir de départ : aucun unlock préalable. Le serveur refuse d'abord
+    // l'ancien contrat sans tuile, puis accepte une tuile libre.
+    const withoutTile = await app.inject({
+      method: 'POST',
+      url: `/planets/${starterA}/build`,
+      payload: { building: 'telescope', tileIndex: null },
+      headers: { cookie: cookieA },
+    });
+    expect(withoutTile.statusCode).toBe(400);
+    expect(withoutTile.json().error).toBe('tile_invalid');
+
+    const placed = await app.inject({
+      method: 'POST',
+      url: `/planets/${starterA}/build`,
+      payload: { building: 'telescope', tileIndex: 1 },
+      headers: { cookie: cookieA },
+    });
+    expect(placed.statusCode).toBe(200);
+
+    const detail = (
+      await app.inject({
+        method: 'GET',
+        url: `/planets/${starterA}`,
+        headers: { cookie: cookieA },
+      })
+    ).json();
+    const telescope = detail.buildings.find(
+      (building: { key: string }) => building.key === 'telescope',
+    );
+    expect(telescope.tileIndex).toBe(1);
+
+    const duplicate = await app.inject({
+      method: 'POST',
+      url: `/planets/${starterA}/build`,
+      payload: { building: 'telescope', tileIndex: 2 },
+      headers: { cookie: cookieA },
+    });
+    expect(duplicate.statusCode).toBe(409);
+    expect(duplicate.json().error).toBe('max_instances');
+  });
+
   it('refus vérifiés : tuile occupée, nœud non déverrouillé, double unlock', async () => {
     const taken = await app.inject({
       method: 'POST',

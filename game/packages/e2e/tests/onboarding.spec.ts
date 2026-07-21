@@ -6,7 +6,7 @@
  * milieu de partie). Preuves par l'UI ET par l'état de l'API.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, registerSovereign, shot } from './lib.ts';
+import { boardHelpers, registerSovereign, revealCard, shot } from './lib.ts';
 
 test('premiers pas : mine posable sans unlock, bandeau guidant puis dissous', async ({
   page,
@@ -54,6 +54,7 @@ test('premiers pas : mine posable sans unlock, bandeau guidant puis dissous', as
 
   // 3. Poser la mine (recette ore) — le flux réel : Place ouvre le
   //    sélecteur de recette (canon : une industrie, une chose).
+  await revealCard(mineCard);
   await mineCard.getByRole('button', { name: 'Place' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

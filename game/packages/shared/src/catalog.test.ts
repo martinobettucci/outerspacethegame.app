@@ -3,6 +3,8 @@
  * les ensembles énumérables du canon sont livrés EXHAUSTIVEMENT.
  */
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { ALL_BUILDING_KEYS, BUILDINGS } from './buildings.js';
 import {
   ALL_ITEM_KEYS,
@@ -49,9 +51,27 @@ describe('complétude des catalogues (GB §24/§25, DG §5.1/§8.1/§10.1)', () 
     }
   });
 
-  it('seuls telescope et probe_pad sont sans tuile (canon §18)', () => {
+  it('seul probe_pad reste sans tuile ; telescope est unique sur tuile', () => {
     const noTile = ALL_BUILDING_KEYS.filter((k) => !BUILDINGS[k].usesTile);
-    expect(noTile.sort()).toEqual(['probe_pad', 'telescope']);
+    expect(noTile).toEqual(['probe_pad']);
+    expect(BUILDINGS.telescope.usesTile).toBe(true);
+    expect(BUILDINGS.telescope.maxInstances).toBe(1);
+  });
+
+  it('les 27 stubs telescope L1-L3 base/hot/cold ont tous leurs companions', () => {
+    const assets = fileURLToPath(
+      new URL('../../../../assets/game/buildings/', import.meta.url),
+    );
+    const missing: string[] = [];
+    for (const level of [1, 2, 3]) {
+      for (const variant of ['', '.ov.hot', '.ov.cold']) {
+        for (const companion of ['', '.bump', '.light']) {
+          const name = `building_telescope_l${level}${variant}${companion}.gif`;
+          if (!existsSync(`${assets}${name}`)) missing.push(name);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
   });
 
   it('6 types d\'unités sol, avec carte d\'unlock et classe de taille', () => {

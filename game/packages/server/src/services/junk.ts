@@ -497,7 +497,7 @@ export async function visibleDerelicts(
     WITH scopes AS (
       SELECT b.x, b.y,
              $2::float + COALESCE((
-               SELECT sum($3::float * t.level)
+               SELECT max($3::float * t.level)
                FROM buildings t
                WHERE t.body_id = b.id AND t.key = 'telescope'
                  AND t.status = 'active'
@@ -548,7 +548,7 @@ export async function visibleJunkFields(
     WITH scopes AS (
       SELECT b.x, b.y,
              $2::float + COALESCE((
-               SELECT sum($3::float * t.level)
+               SELECT max($3::float * t.level)
                FROM buildings t
                WHERE t.body_id = b.id AND t.key = 'telescope'
                  AND t.status = 'active'

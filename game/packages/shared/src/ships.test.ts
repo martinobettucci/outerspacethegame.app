@@ -20,8 +20,9 @@ describe('hoverIdleFuelUPerDay (DG §3.5)', () => {
     expect(hoverIdleFuelUPerDay('combat', 'l')).toBeCloseTo(0.8, 9);
   });
 
-  it('exemptions : probe et personal ne consomment rien (GB §21)', () => {
-    expect(hoverIdleFuelUPerDay('probe', null)).toBe(0);
+  it('sondes v3 (2026-07-20) : elles consomment — L1 0,06, L2 moitié ; personal reste exempt (GB §21)', () => {
+    expect(hoverIdleFuelUPerDay('probe', null)).toBeCloseTo(0.06, 9);
+    expect(hoverIdleFuelUPerDay('probe', null, 2)).toBeCloseTo(0.03, 9);
     expect(hoverIdleFuelUPerDay('personal', null)).toBe(0);
     expect(hoverIdleFuelUPerDay('personal', 's')).toBe(0);
   });
@@ -91,7 +92,7 @@ describe('shipDrainTarget — table de vérité complète (GB §7)', () => {
     ).toBe('tank');
   });
 
-  it('exemptés (probe/personal) → none quel que soit le statut', () => {
+  it('sondes v3 : la sonde paie son réservoir en loitering ; personal reste none', () => {
     for (const status of ['hovering', 'idle']) {
       expect(
         shipDrainTarget({
@@ -101,7 +102,7 @@ describe('shipDrainTarget — table de vérité complète (GB §7)', () => {
           overOwnPlanet: false,
           planetCanServe: false,
         }),
-      ).toBe('none');
+      ).toBe('tank');
       expect(
         shipDrainTarget({
           category: 'personal',

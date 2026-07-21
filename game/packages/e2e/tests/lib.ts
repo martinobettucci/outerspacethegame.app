@@ -4,7 +4,7 @@
  * géométrie EXACTE du plateau isométrique (mêmes formules que PlanetView)
  * et poses vérifiées par l'ÉTAT de l'API — jamais par une notice.
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { planetTechAvailability, SeededStream } from '@atg/shared';
 import { mkdirSync } from 'node:fs';
 
@@ -62,6 +62,16 @@ export async function selectFleetShip(
 
 export const shot = (page: Page, name: string) =>
   page.screenshot({ path: `${CAPTURES}/${name}.jpeg`, type: 'jpeg', quality: 90 });
+
+/** Vise la tranche AO de 64 px avant l'action interne de la carte. */
+export async function revealCard(card: Locator): Promise<void> {
+  // Une carte dépliée passe volontairement au-dessus des suivantes. Comme
+  // un vrai pointeur, sortir d'abord du deck fait retomber la carte précédente
+  // avant d'entrer par la tranche visible de la cible.
+  await card.page().mouse.move(2, 2);
+  await card.hover({ position: { x: 16, y: 120 } });
+  await expect(card).toHaveCSS('z-index', '6');
+}
 
 /**
  * n-ième e-mail `<prefix>-<i>@test.local` dont l'ADN tech du starter
@@ -180,6 +190,10 @@ export async function boardHelpers(
       .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
       .first();
     await expect(async () => {
+      // AO final : une carte non finale n'expose que sa tranche de 64 px.
+      // La viser d'abord reproduit le vrai geste pointeur et la met au-dessus
+      // du paquet avant de cliquer son action complète.
+      await revealCard(card);
       const btn = card.getByRole('button', { name: 'Unlock' });
       if (await btn.isVisible().catch(() => false)) {
         await btn.click().catch(() => undefined);
@@ -203,11 +217,12 @@ export async function boardHelpers(
   const placeCard = async (key: string, tile: readonly [number, number]) => {
     await expect(async () => {
       if (!(await hasBuilding(key))) {
-        const btn = hand
+        const card = hand
           .getByRole('article')
           .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
-          .first()
-          .getByRole('button', { name: 'Place' });
+          .first();
+        await revealCard(card);
+        const btn = card.getByRole('button', { name: 'Place' });
         if ((await btn.getAttribute('aria-pressed')) !== 'true') {
           await btn.click().catch(() => undefined);
         }

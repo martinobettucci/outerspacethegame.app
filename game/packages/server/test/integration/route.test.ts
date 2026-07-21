@@ -328,10 +328,11 @@ describe('nudge triade (DG §11.2 — portée télescope)', () => {
     let detail = await planetDetail(pool, owner, ownerStarter);
     expect(detail.triadNudge).toBe(true); // hors portée : le nudge reste
 
-    // Télescope L2 (+400 pc) : le marché voisin entre dans le ciel.
+    // Télescope unique L2 (+400 pc), sur la première tuile libre : le
+    // marché voisin entre dans le ciel.
     await pool.query(
-      `INSERT INTO buildings (body_id, key, level, status, workforce)
-       VALUES ($1, 'telescope', 2, 'active', 0)`,
+      `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+       VALUES ($1, 'telescope', 2, 1, 'active', 0)`,
       [ownerStarter],
     );
     detail = await planetDetail(pool, owner, ownerStarter);

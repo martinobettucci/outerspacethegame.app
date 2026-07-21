@@ -8,7 +8,7 @@
  * (24 h-jeu ÷ 7200 = 12 s réelles). État vérifié par l'API.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, pickEmailByDna, registerSovereign, revealCard, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -36,6 +36,7 @@ test('retool : instantané Industrialist, puis fenêtre occupée → 24 h minut�
   // mint une chose).
   const hand = page.getByRole('region', { name: 'Construction cards' });
   const mineCard = hand.getByRole('article').filter({ hasText: /^mine/ }).first();
+  await revealCard(mineCard);
   await mineCard.getByRole('button', { name: 'Place' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

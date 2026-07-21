@@ -68,7 +68,7 @@ describe('intel par paliers (GB §20)', () => {
   it('télescope L1 : palier 1 — silhouette, ET la fuite quality est fermée', async () => {
     const { rows } = await pool.query(
       `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
-       VALUES ($1, 'telescope', 1, NULL, 'active', 0) RETURNING id`,
+       VALUES ($1, 'telescope', 1, 0, 'active', 0) RETURNING id`,
       [obsStarter],
     );
     telescopeId = rows[0].id;

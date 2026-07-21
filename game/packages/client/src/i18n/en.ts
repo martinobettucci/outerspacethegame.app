@@ -480,7 +480,7 @@ export const t = {
       'A mid-game goal, not a building: unlocking it lets a workshop L2 here fit a Civil M/L ship as a colony ship (settlers aboard, terraform core, provisions) to claim an uninhabited world.',
     programUnlocked: 'Unlocked — colony fittings enabled here.',
     infrastructure: 'Infrastructure',
-    infrastructureNone: 'None yet — telescopes and probe pads need no tile.',
+    infrastructureNone: 'None yet — only probe pads need no tile.',
     yardTitle: 'Shipyard — lay a keel',
     yardCategory: 'Category',
     yardSize: 'Size',

@@ -64,7 +64,7 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
   await expect(wildPanel.getByText('Level 2 telescope required')).toBeVisible();
   await shot(page, 'int-01-silhouette');
 
-  // 3. Trésorerie + télescope L1 (infrastructure sans tuile).
+  // 3. Trésorerie + télescope L1 UNIQUE sur tuile.
   for (const [resource, tons] of [
     ['ore', 500],
     ['silicon', 200],
@@ -80,21 +80,10 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
     .filter({ hasNotText: /Galaxy|Fleet|Market|Comms|Factions/ })
     .first()
     .click();
-  const { hand } = await boardHelpers(page, planetId);
-  const teleCard = hand
-    .getByRole('article')
-    .filter({ hasText: /^telescope/ })
-    .first();
-  await expect(async () => {
-    const unlock = teleCard.getByRole('button', { name: 'Unlock' });
-    if (await unlock.isVisible().catch(() => false)) {
-      await unlock.click().catch(() => undefined);
-    }
-    await expect(teleCard.getByRole('button', { name: 'Place' })).toBeVisible({
-      timeout: 3_000,
-    });
-  }).toPass({ timeout: 30_000 });
-  await teleCard.getByRole('button', { name: 'Place' }).click();
+  const board = await boardHelpers(page, planetId);
+  await board.unlockCard('telescope');
+  const telescopeTile = board.tilePx(0);
+  await board.placeCard('telescope', telescopeTile);
   const telescopeLevel = async () => {
     const d = (await page.request
       .get(`/api/planets/${planetId}`)
@@ -109,8 +98,11 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
   await expect.poll(telescopeLevel, { timeout: 40_000 }).toBe(1);
 
   // Palier 2 : télescope L1 + oeil scientifique (personnel à quai).
-  const infra = page.getByRole('region', { name: 'Infrastructure' });
-  await expect(infra.getByText(/telescope L1/)).toBeVisible();
+  await board.openPanel(telescopeTile, /^telescope$/i);
+  await expect(board.panel).toContainText('Surface unit / telescope');
+  await expect(
+    page.getByRole('region', { name: 'Infrastructure' }).getByText(/telescope L1/),
+  ).toHaveCount(0);
   await rail.getByRole('button', { name: 'Galaxy' }).click();
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   await page.waitForTimeout(1000);
@@ -134,9 +126,18 @@ test('intel : la lunette monte, le monde sauvage se révèle palier par palier',
       .click();
     await expect(page.getByTestId('planet-canvas')).toBeVisible();
     await expect.poll(telescopeLevel, { timeout: 60_000 }).toBe(target - 1);
-    await page
-      .getByRole('region', { name: 'Infrastructure' })
-      .getByRole('button', { name: /Level up telescope/ })
+    const surface = await boardHelpers(page, planetId);
+    const detail = (await page.request
+      .get(`/api/planets/${planetId}`)
+      .then((response) => response.json())) as {
+      buildings: { key: string; tileIndex: number | null }[];
+    };
+    const tileIndex = detail.buildings.find(
+      (building) => building.key === 'telescope',
+    )!.tileIndex!;
+    await surface.openPanel(surface.tilePx(tileIndex), /^telescope$/i);
+    await surface.panel
+      .getByRole('button', { name: new RegExp(`Level up → L${target}`) })
       .click();
     await expect(page.getByRole('status')).toContainText(
       'Level-up construction started.',

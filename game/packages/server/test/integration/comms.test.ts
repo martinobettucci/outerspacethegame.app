@@ -57,9 +57,10 @@ describe('pings (GB §5)', () => {
   });
 
   it('avec un télescope L1 (+200 pc), le voisin devient hélable ; le ping-back ouvre le canal', async () => {
-    // Télescope L1 posé directement (l'unlock/build est déjà couvert ailleurs).
+    // Télescope L1 unique, sur tuile (l'unlock/build est couvert ailleurs).
     await pool.query(
-      `INSERT INTO buildings (body_id, key, level, status) VALUES ($1, 'telescope', 1, 'active')`,
+      `INSERT INTO buildings (body_id, key, level, tile_index, status)
+       VALUES ($1, 'telescope', 1, 0, 'active')`,
       [aliceStarter],
     );
     const ping = await sendPing(pool, alice, bobStarter);

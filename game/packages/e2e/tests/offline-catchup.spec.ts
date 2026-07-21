@@ -9,7 +9,7 @@
  * prouvée en intégration (colony-loop) ; ici, la preuve UTILISATEUR.
  */
 import { expect, test } from '@playwright/test';
-import { boardHelpers, E2E_PASSWORD, pickEmailByDna, registerSovereign, shot } from './lib.js';
+import { boardHelpers, E2E_PASSWORD, pickEmailByDna, registerSovereign, revealCard, shot } from './lib.js';
 
 const runId = Date.now().toString(36);
 
@@ -51,6 +51,7 @@ test('hors-ligne : les travaux avancent, le stock lazy suit sans dérive', async
   // Mine d'abord (recette ore) — elle doit être ACTIVE avant le départ.
   const hand = page.getByRole('region', { name: 'Construction cards' });
   const mineCard = hand.getByRole('article').filter({ hasText: /^mine/ }).first();
+  await revealCard(mineCard);
   await mineCard.getByRole('button', { name: 'Place' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
