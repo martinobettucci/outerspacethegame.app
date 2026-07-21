@@ -13,14 +13,13 @@
  *   démontré par le vrai flux, jamais fabriqué.
  * Idempotent : ne recrée pas les comptes existants.
  */
-import { SeededStream } from '@atg/shared';
 import { config } from '../config.js';
 import { createPool } from './pool.js';
 import { runMigrations } from './migrate.js';
 import { registerPlayer } from '../services/players.js';
 import { setInnateOffers } from '../services/market.js';
 import { planetDetail } from '../services/planets.js';
-import { rollPocketLuck } from '../gen/rolls.js';
+import { pocketLuckStream, rollPocketLuck } from '../gen/rolls.js';
 
 export const DEMO_ACCOUNTS = [
   {
@@ -42,12 +41,10 @@ export const DEMO_ACCOUNTS = [
  * flux de poche (identique à la prod) tire ≥ 2 starters. Déterministe pour
  * un UNIVERSE_SEED donné : le seed reste un contrat reproductible (§8).
  */
-export function findLuckyDemoEmail(universeSeed: string): string {
+export function findLuckyDemoEmail(luckPepper: string): string {
   for (let i = 0; i < 200_000; i++) {
     const email = `lucky-${i}@atg.local`;
-    const luck = rollPocketLuck(
-      new SeededStream(universeSeed, `pocket:${email}`),
-    );
+    const luck = rollPocketLuck(pocketLuckStream(luckPepper, email));
     if (luck.starters >= 2) return email;
   }
   throw new Error('Seed : aucun e-mail chanceux trouvé (balayage 200k)');
@@ -84,7 +81,7 @@ export async function seed(databaseUrl?: string): Promise<void> {
     const accounts = [
       ...DEMO_ACCOUNTS,
       {
-        email: findLuckyDemoEmail(config.UNIVERSE_SEED),
+        email: findLuckyDemoEmail(config.LUCK_PEPPER),
         password: 'demo-password-3',
         displayName: 'Sovereign Lucky',
         politics: 'civic',
@@ -113,6 +110,7 @@ export async function seed(databaseUrl?: string): Promise<void> {
       const result = await registerPlayer(pool, {
         ...account,
         universeSeed: config.UNIVERSE_SEED,
+        luckPepper: config.LUCK_PEPPER,
       });
       console.log(
         `Seed : ${account.email} créé — starter ${result.spawn.starterPlanetId} ` +

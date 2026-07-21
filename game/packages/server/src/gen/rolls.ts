@@ -3,6 +3,7 @@
  * Fonctions PURES de (seed) : re-calculables, jamais stockées en dehors
  * des colonnes matérialisées (déterminisme canon).
  */
+import { createHmac } from 'node:crypto';
 import {
   BUILDINGS,
   CLIMATE_CRYSTAL,
@@ -10,7 +11,6 @@ import {
   DEPOSIT_SIZE_MULT,
   POP_QUALITY_MULT,
   SeededStream,
-  UNIVERSE_SIZE_PC,
   type BasicResource,
   type BuildingKey,
   type Climate,
@@ -224,31 +224,68 @@ export function rollPocketLuck(stream: SeededStream): PocketLuck {
   return { starters, wilds };
 }
 
+/**
+ * Flux de tirage de la pocket-luck derrière un SECRET rotatif (Round 10
+ * PATCH 10-5) : la graine est HMAC(LUCK_PEPPER, email), jamais le seed
+ * d'univers — le farming multi-starter hors-ligne devient impossible sans
+ * le poivre, et une fuite se corrige par rotation (la géométrie de poche
+ * reste sur (universeSeed, email), donc les poches déjà nées ne bougent
+ * pas). Déterministe pour un poivre donné → injectable en test.
+ */
+export function pocketLuckStream(
+  luckPepper: string,
+  playerKey: string,
+): SeededStream {
+  const seed = createHmac('sha256', luckPepper).update(playerKey).digest('hex');
+  return new SeededStream(seed, 'pocket-luck');
+}
+
 /** Contraintes des mondes bonus. [TUNE] DG §2.2b */
 export const BONUS_COUNT_MIN = 1;
 export const BONUS_COUNT_MAX = 3;
 export const BONUS_MIN_PC = 800; // > 660 pc (scope max ancré au starter)
 export const BONUS_MAX_PC = 4_000;
 export const BONUS_PLACEMENT_ATTEMPTS = 8;
-export const BONUS_STAR_CHANCE = 0.25;
+/** Chance d'étoile bonus liée à la richesse (Round 10 PATCH 10-2) :
+ *  P_star = BONUS_STAR_BASE + BONUS_STAR_RHO_SLOPE·ρ_eff. [TUNE] */
+export const BONUS_STAR_BASE = 0.25;
+export const BONUS_STAR_RHO_SLOPE = 0.5;
 export const BONUS_STAR_FUEL_RICH_FACTOR = 2; // stock ×(1 + f·ρ_eff)
-export const BONUS_RHO_FLOOR = 0.25;
-export const BONUS_RHO_R0_PC = 20_000;
-export const BONUS_RHO_SCALE_PC = 80_000;
 
 /**
- * Richesse effective d'un monde bonus — gradient spatial depuis le centre
- * de l'univers (500k, 500k) avec plancher : tout bonus est AU MOINS riche.
- * ρ_eff = 0,25 + 0,75 × clamp((d_centre − 20 000) / 80 000, 0, 1). [TUNE]
+ * Richesse effective (Balance Round 10, décision responsable 2026-07-21) :
+ * ré-ancrée sur le CENTROÏDE vivant des mondes possédés — le gradient
+ * « distance au centre de l'univers » était mort-né (le cluster peuplé
+ * n'atteint jamais la zone riche, cf. BALANCE_LOG Round 10 F1). Plancher
+ * relevé 0,25 → 0,40 : tout monde bonus est LISIBLEMENT au moins riche.
+ * ρ_eff = 0,40 + 0,60 × clamp(d_centroïde / 22 000, 0, 1). [TUNE]
  */
-export function bonusRhoEff(x: number, y: number): number {
-  const cx = UNIVERSE_SIZE_PC / 2;
-  const d = Math.hypot(x - cx, y - cx);
+export const BONUS_RHO_FLOOR = 0.4;
+export const BONUS_RHO_CENTROID_SCALE_PC = 22_000;
+/** En dessous de ce nombre de corps possédés, l'univers est trop petit
+ *  pour un centroïde stable : repli sur la distance à la poche. [TUNE] */
+export const BONUS_CENTROID_FALLBACK_N = 50;
+/** Repli poche : 800 pc → plancher 0,25, 4 000 pc → saturé. [TUNE] */
+export const BONUS_RHO_POCKET_FLOOR = 0.25;
+
+export function bonusRhoEffFromCentroid(dCentroid: number): number {
+  const t = Math.min(1, Math.max(0, dCentroid / BONUS_RHO_CENTROID_SCALE_PC));
+  return BONUS_RHO_FLOOR + (1 - BONUS_RHO_FLOOR) * t;
+}
+
+/** Repli « distance à la poche » pour les tout premiers explorateurs
+ *  (univers < BONUS_CENTROID_FALLBACK_N corps possédés). [TUNE] */
+export function bonusRhoEffFromPocket(dPocket: number): number {
   const t = Math.min(
     1,
-    Math.max(0, (d - BONUS_RHO_R0_PC) / BONUS_RHO_SCALE_PC),
+    Math.max(0, (dPocket - BONUS_MIN_PC) / (BONUS_MAX_PC - BONUS_MIN_PC)),
   );
-  return BONUS_RHO_FLOOR + (1 - BONUS_RHO_FLOOR) * t;
+  return BONUS_RHO_POCKET_FLOOR + (1 - BONUS_RHO_POCKET_FLOOR) * t;
+}
+
+/** Probabilité d'étoile bonus pour une richesse donnée. [TUNE] */
+export function bonusStarChance(rhoEff: number): number {
+  return BONUS_STAR_BASE + BONUS_STAR_RHO_SLOPE * rhoEff;
 }
 
 /** Profils « riches » vers lesquels les poids standards sont mélangés. [TUNE] */
@@ -306,10 +343,16 @@ export function rollBonusPlanet(seed: string, rhoEff: number): PlanetRoll {
 }
 
 /**
- * Pool des ruines — PRÉDICAT de catalogue, jamais une liste en dur (règle
- * de complétude) : sur tuile, apolitique à TOUS les niveaux, non-industrie.
- * Dérivé de BUILDINGS à l'import : suit automatiquement le catalogue.
+ * Pool des ruines — dérivé du catalogue (règle de complétude, jamais une
+ * liste en dur) : sur tuile, apolitique à TOUS les niveaux, non-industrie,
+ * ET **tier ≤ 2** (Round 10 PATCH 10-3). Le prédicat brut balayait la
+ * mégastructure réseau `stargate_yard` (tier 4) dans les décombres — un
+ * monde bonus pouvait faire naître un stargate_yard L3 abandonné, hérité
+ * fonctionnel + forcé dans l'ADN L3. Le plafond de tier ferme cette porte.
+ * Set courant : telescope, depot, warehouse, spaceport, workshop, clinic,
+ * obs_station.
  */
+export const RUIN_MAX_TIER = 2;
 export const RUIN_POOL: readonly BuildingKey[] = (
   Object.keys(BUILDINGS) as BuildingKey[]
 ).filter((k) => {
@@ -318,7 +361,8 @@ export const RUIN_POOL: readonly BuildingKey[] = (
     d.usesTile &&
     d.politics === null &&
     !d.politicsFromLevel &&
-    !d.batchesPerDayByLevel
+    !d.batchesPerDayByLevel &&
+    d.tier <= RUIN_MAX_TIER
   );
 });
 

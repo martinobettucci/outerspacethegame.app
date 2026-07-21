@@ -358,6 +358,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       const result = await registerPlayer(deps.pool, {
         ...parsed.data,
         universeSeed: deps.config.UNIVERSE_SEED,
+        luckPepper: deps.config.LUCK_PEPPER,
       });
       const session = await createSession(deps.pool, result.playerId);
       setSessionCookie(reply, session.token, session.expiresAt);

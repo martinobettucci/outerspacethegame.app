@@ -887,9 +887,14 @@ export async function placeBuilding(
     const completesAt = new Date(nowMs + buildMs);
     const { rows: created } = await client.query<{ id: string }>(
       `INSERT INTO buildings (body_id, key, level, tile_index, status,
-          completes_at, recipe, workforce)
-       VALUES ($1, $2, 1, $3, 'constructing', $4, $5, $6) RETURNING id`,
-      [bodyId, buildingKey, tileIndex, completesAt, recipe, workforce],
+          completes_at, recipe, workforce, config)
+       VALUES ($1, $2, 1, $3, 'constructing', $4, $5, $6, $7::jsonb)
+       RETURNING id`,
+      // investedPaid = ce que le propriétaire A RÉELLEMENT payé (PATCH
+      // 10-4) : la démolition ne rembourse que là-dessus. Les ruines de
+      // spawn et les bâtiments du kit de colonisation enregistrent {}.
+      [bodyId, buildingKey, tileIndex, completesAt, recipe, workforce,
+       JSON.stringify({ investedPaid: def.placementCost })],
     );
     await enqueue(client, 'construction_complete', completesAt, {
       buildingId: created[0]!.id,
@@ -1219,6 +1224,27 @@ function investedCost(def: (typeof BUILDINGS)[BuildingKey], level: number): Cost
   return out;
 }
 
+/** Somme de deux paniers de coûts (immuable). */
+function addBundles(a: CostBundle, b: CostBundle): CostBundle {
+  const out: CostBundle = { ...a };
+  for (const [res, qty] of Object.entries(b)) {
+    out[res as keyof CostBundle] =
+      ((out[res as keyof CostBundle] as number | undefined) ?? 0) + (qty as number);
+  }
+  return out;
+}
+
+/**
+ * Investissement RÉELLEMENT payé par le propriétaire, lu depuis
+ * buildings.config.investedPaid (PATCH 10-4). Absent (bâtiments d'avant le
+ * patch) → panier vide : la démolition ne rembourse rien, ce qui est le
+ * comportement voulu pour les ruines héritées et le kit de colonisation.
+ */
+function readInvestedPaid(config: unknown): CostBundle {
+  const paid = (config as { investedPaid?: CostBundle } | null)?.investedPaid;
+  return paid && typeof paid === 'object' ? (paid as CostBundle) : {};
+}
+
 /**
  * Montée de niveau sur place (GB §18, DG §5.1) : coût du palier, plafond
  * de profondeur de l'ADN du seed, politique de niveau (intersection),
@@ -1238,7 +1264,7 @@ export async function levelUpBuilding(
     await client.query('BEGIN');
     const planet = await loadOwnedPlanet(client, playerId, bodyId);
     const { rows } = await client.query(
-      `SELECT id, key, level, status FROM buildings
+      `SELECT id, key, level, status, config FROM buildings
        WHERE id = $1 AND body_id = $2 FOR UPDATE`,
       [buildingId, bodyId],
     );
@@ -1279,17 +1305,23 @@ export async function levelUpBuilding(
         );
       }
     }
-    await payCost(client, bodyId, planet.climate, def.levelUpCost[targetLevel - 2]!, nowMs);
+    const stepCost = def.levelUpCost[targetLevel - 2]!;
+    await payCost(client, bodyId, planet.climate, stepCost, nowMs);
     const buildMs =
       (BUILD_HOURS_BY_LEVEL[targetLevel - 1]! * 3_600_000) /
       Math.max(timeScale, 1e-9);
     const completesAt = new Date(nowMs + buildMs);
     // Montée EN PLACE : la production s'interrompt pendant le chantier
-    // [TUNE interp — JOURNAL session 30].
+    // [TUNE interp — JOURNAL session 30]. On CUMULE le palier payé dans
+    // config.investedPaid (PATCH 10-4) : la démolition rembourse ce cumul.
+    const prevPaid = readInvestedPaid(rows[0].config);
+    const newPaid = addBundles(prevPaid, stepCost);
     await client.query(
-      `UPDATE buildings SET level = $2, status = 'constructing', completes_at = $3
+      `UPDATE buildings SET level = $2, status = 'constructing',
+         completes_at = $3,
+         config = jsonb_set(coalesce(config, '{}'::jsonb), '{investedPaid}', $4::jsonb)
        WHERE id = $1`,
-      [buildingId, targetLevel, completesAt],
+      [buildingId, targetLevel, completesAt, JSON.stringify(newPaid)],
     );
     await enqueue(client, 'construction_complete', completesAt, { buildingId });
     await recomputePlanetRates(client, bodyId, nowMs);
@@ -1321,7 +1353,7 @@ export async function demolishBuilding(
     await client.query('BEGIN');
     const planet = await loadOwnedPlanet(client, playerId, bodyId);
     const { rows } = await client.query(
-      `SELECT id, key, level, status FROM buildings
+      `SELECT id, key, level, status, config FROM buildings
        WHERE id = $1 AND body_id = $2 FOR UPDATE`,
       [buildingId, bodyId],
     );
@@ -1330,11 +1362,20 @@ export async function demolishBuilding(
       throw new CommandError('not_available', 'Démolition déjà en cours');
     }
     const def = BUILDINGS[rows[0].key as BuildingKey];
+    // PATCH 10-4 : rembourse 50 % de l'investi RÉELLEMENT PAYÉ (config), pas
+    // du coût théorique. Ruines héritées / kit de colonisation (investedPaid
+    // = {}) → 0. Repli sur le coût théorique UNIQUEMENT pour les bâtiments
+    // d'avant le patch (config sans investedPaid), pour ne pas léser un
+    // propriétaire légitime — un bâtiment posé via placeBuilding porte
+    // toujours investedPaid, donc ce repli ne touche pas les ruines.
+    const paid = rows[0].config?.investedPaid
+      ? readInvestedPaid(rows[0].config)
+      : investedCost(def, rows[0].level);
     const refunded = await creditBundle(
       client,
       bodyId,
       planet.climate,
-      investedCost(def, rows[0].level),
+      paid,
       DEMOLISH_REFUND_RATIO,
       nowMs,
     );

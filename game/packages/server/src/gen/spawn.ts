@@ -40,14 +40,17 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import {
+  BONUS_CENTROID_FALLBACK_N,
   BONUS_COUNT_MAX,
   BONUS_COUNT_MIN,
   BONUS_MAX_PC,
   BONUS_MIN_PC,
   BONUS_PLACEMENT_ATTEMPTS,
-  BONUS_STAR_CHANCE,
   BONUS_STAR_FUEL_RICH_FACTOR,
-  bonusRhoEff,
+  bonusRhoEffFromCentroid,
+  bonusRhoEffFromPocket,
+  bonusStarChance,
+  pocketLuckStream,
   rollBonusPlanet,
   rollLeftoverSupply,
   rollName,
@@ -154,21 +157,31 @@ export async function isPointVisibleToAnyPlayer(
 }
 
 export type VisibilityProbe = (x: number, y: number) => Promise<boolean>;
+/** Richesse ρ_eff d'un point candidat (centroïde ou repli poche, §2.2b). */
+export type RichnessProbe = (x: number, y: number) => number;
 
 /**
  * Choisit une position de monde bonus (et de son étoile éventuelle) hors
  * de toute visibilité — K tentatives puis null (skip silencieux, DG §2.2b).
  * La sonde de visibilité est injectable : le chemin « univers saturé » est
  * testable unitairement sans fabriquer une galaxie dense.
+ *
+ * Round 10 : la richesse ρ_eff est calculée PAR TENTATIVE (elle dépend de
+ * la position), et la présence d'étoile en découle — P_star = 0,25 + 0,5·ρ
+ * (PATCH 10-2). L'étoile est toujours rollée en amont (déterministe) ; on
+ * n'utilise sa R_nova que si le tirage lié à ρ retient une étoile.
  */
 export async function placeBonusCandidate(
   stream: SeededStream,
   center: { x: number; y: number },
   isVisible: VisibilityProbe,
-  starNovaPc: number | null,
+  richnessAt: RichnessProbe,
+  starNovaPc: number,
 ): Promise<{
   x: number;
   y: number;
+  rho: number;
+  hasStar: boolean;
   starX: number | null;
   starY: number | null;
 } | null> {
@@ -177,9 +190,11 @@ export async function placeBonusCandidate(
     const theta = stream.uniform(0, 2 * Math.PI);
     const x = center.x + r * Math.cos(theta);
     const y = center.y + r * Math.sin(theta);
+    const rho = richnessAt(x, y);
+    const hasStar = stream.float() < bonusStarChance(rho);
     let starX: number | null = null;
     let starY: number | null = null;
-    if (starNovaPc !== null) {
+    if (hasStar) {
       // Géométrie de poche : l'étoile à distance sûre, la planète hors
       // R_nova par construction.
       const starDist = stream.uniform(starNovaPc + 5, starNovaPc + 30);
@@ -191,7 +206,7 @@ export async function placeBonusCandidate(
     if (starX !== null && starY !== null && (await isVisible(starX, starY))) {
       continue;
     }
-    return { x, y, starX, starY };
+    return { x, y, rho, hasStar, starX, starY };
   }
   return null;
 }
@@ -275,24 +290,51 @@ async function findPocketCenter(
  * Crée le système starter complet d'un joueur. S'exécute DANS la
  * transaction fournie (l'inscription est atomique).
  */
+/** Clé de verrou d'avis pour SÉRIALISER les spawns (Round 10 PATCH 10-6) :
+ *  ferme la course TOCTOU entre inscriptions concurrentes (isolement de
+ *  poche + invariant d'invisibilité évalués sur des snapshots disjoints). */
+export const SPAWN_ADVISORY_LOCK_KEY = 0x415447_5350_4157n & 0x7fffffffffffffffn; // "ATGSPAW"
+
 export async function spawnStarterSystem(
   client: pg.PoolClient,
   opts: {
     playerId: string;
     playerKey: string; // clé stable (email) pour les seeds déterministes
     universeSeed: string;
+    luckPepper: string; // secret du tirage de luck (PATCH 10-5)
     nowMs?: number;
   },
 ): Promise<SpawnResult> {
   const now = opts.nowMs ?? Date.now();
+  // PATCH 10-6 : sérialise les spawns concurrents (relâché en fin de txn).
+  await client.query('SELECT pg_advisory_xact_lock($1)', [
+    SPAWN_ADVISORY_LOCK_KEY.toString(),
+  ]);
   const stream = new SeededStream(
     opts.universeSeed,
     `pocket:${opts.playerKey}`,
   );
-  // §2.2b : la luck se tire EN PREMIER sur le flux de poche (ordre figé,
-  // starters puis wilds) — reproductible hors base pour les tests/seed.
-  const luck = rollPocketLuck(stream);
+  // §2.2b : la luck se tire d'un flux SÉPARÉ derrière le poivre secret
+  // (PATCH 10-5) — plus sur le flux de poche public. Le farming hors-ligne
+  // devient impossible sans LUCK_PEPPER ; une fuite se corrige par rotation.
+  const luck = rollPocketLuck(pocketLuckStream(opts.luckPepper, opts.playerKey));
   const center = await findPocketCenter(client, stream, opts.playerId);
+
+  // §2.2b (Round 10) — centroïde vivant des mondes possédés, capturé AVANT
+  // tout insert de CE joueur (donc sur les seuls autres joueurs) : ancre la
+  // richesse des mondes bonus. `n` sous BONUS_CENTROID_FALLBACK_N → repli
+  // « distance à la poche » plus bas.
+  const { rows: cen } = await client.query<{
+    cx: number | null;
+    cy: number | null;
+    n: number;
+  }>(
+    `SELECT avg(x)::float8 AS cx, avg(y)::float8 AS cy, count(*)::int AS n
+     FROM bodies WHERE owner_id IS NOT NULL`,
+  );
+  const centroidN = Number(cen[0]?.n ?? 0);
+  const centroidX = cen[0]?.cx ?? center.x;
+  const centroidY = cen[0]?.cy ?? center.y;
 
   // 1. L'étoile de la poche : classe S (R_nova 40), à 40 pc pile du starter.
   const starSeed = `${opts.universeSeed}:star:${opts.playerKey}`;
@@ -490,6 +532,18 @@ export async function spawnStarterSystem(
   // 6. §2.2b — la frontière latente : 1–3 mondes bonus lointains, hors de
   // toute visibilité COURANTE (sinon skip silencieux). Flux dédiés par
   // candidat : les tentatives de placement ne perturbent pas la poche.
+  //
+  // Round 10 : la richesse ρ_eff est ancrée sur le CENTROÏDE VIVANT des
+  // mondes possédés (capturé AVANT les inserts de ce joueur — cf. plus
+  // haut), avec repli « distance à la poche » tant que l'univers est trop
+  // petit (< BONUS_CENTROID_FALLBACK_N corps). Plus loin du cœur peuplé =
+  // plus riche, et le cœur densifiant, les cohortes tardives sont plus
+  // riches (mont ée émergente ∝ √N).
+  const richnessAt: RichnessProbe = (x, y) =>
+    centroidN >= BONUS_CENTROID_FALLBACK_N
+      ? bonusRhoEffFromCentroid(dist(x, y, centroidX, centroidY))
+      : bonusRhoEffFromPocket(dist(x, y, center.x, center.y));
+
   const bonusPlanetIds: string[] = [];
   const countStream = new SeededStream(
     opts.universeSeed,
@@ -503,19 +557,20 @@ export async function spawnStarterSystem(
       opts.universeSeed,
       `bonus-place:${opts.playerKey}:${i}`,
     );
-    // Étoile propre à 25 % [TUNE] (décision responsable 2026-07-20) — la
-    // classe se roule d'abord : la géométrie dépend de R_nova.
-    const withStar = place.float() < BONUS_STAR_CHANCE;
-    const bonusStar = withStar ? rollStar(bonusStarSeed) : null;
+    // L'étoile est rollée DÉTERMINISTIQUEMENT en amont (classe → R_nova
+    // pour la géométrie) ; sa PRÉSENCE se décide dans le placement selon la
+    // richesse du candidat (P_star = 0,25 + 0,5·ρ_eff, PATCH 10-2).
+    const bonusStar = rollStar(bonusStarSeed);
     const spot = await placeBonusCandidate(
       place,
       center,
       (x, y) => isPointVisibleToAnyPlayer(client, x, y),
-      bonusStar ? bonusStar.rNova : null,
+      richnessAt,
+      bonusStar.rNova,
     );
     if (!spot) continue; // univers saturé ici : PAS de monde bonus (attendu)
 
-    const rho = bonusRhoEff(spot.x, spot.y);
+    const rho = spot.rho;
     const bonus = rollBonusPlanet(bonusSeed, rho);
     const { rows: bRows } = await client.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,
@@ -550,9 +605,13 @@ export async function spawnStarterSystem(
     // (règle extinction) ; héritées par le colonisateur.
     for (const ruin of rollRuins(bonusSeed, rho, bonus.tiles)) {
       await client.query(
-        `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
-         VALUES ($1, $2, $3, $4, 'active', 0)`,
-        [bonusId, ruin.key, ruin.level, ruin.tileIndex],
+        `INSERT INTO buildings (body_id, key, level, tile_index, status,
+            workforce, config)
+         VALUES ($1, $2, $3, $4, 'active', 0, $5::jsonb)`,
+        // investedPaid = {} : personne n'a payé cette ruine — la démolition
+        // ne remboursera RIEN (PATCH 10-4).
+        [bonusId, ruin.key, ruin.level, ruin.tileIndex,
+         JSON.stringify({ investedPaid: {} })],
       );
     }
 
@@ -567,7 +626,7 @@ export async function spawnStarterSystem(
       );
     }
 
-    if (bonusStar && spot.starX !== null && spot.starY !== null) {
+    if (spot.hasStar && spot.starX !== null && spot.starY !== null) {
       await client.query(
         `INSERT INTO bodies (body_type, name, x, y, seed, star_class,
             star_fuel_type, star_fuel_stock, star_fuel_initial, r_nova)

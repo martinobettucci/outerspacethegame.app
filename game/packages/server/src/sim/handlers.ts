@@ -627,10 +627,13 @@ export const colonyEstablished: EventHandler = async (client, event) => {
   for (const [key, tile] of converted) {
     if (tile < body.tiles && BUILDINGS[key as keyof typeof BUILDINGS]) {
       await client.query(
-        `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
-         VALUES ($1, $2, 1, $3, 'active', 0)
+        `INSERT INTO buildings (body_id, key, level, tile_index, status,
+            workforce, config)
+         VALUES ($1, $2, 1, $3, 'active', 0, $4::jsonb)
          ON CONFLICT DO NOTHING`,
-        [bodyId, key, tile],
+        // Kit de colonisation « offert » (coque dépensée) : investedPaid = {}
+        // → non remboursable à la démolition (PATCH 10-4).
+        [bodyId, key, tile, JSON.stringify({ investedPaid: {} })],
       );
     }
   }

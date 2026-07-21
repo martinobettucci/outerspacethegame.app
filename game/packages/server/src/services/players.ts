@@ -11,12 +11,22 @@ import type { Archetype } from '@atg/shared';
 import { spawnStarterSystem, type SpawnResult } from '../gen/spawn.js';
 import { hashPassword } from './passwords.js';
 
+/**
+ * Poivre de luck de REPLI (dev/test) — identique au défaut de config, pour
+ * que seed, dev et tests partagent UN seul poivre déterministe. La prod
+ * passe TOUJOURS `config.LUCK_PEPPER` explicitement (server.ts) ; ce repli
+ * n'est atteint que si un appelant l'omet (jamais en prod). [dev-only]
+ */
+export const FALLBACK_LUCK_PEPPER = 'dev-only-luck-pepper-change-me-0123456789';
+
 export interface RegisterInput {
   email: string;
   password: string;
   displayName: string;
   politics: Archetype;
   universeSeed: string;
+  /** Secret du tirage de pocket-luck (§2.2b PATCH 10-5) ; repli dev si omis. */
+  luckPepper?: string;
 }
 
 export interface RegisterResult {
@@ -76,6 +86,7 @@ export async function registerPlayer(
       playerId,
       playerKey: input.email.toLowerCase(),
       universeSeed: input.universeSeed,
+      luckPepper: input.luckPepper ?? FALLBACK_LUCK_PEPPER,
     });
     await client.query('COMMIT');
     return { playerId, spawn };

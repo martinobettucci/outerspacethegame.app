@@ -11,12 +11,18 @@ import {
   BASIC_RESOURCES,
   BUILDINGS,
   SeededStream,
-  UNIVERSE_SIZE_PC,
   type Quality,
 } from '@atg/shared';
 import {
+  BONUS_CENTROID_FALLBACK_N,
+  BONUS_MAX_PC,
+  BONUS_MIN_PC,
+  BONUS_RHO_CENTROID_SCALE_PC,
   BONUS_RHO_FLOOR,
-  bonusRhoEff,
+  BONUS_RHO_POCKET_FLOOR,
+  bonusRhoEffFromCentroid,
+  bonusRhoEffFromPocket,
+  bonusStarChance,
   luckCount,
   QUALITY_WEIGHTS,
   RICH_QUALITY_WEIGHTS,
@@ -24,11 +30,10 @@ import {
   rollLeftoverSupply,
   rollPocketLuck,
   rollRuins,
+  RUIN_MAX_TIER,
   RUIN_POOL,
   TILE_RANGES,
 } from '../../src/gen/rolls.js';
-
-const CENTER = UNIVERSE_SIZE_PC / 2;
 
 describe('luckCount — seuils littéraux de la directive', () => {
   it('0,1 % → +2 ; 1,0 % → +1 ; sinon base (bornes exactes)', () => {
@@ -71,22 +76,46 @@ describe('luckCount — seuils littéraux de la directive', () => {
   });
 });
 
-describe('bonusRhoEff — gradient spatial borné', () => {
-  it('plancher 0,25 au centre, 1 au-delà de 100 k pc, monotone', () => {
-    expect(bonusRhoEff(CENTER, CENTER)).toBe(BONUS_RHO_FLOOR);
-    expect(bonusRhoEff(CENTER + 20_000, CENTER)).toBe(BONUS_RHO_FLOOR);
-    expect(bonusRhoEff(CENTER + 60_000, CENTER)).toBeCloseTo(
-      0.25 + 0.75 * 0.5,
+describe('bonusRhoEffFromCentroid — gradient de void borné (Round 10)', () => {
+  it('plancher 0,40 au centroïde, 1 à la saturation, monotone', () => {
+    expect(bonusRhoEffFromCentroid(0)).toBe(BONUS_RHO_FLOOR);
+    expect(BONUS_RHO_FLOOR).toBe(0.4);
+    expect(bonusRhoEffFromCentroid(BONUS_RHO_CENTROID_SCALE_PC / 2)).toBeCloseTo(
+      0.4 + 0.6 * 0.5,
       10,
     );
-    expect(bonusRhoEff(CENTER + 100_000, CENTER)).toBe(1);
-    expect(bonusRhoEff(CENTER, CENTER + 400_000)).toBe(1);
+    expect(bonusRhoEffFromCentroid(BONUS_RHO_CENTROID_SCALE_PC)).toBe(1);
+    expect(bonusRhoEffFromCentroid(BONUS_RHO_CENTROID_SCALE_PC * 3)).toBe(1);
     let prev = 0;
-    for (let d = 0; d <= 120_000; d += 5_000) {
-      const rho = bonusRhoEff(CENTER + d, CENTER);
+    for (let d = 0; d <= 30_000; d += 1_000) {
+      const rho = bonusRhoEffFromCentroid(d);
       expect(rho).toBeGreaterThanOrEqual(prev);
       prev = rho;
     }
+  });
+});
+
+describe('bonusRhoEffFromPocket — repli des premiers explorateurs', () => {
+  it('plancher 0,25 à 800 pc, saturé à 4000 pc, monotone', () => {
+    expect(bonusRhoEffFromPocket(BONUS_MIN_PC)).toBe(BONUS_RHO_POCKET_FLOOR);
+    expect(BONUS_RHO_POCKET_FLOOR).toBe(0.25);
+    expect(bonusRhoEffFromPocket(BONUS_MAX_PC)).toBe(1);
+    expect(bonusRhoEffFromPocket((BONUS_MIN_PC + BONUS_MAX_PC) / 2)).toBeCloseTo(
+      0.25 + 0.75 * 0.5,
+      10,
+    );
+    expect(bonusRhoEffFromPocket(400)).toBe(BONUS_RHO_POCKET_FLOOR); // clamp bas
+    // Le repli ne sert que les tout premiers (< N corps possédés).
+    expect(BONUS_CENTROID_FALLBACK_N).toBeGreaterThan(0);
+  });
+});
+
+describe('bonusStarChance — étoile liée à la richesse (PATCH 10-2)', () => {
+  it('P = 0,25 + 0,5·ρ (0,40 au plancher, 0,75 à ρ=1), croissante', () => {
+    expect(bonusStarChance(0)).toBeCloseTo(0.25, 10);
+    expect(bonusStarChance(0.4)).toBeCloseTo(0.45, 10); // plancher centroïde
+    expect(bonusStarChance(1)).toBeCloseTo(0.75, 10);
+    expect(bonusStarChance(0.6)).toBeGreaterThan(bonusStarChance(0.3));
   });
 });
 
@@ -127,16 +156,28 @@ describe('rollBonusPlanet — profil riche', () => {
   });
 });
 
-describe('RUIN_POOL — prédicat de catalogue (règle de complétude)', () => {
-  it('tout le pool est sur tuile, apolitique à tous niveaux, non-industrie', () => {
+describe('RUIN_POOL — prédicat de catalogue + plafond de tier (PATCH 10-3)', () => {
+  it('tout le pool est sur tuile, apolitique, non-industrie ET tier ≤ 2', () => {
     expect(RUIN_POOL.length).toBeGreaterThan(0);
+    expect(RUIN_MAX_TIER).toBe(2);
     for (const key of RUIN_POOL) {
       const d = BUILDINGS[key];
       expect(d.usesTile).toBe(true);
       expect(d.politics).toBeNull();
       expect(d.politicsFromLevel).toBeUndefined();
       expect(d.batchesPerDayByLevel).toBeUndefined();
+      expect(d.tier).toBeLessThanOrEqual(RUIN_MAX_TIER);
     }
+  });
+
+  it('la mégastructure réseau stargate_yard (tier 4) est EXCLUE', () => {
+    expect(RUIN_POOL).not.toContain('stargate_yard');
+    // Confirme que c'est bien le plafond de tier qui l'exclut (elle passe
+    // les autres critères du prédicat brut).
+    const d = BUILDINGS.stargate_yard;
+    expect(d.usesTile).toBe(true);
+    expect(d.politics).toBeNull();
+    expect(d.tier).toBeGreaterThan(RUIN_MAX_TIER);
   });
 
   it('snapshot du pool courant — si le catalogue bouge, revue exigée', () => {
@@ -146,7 +187,6 @@ describe('RUIN_POOL — prédicat de catalogue (règle de complétude)', () => {
         'depot',
         'obs_station',
         'spaceport',
-        'stargate_yard',
         'telescope',
         'warehouse',
         'workshop',

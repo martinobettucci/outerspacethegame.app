@@ -18,7 +18,7 @@ import type pg from 'pg';
 import { randomUUID } from 'node:crypto';
 import { SeededStream, STARTER_POP, STARTER_PRE_UNLOCKED } from '@atg/shared';
 import { registerPlayer, type RegisterResult } from '../../src/services/players.js';
-import { planetDetail } from '../../src/services/planets.js';
+import { demolishBuilding, planetDetail } from '../../src/services/planets.js';
 import {
   isPointVisibleToAnyPlayer,
   placeBonusCandidate,
@@ -29,31 +29,36 @@ import {
   BONUS_COUNT_MIN,
   BONUS_MAX_PC,
   BONUS_MIN_PC,
-  BONUS_RHO_FLOOR,
-  BONUS_STAR_CHANCE,
-  bonusRhoEff,
+  BONUS_RHO_POCKET_FLOOR,
+  bonusRhoEffFromPocket,
+  pocketLuckStream,
   rollLeftoverSupply,
   rollPocketLuck,
   rollRuins,
+  rollStar,
 } from '../../src/gen/rolls.js';
 import { createTestPool } from './helpers.js';
 
 let pool: pg.Pool;
 const run = randomUUID().slice(0, 8);
 const universeSeed = `luck-universe-${run}`;
+// Poivre de luck de TEST (PATCH 10-5) : injecté pour rendre le tirage
+// déterministe et reproductible hors base — le même dans register ET dans le
+// balayage, sinon les luck divergeraient.
+const TEST_PEPPER = `test-luck-pepper-${run}`;
 
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(Number(a.x) - Number(b.x), Number(a.y) - Number(b.y));
 
 /**
- * Balayage déterministe : trouve un e-mail dont le flux de poche (le MÊME
- * que la prod : `pocket:{email}`) donne exactement `starters` planètes
- * starter. P(2) = 1 % → ~100 candidats en moyenne, plafond large.
+ * Balayage déterministe : trouve un e-mail dont le flux de luck SECRET
+ * (HMAC(TEST_PEPPER, email), le MÊME que register) donne exactement
+ * `starters` planètes starter. P(2) = 1 % → ~100 candidats en moyenne.
  */
 function findEmailWithLuck(starters: number): string {
   for (let i = 0; i < 200_000; i++) {
     const email = `lucky-${run}-${i}@test.local`;
-    const luck = rollPocketLuck(new SeededStream(universeSeed, `pocket:${email}`));
+    const luck = rollPocketLuck(pocketLuckStream(TEST_PEPPER, email));
     if (luck.starters === starters) return email;
   }
   throw new Error(`Aucun e-mail à ${starters} starters trouvé (balayage 200k)`);
@@ -71,6 +76,7 @@ beforeAll(async () => {
     displayName: 'Chanceux',
     politics: 'industrialist',
     universeSeed,
+    luckPepper: TEST_PEPPER,
   });
 }, 60_000);
 
@@ -177,10 +183,13 @@ describe('§2.2b — frontière latente (mondes bonus)', () => {
         expect(
           await isPointVisibleToAnyPlayer(client, Number(bonus.x), Number(bonus.y)),
         ).toBe(false);
-        // ρ_eff figé en config = fonction pure de la position, ≥ plancher.
+        // ρ_eff figé en config : univers de test minuscule (< 50 corps
+        // possédés) → repli « distance à la poche » (Round 10). ρ = fonction
+        // pure de la distance au centre de la poche, ≥ plancher poche 0,25.
         const rho = (bonus.config as { bonus: { rhoEff: number } }).bonus.rhoEff;
-        expect(rho).toBeCloseTo(bonusRhoEff(Number(bonus.x), Number(bonus.y)), 10);
-        expect(rho).toBeGreaterThanOrEqual(BONUS_RHO_FLOOR);
+        const dPocket = dist(bonus, lucky.spawn.pocketCenter);
+        expect(rho).toBeCloseTo(bonusRhoEffFromPocket(dPocket), 10);
+        expect(rho).toBeGreaterThanOrEqual(BONUS_RHO_POCKET_FLOOR);
       }
     } finally {
       client.release();
@@ -241,53 +250,69 @@ describe('§2.2b — frontière latente (mondes bonus)', () => {
     }
   });
 
-  it("étoile propre : présence EXACTEMENT quand le flux de placement l'a tirée (25 %)", async () => {
+  it("étoile propre : présence liée à ρ (P=0.25+0.5·ρ), REJOUÉE fidèlement + fuel enrichi", async () => {
+    // L'univers de test est minuscule : rien n'est visible, donc on REJOUE
+    // placeBonusCandidate à l'identique (même flux `bonus-place`, repli poche,
+    // isVisible=false) et on confronte hasStar/position à la base — preuve de
+    // bout en bout de la présence ρ-dépendante et de la géométrie.
     for (let i = 0; i < lucky.spawn.bonusPlanetIds.length; i++) {
-      const withStar =
-        new SeededStream(universeSeed, `bonus-place:${luckyEmail}:${i}`).float() <
-        BONUS_STAR_CHANCE;
+      const bonusStar = rollStar(`${universeSeed}:bonusstar:${luckyEmail}:${i}`);
+      const spot = await placeBonusCandidate(
+        new SeededStream(universeSeed, `bonus-place:${luckyEmail}:${i}`),
+        lucky.spawn.pocketCenter,
+        async () => false,
+        (x, y) => bonusRhoEffFromPocket(dist({ x, y }, lucky.spawn.pocketCenter)),
+        bonusStar.rNova,
+      );
+      expect(spot).not.toBeNull();
       const { rows: stars } = await pool.query(
-        `SELECT id, x, y, star_fuel_stock FROM bodies WHERE seed = $1`,
+        `SELECT x, y, star_fuel_stock FROM bodies WHERE seed = $1`,
         [`${universeSeed}:bonusstar:${luckyEmail}:${i}`],
       );
-      expect(stars.length).toBe(withStar ? 1 : 0);
-      if (withStar) {
-        const { rows: planets } = await pool.query(
-          `SELECT x, y, config FROM bodies WHERE seed = $1`,
-          [`${universeSeed}:bonus:${luckyEmail}:${i}`],
+      expect(stars.length).toBe(spot!.hasStar ? 1 : 0);
+      if (spot!.hasStar) {
+        // Géométrie de poche (R_nova+5..+30) et stock enrichi ×(1+2ρ) > base.
+        const dStar = Math.hypot(
+          Number(stars[0]!.x) - spot!.x,
+          Number(stars[0]!.y) - spot!.y,
         );
-        expect(planets).toHaveLength(1);
-        // Étoile à portée de poche (harvest praticable), stock enrichi > 0.
-        expect(dist(stars[0]!, planets[0]!)).toBeLessThanOrEqual(102 + 30 + 1);
-        expect(Number(stars[0]!.star_fuel_stock)).toBeGreaterThan(0);
+        expect(dStar).toBeGreaterThanOrEqual(bonusStar.rNova + 5 - 1);
+        expect(dStar).toBeLessThanOrEqual(bonusStar.rNova + 30 + 1);
+        expect(Number(stars[0]!.star_fuel_stock)).toBeGreaterThanOrEqual(
+          bonusStar.fuelStock,
+        );
       }
     }
   });
 
   it('saturation : la sonde de visibilité toujours-vraie force le skip (null) après K tentatives', async () => {
-    const stream = new SeededStream(universeSeed, 'saturation-check');
+    const richHalf = () => 0.5; // P_star = 0.5
     const saturated = await placeBonusCandidate(
-      stream,
+      pocketLuckStream(TEST_PEPPER, 'sat'),
       { x: 500_000, y: 500_000 },
       async () => true,
-      null,
+      richHalf,
+      40,
     );
     expect(saturated).toBeNull();
 
     const open = await placeBonusCandidate(
-      new SeededStream(universeSeed, 'saturation-check'),
+      pocketLuckStream(TEST_PEPPER, 'sat'),
       { x: 500_000, y: 500_000 },
       async () => false,
+      richHalf,
       40,
     );
     expect(open).not.toBeNull();
     const d = Math.hypot(open!.x - 500_000, open!.y - 500_000);
     expect(d).toBeGreaterThanOrEqual(BONUS_MIN_PC);
     expect(d).toBeLessThanOrEqual(BONUS_MAX_PC);
-    // Étoile demandée (R_nova 40) : géométrie de poche 45–70 pc.
-    const starDist = Math.hypot(open!.starX! - open!.x, open!.starY! - open!.y);
-    expect(starDist).toBeGreaterThanOrEqual(45 - 1e-6);
-    expect(starDist).toBeLessThanOrEqual(70 + 1e-6);
+    // Étoile (si tirée) : géométrie de poche R_nova+5..+30 (R_nova 40).
+    if (open!.hasStar) {
+      const starDist = Math.hypot(open!.starX! - open!.x, open!.starY! - open!.y);
+      expect(starDist).toBeGreaterThanOrEqual(45 - 1e-6);
+      expect(starDist).toBeLessThanOrEqual(70 + 1e-6);
+    }
   });
 });
 
@@ -307,6 +332,7 @@ describe("§2.2b — ADN effectif d'un monde à ruines (union servie par planetD
         displayName: `RuinScan${attempts}`,
         politics: 'civic',
         universeSeed,
+        luckPepper: TEST_PEPPER,
       });
       for (const bonusId of reg.spawn.bonusPlanetIds) {
         const { rows } = await pool.query(
@@ -349,5 +375,23 @@ describe("§2.2b — ADN effectif d'un monde à ruines (union servie par planetD
       expect(detail.tech.available).toContain(ruin.key);
       expect(detail.tech.maxLevel[ruin.key]).toBeGreaterThanOrEqual(ruin.level);
     }
+
+    // PATCH 10-4 : démolir une RUINE HÉRITÉE ne rembourse RIEN (investedPaid
+    // = {}), même une ruine de haut niveau — le colonisateur n'a rien payé.
+    const { rows: ruinRows } = await pool.query(
+      `SELECT id, key, level, config FROM buildings
+       WHERE body_id = $1 ORDER BY level DESC LIMIT 1`,
+      [target!.id],
+    );
+    expect(ruinRows[0]).toBeDefined();
+    expect(ruinRows[0]!.config.investedPaid).toEqual({}); // rien payé
+    const { refunded } = await demolishBuilding(
+      pool,
+      ownerId,
+      target!.id,
+      ruinRows[0]!.id,
+      { timeScale: 7200 },
+    );
+    expect(Object.values(refunded).every((v) => !v || v === 0)).toBe(true);
   }, 120_000);
 });

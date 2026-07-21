@@ -81,7 +81,7 @@ Environment variables are documented in `game/.env.example` (copy to
 |---|---|---|---|
 | `demo@atg.local` | `demo-password-1` | industrialist | main demo Sovereign |
 | `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor; publishes an innate hospitality offer (water @ 2 ore/T, floor 10 T) |
-| `lucky-N@atg.local` | `demo-password-3` | civic | §2.2b pocket-luck demo: `N` is scanned deterministically (same luck stream as production) until the first e-mail rolling **≥ 2 starter planets** — the multi-starter spawn is demonstrated through the real flow, never fabricated (with the default `UNIVERSE_SEED`, `N = 26`) |
+| `lucky-N@atg.local` | `demo-password-3` | civic | §2.2b pocket-luck demo: `N` is scanned deterministically (same secret luck stream `HMAC(LUCK_PEPPER, email)` as production) until the first e-mail rolling **≥ 2 starter planets** — the multi-starter spawn is demonstrated through the real flow, never fabricated (with the default `LUCK_PEPPER`, `N = 142`) |
 
 The seed goes through the real registration flow (`registerPlayer` →
 starter spawn), is idempotent, and is recreated by `pnpm resetDb`. Its

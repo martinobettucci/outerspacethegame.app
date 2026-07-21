@@ -29,6 +29,18 @@ const schema = z.object({
     .min(32)
     .default('dev-only-secret-change-me-0123456789abcdef'),
   UNIVERSE_SEED: z.string().min(1).default('atg-dev-universe-0001'),
+  /**
+   * Poivre secret du tirage de pocket-luck (§2.2b, Balance Round 10 PATCH
+   * 10-5). La chance multi-starter est tirée de HMAC(LUCK_PEPPER, email),
+   * PAS du seed d'univers : le farming hors-ligne devient impossible sans
+   * le secret, et une fuite est rattrapable par ROTATION (les poches déjà
+   * nées ne bougent pas — seule la géométrie reste sur UNIVERSE_SEED). En
+   * dev/test : valeur par défaut ; en prod : variable dédiée, jamais commit.
+   */
+  LUCK_PEPPER: z
+    .string()
+    .min(16)
+    .default('dev-only-luck-pepper-change-me-0123456789'),
   TICK_MS: z.coerce.number().int().positive().default(60_000),
   /**
    * Accélérateur de temps DEV/TEST uniquement (instrumentation §15 :
