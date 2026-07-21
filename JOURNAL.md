@@ -4052,3 +4052,50 @@ Preuves : unit wear 17 ; star-fields.test 3/3 (×3) ; wear.test 9/9
 21 ; E2E shields.spec réécrit vert ×2 ; captures sh-00..03 OBSERVÉES
 (champ teinté au clic, −4.0 HP/day, « Hull morphing → hot », péage
 éteint après morphose).
+
+## 2026-07-21 — W6 : plan de chunk (pipeline accessoires & upgrades-items)
+
+Spec validée (MASTER_PLAN W6). Décomposition en sous-chunks et
+interprétations d'implémentation :
+
+W6a — Modèle d'items & fabrication :
+- Catalogue partagé `items.ts` : ITEMS non-fongibles {key, kind
+  accessory|upgrade, slot (accessory|engine|armor|obs|weapon|fuel),
+  level 2|3 pour les upgrades, coût de fabrication, heures de
+  fabrication [TUNE], coût+heures d'installation [TUNE], bâtiment hôte
+  de fabrication}. Premier accessoire : advanced_refueling_system
+  (2 ancrages W3). Upgrades DG §8.2 : engine/armor/fuel(tank)/obs/
+  weapon L2 et L3 — effets moteur (vitesse ×1,15/×1,30), armure (HP
+  ×1,3/×1,6), réservoir (×1,5/×2,0) branchés ; obs/weapon DORMANTS
+  (combat P5, annoncé).
+- Découverte [interp annoncée v1] : un item est fabricable là où son
+  bâtiment hôte est DISPONIBLE dans l'ADN de la planète (accessoires →
+  workshop ; weapon → weapon_foundry ; engine/armor/fuel/obs →
+  shipyard). L'« arbre ADN des accessoires » dédié (nœuds propres)
+  reste à approfondir — ANNONCÉ comme reste W6 au MASTER_PLAN.
+- Migration 031 : table planet_items (lignes non-fongibles, body_id,
+  item_key), ships.accessories jsonb [], ships.upgrades jsonb {},
+  ships.installing_item + install_started_at.
+- Fabrication : commande sur un bâtiment hôte ACTIF (coût au stock,
+  refus explicites), événement item_fabricated → ligne planet_items ;
+  capacité d'ITEMS des warehouses RÉVEILLÉE : Σ 50 × mult(niveau)
+  [chunk AD], la fabrication refuse au-delà.
+W6b — Installation & effet du premier accessoire :
+- Vaisseau WAREHOUSED sur le monde de l'item : install (coût
+  ressources + TEMPS [TUNE 12 h] d'immobilisation supplémentaire),
+  événement item_installed idempotent → accessories/upgrades écrits,
+  la ligne planet_items consommée à la COMMANDE (atomique).
+- Slots = ceux de la coque (canon, PAS de rnd) : accessoires ≤
+  slots.accessory ; upgrades : 1 par famille max [TUNE-v1 interp
+  annoncée], famille avec slot > 0 seulement ; un L3 s'installe
+  DIRECTEMENT (remplace un L2 installé, l'item L2 N'est PAS rendu
+  [TUNE-v1 annoncé]).
+- Effet accessoire 1 : MAX_ANCHORED_PROBES → 2 si
+  advanced_refueling_system installé (W3 hook).
+- Effets upgrades : vitesse moteur dans moveShip/hullStats, HP max
+  armure dans shipMaxHp, capacité réservoir effective partagée
+  (effectiveTankU) utilisée par refuel/transferts/anchor/moveShip.
+W6c — restes explicites (au MASTER_PLAN) : arbre ADN dédié des
+  accessoires, achat/acheminement par cargo (marché des items),
+  conversion des rigs booléens historiques (harvest/junk/claim) en
+  items, obs/weapon effectifs (P5).
