@@ -156,12 +156,23 @@ literal per the directive [TUNE]:
    **K = 8** [TUNE] placement attempts per candidate; if none fits, the bonus
    world is **silently not spawned**. Crowding therefore self-throttles the
    reward flow (intended: the denser the universe, the rarer the bonus).
-3. **Richness gradient:** `ρ_eff = 0.25 + 0.75 × clamp((d_center − 20 000) /
-   80 000, 0, 1)` [TUNE], `d_center` = distance from the universe center
-   (500 000, 500 000). Floor 0.25: every bonus world is *at least* rich;
-   saturation ≈ 100 k pc out. As the settled cluster random-walks outward
-   (§2.2.1 neighbor ring), later cohorts spawn farther → richer: the outskirts
-   accumulate increasingly valuable latent worlds over the universe's life.
+3. **Richness gradient (re-anchored — Balance Round 10, owner decision
+   2026-07-21):** `ρ_eff = 0.40 + 0.60 × clamp( dist(world, C) / 22 000, 0,
+   1 )` [TUNE], where **C = the live centroid of all owned bodies** (running
+   `avg(x), avg(y)` over `owner_id IS NOT NULL`). Floor **0.40**: every bonus
+   world is legibly *at least* rich. When the universe is tiny
+   (`n_owned < 50` [TUNE]) fall back to distance-from-pocket
+   `0.25 + 0.75·clamp((d_pocket − 800)/3200, 0, 1)` so the first adventurers
+   are still rewarded. **Why the centroid, not the universe centre:** the
+   original `d_center` model was proven **dead on arrival** (Round 10 F1) —
+   the settled cluster is a √N random-walk (`max d_center ≈ 13 600 + 117.6·√N`)
+   that reaches only ~31 k pc at 40 k players while `d_center` needed 100 k pc
+   to saturate, so **0 %** of worlds were ever rich. Anchoring on the centroid
+   puts the origin *inside* the population, giving richness real spatial
+   variance (deeper into the void = richer) AND — because mean-distance-from-
+   centroid = ⅔·R grows as R ∝ √N — an **emergent temporal lift**: later
+   cohorts' frontiers are richer. Sim (final config): ρ climbs **0.53 → 0.77**
+   across cohorts, **97.5 %** of worlds ρ>0.5.
 4. **Richer rolls** (all [TUNE], blended toward a rich profile by ρ_eff):
    quality weights → `{A .25, B .30, C .25, D .13, E .05, F .02}`; size
    weights → `{s .20, m .40, l .40}`; tiles rolled in the **upper half** of
@@ -176,11 +187,14 @@ literal per the directive [TUNE]:
    buildings are **force-unioned** into availability with
    `maxLevel ≥ their level`.
 6. **Abandoned buildings:** `count = round(ρ_eff × U(0, 4))`, capped at
-   `⌊tiles/2⌋` [TUNE]; types drawn from the **catalogue predicate**
-   {usesTile, politics-free at every level, non-industry (no
-   batchesPerDayByLevel)} — derived from `BUILDINGS`, never a hardcoded list
-   (completeness rule); levels: **L3 with P = 0.15 + 0.45·ρ_eff, L2 0.30,
-   else L1** [TUNE]; rows born `status = 'active'`, `workforce = 0`,
+   `⌊tiles/2⌋` [TUNE]; types drawn from the **`ruinEligible` set** — the
+   catalogue predicate {usesTile, politics-free at every level, non-industry}
+   **further restricted to tier ≤ 2** (Round 10 PATCH 10-3: the raw predicate
+   swept in the tier-4 `stargate_yard`; the network megastructure must never
+   spawn as rubble). Current set: `{telescope, depot, warehouse, spaceport,
+   workshop, clinic, obs_station}`. Levels: **L3 with P = 0.15 + 0.45·ρ_eff,
+   L2 0.30, else L1** [TUNE]; rows born `status = 'active'`, `workforce = 0`,
+   `config.investedPaid = {}` (nothing was paid — see §6 demolition),
    `tile_index` from **2 upward** (tiles 0/1 stay free for the §12.3
    colonization kit, whose inserts are ON CONFLICT-safe). Unowned worlds
    produce nothing (extinction rule): the ruins are **inert until settled,
@@ -188,13 +202,33 @@ literal per the directive [TUNE]:
 7. **Leftover supply:** 2–5 resources drawn from basics + food/water, each
    `ρ_eff × U(40, 200)` T [TUNE] in planet stock; the §3.3b storage brake
    governs any post-landing overflow.
-8. **Bonus star (owner decision 2026-07-20):** probability **25%** [TUNE];
-   class rolled normally (S/M/L 60/30/10), fuel stock `× (1 + 2·ρ_eff)`
-   [TUNE], placed `U(R_nova + 5, R_nova + 30)` pc from the bonus planet
-   (pocket-like geometry — harvest trips work as at home); the star obeys the
-   same invisibility invariant. The other ~75% are **fuel deserts by
-   design** — their wealth is paid in round-trip logistics (stargates remain
-   the long-term answer).
+8. **Bonus star — chance scales with richness (Round 10 PATCH 10-2, owner
+   decision 2026-07-21):** probability `P_star = 0.25 + 0.5·ρ_eff` [TUNE]
+   (0.40 at the floor, up to 0.75) — the farthest/richest worlds carry the
+   highest logistics tax, so they get the refuel star that makes them viable
+   waypoints (sim star% 54 → 63 % across cohorts). Class rolled normally
+   (S/M/L 60/30/10), fuel stock `× (1 + 2·ρ_eff)` [TUNE], placed
+   `U(R_nova + 5, R_nova + 30)` pc from the bonus planet (pocket-like
+   geometry); the star obeys the same invisibility invariant. Starless worlds
+   remain **fuel deserts by design** — wealth paid in round-trip logistics
+   (stargates remain the long-term answer).
+
+**Reachability & security (Round 10).** The **800 pc floor is intentional** —
+it exceeds max telescope scope (660 pc) and a probe's ~700 pc round-trip, so a
+bonus world is genuinely latent, reached only as the settled network expands
+(an epic late-game goal); the 4000 pc ceiling is a stargate-era target and no
+longer gates richness (10-M2). Three hardening patches ship with the round:
+**(10-4)** demolition refunds only `0.5 × config.investedPaid` — the owner-paid
+investment recorded on each building (placement + level-ups); spawn ruins and
+colony-kit conversions record **0**, so inherited value refunds nothing.
+**(10-5)** the pocket-luck draw uses `SeededStream(HMAC(LUCK_PEPPER, email),
+'pocket-luck')` — a rotatable secret env var (injected in tests) — so
+multi-starter luck cannot be ground offline; pocket *geometry* stays on
+`(universeSeed, email)`. **(10-6)** `spawnStarterSystem` takes a
+`pg_advisory_xact_lock` so concurrent registrations cannot race the isolation
+or invisibility checks. **Monitor 10-M1:** carry `account_bound_until` across
+extinction/supernova and wire the `is_starter` flag into every future
+ownership-transfer path before planet trade/conquest ship.
 
 ---
 

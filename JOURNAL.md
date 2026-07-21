@@ -3645,3 +3645,33 @@ Persisté avant code (§5). Complète la spec sondes v3.
   DÉTRUITES (hooks combat P5). MaxHP sonde proposé [TUNE] : 50 HP
   (fragile — ~4-5 refuels stellaires avant perte). À 0 HP = détruite
   (cohérent avec « à sec = perdue »).
+
+## 2026-07-21 — Balance Round 10 : spawn §2.2b (pocket luck & frontière latente)
+
+- **Méthode.** Simulateur Monte-Carlo `tools/balance/spawn_v2_sim.py` (univers
+  rempli joueur par joueur, règles de spawn exactes) + 3 campagnes archétypes
+  (Voyager, Breaker, Latecomer). Anchor A (fréquences de luck) vert.
+- **Finding critique (F1).** Le gradient de richesse était mort-né : `ρ_eff`
+  ancré sur la distance au CENTRE de l'univers (saturation 100k pc), or le
+  cluster peuplé est une marche aléatoire √N (`max d_center ≈ 13 600 +
+  117.6·√N`) qui n'atteint que ~31k pc à 40 000 joueurs → 0,000 % de mondes
+  riches. La récompense promise ne se déclenchait jamais.
+- **Décision responsable 2026-07-21 (4 questions).** (1) Ré-ancrer sur le
+  CENTROÏDE vivant des mondes possédés : `ρ_eff = 0.40 + 0.60·clamp(dist/22000)`,
+  plancher relevé 0,25→0,40, repli distance-poche si `n_owned < 50`. Origine
+  DANS la population → variance spatiale réelle + mont ée temporelle émergente
+  (⅔R ∝ √N). Sim : ρ 0.53→0.77 selon la cohorte, 97,5 % riches. (2) Chance
+  d'étoile liée à la richesse `P = 0.25 + 0.5·ρ` (relais de ravitaillement pour
+  les mondes lointains). (3) 4 correctifs de sécurité : retirer stargate_yard
+  /tier≥3 du pool de ruines (défaut de prédicat), démolition rembourse seulement
+  l'investi payé (`config.investedPaid`), verrou `pg_advisory_xact_lock` au
+  spawn, LUCK_PEPPER (tirage de luck derrière un secret rotatif). (4) Tout
+  appliquer maintenant + re-sim + persister.
+- **Conséquences.** DG §2.2b réécrit (v0.11), BALANCE_LOG Round 10 détaillé,
+  moniteur 10-M1 (blanchiment du bind 45 j via extinction — à câbler avant que
+  le trade/conquête arrivent). Toutes les valeurs restent [TUNE].
+- **Vérifications prévues (code).** Unit : formule centroïde bornée/monotone,
+  pool de ruines tier≤2, `P_star`, HMAC luck déterministe sous pepper injecté,
+  refund = investi payé. Intégration : centroïde servi au spawn, ruines sans
+  stargate_yard, refund d'une ruine héritée = 0, luck reproductible via pepper
+  de test, verrou de concurrence. E2E inchangé (frontière latente déjà verte).

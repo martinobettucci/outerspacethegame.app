@@ -753,3 +753,113 @@ authoritative PostgreSQL rebase, and four otherwise identical integration
 worlds prove reserve, zero stock, exact exhaustion and full lab supply. The
 survival anchors remain unchanged; the implementation adds no medicine clock
 and the compatibility natality helper now excludes medicine.
+
+---
+
+## Round 10 — §2.2b spawn: pocket luck & the latent frontier (2026-07-21) — **PATCHED → guide v0.11**
+
+Second numerical round (`tools/balance/spawn_v2_sim.py`), a **Monte-Carlo
+universe-filler**: §2.2b is a stochastic *generator* whose balance is
+emergent across a filling universe, so we fill one player-by-player with the
+exact spawn rules and measure the anchors. Backed by three archetype
+campaigns (Voyager / Breaker / Latecomer). Every sim constant mirrors the
+shipped code; a mid-round audit corrected `DEPOSIT_SIZE_MULT` proxy to the
+real `{s1, m3, l10}` (rich worlds skew large → reward spread across ρ ≈ 10×,
+not the ~flat first pass).
+
+### Findings → patches
+
+1. **F1 — the richness gradient was DEAD ON ARRIVAL (game-shaping).** Shipped
+   `ρ_eff` keyed on distance from the *universe centre* (saturates at
+   100 000 pc), but the settled cluster is a slow √N random-walk:
+   `max d_center ≈ 13 600 + 117.6·√N`. Median world reaches ρ>floor only at
+   ~31 000 players and ρ=1.0 at ~1.4 M — unreachable. Sim: **0.000 %** of
+   bonus worlds ever exceed ρ 0.50 even at 40 000 players; 59–85 % pinned at
+   the exact floor 0.25. The "abandoned buildings, richer DNA, higher supply"
+   the feature promises **never fired**. → **PATCH 10-1.**
+2. **F2 — reward vs reach (Voyager).** At floor ρ0.25 a bonus world is a
+   ×1.5-deposit wild rock with ~0.45 buildings (usually none), 75 % with no
+   star, at 800–4000 pc — beyond every single-ship colony reach (best tank
+   ~640 pc; Civil-L survival 1980 pc; probe round-trip ~700 pc). The 800 pc
+   floor is correct (clears telescope 660 + probe reach → genuinely latent);
+   the reward simply wasn't worth the epic trip. → **PATCH 10-1 + 10-2.**
+3. **F3 — `stargate_yard` (tier 4) was in `RUIN_POOL` (Breaker, CONFIRMED
+   defect).** The catalogue predicate swept the network-gating megastructure
+   into the rubble pool: a bonus world could spawn an abandoned L3
+   `stargate_yard`, inherited working and force-unioned into DNA at L3. →
+   **PATCH 10-3.**
+4. **F4 — demolition refunded materials never paid (Breaker, CONFIRMED).**
+   `demolishBuilding` credited 0.5 × `investedCost(def, level)` with no check
+   that the current owner paid it — inherited ruins and the colony-kit
+   auto-buildings salvaged for free (worst case an L3 `stargate_yard` ruin →
+   2500 steel_h). → **PATCH 10-4.**
+5. **F5 — multi-starter luck is a grindable public function (Breaker).**
+   `rollPocketLuck` is deterministic on `(universeSeed, email)`; the repo's
+   own `findLuckyDemoEmail` is a working brute-forcer (~90 free signups per
+   2-starter). The 45-day bind contains the *value* of the extras (verified:
+   they are `is_starter` + account-bound), but extinction/supernova launder
+   the bind and the flags gate nothing yet. → **PATCH 10-5** (defence in
+   depth) + monitor 10-M1.
+6. **F6 — spawn TOCTOU (Breaker).** READ COMMITTED + no serialization lets
+   concurrent registrations place pockets < 150 pc apart or a bonus inside a
+   concurrently-committing player's scope. → **PATCH 10-6.**
+
+### Verified behaviours (no patch)
+
+- **Anchor A (pocket luck) GREEN.** `luckCount` thresholds are exactly
+  P(+2)=0.1 %, P(+1)=1.0 % for starters and wilds; sim 0.96–1.19 % / 0.04–
+  0.16 % is sampling noise. Extra starters are born colonized + fully granted
+  + account-bound 45 d + `is_starter`.
+- **Self-throttle works** (gently): skip rate rises with density (≈0 % early
+  → 4–6 % under telescope adoption at large N). Frontier never starves.
+- **Invisibility invariant holds at spawn** (structural: 800 pc floor > 660 pc
+  max telescope scope); never visible to the spawner; register returns no
+  bonus coords. Only the concurrency race (F6) can violate it.
+- **DNA-cap lift by inherited ruins is intended** (spec 5–6); only its combo
+  with the `stargate_yard` defect and the free-refund bug was exploitable —
+  both fixed by 10-3/10-4.
+
+### Applied patches (→ DESIGN_GUIDE §2.2b v0.11) — owner-approved 2026-07-21
+
+- **PATCH 10-1 — re-anchor richness on the LIVE SETTLED CENTROID** (owner
+  choice B'). `ρ_eff = 0.40 + 0.60 · clamp( dist(world, centroid_of_owned) /
+  22 000, 0, 1 )`; floor **0.25 → 0.40** (every bonus world legibly "at least
+  rich"); when `n_owned < 50`, fall back to distance-from-pocket
+  `0.25 + 0.75·clamp((d_pocket−800)/3200,0,1)` (early adventurers still
+  rewarded). The origin sits *inside* the population, so distance has real
+  variance AND mean-distance-from-centroid = ⅔R grows as R ∝ √N → an
+  **emergent temporal lift** ("later players' frontiers are richer"). **Sim
+  (final config):** ρ climbs **0.53 → 0.77** across cohorts, **97.5 %** of
+  worlds ρ>0.5 (0 % today), ruins **0.97 → 1.42**/world, value ×~1.6 and
+  rising. Both owner goals — spatial "farther = richer" and temporal
+  "outskirts richer over time" — met.
+- **PATCH 10-2 — star chance scales with richness.** `P_star = 0.25 + 0.5·ρ`
+  (0.40 at floor, up to 0.75). The farthest/richest worlds — highest logistics
+  tax — get the refuel star that makes them viable waypoints. Sim star%
+  **54 → 63 %** across cohorts.
+- **PATCH 10-3 — ruin pool restricted to tier ≤ 2.** Explicit `ruinEligible`
+  gate (not the raw catalogue predicate); pool = {telescope, depot, warehouse,
+  spaceport, workshop, clinic, obs_station}. `stargate_yard` removed.
+- **PATCH 10-4 — demolition refunds only owner-paid investment.** Each
+  building records `config.investedPaid` (placement + level-ups actually
+  paid); spawn ruins and colony-kit conversions record **0**. Demolish credits
+  `0.5 × investedPaid`. Inherited value refunds nothing.
+- **PATCH 10-5 — luck draw moved behind a rotatable secret.** The pocket-luck
+  roll uses `SeededStream(HMAC(LUCK_PEPPER, email), 'pocket-luck')` instead of
+  the world seed; `LUCK_PEPPER` a dedicated env var (injected in tests for
+  determinism). Grinding now needs the secret; a leak is recoverable by
+  rotation. Pocket geometry stays on `(seed, email)` for reproducibility.
+- **PATCH 10-6 — spawn serialized.** `pg_advisory_xact_lock` at the top of
+  `spawnStarterSystem` closes the registration race.
+
+### Open monitors
+
+- **10-M1 — starter bind laundering.** Before planet trade/conquest ship
+  (P4/P5): carry `account_bound_until` across extinction/supernova (a reverted
+  ex-starter stays bound to its last owner until expiry) and wire the
+  `is_starter` / `account_bound_until` flags into every ownership-transfer /
+  mint path (the designed "never mintable" guard).
+- **10-M2 — band ceiling 4000 pc** stays a stargate-era goal under the
+  centroid model (richness no longer rides on the unreachable tail). Revisit
+  if stargate reach changes.
+- All §2.2b values remain `[TUNE]`; re-run `spawn_v2_sim.py` after any change.
