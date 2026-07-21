@@ -4256,3 +4256,18 @@ base sous la suite voisine (runs « skipped » en alternance) — supprimé,
 
 Preuves : crusader.test.ts 5/5 (×6) ; balayage sériel 333/335 (census
 ×2 = flaky R5 connu) ; unit 55 ; build vert. Restent W8c→W8e.
+
+## 2026-07-21 — W8c livré : les docks volants du Crusader
+
+Conforme au plan : amarrage à ≤ 1 pc (les deux à l'arrêt), capacité
+6 S / 6 M / 6 L (3 spaceports L3 figés, balances séparées — canon
+warehouse), sondes/personnel/Crusader exclus, v1 entre vos coques. À
+bord : réservoir GELÉ + équipage nourri par l'hôte, et les équipages
+invités s'ajoutent aux TÊTES du crusader_daily (« comme au sol » réel,
+pas simulé). Les invités voyagent avec l'hôte (sync à l'arrivée dans
+shipArrival — no-op pour les coques sans invités) ; moveShip efface
+l'amarrage (appareillage direct). Leçon : l'arrivée d'un vol précédent
+peut rester en file — pomper avant d'amarrer (flake corrigé).
+
+Preuves : crusader.test.ts 7/7 (×4) ; balayage sériel 335/337 (census
+×2 = flaky R5 connu) ; build vert. Restent W8d/W8e (plan persisté).

@@ -339,8 +339,17 @@ export const crusaderDaily: EventHandler = async (client, event) => {
   const popBefore = pyr.children + pyr.actives + pyr.seniors;
   if (popBefore <= 1e-9) return; // bord éteint : l'horloge s'arrête
 
-  // 1. Consommation du jour sur le STOCK de bord.
-  const heads = weightedHeads(pyr);
+  // 1. Consommation du jour sur le STOCK de bord — les ÉQUIPAGES des
+  //    coques amarrées mangent « comme au sol » sur l'hôte (W8c).
+  const { rows: guests } = await client.query(
+    `SELECT count(n.id)::int AS crew
+     FROM ships g
+     LEFT JOIN npcs n ON n.bound_host_type = 'ship' AND n.bound_host_id = g.id
+     WHERE g.follow_ship_id = $1 AND g.status = 'docked'`,
+    [shipId],
+  );
+  const guestCrew = Number(guests[0]?.crew ?? 0);
+  const heads = weightedHeads(pyr) + guestCrew;
   const per1000 = heads / 1_000;
   const needs = {
     food: POP_NEEDS_PER_1000_PER_DAY.food * per1000,
@@ -925,6 +934,15 @@ export const shipArrival: EventHandler = async (client, event) => {
            departed_at = NULL, arrives_at = NULL, dest_body_id = NULL
      WHERE id = $1 AND status = 'transit' AND arrives_at <= $2`,
     [shipId, event.dueAt],
+  );
+  // W8c/W8d : ce qui est AMARRÉ au bord voyage avec lui — position
+  // synchronisée à l'arrivée (no-op pour toute coque sans invités).
+  await client.query(
+    `UPDATE ships g
+        SET x = s.x, y = s.y
+       FROM ships s
+      WHERE s.id = $1 AND g.follow_ship_id = s.id AND g.status = 'docked'`,
+    [shipId],
   );
 
   // Armement du drain de loitering (GB §7) : survol de SON monde ⇒ le

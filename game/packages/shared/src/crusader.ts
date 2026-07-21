@@ -36,6 +36,13 @@ export const CRUSADER = {
   },
 } as const;
 
+/** Docks VOLANTS (W8c) : 3 spaceports L3 figés — comptes cumulés L3
+ *  (2S+2M+2L chacun) → 6 S / 6 M / 6 L. Les invités DOCKENT au
+ *  Crusader et consomment « comme au sol » sur SES ressources. */
+export function crusaderDocks(): { s: number; m: number; l: number } {
+  return { s: 6, m: 6, l: 6 };
+}
+
 /** Le Crusader est LA coque combat L (une seule classe volante). */
 export function isCrusader(
   category: string | null | undefined,

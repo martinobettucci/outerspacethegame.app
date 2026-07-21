@@ -18,6 +18,7 @@ import {
   effectiveTankU,
   engineSpeedMult,
   isCrusader,
+  crusaderDocks,
   ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
   recipeEngine,
@@ -417,6 +418,14 @@ export async function moveShip(
     }
     if (!['docked', 'hovering', 'idle'].includes(ship.status)) {
       throw new CommandError('not_available', `Vaisseau indisponible (${ship.status})`);
+    }
+    // W8c : partir depuis le bord d'un Crusader = appareillage direct.
+    if (ship.follow_ship_id && ship.status === 'docked') {
+      await client.query(
+        `UPDATE ships SET follow_ship_id = NULL WHERE id = $1`,
+        [shipId],
+      );
+      ship.follow_ship_id = null;
     }
     // W5 : coque immobilisée pendant sa MORPHOSE d'adaptation.
     if (ship.morphing_shield) {
@@ -1265,6 +1274,127 @@ export async function morphShield(
     });
     await client.query('COMMIT');
     return { completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+
+/**
+ * W8c — docks VOLANTS : une coque s'amarre au CRUSADER (3 spaceports L3
+ * figés → 6 S / 6 M / 6 L), les deux À L'ARRÊT à ≤ 1 pc. À bord :
+ * réservoir GELÉ et équipage nourri par l'hôte (« comme au sol » — les
+ * équipages invités pèsent sur le stock du bord via crusader_daily).
+ * Sondes/personnel/Crusader exclus ; v1 entre VOS coques.
+ */
+export async function dockAtCrusader(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  crusaderId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ docked: true }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  if (shipId === crusaderId) {
+    throw new CommandError('not_available', 'Une coque ne s\'amarre pas à elle-même');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE`,
+      [[shipId, crusaderId]],
+    );
+    const guest = rows.find((r) => r.id === shipId);
+    const host = rows.find((r) => r.id === crusaderId);
+    if (!guest || !host) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (guest.owner_id !== playerId || host.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'v1 : amarrage entre VOS coques seulement');
+    }
+    if (!isCrusader(host.hull_category, host.hull_size) || !host.crusader_infra) {
+      throw new CommandError('not_available', 'La cible n\'est pas un Crusader');
+    }
+    if (['probe', 'personal'].includes(guest.hull_category)) {
+      throw new CommandError('not_available', 'Cette coque ne s\'amarre pas');
+    }
+    if (isCrusader(guest.hull_category, guest.hull_size)) {
+      throw new CommandError('not_available', 'Un Crusader ne s\'amarre pas à un autre');
+    }
+    if (!['idle', 'hovering'].includes(guest.status)) {
+      throw new CommandError('not_available', `Coque indisponible (${guest.status})`);
+    }
+    if (!['idle', 'hovering'].includes(host.status)) {
+      throw new CommandError('not_available', 'Le Crusader doit être à l\'arrêt');
+    }
+    const d = Math.hypot(guest.x - host.x, guest.y - host.y);
+    if (d > 1 + 1e-9) {
+      throw new CommandError('not_available', `Trop loin pour s'amarrer : ${d.toFixed(2)} pc (max 1 pc)`);
+    }
+    // Capacité par taille (balances séparées, canon warehouse).
+    const docks = crusaderDocks();
+    const { rows: aboard } = await client.query(
+      `SELECT hull_size, count(*)::int AS n FROM ships
+       WHERE follow_ship_id = $1 AND status = 'docked'
+       GROUP BY hull_size`,
+      [crusaderId],
+    );
+    const used: Record<string, number> = { s: 0, m: 0, l: 0 };
+    for (const a of aboard) used[a.hull_size] = a.n;
+    const size = String(guest.hull_size) as 's' | 'm' | 'l';
+    if ((used[size] ?? 0) + 1 > docks[size]) {
+      throw new CommandError(
+        'not_available',
+        `Docks ${size.toUpperCase()} du Crusader pleins (${used[size]}/${docks[size]})`,
+      );
+    }
+    await client.query(
+      `UPDATE ships
+         SET status = 'docked', docked_body_id = NULL, docked_at = NULL,
+             hover_body_id = NULL, follow_ship_id = $2,
+             x = $3, y = $4
+       WHERE id = $1`,
+      [shipId, crusaderId, host.x, host.y],
+    );
+    // À bord : réservoir GELÉ, équipage nourri par l'hôte.
+    const { rows: fresh } = await client.query(`SELECT * FROM ships WHERE id = $1`, [shipId]);
+    await rebaseShipDrain(client, fresh[0], nowMs, 'none', { survivalServed: true });
+    await client.query('COMMIT');
+    return { docked: true };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** W8c — appareillage depuis le Crusader : la coque repart à l'arrêt à
+ * sa position (le vol libre existant fait le reste). */
+export async function undockFromCrusader(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ status: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ship = await lockOwnedShip(client, playerId, shipId);
+    if (ship.status !== 'docked' || !ship.follow_ship_id) {
+      throw new CommandError('not_available', 'Cette coque n\'est pas amarrée à un Crusader');
+    }
+    await client.query(
+      `UPDATE ships SET status = 'idle', follow_ship_id = NULL WHERE id = $1`,
+      [shipId],
+    );
+    const { rows: fresh } = await client.query(`SELECT * FROM ships WHERE id = $1`, [shipId]);
+    await rebaseShipDrain(client, fresh[0], nowMs, 'tank');
+    await client.query('COMMIT');
+    return { status: 'idle' };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;

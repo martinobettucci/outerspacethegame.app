@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/DAT.md §2/§4/§5; docs/BACKLOG.md §P1–§P4. */
 import { STABLE_PYRAMID } from '@atg/shared';
 import { setAutoTrade } from '../services/hoverTrade.js';
 import {
@@ -64,6 +65,8 @@ import {
   scoopProbeFuel,
   anchorTransferFuel,
   cancelAnchorTransfer,
+  dockAtCrusader,
+  undockFromCrusader,
   morphShield,
   setProbeFuelOrder,
   sendProbe,
@@ -679,6 +682,22 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         timeScale: deps.config.TIME_SCALE,
       }),
     );
+  });
+
+  // W8c : docks volants du Crusader.
+  app.post('/ships/:id/dock-crusader', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ crusaderId: z.string().uuid() }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      dockAtCrusader(deps.pool, player.id, id, parsed.data.crusaderId),
+    );
+  });
+  app.post('/ships/:id/undock-crusader', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    return wrap(reply, () => undockFromCrusader(deps.pool, player.id, id));
   });
 
   // W3 : ancrage & transfert d'une sonde L3 (règlement au bord).

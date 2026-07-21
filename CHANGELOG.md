@@ -2,6 +2,20 @@
 
 ## [Non publié]
 
+### W8c — le Crusader : docks VOLANTS (MASTER_PLAN W8, 2026-07-21)
+
+- Amarrage au Crusader (3 spaceports L3 figés → **6 S / 6 M / 6 L**,
+  balances séparées) : les deux à l'arrêt à ≤ 1 pc, v1 entre VOS
+  coques ; sondes/personnel/Crusader exclus. À bord : réservoir GELÉ,
+  équipage nourri par l'hôte — les équipages invités PÈSENT sur le
+  stock du bord (crusader_daily, « comme au sol »).
+- Les invités amarrés VOYAGENT avec l'hôte (position synchronisée à
+  l'arrivée) ; appareillage par undock dédié ou départ direct (moveShip
+  efface l'amarrage). API dock-crusader / undock-crusader.
+- Tests : crusader.test.ts 7/7 (×4), balayage sériel 335/337 (census
+  ×2 = flaky R5), build vert. **Restent W8d (flotte-suiveuse des
+  coques en SURVOL) et W8e (fabrication à bord, UI, E2E).**
+
 ### W8b — le Crusader : la fiche pop v2 VIVANTE à bord (MASTER_PLAN W8, 2026-07-21)
 
 - Événement `crusader_daily` (armé à la naissance, quotidien tant que
