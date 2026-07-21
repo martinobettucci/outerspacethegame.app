@@ -4167,3 +4167,40 @@ leçon : plus JAMAIS de docs sans `cd` absolu vérifié.
 
 Preuves : work-orders.test 3/3 (×3) ; balayage sériel 330/330 (43
 fichiers) ; unit 55 ; build monorepo vert.
+
+## 2026-07-21 — W8 : plan de chunk (le Crusader, petite planète volante)
+
+Spec validée (MASTER_PLAN W8, réponses finales 2026-07-21). Découpage :
+
+W8a — Schéma & naissance :
+- Migration 033 : ships.crusader_stock jsonb (fongibles, équivalent
+  planète S : cap 800 T [TUNE]), ships.crusader_pop jsonb (pyramide
+  C/A/S + compteurs démo + horloges — MÊME forme que bodies),
+  ships.crusader_infra jsonb FIGÉ à la naissance {residential: 3,
+  factories L3 (usinage partiel d'office), spaceports: 3×L3,
+  warehouses: 3×L3, ADN complet, PAS de markets}.
+- shipBuilt(combat_l) : naît EN HOVERING (jamais docked — GB amendé),
+  25 % de la population de la planète source migre à bord
+  (proportions d'âges exactes, staff source décrémenté, compteurs demo
+  crédités), oxygène AU STOCK (cap pop 2 000 [TUNE]).
+- MIGRATION D'EXISTANT : tout combat_l à quai/entrepôt est FORCÉ en
+  hovering à la migration 033 (décision « tu as merdé », effet
+  immédiat).
+W8b — Vie à bord (pop v2 complète) :
+- pop_daily étendu aux crusaders : natalité (residential L3), chômage
+  vs emplois FIXES, efficience, mortalité, horloges eau/nourriture/
+  OXYGÈNE AU STOCK (le stock crusader_stock paie), overcap 0,25.
+  Réutiliser les fonctions popv2 partagées (mêmes formules).
+W8c — Atterrissage interdit & docks volants :
+- landShip/warehouseShip REFUSENT la catégorie combat_l ; les autres
+  coques peuvent DOCKER au crusader (3 spaceports L3 = comptes L3),
+  consommant « comme au sol » sur SES ressources.
+W8d — Flotte-suiveuse :
+- TOUT ce qui hover avec lui (hover_body_id = crusader ? un vaisseau
+  ne référence que bodies → table ou colonne follow_ship_id, migration
+  033) bouge au même temps : au moveShip du crusader, les suiveurs
+  reçoivent la même mission (positions synchrones), conso hovering.
+W8e — Fabrication à bord (ADN complet, usinage partiel d'office) et
+  vues/UI/E2E — chunk final.
+Interps à trancher en cours de route (annoncées) : quelles « usines »
+fixes exactement (liste DG), montants de seed du stock à la naissance.
