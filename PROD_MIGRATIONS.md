@@ -53,6 +53,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | `DATABASE_URL` | connexion PostgreSQL production | oui |
 | `SESSION_SECRET` | signature des cookies de session (≥ 32 car., dédié) | oui |
 | `UNIVERSE_SEED` | graine de l'univers de production (fixée UNE fois, ne change jamais) | oui |
+| `LUCK_PEPPER` | secret du tirage de pocket-luck §2.2b (≥ 16 car., dédié) — anti-farming multi-starter ; **rotatable** sans re-générer les poches | oui |
 | `API_PORT`, `CLIENT_ORIGIN`, `TICK_MS` | voir `game/.env.example` | non (défauts) |
 | `ATG_TEST_ENDPOINTS` | **NE JAMAIS provisionner en production** — instrumentation E2E (§15) | interdit en prod |
 | `CENSUS_PER_DAY` | cadence du census global (entier > 0, défaut 4 [TUNE]) | non (défaut) |
@@ -69,3 +70,8 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 
 - `UNIVERSE_SEED` de production doit être unique et secret avant le premier
   lancement : il détermine tous les rolls de génération.
+- `LUCK_PEPPER` de production doit être dédié et secret : s'il fuite, le
+  farming des rolls multi-starter redevient possible hors-ligne. Contrairement
+  à `UNIVERSE_SEED`, il PEUT être tourné à tout moment (les poches déjà nées
+  ne bougent pas — seule la géométrie dépend d'`UNIVERSE_SEED`) : une rotation
+  ne fait que re-tirer la luck des FUTURES inscriptions.
