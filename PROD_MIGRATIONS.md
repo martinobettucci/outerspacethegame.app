@@ -48,6 +48,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 32 | `game/packages/server/migrations/032_work_orders.sql` | W7 usinage partiel : table `work_orders` (paliers 5 % × 20, FIFO par usine L3) | 001 | DROP TABLE |
 | 33 | `game/packages/server/migrations/033_crusader.sql` | W8a Crusader : `crusader_stock`/`_pop`/`_infra` + `follow_ship_id` sur ships ; combat_l posés/entreposés FORCÉS en survol | 001 | DROP des 4 colonnes (le forçage hovering n'est pas réversible — assumé) |
 | 34 | `game/packages/server/migrations/034_rigs_as_accessories.sql` | Erratum W6 : rigs posés backfillés dans `accessories[]` (slots honnêtes) | 031 | Retirer les clés rig de accessories[] (les booléens font foi) |
+| 35 | `game/packages/server/migrations/035_metamorphic_hull.sql` | W9a : coque métamorphose d'office — backfill `accessories[]` de toute coque à slots | 031 | Retirer la clé metamorphic_hull de accessories[] |
 
 ## Services à déployer (au premier déploiement)
 

@@ -98,6 +98,23 @@ test('items : fabriqué au workshop, entreposé, installé sur coque entreposée
   const haulerId = fleet0.ships.find((s) => s.name === 'First hauler')!.id;
   const wh = await page.request.post(`/api/ships/${haulerId}/warehouse`);
   expect(wh.ok()).toBe(true);
+  // W9a : arbitrage du slot unique — la métamorphose d'office est
+  // démontée par la vraie commande avant d'installer le refueling system.
+  const strip = await page.request.post(`/api/ships/${haulerId}/uninstall`, {
+    data: { itemKey: 'metamorphic_hull' },
+  });
+  expect(strip.ok()).toBe(true);
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; installingItem: string | null }[];
+        };
+        return f.ships.find((x) => x.id === haulerId)?.installingItem ?? null;
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(null);
   await rail.getByRole('button', { name: 'Galaxy' }).click();
   await expect(page.getByTestId('galaxy-canvas')).toBeVisible();
   const haulerPanel = page.getByRole('complementary', { name: 'First hauler' });
@@ -131,8 +148,8 @@ test('items : fabriqué au workshop, entreposé, installé sur coque entreposée
     .toBe('advanced_refueling_system');
   const inv = (await page.request
     .get(`/api/planets/${planetId}/items`)
-    .then((r) => r.json())) as { items: unknown[] };
-  expect(inv.items).toEqual([]);
+    .then((r) => r.json())) as { items: { itemKey: string }[] };
+  expect(inv.items.filter((i) => i.itemKey !== 'metamorphic_hull')).toEqual([]);
   await expect(async () => {
     await page
       .getByLabel('Galaxy contact index')

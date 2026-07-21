@@ -97,7 +97,8 @@ le même commit, tests §15, captures §16, docs.
 
 ## Programme W9 — Accessoires de conversion & coque métamorphose (VALIDÉ 2026-07-22)
 
-- [ ] **W9a — Démontage/désassemblage + coque métamorphose d'office** :
+- [x] **W9a — LIVRÉ (2026-07-22)** — Démontage/désassemblage + coque
+  métamorphose d'office :
   commandes pipeline UNINSTALL (coque entreposée, temps [TUNE], l'item
   retourne à la balance du monde — refus si pleine) et DISASSEMBLE
   (item ENTREPOSÉ détruit, remboursement 50 % du coût de fabrication

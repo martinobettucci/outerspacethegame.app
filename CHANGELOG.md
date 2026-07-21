@@ -2,6 +2,27 @@
 
 ## [Non publié]
 
+### W9a — coque métamorphose d'office + démontage/désassemblage (décisions responsable 2026-07-22)
+
+- Nouveaux items GEAR : **metamorphic_hull** (accessoire, workshop) —
+  INSTALLÉ D'OFFICE sans surcoût sur toute coque à slots (spawn +
+  chantier ; migration 035 backfille l'existant) ; **sans lui, pas de
+  bouclier morphique** (la morphose W5 l'exige ; le démonter EFFACE
+  l'adaptation active). Catalogue prêt pour W9b/W9c : electrolyzer,
+  electrolyzer_l2, vivarium (mécaniques à venir).
+- **Démontage** (`/ships/:id/uninstall`) : coque entreposée, 6 h [TUNE],
+  l'accessoire retourne à la balance d'items ; balance pleine ou sans
+  warehouse → DÉSASSEMBLÉ sur place, 50 % du coût rendu [interp
+  annoncée] ; les rigs démontés éteignent leur booléen d'effet.
+- **Désassemblage** (`/planets/:id/items/disassemble`) : un item
+  entreposé est détruit contre 50 % du coût de fabrication [TUNE-v1].
+- Conséquence canon assumée : le cargo_s (1 slot accessoire) naît PLEIN
+  — monter un rig exige d'ARBITRER (démonter la métamorphose) ; les
+  parcours E2E le font par les vraies commandes.
+- Tests : shared items 3 (15 items dont 8 accessoires), gear.test
+  10/10 (×3), wear fixture adaptée, balayage sériel 340/340, unit 55,
+  E2E gear+shields+harvest+junk+claim 5/5 sériels, build vert.
+
 ### Erratum W6 (décision responsable 2026-07-22) : les rigs SONT des accessoires
 
 - Harvest rig, junk collector et claim rig rejoignent le pipeline

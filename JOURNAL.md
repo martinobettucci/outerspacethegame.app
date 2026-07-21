@@ -4376,3 +4376,21 @@ Interps à annoncer à l'implémentation : ratio 1:1:1 en tonnes ;
 carburant de fonctionnement puisé au réservoir de la coque ; commandes
 de conversion à l'ARRÊT [à confirmer] ; le manifest des coques
 existantes reçoit la coque métamorphose au backfill (migration).
+
+## 2026-07-22 — W9a livré : métamorphose d'office, démontage, désassemblage
+
+Conforme au plan : GEAR += metamorphic_hull/electrolyzer/
+electrolyzer_l2/vivarium (les mécaniques de conversion arrivent en
+W9b/W9c — le catalogue est complet d'avance, règle de complétude) ;
+métamorphose installée d'office (spawn + shipBuilt + migration 035) ;
+morphShield exige l'accessoire ; démontage (item_uninstalled : retour
+en balance, rigs éteints, métamorphose → adaptations effacées) ;
+INTERP AJUSTÉE en cours de chunk : balance pleine/absente au démontage
+= désassemblage sur place à 50 % (l'arbitrage ne se bloque jamais) ;
+désassemblage d'un item entreposé à 50 %. Conséquence canon assumée :
+cargo_s naît PLEIN (1 slot) — E2E et tests arbitrent par les vraies
+commandes.
+
+Preuves : shared items 3 ; gear.test 10/10 (×3) ; balayage sériel
+340/340 ; unit 55 ; E2E gear+shields+harvest+junk+claim 5/5 sériels ;
+build vert.

@@ -111,6 +111,55 @@ export const GEAR: Record<string, GearDef> = {
     installHours: 12,
     note: 'Claims ownerless wrecks after two hours of held proximity.',
   },
+  /** W9a — la coque MÉTAMORPHOSE est un accessoire : installée D'OFFICE
+   *  sans surcoût à la construction, démontable pour arbitrer les
+   *  slots ; SANS elle, pas de bouclier morphique (W5). */
+  metamorphic_hull: {
+    key: 'metamorphic_hull',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 20, silicon: 10 },
+    fabricationHours: 24,
+    installCost: { steel_l: 5 },
+    installHours: 12,
+    note: 'Molecular-rewrite lattice — enables climate morphing. Fitted free on every new hull; strip it to free the slot.',
+  },
+  /** W9b — électrolyseur : eau → O2 + H (L2 : aussi l'inverse). */
+  electrolyzer: {
+    key: 'electrolyzer',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 25, silicon: 15, gold: 5 },
+    fabricationHours: 24,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Splits water into oxygen and hydrogen — burns fuel while running.',
+  },
+  electrolyzer_l2: {
+    key: 'electrolyzer_l2',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 40, silicon: 25, gold: 10 },
+    fabricationHours: 48,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Runs the split both ways — water from oxygen and hydrogen too.',
+  },
+  /** W9c — vivarium : carburant + oxygène → nourriture (sans niveaux). */
+  vivarium: {
+    key: 'vivarium',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'workshop',
+    fabricationCost: { steel_l: 30, phosphor: 10, water: 10 },
+    fabricationHours: 48,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'A sealed garden — grows food from oxygen while the lights burn fuel.',
+  },
   engine_l2: upgrade('engine', 2, 'shipyard', { steel_l: 40, fuel_cells: 20 }, 'Speed ×1.15.'),
   engine_l3: upgrade('engine', 3, 'shipyard', { steel_h: 60, fuel_cells: 50 }, 'Speed ×1.30.'),
   armor_l2: upgrade('armor', 2, 'shipyard', { steel_l: 50 }, 'Hull ×1.3.'),
@@ -124,6 +173,12 @@ export const GEAR: Record<string, GearDef> = {
 };
 
 export const ALL_GEAR_KEYS = Object.keys(GEAR);
+
+/** W9a — démontage d'un accessoire (coque entreposée), h-jeu. [TUNE] */
+export const UNINSTALL_HOURS = 6;
+/** W9a — désassemblage : fraction du coût de fabrication remboursée.
+ *  [TUNE-v1 interp annoncée] */
+export const DISASSEMBLE_REFUND_FRACTION = 0.5;
 
 /** Capacité d'ITEMS d'un monde : Σ 50 × mult par warehouse ACTIF
  * (chunk AD — réveillée par W6). */

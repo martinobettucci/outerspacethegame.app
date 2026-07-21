@@ -15,7 +15,7 @@ import { GEAR } from '@atg/shared';
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { fabricateGear, installGear, listPlanetGear } from '../../src/services/gear.js';
+import { disassembleGear, fabricateGear, installGear, listPlanetGear, uninstallGear } from '../../src/services/gear.js';
 import {
   anchorTransferFuel,
   buildProbe,
@@ -23,6 +23,7 @@ import {
   refuelShip,
   retrieveShip,
   warehouseShip,
+  morphShield,
 } from '../../src/services/ships.js';
 import { createTestPool } from './helpers.js';
 
@@ -43,7 +44,7 @@ async function drainGear(): Promise<void> {
     const { rows } = await pool.query(
       `SELECT count(*)::int AS n FROM events
        WHERE processed_at IS NULL
-         AND kind IN ('item_fabricated', 'item_installed')`,
+         AND kind IN ('item_fabricated', 'item_installed', 'item_uninstalled')`,
     );
     if (rows[0].n === 0) return;
   }
@@ -160,15 +161,20 @@ describe('W6 — installation sur coque ENTREPOSÉE', () => {
       installGear(pool, owner, haulerId, 'advanced_refueling_system', FAST),
     ).rejects.toMatchObject({ code: 'not_available' });
     await warehouseShip(pool, owner, haulerId);
+    // W9a : le cargo_s naît avec la MÉTAMORPHOSE d'office sur son unique
+    // slot — on ARBITRE (démontage) avant de monter le refueling system.
+    await uninstallGear(pool, owner, haulerId, 'metamorphic_hull', FAST);
+    await drainGear();
     // timeScale 1 : l'installation dure 12 h réelles — on observe l'état.
     await installGear(pool, owner, haulerId, 'advanced_refueling_system', {
       timeScale: 1,
     });
     const s = await ship(haulerId);
     expect(s.installing_item).toBe('advanced_refueling_system');
-    // L'item est CONSOMMÉ à la commande.
+    // L'item est CONSOMMÉ à la commande (la métamorphose DÉMONTÉE, elle,
+    // siège en balance — on l'ignore ici).
     const inv = await listPlanetGear(pool, owner, starter);
-    expect(inv.items).toEqual([]);
+    expect(inv.items.filter((i) => i.itemKey !== 'metamorphic_hull')).toEqual([]);
     // Immobilisée : pas de redéploiement pendant l'installation.
     await expect(retrieveShip(pool, owner, haulerId, FAST)).rejects.toMatchObject({
       code: 'not_available',
@@ -315,5 +321,79 @@ describe('W6 — installation sur coque ENTREPOSÉE', () => {
         timeScale: 1,
       }),
     ).rejects.toMatchObject({ code: 'not_available' });
+  });
+});
+
+describe('W9a — métamorphose d\'office, démontage, désassemblage', () => {
+  it("une coque SPAWNÉE porte la métamorphose d'office (slot occupé)", async () => {
+    const c = await registerPlayer(pool, {
+      email: `gear-w9-${run}@test.local`,
+      password: 'motdepasse-solide-3',
+      displayName: 'Fresh',
+      politics: 'scientific',
+      universeSeed: `gear-universe-w9-${run}`,
+    });
+    const { rows } = await pool.query(
+      `SELECT accessories FROM ships WHERE id = $1`,
+      [c.spawn.cargoShipId],
+    );
+    expect(rows[0].accessories).toContain('metamorphic_hull');
+  });
+
+  it("démontage sur le Big Rigger : l'item retourne à la balance, l'adaptation s'efface, la morphose se re-gate", async () => {
+    const { rows: big } = await pool.query(
+      `SELECT id FROM ships WHERE name = 'Big Rigger'`,
+    );
+    const bigId = big[0].id;
+    // Fixture : le Big Rigger (INSERT direct) reçoit la métamorphose +
+    // une adaptation active.
+    await pool.query(
+      `UPDATE ships SET accessories = accessories || '["metamorphic_hull"]'::jsonb,
+         shield_hot = true
+       WHERE id = $1`,
+      [bigId],
+    );
+    await uninstallGear(pool, owner, bigId, 'metamorphic_hull', FAST);
+    await drainGear();
+    const { rows: after } = await pool.query(
+      `SELECT accessories, shield_hot FROM ships WHERE id = $1`,
+      [bigId],
+    );
+    expect(after[0].accessories).not.toContain('metamorphic_hull');
+    expect(after[0].shield_hot).toBe(false);
+    const inv = await listPlanetGear(pool, owner, starter);
+    expect(inv.items.some((i) => i.itemKey === 'metamorphic_hull')).toBe(true);
+    // Sans la coque métamorphose : morphose REFUSÉE (gate W5) — la
+    // coque reste entreposée, la morphose exige l'arrêt : re-docked.
+    await pool.query(`UPDATE ships SET status = 'docked' WHERE id = $1`, [bigId]);
+    await expect(
+      morphShield(pool, owner, bigId, 'cold', FAST),
+    ).rejects.toThrow(/métamorphose/);
+  });
+
+  it("désassemblage : l'item entreposé est détruit, 50 % du coût revient au stock", async () => {
+    const { rows: before } = await pool.query(
+      `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = 'steel_l'`,
+      [starter],
+    );
+    const r = await disassembleGear(pool, owner, starter, 'metamorphic_hull');
+    expect(r.refunded.steel_l).toBeCloseTo(10, 6); // 20 × 0,5
+    const { rows: after } = await pool.query(
+      `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = 'steel_l'`,
+      [starter],
+    );
+    expect(Number(after[0].amount_t) - Number(before[0].amount_t)).toBeCloseTo(10, 3);
+    // Plusieurs exemplaires démontés peuvent siéger : on vide, puis refus.
+    for (let guard = 0; guard < 10; guard++) {
+      const inv = await listPlanetGear(pool, owner, starter);
+      const left = inv.items.find((i) => i.itemKey === 'metamorphic_hull');
+      if (!left) break;
+      await disassembleGear(pool, owner, starter, 'metamorphic_hull');
+    }
+    const inv = await listPlanetGear(pool, owner, starter);
+    expect(inv.items.some((i) => i.itemKey === 'metamorphic_hull')).toBe(false);
+    await expect(
+      disassembleGear(pool, owner, starter, 'metamorphic_hull'),
+    ).rejects.toMatchObject({ code: 'insufficient_resources' });
   });
 });

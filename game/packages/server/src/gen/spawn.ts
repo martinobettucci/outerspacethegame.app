@@ -504,8 +504,10 @@ export async function spawnStarterSystem(
   );
   const { rows: csRows } = await client.query<{ id: string }>(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-        status, docked_body_id, docked_at, fuel, survival, engine_type)
-     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, now(), $5, $6, $7)
+        status, docked_body_id, docked_at, fuel, survival, engine_type,
+        accessories)
+     VALUES ($1, 'cargo', 's', 'First hauler', $2, $3, 'docked', $4, now(), $5, $6, $7,
+        '["metamorphic_hull"]'::jsonb)
      RETURNING id`,
     [
       opts.playerId,

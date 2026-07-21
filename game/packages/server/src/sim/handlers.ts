@@ -18,6 +18,8 @@ import {
   CRUSADER,
   crusaderMigrants,
   isCrusader,
+  DISASSEMBLE_REFUND_FRACTION,
+  itemCapacity,
   GROWTH_EFF_NEUTRAL,
   growthModulator,
   NATALITY_BY_RESIDENTIAL,
@@ -509,6 +511,84 @@ export const crusaderDaily: EventHandler = async (client, event) => {
     await enqueue(client, 'crusader_daily', new Date(nowMs + 86_400_000), {
       shipId,
     });
+  }
+};
+
+
+/**
+ * item_uninstalled { shipId, itemKey, startedAtMs } — fin de démontage
+ * (W9a) : l'accessoire quitte la coque, retourne à la balance du monde,
+ * les effets s'éteignent (booléens de rig ; la métamorphose EFFACE
+ * l'adaptation climatique active [interp annoncée]). Idempotent.
+ */
+export const itemUninstalled: EventHandler = async (client, event) => {
+  const shipId = String(event.payload.shipId ?? '');
+  const itemKey = String(event.payload.itemKey ?? '');
+  const startedAtMs = Number(event.payload.startedAtMs ?? 0);
+  if (!shipId || !itemKey || !startedAtMs) return;
+  const def = GEAR[itemKey];
+  if (!def) return;
+  const { rows } = await client.query(
+    `SELECT * FROM ships
+     WHERE id = $1 AND installing_item = $2
+       AND install_started_at = to_timestamp($3 / 1000.0)
+     FOR UPDATE`,
+    [shipId, `uninstall:${itemKey}`, startedAtMs],
+  );
+  const ship = rows[0];
+  if (!ship) return;
+  const accessories: string[] = (Array.isArray(ship.accessories)
+    ? ship.accessories
+    : []).filter((a: string) => a !== itemKey);
+  const rigFlags: Record<string, string> = {
+    harvest_rig: 'harvest_rig',
+    junk_collector: 'junk_collector',
+    claim_rig: 'claim_rig',
+  };
+  const clearFlag = rigFlags[itemKey];
+  const clearShields = itemKey === 'metamorphic_hull';
+  await client.query(
+    `UPDATE ships SET accessories = $2,
+        installing_item = NULL, install_started_at = NULL
+        ${clearFlag ? `, ${clearFlag} = false` : ''}
+        ${clearShields ? ', shield_hot = false, shield_cold = false, shield_radio = false, morphing_shield = NULL, morph_started_at = NULL' : ''}
+     WHERE id = $1`,
+    [shipId, JSON.stringify(accessories)],
+  );
+  if (ship.docked_body_id) {
+    // Balance pleine (ou aucun warehouse) : DÉSASSEMBLAGE sur place —
+    // 50 % du coût de fabrication rendu au stock [interp annoncée].
+    const { rows: wh } = await client.query(
+      `SELECT level FROM buildings
+       WHERE body_id = $1 AND key = 'warehouse' AND status = 'active'`,
+      [ship.docked_body_id],
+    );
+    const cap = itemCapacity(wh.map((w) => Number(w.level)));
+    const { rows: stored } = await client.query(
+      `SELECT count(*)::int AS n FROM planet_items WHERE body_id = $1`,
+      [ship.docked_body_id],
+    );
+    if (stored[0].n < cap) {
+      await client.query(
+        `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+        [ship.docked_body_id, itemKey],
+      );
+    } else {
+      for (const [resource, amount] of Object.entries(def.fabricationCost)) {
+        const back = (amount as number) * DISASSEMBLE_REFUND_FRACTION;
+        await client.query(
+          `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (body_id, resource)
+           DO UPDATE SET amount_t = planet_stock.amount_t + $3, as_of = $4`,
+          [ship.docked_body_id, resource, back, event.dueAt],
+        );
+      }
+    }
+  }
+  if (clearShields) {
+    const { rows: fresh } = await client.query(`SELECT * FROM ships WHERE id = $1`, [shipId]);
+    if (fresh[0]) await rebaseShipHull(client, fresh[0], event.dueAt.getTime());
   }
 };
 
@@ -1357,6 +1437,18 @@ export const shipBuilt: EventHandler = async (client, event) => {
       crusader ? JSON.stringify(CRUSADER.infra) : null,
     ],
   );
+  // W9a : la coque MÉTAMORPHOSE est un accessoire installé D'OFFICE,
+  // sans surcoût (le joueur peut le démonter pour arbitrer ses slots).
+  await client.query(
+    `UPDATE ships SET accessories = '["metamorphic_hull"]'::jsonb
+     WHERE owner_id = $1 AND name = $2 AND created_at >= $3
+       AND accessories = '[]'::jsonb`,
+    [
+      planet[0].owner_id ?? String(p.playerId),
+      String(p.name),
+      new Date(event.dueAt.getTime() - 5_000),
+    ],
+  );
   // Un Crusader naît en survol de SON monde : le rebase planétaire
   // arme les drains (stock servi) et met à jour la pop — et sa fiche
   // pop v2 de bord démarre (W8b : crusader_daily quotidien).
@@ -1938,6 +2030,7 @@ export function baseHandlers(): Record<string, EventHandler> {
     shield_morph_complete: shieldMorphComplete,
     item_fabricated: itemFabricated,
     item_installed: itemInstalled,
+    item_uninstalled: itemUninstalled,
     work_step: workStep,
     crusader_daily: crusaderDaily,
     ship_retrieved: shipRetrieved,

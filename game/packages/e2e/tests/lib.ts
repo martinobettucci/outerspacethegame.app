@@ -262,6 +262,24 @@ export async function installRigViaPipeline(
   if (!g.ok()) throw new Error(`grant-item: ${await g.text()}`);
   const wh = await page.request.post(`/api/ships/${shipId}/warehouse`);
   if (!wh.ok()) throw new Error(`warehouse: ${await wh.text()}`);
+  // W9a : le cargo_s naît avec la MÉTAMORPHOSE d'office sur son unique
+  // slot — on ARBITRE (démontage réel) avant de monter le rig.
+  const strip = await page.request.post(`/api/ships/${shipId}/uninstall`, {
+    data: { itemKey: 'metamorphic_hull' },
+  });
+  if (strip.ok()) {
+    await expect
+      .poll(
+        async () => {
+          const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+            ships: { id: string; installingItem: string | null }[];
+          };
+          return f.ships.find((x) => x.id === shipId)?.installingItem ?? null;
+        },
+        { timeout: 60_000 },
+      )
+      .toBe(null);
+  }
   const inst = await page.request.post(`/api/ships/${shipId}/install`, {
     data: { itemKey },
   });

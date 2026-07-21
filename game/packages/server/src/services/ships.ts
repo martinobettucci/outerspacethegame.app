@@ -1247,6 +1247,17 @@ export async function morphShield(
     if (ship.hull_category === 'probe') {
       throw new CommandError('not_available', 'Une sonde ne porte pas de bouclier');
     }
+    // W9a : la morphose EXIGE la coque métamorphose (accessoire d'office,
+    // démontable — décision responsable 2026-07-22).
+    const morphAccessories: string[] = Array.isArray(ship.accessories)
+      ? ship.accessories
+      : [];
+    if (!morphAccessories.includes('metamorphic_hull')) {
+      throw new CommandError(
+        'not_available',
+        'Pas de coque métamorphose montée — aucune morphose possible',
+      );
+    }
     if (!['docked', 'hovering', 'idle', 'stranded'].includes(ship.status)) {
       throw new CommandError(
         'not_available',

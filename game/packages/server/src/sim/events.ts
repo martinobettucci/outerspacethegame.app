@@ -35,6 +35,7 @@ export type EventKind =
   | 'shield_morph_complete'
   | 'item_fabricated'
   | 'item_installed'
+  | 'item_uninstalled'
   | 'work_step'
   | 'crusader_daily'
   | 'noop';

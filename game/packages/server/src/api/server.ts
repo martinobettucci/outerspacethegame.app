@@ -52,7 +52,7 @@ import {
   startHarvest,
   stopHarvest,
 } from '../services/harvest.js';
-import { fabricateGear, installGear, listPlanetGear } from '../services/gear.js';
+import { disassembleGear, fabricateGear, installGear, listPlanetGear, uninstallGear } from '../services/gear.js';
 import {
   assignCrew,
   buildShip,
@@ -705,6 +705,28 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => undockFromCrusader(deps.pool, player.id, id));
+  });
+
+  // W9a : démontage d'un accessoire / désassemblage d'un item.
+  app.post('/ships/:id/uninstall', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ itemKey: z.string().min(1).max(64) }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      uninstallGear(deps.pool, player.id, id, parsed.data.itemKey, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
+  });
+  app.post('/planets/:id/items/disassemble', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z.object({ itemKey: z.string().min(1).max(64) }).safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      disassembleGear(deps.pool, player.id, id, parsed.data.itemKey),
+    );
   });
 
   // W3 : ancrage & transfert d'une sonde L3 (règlement au bord).

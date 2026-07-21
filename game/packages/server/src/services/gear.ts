@@ -10,9 +10,11 @@
  * l'ancien n'est pas rendu [TUNE-v1 annoncé]).
  */
 import {
+  DISASSEMBLE_REFUND_FRACTION,
   GEAR,
   HULLS,
   itemCapacity,
+  UNINSTALL_HOURS,
   type HullCategory,
   type HullSize,
   type InstalledUpgrades,
@@ -341,4 +343,135 @@ export async function listPlanetGear(
       completesAt: new Date(r.due_at).toISOString(),
     })),
   };
+}
+
+/**
+ * W9a — DÉMONTE un accessoire d'une coque ENTREPOSÉE : temps [TUNE],
+ * l'item retourne à la balance d'items du monde (refus si pleine).
+ * Démonter la coque métamorphose EFFACE l'adaptation climatique active
+ * [interp annoncée] ; démonter un rig éteint son booléen d'effet.
+ */
+export async function uninstallGear(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  itemKey: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const def = GEAR[itemKey];
+  if (!def || def.kind !== 'accessory') {
+    throw new CommandError('not_found', 'Accessoire inconnu');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    const ship: Row | undefined = rows[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (ship.status !== 'warehoused' || !ship.docked_body_id) {
+      throw new CommandError(
+        'not_available',
+        'Le démontage se fait sur une coque ENTREPOSÉE (warehouse)',
+      );
+    }
+    if (ship.installing_item) {
+      throw new CommandError('not_available', 'Un chantier d\'item est déjà en cours');
+    }
+    const accessories: string[] = Array.isArray(ship.accessories)
+      ? ship.accessories
+      : [];
+    if (!accessories.includes(itemKey)) {
+      throw new CommandError('not_available', 'Cet accessoire n\'est pas monté');
+    }
+    // [Interp annoncée 2026-07-22] Si la balance d'items du monde ne
+    // peut pas accueillir l'accessoire démonté, il est DÉSASSEMBLÉ sur
+    // place à la fin du démontage (50 % du coût rendu) — l'arbitrage de
+    // slots ne se bloque jamais.
+    const completesAt = new Date(nowMs + (UNINSTALL_HOURS * 3_600_000) / timeScale);
+    await client.query(
+      `UPDATE ships
+         SET installing_item = $2, install_started_at = to_timestamp($3 / 1000.0)
+       WHERE id = $1`,
+      [shipId, `uninstall:${itemKey}`, nowMs],
+    );
+    await enqueue(client, 'item_uninstalled', completesAt, {
+      shipId,
+      itemKey,
+      startedAtMs: nowMs,
+    });
+    await client.query('COMMIT');
+    return { completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * W9a — DÉSASSEMBLE un item ENTREPOSÉ : la ligne est détruite,
+ * 50 % du coût de fabrication revient au stock [TUNE-v1 interp].
+ */
+export async function disassembleGear(
+  pool: pg.Pool,
+  playerId: string,
+  planetId: string,
+  itemKey: string,
+  opts: { nowMs?: number } = {},
+): Promise<{ refunded: Record<string, number> }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const def = GEAR[itemKey];
+  if (!def) throw new CommandError('not_found', 'Item inconnu');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: planet } = await client.query(
+      `SELECT owner_id FROM bodies WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
+      [planetId],
+    );
+    if (!planet[0]) throw new CommandError('not_found', 'Planète inconnue');
+    if (planet[0].owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
+    }
+    const { rows: taken } = await client.query(
+      `DELETE FROM planet_items
+       WHERE id = (SELECT id FROM planet_items
+                   WHERE body_id = $1 AND item_key = $2
+                   ORDER BY created_at LIMIT 1 FOR UPDATE)
+       RETURNING id`,
+      [planetId, itemKey],
+    );
+    if (!taken[0]) {
+      throw new CommandError('insufficient_resources', 'Aucun exemplaire à désassembler ici');
+    }
+    const refunded: Record<string, number> = {};
+    for (const [resource, amount] of Object.entries(def.fabricationCost)) {
+      const back = (amount as number) * DISASSEMBLE_REFUND_FRACTION;
+      refunded[resource] = back;
+      await client.query(
+        `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))
+         ON CONFLICT (body_id, resource)
+         DO UPDATE SET amount_t = planet_stock.amount_t + $3,
+                       as_of = to_timestamp($4 / 1000.0)`,
+        [planetId, resource, back, nowMs],
+      );
+    }
+    await client.query('COMMIT');
+    return { refunded };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }

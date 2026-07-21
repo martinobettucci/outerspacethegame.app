@@ -70,11 +70,11 @@ async function ship(id: string) {
 async function newDockedShip(name: string): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(
     `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
-        status, docked_body_id, docked_at, fuel)
+        status, docked_body_id, docked_at, fuel, accessories)
      VALUES ($1, 'cargo', 's', $2,
         (SELECT x FROM bodies WHERE id = $3),
         (SELECT y FROM bodies WHERE id = $3),
-        'docked', $3, now(), $4) RETURNING id`,
+        'docked', $3, now(), $4, '["metamorphic_hull"]'::jsonb) RETURNING id`,
     [owner, name, ownerStarter, JSON.stringify({ [starType]: 10 })],
   );
   return rows[0]!.id;
