@@ -4123,3 +4123,31 @@ conversion des rigs, obs/weapon P5).
 
 Preuves : unit items 3 ; gear.test.ts 6/6 (×3) ; balayage sériel
 327/327 (42 fichiers) ; unit 55 ; client 21 ; build monorepo vert.
+
+## 2026-07-21 — W7 : plan de chunk (usinage partiel, usines L3)
+
+Spec validée (MASTER_PLAN W7). Interprétations d'implémentation :
+- Migration 032 : table work_orders {body_id, kind 'ship'|'item',
+  payload, cost total, steps_done/20, status running|starved,
+  factory_building_id, created_at}.
+- Déclencheur : dès qu'UNE industrie L3 ACTIVE (bâtiment à
+  batchesPerDayByLevel, n'importe laquelle) existe sur le monde, les
+  commandes buildShip et fabricateGear passent en PAIEMENT PAR PALIERS :
+  rien d'avance, 20 paliers de 5 % du coût, un palier = durée
+  totale/20 (temps de chantier du vaisseau ; fabricationHours de
+  l'item). Sinon : chemin historique (paiement à la commande).
+- Affectation : l'usine L3 la moins chargée à la commande ; une usine
+  traite ses ordres STRICTEMENT dans l'ordre d'insertion BDD (le palier
+  d'un ordre ne court que s'il est le plus ancien inachevé de son
+  usine — sinon replanifié).
+- Starved : un palier impayable marque l'ordre starved et se
+  replanifie à cadence fixe (1 h-jeu [TUNE]) jusqu'à ce que le stock
+  revienne — reprise AUTO, aucune perte.
+- 20e palier payé → l'événement terminal EXISTANT est émis (ship_built
+  / item_fabricated) : les handlers actuels restent la seule voie de
+  naissance. Les vues en attente (pendingShipBuilds, fabricating)
+  agrègent les work_orders.
+- RESTE ANNONCÉ (règle de complétude) : les BÂTIMENTS en usinage
+  partiel — le flux de placement (main de cartes, tuiles, retool) est
+  un chantier propre ; listé au MASTER_PLAN avec motif, à couvrir dans
+  un chunk dédié. E2E/captures suivant la disponibilité du port (R6).
