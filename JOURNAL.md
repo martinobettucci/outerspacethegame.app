@@ -3720,3 +3720,31 @@ Tour de Q/R clos. Décisions FERMES :
 - **L3 = L2 pour le reste** (télescope de bord, survol moitié, même
   tank 70 u / vitesse / portée) + la capacité d'ancrage/transfert.
   Gating naturel : pad L3 [interp], surcoût [TUNE].
+
+## 2026-07-21 — Brainstorm responsable : ancrages multiples, refonte ACCESSOIRES, le Crusader-amiral
+
+À VALIDER D'UN COUP après discussion (demande responsable). Proposé :
+
+### Ancrages multiples (tranche les options a/b du tanker)
+- Tank L3 70 u ASSUMÉ (option a). PLUSIEURS sondes peuvent ancrer le
+  même vaisseau et remplir plus vite — MAIS multi-ancrage conditionné :
+  le receveur doit porter le « système de ravitaillement avancé »
+  (un ACCESSOIRE à fabriquer/installer). 1 sonde = de base [à confirmer].
+
+### Refonte du pipeline ACCESSOIRES (ne plus les « définir dans le vaisseau »)
+1. DÉCOUVRIR : arbre ADN des accessoires (à prévoir, façon tech tree).
+2. FABRIQUER : non-fongible, usiné, occupe la place d'ITEM en ENTREPÔT
+   (réveille les balances d'items 50/niveau, dormantes depuis chunk AD).
+3. INSTALLER : vaisseau LANDED puis WAREHOUSED — alors seulement le menu
+   des accessoires disponibles apparaît ; coût ressources + TEMPS ;
+   l'accessoire occupe un SLOT du vaisseau. Slots par coque avec petit
+   rnd au build : +1 slot à 1 %, +2 à 0,1 % [seedé].
+4. RESSORTIR : entrepôt → deck → décoller. L'assemblage est stratégique.
+
+### Le Crusader (Combat L) = vaisseau AMIRAL, « planète sans buildings »
+- Ne peut JAMAIS atterrir (par définition).
+- Ses propres STOCKS de ressources (acheminés par cargos).
+- Arbre ADN COMPLET (recherches + accessoires, sans masque de seed).
+- Peut TOUT fabriquer sur place.
+- Équivalent 3 warehouses L3 + 3 spaceports L3 — les petits vaisseaux
+  peuvent DOCK SUR le crusader.
