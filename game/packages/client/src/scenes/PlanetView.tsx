@@ -1136,9 +1136,9 @@ export function PlanetView({ planetId }: { planetId: string }) {
             </table>
           </div>
 
-          {/* Infrastructure sans tuile (télescopes, probe pads) : invisible
-              sur le plateau iso, donc listée ici — sinon rien n'atteste de
-              son existence à l'écran. */}
+          {/* Infrastructure sans tuile (`probe_pad` seul depuis la décision
+              télescope-sur-tuile du 2026-07-20) : invisible sur le plateau
+              iso, donc listée ici — sinon rien n'atteste de son existence. */}
           <section
             aria-label={t.planet.infrastructure}
             style={{ display: 'grid', gap: 4 }}
