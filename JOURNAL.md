@@ -3834,3 +3834,16 @@ Persisté avant validation groupée (§5). Décisions du responsable :
 considéré VALIDÉ D'UN COUP par le responsable. Plan total demandé :
 docs/MASTER_PLAN.md créé (tout ce qui est figé et attend l'implé-
 mentation + ce qui reste au stade de discussion).
+
+## 2026-07-21 — W1 livré : réservoir multi-carburant des sondes
+
+Slot ACTIF (premier de l'ordre configuré avec du stock) porte le taux
+lazy, les autres slots statiques ; à sec du slot actif, ship_fuel_out
+BASCULE au suivant (rebase) au lieu de tuer — la sonde ne meurt qu'à
+sec TOTAL. Pré-brûlage de trajet tiré dans l'ORDRE à travers les slots
+(leçon : l'auto-chargement au départ créditait inTank sans créditer le
+slot — corrigé). Scoop préserve les autres slots (remplit le type de
+l'étoile à la capacité restante). fuel_order par sonde (migration 027,
+API POST /ships/:id/fuel-order, §10 sondes seules, doublons refusés).
+Cercles d'autonomie = TOTAL des slots. Intégration ships 8/8 ; hover et
+census ordonno-dépendants au balayage (passent seuls) → R5 élargi.

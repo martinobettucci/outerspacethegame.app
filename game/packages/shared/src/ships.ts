@@ -188,6 +188,26 @@ export function probeHoverUPerDay(level: number): number {
   return level >= 2 ? PROBE.hoverUPerDay / 2 : PROBE.hoverUPerDay;
 }
 
+/** Ordre canonique de consommation multi-fuel des sondes (W1). */
+export const FUEL_ORDER_DEFAULT = ['cold', 'hot', 'gas'] as const;
+
+/** Slot ACTIF d'un réservoir multi-type : premier de l'ordre avec du stock. */
+export function activeFuelSlot(
+  fuel: Record<string, number>,
+  order?: readonly string[] | null,
+): string {
+  const seq = order && order.length ? order : FUEL_ORDER_DEFAULT;
+  for (const t of seq) if ((fuel[t] ?? 0) > 1e-9) return t;
+  // Types hors ordre (défensif) puis défaut.
+  for (const t of Object.keys(fuel)) if ((fuel[t] ?? 0) > 1e-9) return t;
+  return seq[0] ?? 'cold';
+}
+
+/** Total d'un réservoir multi-type. */
+export function totalFuelUnits(fuel: Record<string, number>): number {
+  return Object.values(fuel).reduce((s, v) => s + Math.max(0, v ?? 0), 0);
+}
+
 /** Fraction de plein à la NAISSANCE de tout véhicule (2026-07-20). [TUNE] */
 export const BUILD_FUEL_FRACTION = 0.25;
 

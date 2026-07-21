@@ -12,7 +12,7 @@
 Ordre proposé par dépendances. Chaque chunk : spec DG consolidée dans
 le même commit, tests §15, captures §16, docs.
 
-- [ ] **W1 — Réservoir multi-carburant des sondes** : stocks séparés
+- [x] **W1 — Réservoir multi-carburant des sondes — LIVRÉ (2026-07-21)** (slot actif lazy + bascule à sec + pré-brûlage ordonné + scoop préserve-slots + API fuel-order + cercles=total ; intégration ships 8/8) : stocks séparés
   par type dans le jsonb `fuel`, ordre de consommation configurable PAR
   SONDE (UI patron auto-trade), drains/évaluations consommant type par
   type dans l'ordre. Fondation de W3. → JOURNAL 2026-07-21
@@ -89,7 +89,7 @@ le même commit, tests §15, captures §16, docs.
   par staffing [TUNE-v1] ; E2E visuel du spawn ; cas « univers
   saturé » ; scan riche des sondes (ADN/gisements, intel
   scientifique) ; intel des VAISSEAUX L1/L2/L3 (chunk flotte).
-- [ ] **R5 — Stabiliser census** : 2 tests ordonno-dépendants au
+- [ ] **R5 — Stabiliser census + hover** : tests ordonno-dépendants (census ×2, hover ×3 au balayage) au
   balayage complet (totaux GLOBAUX pollués par l'ordre des fichiers —
   passent seuls) : isoler par fenêtre/univers dédié.
 - [ ] **R6 — Captures §16 en attente de port 8080** : V1 halo/cercles,

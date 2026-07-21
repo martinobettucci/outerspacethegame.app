@@ -8,7 +8,7 @@ import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
 import { placeBuilding } from '../../src/services/planets.js';
-import { fleet, buildProbe, scoopProbeFuel, sendProbe, moveShip, shipPosition } from '../../src/services/ships.js';
+import { fleet, buildProbe, scoopProbeFuel, sendProbe, setProbeFuelOrder, moveShip, shipPosition } from '../../src/services/ships.js';
 import { visibleBodies } from '../../src/services/world.js';
 import { createTestPool } from './helpers.js';
 
@@ -208,6 +208,43 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
   });
 
 
+  it('W1 multi-fuel : ordre configuré, bascule à sec du slot actif, pré-brûlage ordonné', async () => {
+    // Sonde neuve (cap du jour : voir tests précédents — on reste ≤ 5).
+    const { probeId } = await buildProbe(pool, playerId, starterId);
+    // Injecte un réservoir multi-type et un ordre : hot d'abord, puis cold.
+    await pool.query(
+      `UPDATE ships SET fuel = '{"hot": 2, "cold": 10}',
+          fuel_order = '["hot","cold"]', fuel_rate_u_per_day = 0,
+          fuel_as_of = now() WHERE id = $1`,
+      [probeId],
+    );
+    // Le slot ACTIF est hot (premier de l'ordre avec du stock) ; le
+    // total vaut 12.
+    const view = (await fleet(pool, playerId)).find((s) => s.id === probeId)!;
+    expect(view.fuel.hot).toBeCloseTo(2, 6);
+    expect(view.fuel.cold).toBeCloseTo(10, 6);
+    // Pré-brûlage ORDONNÉ : un trajet de 100 pc coûte 5 u — 2 pris sur
+    // hot (épuisé), 3 sur cold.
+    const { rows: home } = await pool.query(
+      `SELECT x, y FROM bodies WHERE id = $1`,
+      [starterId],
+    );
+    await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: Number(home[0].x) + 100, y: Number(home[0].y) },
+      FAST,
+    );
+    const after = (await fleet(pool, playerId)).find((s) => s.id === probeId)!;
+    expect(after.fuel.hot ?? 0).toBeCloseTo(0, 6);
+    expect(after.fuel.cold).toBeCloseTo(7, 6);
+    // Ordre invalide refusé (§10 : doublons/types inconnus).
+    await expect(
+      setProbeFuelOrder(pool, playerId, probeId, ['hot', 'hot']),
+    ).rejects.toMatchObject({ code: 'not_available' });
+  });
+
   it('scoop stellaire : plein à 70 u contre 10 HP ; le 5e scoop détruit la sonde', async () => {
     // Une sonde en survol du starter est à 40 pc de l'étoile (> 8 pc) :
     // scoop refusé. On l'envoie SUR l'étoile puis on scoope à l'arrêt.
@@ -248,9 +285,9 @@ describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
   it('ordre FIFO du send, cap de production 5/j/pad, aucune limite de flotte', async () => {
     // Cap 5/j compté sur les sondes VIVANTES nées aujourd'hui [TUNE-v1
     // annoncé : une sonde détruite « rembourse » son slot du jour]. Ici :
-    // 2 construites, 1 détruite au scoop → 4 de plus atteignent 5.
+    // 3 construites (dont W1), 1 détruite au scoop → 3 de plus = 5.
     const builtIds: string[] = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       builtIds.push((await buildProbe(pool, playerId, starterId)).probeId);
     }
     await expect(buildProbe(pool, playerId, starterId)).rejects.toMatchObject({

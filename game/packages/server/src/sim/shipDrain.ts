@@ -8,6 +8,7 @@
  * sur une ligne `ships` déjà verrouillée FOR UPDATE.
  */
 import {
+  activeFuelSlot,
   PROBE,
   evalJunkAmount,
   junkCellOf,
@@ -36,8 +37,22 @@ export type ShipRow = Record<string, any>;
 /** Type + montant BRUT (as-of) du réservoir mono-type v1. */
 export function shipFuelState(ship: ShipRow): { type: string; units: number } {
   const fuelObj: Record<string, number> = ship.fuel ?? {};
-  const type = Object.keys(fuelObj)[0] ?? 'cold';
+  // W1 multi-fuel (sondes) : le slot ACTIF est le premier de l'ordre
+  // configuré avec du stock — les coques mono-type retombent sur leur
+  // unique clé naturellement.
+  const type = activeFuelSlot(fuelObj, ship.fuel_order as string[] | null);
   return { type, units: fuelObj[type] ?? 0 };
+}
+
+/** Réservoir TOTAL évalué (multi-type : actif lazy + autres statiques). */
+export function evalShipFuelTotal(ship: ShipRow, nowMs: number): number {
+  const fuelObj: Record<string, number> = ship.fuel ?? {};
+  const active = evalShipFuel(ship, nowMs);
+  let total = active.units;
+  for (const [t, u] of Object.entries(fuelObj)) {
+    if (t !== active.type) total += Math.max(0, u ?? 0);
+  }
+  return total;
 }
 
 /** Réservoir ÉVALUÉ à nowMs (jamais négatif). */
@@ -88,11 +103,24 @@ export async function rebaseShipDrain(
   );
   const rate = target === 'tank' && perDay > 0 ? -perDay : 0;
 
+  // W1 : préserver les slots NON actifs (multi-fuel des sondes) — une
+  // coque mono-type n'a qu'une clé, comportement inchangé.
+  const otherSlots: Record<string, number> = {};
+  for (const [t, u] of Object.entries(
+    (ship.fuel ?? {}) as Record<string, number>,
+  )) {
+    if (t !== evaluated.type && (u ?? 0) > 1e-9) otherSlots[t] = u;
+  }
   await client.query(
     `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = $3,
         fuel_as_of = to_timestamp($4 / 1000.0)
      WHERE id = $1`,
-    [ship.id, JSON.stringify({ [evaluated.type]: units }), rate, nowMs],
+    [
+      ship.id,
+      JSON.stringify({ ...otherSlots, [evaluated.type]: units }),
+      rate,
+      nowMs,
+    ],
   );
   await client.query(
     `DELETE FROM events

@@ -62,6 +62,7 @@ import {
   landShip,
   buildProbe,
   scoopProbeFuel,
+  setProbeFuelOrder,
   sendProbe,
   listNpcs,
   moveShip,
@@ -586,6 +587,27 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     try {
       const r = await buildProbe(deps.pool, player.id, id);
       return { probeId: r.probeId };
+    } catch (err) {
+      if (err instanceof CommandError) {
+        return reply
+          .status(COMMAND_HTTP[err.code])
+          .send({ error: err.code, message: err.message });
+      }
+      throw err;
+    }
+  });
+
+  // W1 : ordre de consommation multi-fuel d'une sonde.
+  app.post('/ships/:id/fuel-order', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ order: z.array(z.string()).min(1).max(3) })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+    try {
+      await setProbeFuelOrder(deps.pool, player.id, id, parsed.data.order);
+      return { ok: true };
     } catch (err) {
       if (err instanceof CommandError) {
         return reply

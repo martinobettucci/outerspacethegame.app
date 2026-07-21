@@ -1083,7 +1083,11 @@ export function GalaxyMap() {
       HULLS[
         `${selectedShip.hullCategory}_${selectedShip.hullSize}` as `${HullCategory}_${HullSize}`
       ];
-    const fuelUnits = Object.values(selectedShip.fuel)[0] ?? 0;
+    // W1 multi-fuel : l'autonomie compte TOUS les slots du réservoir.
+    const fuelUnits = Object.values(selectedShip.fuel).reduce(
+      (s, v) => s + Math.max(0, v ?? 0),
+      0,
+    );
     const radii = shipRangeRadiiPc(fuelUnits, hull?.burnUPerPc ?? 0);
     if (!radii) return;
     const { scene } = refs;

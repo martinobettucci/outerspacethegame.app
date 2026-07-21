@@ -541,6 +541,24 @@ export const shipFuelOut: EventHandler = async (client, event) => {
   if (!ship) return;
   const { type, units } = evalShipFuel(ship, nowMs);
   if (units > 1e-9) return; // périmé : un refuel a replanifié le bord
+  // W1 multi-fuel : le slot ACTIF est à sec mais un AUTRE type reste ?
+  // → bascule (rebase re-choisit le slot actif et replanifie le bord).
+  const slots = (ship.fuel ?? {}) as Record<string, number>;
+  const hasOther = Object.entries(slots).some(
+    ([t, u]) => t !== type && (u ?? 0) > 1e-9,
+  );
+  if (hasOther) {
+    await client.query(
+      `UPDATE ships SET fuel = $2 WHERE id = $1`,
+      [shipId, JSON.stringify({ ...slots, [type]: 0 })],
+    );
+    const { rows: fresh } = await client.query(
+      `SELECT * FROM ships WHERE id = $1`,
+      [shipId],
+    );
+    if (fresh[0]) await rebaseShipDrain(client, fresh[0], nowMs, 'tank');
+    return;
+  }
   if (ship.hull_category === 'probe') {
     // Sondes v3 (2026-07-20) : à sec, la sonde est PERDUE — « gone »,
     // pas d'échouage récupérable (annoncé).

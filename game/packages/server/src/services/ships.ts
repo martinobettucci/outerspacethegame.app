@@ -14,6 +14,8 @@
 import {
   ALL_RESOURCE_IDS,
   BUILD_FUEL_FRACTION,
+  FUEL_ORDER_DEFAULT,
+  totalFuelUnits,
   buildableSizes,
   canAcceptLanding,
   canLand,
@@ -245,7 +247,12 @@ export async function fleet(
       })(),
       crewCount: crewBy.get(r.id) ?? 0,
       fleeArmed: !!r.flee_armed,
-      fuel: { [tank.type]: tank.units },
+      fuel: (() => {
+        // W1 : tous les slots, l'actif évalué lazy.
+        const slots = { ...((r.fuel ?? {}) as Record<string, number>) };
+        slots[tank.type] = tank.units;
+        return slots;
+      })(),
       fuelType: tank.type,
       fuelRatePerDay: Number(r.fuel_rate_u_per_day ?? 0),
       fuelAsOf: r.fuel_as_of ? new Date(r.fuel_as_of).toISOString() : null,
@@ -398,11 +405,16 @@ export async function moveShip(
     let stockMutatedBodyId: string | null = null;
     if (stats.burnPerPc > 0) {
       const needed = distance * stats.burnPerPc; // matrice 1.0 [TUNE-v1]
-      // Réservoir ÉVALUÉ : le drain de loitering a pu l'entamer.
+      // Réservoir ÉVALUÉ : le drain de loitering a pu l'entamer. W1 :
+      // multi-fuel — le slot actif est évalué lazy, les autres statiques,
+      // le pré-brûlage tire dans l'ORDRE configuré de la sonde.
       const tank = evalShipFuel(ship, nowMs);
       const fuelType = tank.type;
-      const fuelObj: Record<string, number> = { [fuelType]: tank.units };
-      let inTank = tank.units;
+      const fuelObj: Record<string, number> = {
+        ...((ship.fuel ?? {}) as Record<string, number>),
+        [fuelType]: tank.units,
+      };
+      let inTank = totalFuelUnits(fuelObj);
       // Auto-chargement au départ d'un monde possédé (v1 documentée) :
       // PLEIN réservoir — charger juste le trajet échouerait la coque dès
       // l'arrivée (le loitering consomme, GB §7).
@@ -437,6 +449,8 @@ export async function moveShip(
               [ship.docked_body_id, resource, available - load, nowMs],
             );
             inTank += load;
+            // W1 : créditer le SLOT (le tirage ordonné lit fuelObj).
+            fuelObj[fuelType] = (fuelObj[fuelType] ?? 0) + load;
             stockMutatedBodyId = ship.docked_body_id;
           }
         }
@@ -448,7 +462,24 @@ export async function moveShip(
         );
       }
       fuelBurned = needed;
-      fuelObj[fuelType] = inTank - needed; // pré-brûlage v1
+      // Tirage ORDONNÉ à travers les slots (multi-fuel W1) — une coque
+      // mono-type n'a qu'un slot, comportement inchangé.
+      let toBurn = needed;
+      const order = [
+        fuelType,
+        ...FUEL_ORDER_DEFAULT.filter((t) => t !== fuelType),
+        ...Object.keys(fuelObj).filter(
+          (t) => t !== fuelType && !FUEL_ORDER_DEFAULT.includes(t as never),
+        ),
+      ];
+      for (const t of order) {
+        if (toBurn <= 1e-9) break;
+        const take = Math.min(fuelObj[t] ?? 0, toBurn);
+        if (take > 0) {
+          fuelObj[t] = (fuelObj[t] ?? 0) - take;
+          toBurn -= take;
+        }
+      }
       // Transit : drain désarmé (le vol paie en pré-brûlage, pas en taux).
       await client.query(
         `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
@@ -659,6 +690,38 @@ export async function buildProbe(
 }
 
 /**
+ * W1 : configure l'ordre de consommation multi-fuel d'une SONDE (§10).
+ */
+export async function setProbeFuelOrder(
+  pool: pg.Pool,
+  playerId: string,
+  probeId: string,
+  order: string[],
+): Promise<void> {
+  const valid = order.every((t) =>
+    (FUEL_ORDER_DEFAULT as readonly string[]).includes(t),
+  );
+  if (!valid || order.length === 0 || new Set(order).size !== order.length) {
+    throw new CommandError('not_available', 'Ordre de carburant invalide');
+  }
+  const { rows } = await pool.query(
+    `SELECT owner_id, hull_category FROM ships WHERE id = $1`,
+    [probeId],
+  );
+  if (!rows[0]) throw new CommandError('not_found', 'Sonde inconnue');
+  if (rows[0].owner_id !== playerId) {
+    throw new CommandError('forbidden', 'Cette sonde ne vous obéit pas');
+  }
+  if (rows[0].hull_category !== 'probe') {
+    throw new CommandError('not_available', 'Ordre multi-fuel : sondes seulement');
+  }
+  await pool.query(`UPDATE ships SET fuel_order = $2 WHERE id = $1`, [
+    probeId,
+    JSON.stringify(order),
+  ]);
+}
+
+/**
  * Scoop stellaire (décision responsable 2026-07-20) : une sonde à ≤ 8 pc
  * d'une étoile refait le PLEIN directement — au prix de sa coque
  * (10 HP par scoop [TUNE]). À 0 HP, la sonde est DÉTRUITE. Le réservoir
@@ -711,17 +774,19 @@ export async function scoopProbeFuel(
       await client.query('COMMIT');
       return { destroyed: true, hp: 0, fuelUnits: 0 };
     }
+    // W1 multi-fuel : le scoop remplit le SLOT du type de l'étoile
+    // jusqu'à la capacité restante — les autres slots sont préservés.
+    const slots = { ...((probe.fuel ?? {}) as Record<string, number>) };
+    const evalActive = evalShipFuel(probe, nowMs);
+    slots[evalActive.type] = evalActive.units;
+    const others = totalFuelUnits(slots) - (slots[stars[0].star_fuel_type] ?? 0);
+    slots[stars[0].star_fuel_type] = Math.max(0, PROBE.tankU - others);
     await client.query(
       `UPDATE ships SET fuel = $2, fuel_rate_u_per_day = 0,
           fuel_as_of = to_timestamp($3 / 1000.0),
           hull_hp = $4, hull_as_of = to_timestamp($3 / 1000.0)
        WHERE id = $1`,
-      [
-        probeId,
-        JSON.stringify({ [stars[0].star_fuel_type]: PROBE.tankU }),
-        nowMs,
-        newHp,
-      ],
+      [probeId, JSON.stringify(slots), nowMs, newHp],
     );
     // Replanifie le drain de survol sur le réservoir plein.
     const { rows: fresh } = await client.query(
