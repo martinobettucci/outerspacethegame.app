@@ -4937,3 +4937,25 @@ contamination inter-fichiers, même famille que census R5, consigné au
 Programme R.
 
 Le PROGRAMME W8 est CLOS (MASTER_PLAN W8 → [x]).
+
+## 2026-07-22 — R5 corrigé à la racine : les flaky de sweep census/pods
+
+Diagnostic (enfin) : ce n'était PAS du lazy ni de l'ordre — census est
+GLOBAL PAR CONCEPTION (DG §11.5 : totaux de tout l'univers), et les
+prix des pods en dérivent. Les tests posaient des assertions ABSOLUES
+(« gold = 19 ») dans une base PARTAGÉE entre 49 suites : toute suite
+laissant de l'or (p.ex. les fixtures de fabrication) décalait le total
+(le fameux +42 = 40 d'or de conversions.test + 2 de taux), et le
+barème des pods gonflé par les stocks des autres suites rendait le
+stock d'ore de la fixture insuffisant en plein top-up du cap.
+
+Correctifs SANS affaiblir les contrats : census.test neutralise l'or
+de SON starter, prend un census de BASELINE puis assert le DELTA exact
+(+12 stock lazy, +7 soute, +19 total) et l'API compare à la valeur
+GLOBALE relevée ; pods.test surdimensionne le stock d'ore du test de
+cap (le contrat est le CAP quotidien, pas le prix du moment — les
+tests de PRIX restent absolus et propres dans leur univers).
+
+Preuves : census+pods seuls 9/9 ; balayage sériel COMPLET 375/375
+deux fois de suite (premier sweep 100 % vert de l'histoire du dépôt
+depuis l'apparition du flaky).

@@ -180,6 +180,17 @@ describe('pods de recrutement (DG §11.4)', () => {
   });
 
   it('cap quotidien : 10 pods/jour, le 11e est refusé', async () => {
+    // Robustesse de sweep (flaky famille R5, consigné 2026-07-22) : le
+    // PRIX dérive du census GLOBAL — les stocks des AUTRES suites le
+    // font varier. Un stock d'ore surdimensionné rend le cap testable
+    // quel que soit le barème du moment (le contrat testé est le CAP).
+    await pool.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, 'ore', 1000000, now())
+       ON CONFLICT (body_id, resource)
+       DO UPDATE SET amount_t = 1000000, rate_t_per_day = 0, as_of = now()`,
+      [starter],
+    );
     const { rows } = await pool.query(
       `SELECT count(*)::int AS n FROM pod_openings WHERE player_id = $1`,
       [buyer],

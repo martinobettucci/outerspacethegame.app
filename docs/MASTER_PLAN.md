@@ -191,10 +191,15 @@ le même commit, tests §15, captures §16, docs.
   par staffing [TUNE-v1] ; E2E visuel du spawn ; cas « univers
   saturé » ; scan riche des sondes (ADN/gisements, intel
   scientifique) ; intel des VAISSEAUX L1/L2/L3 (chunk flotte).
-- [ ] **R5 — Stabiliser census** : ×2 flaky au balayage (totaux
-  GLOBAUX/lazy — passent souvent, chantier responsable) : isoler par
-  fenêtre/univers dédié. (Erratum W2 : hover n'était PAS
-  ordonno-dépendant — régression W1 seed-dépendante, corrigée.)
+- [x] **R5 — Stabiliser census — CORRIGÉ À LA RACINE (2026-07-22)** :
+  cause = des ASSERTIONS ABSOLUES sur des agrégats GLOBAUX par
+  conception (census DG §11.5 ; prix des pods dérivés du census) dans
+  une base partagée entre suites. Correctifs : census.test passe en
+  BASELINE + DELTA (l'or du starter neutralisé, un census de référence
+  avant la fixture) ; pods.test surdimensionne le stock d'ore du cap
+  quotidien (le contrat testé est le CAP, pas le barème du moment).
+  Balayage sériel 375/375 ×2 consécutifs. (Erratum W2 : hover n'était
+  PAS ordonno-dépendant — régression W1 seed-dépendante, corrigée.)
 - [ ] **R6 — Captures §16 en attente de port 8080** : V1 halo/cercles,
   V2 UI sondes, V3 chapitre Codex, zoom galaxie, key BuildingPanel.
 - [ ] **R7 — Quirk cap sondes** [TUNE-v1 à trancher] : le cap 5/j/pad

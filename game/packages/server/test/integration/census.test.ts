@@ -24,6 +24,8 @@ const run = randomUUID().slice(0, 8);
 const INTERVAL_MS = 4_000;
 let starter = '';
 let cookie = '';
+/** Total GLOBAL relevé par le 1er test (le census est global — DG §11.5). */
+let lastGoldTotal = 0;
 
 const handlers = { ...baseHandlers(), census_run: censusRun(INTERVAL_MS) };
 
@@ -56,6 +58,30 @@ afterAll(async () => {
 
 describe('census_run (DG §11.5)', () => {
   it('agrège stocks (lazy) + soutes, méta honnête, replanifie dédoublonné', async () => {
+    // Robustesse de sweep (flaky R5, consigné 2026-07-22) : le census
+    // est GLOBAL par CONCEPTION (DG §11.5) — les stocks laissés par les
+    // AUTRES suites comptent. On neutralise l'or du starter, on prend un
+    // census de BASELINE, puis on assert le DELTA de la fixture.
+    await pool.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, 'gold', 0, now())
+       ON CONFLICT (body_id, resource)
+       DO UPDATE SET amount_t = 0, rate_t_per_day = 0, as_of = now()`,
+      [starter],
+    );
+    await pool.query(
+      `INSERT INTO events (due_at, kind, payload)
+       VALUES (now() - interval '1 second', 'census_run', '{}')`,
+    );
+    await processDueEvents(pool, handlers);
+    const { rows: base } = await pool.query(
+      `SELECT totals FROM census_snapshots ORDER BY taken_at DESC LIMIT 1`,
+    );
+    const baseGold = (base[0]?.totals.gold ?? {
+      planetStockT: 0,
+      shipCargoT: 0,
+      totalT: 0,
+    }) as { planetStockT: number; shipCargoT: number; totalT: number };
     // État contrôlé : une ligne de stock avec un TAUX et un as_of passé
     // (le delta lazy doit compter), plus une soute en transit.
     const dayAgo = Date.now() - GAME_DAY_SECONDS * 1000;
@@ -90,10 +116,11 @@ describe('census_run (DG §11.5)', () => {
     );
     expect(snaps.length).toBe(1);
     const gold = snaps[0].totals.gold;
-    // 10 + 2 T/j × 1 j (lazy) + 7 en soute = 19.
-    expect(gold.planetStockT).toBeCloseTo(12, 1);
-    expect(gold.shipCargoT).toBeCloseTo(7, 6);
-    expect(gold.totalT).toBeCloseTo(19, 1);
+    // DELTA vs baseline : 10 + 2 T/j × 1 j (lazy) + 7 en soute = 19.
+    expect(gold.planetStockT - baseGold.planetStockT).toBeCloseTo(12, 1);
+    expect(gold.shipCargoT - baseGold.shipCargoT).toBeCloseTo(7, 6);
+    expect(gold.totalT - baseGold.totalT).toBeCloseTo(19, 1);
+    lastGoldTotal = Number(gold.totalT);
     expect(snaps[0].meta.sources).toEqual(['planet_stock', 'ship_cargo', 'amm_pools']);
     expect(snaps[0].meta.shipCount).toBeGreaterThanOrEqual(1);
 
@@ -128,7 +155,8 @@ describe('census_run (DG §11.5)', () => {
     };
     expect(body.perDay).toBeGreaterThan(0);
     expect(body.census).toBeTruthy();
-    expect(body.census!.totals.gold).toBeCloseTo(19, 1);
+    // Le même instantané que le test précédent (valeur GLOBALE relevée).
+    expect(body.census!.totals.gold).toBeCloseTo(lastGoldTotal, 1);
     // Assertion NÉGATIVE (DG §11.5) : aucune clé de ventilation ne sort.
     const serialized = res.body;
     for (const banned of [
