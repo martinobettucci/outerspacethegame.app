@@ -4636,3 +4636,27 @@ mord — synergie ballast_shielding) ; apothecary_still (logistique
 médicale hors réseau). Colle du système : horloge de survie pendant
 les batch, slots de famille partagés (W9c), gates dispersés = marché
 d'items, enhanced ÷1,5.
+
+## 2026-07-22 — VALIDÉ (responsable) : « go pour tout » — les 9 items 💬 + amendements
+
+1. cryo_stasis_pod : VALIDÉ avec amendements — (a) RÉVEIL RAPIDE à la
+   demande : 10 minutes ; (b) version L2 AVEC AUTOPILOTE : voyage en
+   restant en cryo (longues expéditions exodiques), durée d'autopilote
+   CHOISIE par le joueur et IMPOSSIBLE à réveiller pendant ; (c) le
+   VIEILLISSEMENT est arrêté aussi (L1 et L2) — équipage/cohortes à
+   bord ne vieillissent pas pendant le gel.
+2. jump_primer : AMENDÉ — charge à durée LIBRE (min 1 h, max 10 j),
+   le boost (vitesse ×1,5) dure 3 × LE TEMPS DE CHARGE (remplace la
+   péremption fixe).
+3. deep_scan_pulse : validé tel quel.
+4. hull_patch_kit : validé + 1 T de steel SYMBOLIQUE consommée.
+5. kedge_winch : validé + MODE BOOST — lancé avec MOINS DE 1 fuel
+   restant : tout est brûlé d'un coup et la coque DRIFTE à 10 pc/j
+   (au lieu de 5).
+6–9. electrolysis_vat, hydroponic_run, smelting_run, apothecary_still :
+   validés tels quels. → GO pour TOUT le catalogue (plus aucun 💬).
+
+Note d'implémentation W9d persistée : trim_vanes exige la pénalité de
+charge loadFrac (DG §8.2, jamais implémentée) — elle sera LIVRÉE avec
+W9d (speedEff = v×(1−0,15×loadFrac), burnEff = b×(1+0,5×loadFrac),
+loadFrac = conteneurs utilisés/conteneurs) : canon DG, pas une invention.

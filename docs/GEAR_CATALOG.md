@@ -12,7 +12,7 @@
 > supérieur). L'installation n'exige AUCUNE techno. Chiffres [TUNE]
 > jusqu'au tour d'équilibrage W9f.
 
-## Statuts : ✔ implémenté · ⏳ validé à implémenter · 💬 proposé (en discussion)
+## Statuts : ✔ implémenté · ⏳ validé à implémenter (« go pour tout », 2026-07-22 — plus aucun 💬)
 
 ## 1. Accessoires PASSIFS
 
@@ -62,15 +62,15 @@
 | Accessoire | Slot | Gate | Procédé (arrêt + temps figé) std / enh | Statut |
 |---|---|---|---|---|
 | cell_decompressor | accessory | fuelcell_plant | 1 fuel_cell → 24 h / 16 h → +50 fuel moteur (au réservoir) | ✔ |
-| cryo_stasis_pod | accessory | lab | 12 h de mise en route → horloge de survie GELÉE 7 j (vaisseau inerte) | 💬 |
-| jump_primer | engine | shipyard | 1 j de charge → prochain trajet vitesse ×1,5 (périme sous 3 j) | 💬 |
-| deep_scan_pulse | obs | research_center | 12 h → un instantané d'intel L3 d'un corps sous scan | 💬 |
-| hull_patch_kit | accessory | workshop | 12 h → +25 % des HP max, sans atelier ni steel | 💬 |
-| kedge_winch | accessory | spaceport | 1 j → treuille la coque de 5 pc SANS carburant | 💬 |
-| electrolysis_vat | accessory | workshop | contrepartie batch de l'électrolyse (rendement +10 %) | 💬 |
-| hydroponic_run | accessory | farm | contrepartie batch du vivarium | 💬 |
-| smelting_run | accessory | smelter | contrepartie batch de l'arc_furnace | 💬 |
-| apothecary_still | accessory | lab | contrepartie batch du med_synth | 💬 |
+| cryo_stasis_pod | accessory | lab | gel de la survie ET du vieillissement 7 j ; réveil à la demande en 10 min ; L2 (enhanced) : AUTOPILOTE cryostatique (voyage gelé, durée choisie, irréveillable pendant) | ⏳ W9e |
+| jump_primer | engine | shipyard | charge LIBRE (1 h–10 j) → boost vitesse ×1,5 pendant 3 × le temps de charge | ⏳ W9e |
+| deep_scan_pulse | obs | research_center | 12 h → un instantané d'intel L3 d'un corps sous scan | ⏳ W9e |
+| hull_patch_kit | accessory | workshop | 12 h → +25 % des HP max, 1 T steel_l symbolique | ⏳ W9e |
+| kedge_winch | accessory | spaceport | 1 j → 5 pc sans carburant ; MODE BOOST (< 1 fuel restant) : tout brûlé, drift 10 pc/j | ⏳ W9e |
+| electrolysis_vat | accessory | workshop | contrepartie batch de l'électrolyse (rendement +10 %) | ⏳ W9e |
+| hydroponic_run | accessory | farm | contrepartie batch du vivarium | ⏳ W9e |
+| smelting_run | accessory | smelter | contrepartie batch de l'arc_furnace | ⏳ W9e |
+| apothecary_still | accessory | lab | contrepartie batch du med_synth | ⏳ W9e |
 
 ## 4. UPGRADES (rappel — pas des accessoires, mêmes familles de slots)
 
