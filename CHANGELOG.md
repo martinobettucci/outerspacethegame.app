@@ -2,6 +2,19 @@
 
 ## [Non publié]
 
+### R4 (partiel) — univers saturé typé ; spawn prouvé visuellement (2026-07-22)
+
+- **Univers saturé** : l'épuisement du placement de spawn (poche de
+  Fermi, wild, starter bonus) lève désormais une `SpawnSaturationError`
+  typée → inscription refusée avec le code **`universe_saturated`**
+  (HTTP 503) et AUCUN joueur fantôme (rollback prouvé par test) —
+  fini le 500 brut sur un état de jeu légitime.
+- **Spawn visuel** : E2E dédié — population de départ exacte
+  (STARTER_POP live), grâce de colonie, ADN de départ, main des
+  premiers pas, flotte de naissance (personnel + First hauler) ;
+  captures observées. La cap de population affichée varie par monde
+  (popCap(size, quality)) — constaté et non asserté.
+
 ### R1 — le fold de la main de cartes PROUVÉ (2026-07-22)
 
 - Contrat du chunk AO (BACKLOG « Card hand v2 ») prouvé par E2E

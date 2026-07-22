@@ -9,7 +9,7 @@
  */
 import type pg from 'pg';
 import type { Archetype } from '@atg/shared';
-import { spawnStarterSystem, type SpawnResult } from '../gen/spawn.js';
+import { SpawnSaturationError, spawnStarterSystem, type SpawnResult } from '../gen/spawn.js';
 import { hashPassword } from './passwords.js';
 
 /**
@@ -37,7 +37,7 @@ export interface RegisterResult {
 
 export class RegistrationError extends Error {
   constructor(
-    public readonly code: 'email_taken' | 'invalid_input',
+    public readonly code: 'email_taken' | 'invalid_input' | 'universe_saturated',
     message: string,
   ) {
     super(message);
@@ -93,6 +93,14 @@ export async function registerPlayer(
     return { playerId, spawn };
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
+    // R4 : univers saturé — état de jeu, erreur TYPÉE (le joueur
+    // fantôme est annulé par le ROLLBACK ci-dessus).
+    if (err instanceof SpawnSaturationError) {
+      throw new RegistrationError(
+        'universe_saturated',
+        'L\'univers ne laisse plus de place pour un nouveau monde natal — réessayez plus tard',
+      );
+    }
     throw err;
   } finally {
     client.release();

@@ -282,8 +282,8 @@ async function findPocketCenter(
     if (stars.some((s) => dist(s.x, s.y, x, y) < s.r_nova)) continue;
     return { x, y };
   }
-  throw new Error(
-    'Spawn : impossible de trouver une poche de Fermi satisfaisant les contraintes (univers saturé ?)',
+  throw new SpawnSaturationError(
+    'Spawn : impossible de trouver une poche de Fermi satisfaisant les contraintes (univers saturé)',
   );
 }
 
@@ -294,6 +294,17 @@ async function findPocketCenter(
 /** Clé de verrou d'avis pour SÉRIALISER les spawns (Round 10 PATCH 10-6) :
  *  ferme la course TOCTOU entre inscriptions concurrentes (isolement de
  *  poche + invariant d'invisibilité évalués sur des snapshots disjoints). */
+/** R4 (2026-07-22) — l'ÉCHEC DE PLACEMENT est un état de jeu, pas un
+ *  bug : quand l'univers ne laisse plus de place valide (poche de
+ *  Fermi, placement wild ou bonus), l'inscription doit échouer
+ *  PROPREMENT (erreur typée, transaction annulée), jamais en 500 brut. */
+export class SpawnSaturationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SpawnSaturationError';
+  }
+}
+
 export const SPAWN_ADVISORY_LOCK_KEY = 0x415447_5350_4157n & 0x7fffffffffffffffn; // "ATGSPAW"
 
 export async function spawnStarterSystem(
@@ -385,7 +396,7 @@ export async function spawnStarterSystem(
         sy = center.y + r * Math.sin(theta);
         if (dist(sx, sy, starX, starY) >= star.rNova) break;
         if (attempt > 64) {
-          throw new Error('Spawn : placement starter bonus impossible');
+          throw new SpawnSaturationError('Spawn : placement starter bonus impossible (univers saturé)');
         }
       }
     }
@@ -468,7 +479,9 @@ export async function spawnStarterSystem(
       wx = center.x + r * Math.cos(theta);
       wy = center.y + r * Math.sin(theta);
       if (dist(wx, wy, starX, starY) >= star.rNova) break;
-      if (attempt > 64) throw new Error('Spawn : placement wild impossible');
+      if (attempt > 64) {
+        throw new SpawnSaturationError('Spawn : placement wild impossible (univers saturé)');
+      }
     }
     const { rows } = await client.query<{ id: string }>(
       `INSERT INTO bodies (body_type, name, x, y, seed, size, climate,

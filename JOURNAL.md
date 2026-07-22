@@ -5013,3 +5013,30 @@ GELÉ par le chantier @spec du responsable (« laisse pour le moment »).
 R6 reste [~] avec ce seul reliquat, motif tracé au MASTER_PLAN.
 La sonde de la fixture est construite par les VRAIES commandes
 (grant §15 → probe_pad L1 → /probes) — aucun état fabriqué.
+
+## 2026-07-22 — R4 partiel : univers saturé typé, spawn prouvé visuellement
+
+Univers saturé : les trois branches d'épuisement de gen/spawn.ts
+(poche de Fermi 512 essais, wild 64, starter bonus 64) levaient des
+Error brutes → 500 opaque et joueur potentiellement fantôme. Désormais
+SpawnSaturationError (exportée) → RegistrationError
+'universe_saturated' dans registerPlayer (le ROLLBACK annule l'INSERT
+joueur — prouvé) → 503 à l'API (indisponibilité de jeu, réessayer).
+Test d'intégration avec MOCK DOCUMENTÉ (§15) : la saturation réelle
+exigerait de remplir des centaines de milliers de pc² — le mock lève
+la VRAIE classe depuis le vrai module (importOriginal), tout le reste
+(transaction, vraie base, rollback) est réel.
+
+E2E visuel du spawn : spawn-visual.spec — 350 exacts (STARTER_POP
+importé), « Colony grace until » affiché, chip Technology DNA, main
+des premiers pas non vide, guide « First steps — place a Mine »,
+flotte de naissance (personnel + First hauler) ; captures sp-01/02
+OBSERVÉES (monde S temperate, 350/2 600, ADN 4/26, 10 tuiles libres).
+APPRIS en l'écrivant : la cap de pop affichée varie par monde
+(popCap(size, quality) — 2 000 n'est PAS une constante d'affichage) ;
+l'assertion ne porte que sur le 350.
+
+Restent (R4) : gating staffing des non-industries — je ne le code pas
+sans proposition validée : il CHANGE la boucle du joueur (staffer ses
+télescopes/cliniques pour qu'ils fonctionnent) — proposition à
+formuler ; scan riche des sondes ; intel vaisseaux L1/L2/L3.

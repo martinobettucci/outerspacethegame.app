@@ -197,10 +197,20 @@ le même commit, tests §15, captures §16, docs.
   (V3).
 - [ ] **R3 — Sprites de stock du HUD** : mêmes stubs que le ledger
   stats, TAILLE RÉDUITE adaptée à la densité (PlanetView).
-- [ ] **R4 — Pop v2, restes** : gating fonctionnel des non-industries
-  par staffing [TUNE-v1] ; E2E visuel du spawn ; cas « univers
-  saturé » ; scan riche des sondes (ADN/gisements, intel
-  scientifique) ; intel des VAISSEAUX L1/L2/L3 (chunk flotte).
+- [~] **R4 — Pop v2, restes — 2/5 LIVRÉS (2026-07-22)** :
+  ✔ cas « univers saturé » — SpawnSaturationError typée sur les trois
+  branches d'épuisement de gen/spawn.ts → RegistrationError
+  `universe_saturated` (rollback prouvé : aucun joueur fantôme) → API
+  503 ; spawn-saturation.test 1/1 (mock documenté §15 : la saturation
+  réelle est inexécutable localement, la classe d'erreur est la
+  vraie). ✔ E2E visuel du spawn — spawn-visual.spec (350 exacts
+  depuis STARTER_POP, grâce de colonie, ADN, main des premiers pas,
+  flotte de naissance ; captures sp-01/02 observées ; la CAP de pop
+  affichée varie par monde — non assertée). RESTENT : gating
+  fonctionnel des non-industries par staffing [TUNE-v1 — proposition
+  à soumettre au responsable : change ce que le joueur doit staffer] ;
+  scan riche des sondes (ADN/gisements, intel scientifique) ; intel
+  des VAISSEAUX L1/L2/L3 (chunk flotte).
 - [x] **R5 — Stabiliser census — CORRIGÉ À LA RACINE (2026-07-22)** :
   cause = des ASSERTIONS ABSOLUES sur des agrégats GLOBAUX par
   conception (census DG §11.5 ; prix des pods dérivés du census) dans
