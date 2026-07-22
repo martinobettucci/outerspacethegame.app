@@ -11,9 +11,11 @@
  */
 import {
   canFitGear,
+  CRUSADER,
   DISASSEMBLE_REFUND_FRACTION,
   GEAR,
   HULLS,
+  isCrusader,
   itemCapacity,
   UNINSTALL_HOURS,
   type HullCategory,
@@ -172,6 +174,82 @@ export async function fabricateGear(
 }
 
 /**
+ * W8e — fabrication À BORD du Crusader : ADN COMPLET (canon) — TOUT
+ * hôte est réputé actif L3 (grades enhanced fabricables d'office),
+ * usinage partiel D'OFFICE (paliers de 5 % payés sur crusader_stock,
+ * FIFO par Crusader), balance d'items de bord = 3 warehouses L3
+ * (itemCapacity 450 [TUNE]). PAS de markets à bord (structurel).
+ */
+export async function fabricateGearAboard(
+  pool: pg.Pool,
+  playerId: string,
+  crusaderId: string,
+  itemKey: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const def = GEAR[itemKey];
+  if (!def) throw new CommandError('not_found', 'Item inconnu');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [crusaderId],
+    );
+    const ship = rows[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (!isCrusader(ship.hull_category, ship.hull_size) || !ship.crusader_infra) {
+      throw new CommandError('not_available', 'Seul un Crusader fabrique à bord');
+    }
+    // Balance de bord : items stockés + ordres/événements en route.
+    const cap = itemCapacity(CRUSADER.infra.warehouses as unknown as number[]);
+    const items = (ship.crusader_items ?? {}) as Record<string, number>;
+    const stored = Object.values(items).reduce((n, c) => n + c, 0);
+    const { rows: pendingOrders } = await client.query(
+      `SELECT count(*)::int AS n FROM work_orders
+       WHERE ship_id = $1 AND kind = 'item'`,
+      [crusaderId],
+    );
+    const { rows: pendingEvents } = await client.query(
+      `SELECT count(*)::int AS n FROM events
+       WHERE kind = 'item_fabricated' AND processed_at IS NULL
+         AND payload->>'shipId' = $1`,
+      [crusaderId],
+    );
+    if (stored + pendingOrders[0].n + pendingEvents[0].n >= cap) {
+      throw new CommandError(
+        'not_available',
+        `Balance d'items de bord pleine (${stored + pendingOrders[0].n + pendingEvents[0].n}/${cap})`,
+      );
+    }
+    // ADN complet : aucune gate d'hôte — usinage partiel D'OFFICE.
+    const r = await createWorkOrder(client, {
+      bodyId: null,
+      factoryBuildingId: null,
+      shipId: crusaderId,
+      kind: 'item',
+      payload: { shipId: crusaderId, itemKey },
+      cost: def.fabricationCost as Record<string, number>,
+      totalHours: def.fabricationHours,
+      nowMs,
+      timeScale,
+    });
+    await client.query('COMMIT');
+    return { completesAt: r.completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Installe un item du monde sur une coque ENTREPOSÉE ici : ligne
  * consommée À LA COMMANDE (atomique), coût payé, immobilisation
  * `installHours` puis bord `item_installed`. Slots de la coque (canon) :
@@ -204,10 +282,16 @@ export async function installGear(
     if (['probe', 'personal'].includes(ship.hull_category)) {
       throw new CommandError('not_available', 'Cette coque n\'a pas de slots');
     }
-    if (ship.status !== 'warehoused' || !ship.docked_body_id) {
+    // W8e : une coque AMARRÉE à un Crusader (docks volants) s'équipe à
+    // bord — items et coût pris sur la balance/le stock du bord.
+    const hostCrusaderId =
+      ship.status === 'docked' && !ship.docked_body_id && ship.follow_ship_id
+        ? String(ship.follow_ship_id)
+        : null;
+    if (!hostCrusaderId && (ship.status !== 'warehoused' || !ship.docked_body_id)) {
       throw new CommandError(
         'not_available',
-        'L\'installation se fait sur une coque ENTREPOSÉE (warehouse)',
+        'L\'installation se fait sur une coque ENTREPOSÉE (warehouse) ou AMARRÉE à un Crusader',
       );
     }
     if (ship.installing_item) {
@@ -243,29 +327,70 @@ export async function installGear(
     if (!fit.ok) {
       throw new CommandError('not_available', `Montage refusé : ${fit.reason}`);
     }
-    // L'ITEM : une ligne de CE monde, consommée à la commande.
-    const { rows: taken } = await client.query(
-      `DELETE FROM planet_items
-       WHERE id = (SELECT id FROM planet_items
-                   WHERE body_id = $1 AND item_key = $2
-                   ORDER BY created_at LIMIT 1 FOR UPDATE)
-       RETURNING id`,
-      [ship.docked_body_id, itemKey],
-    );
-    if (!taken[0]) {
-      throw new CommandError(
-        'insufficient_resources',
-        'Aucun exemplaire de cet item en stock sur ce monde',
+    if (hostCrusaderId) {
+      // W8e : item et coût pris sur le BORD (balance + stock du Crusader).
+      const { rows: hostRows } = await client.query(
+        `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+        [hostCrusaderId],
       );
+      const host = hostRows[0];
+      if (!host || !isCrusader(host.hull_category, host.hull_size)) {
+        throw new CommandError('not_available', 'L\'hôte n\'est pas un Crusader');
+      }
+      if (host.owner_id !== playerId) {
+        throw new CommandError('forbidden', 'Ce Crusader ne vous obéit pas');
+      }
+      const items = { ...((host.crusader_items ?? {}) as Record<string, number>) };
+      if ((items[itemKey] ?? 0) < 1) {
+        throw new CommandError(
+          'insufficient_resources',
+          'Aucun exemplaire de cet item dans la balance de bord',
+        );
+      }
+      items[itemKey]! -= 1;
+      if (items[itemKey]! <= 0) delete items[itemKey];
+      const stock = { ...((host.crusader_stock ?? {}) as Record<string, number>) };
+      for (const [resource, amount] of Object.entries(def.installCost)) {
+        if ((stock[resource] ?? 0) + 1e-9 < (amount as number)) {
+          throw new CommandError(
+            'insufficient_resources',
+            `Stock de bord : ${resource} ${Number(stock[resource] ?? 0).toFixed(1)}/${amount} T`,
+          );
+        }
+      }
+      for (const [resource, amount] of Object.entries(def.installCost)) {
+        stock[resource] = Math.max(0, (stock[resource] ?? 0) - (amount as number));
+        if (stock[resource]! <= 1e-9) delete stock[resource];
+      }
+      await client.query(
+        `UPDATE ships SET crusader_items = $2, crusader_stock = $3 WHERE id = $1`,
+        [hostCrusaderId, JSON.stringify(items), JSON.stringify(stock)],
+      );
+    } else {
+      // L'ITEM : une ligne de CE monde, consommée à la commande.
+      const { rows: taken } = await client.query(
+        `DELETE FROM planet_items
+         WHERE id = (SELECT id FROM planet_items
+                     WHERE body_id = $1 AND item_key = $2
+                     ORDER BY created_at LIMIT 1 FOR UPDATE)
+         RETURNING id`,
+        [ship.docked_body_id, itemKey],
+      );
+      if (!taken[0]) {
+        throw new CommandError(
+          'insufficient_resources',
+          'Aucun exemplaire de cet item en stock sur ce monde',
+        );
+      }
+      const { rows: world } = await client.query(
+        `SELECT owner_id FROM bodies WHERE id = $1`,
+        [ship.docked_body_id],
+      );
+      if (world[0]?.owner_id !== playerId) {
+        throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
+      }
+      await payStock(client, ship.docked_body_id, def.installCost as Record<string, number>, nowMs);
     }
-    const { rows: world } = await client.query(
-      `SELECT owner_id FROM bodies WHERE id = $1`,
-      [ship.docked_body_id],
-    );
-    if (world[0]?.owner_id !== playerId) {
-      throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
-    }
-    await payStock(client, ship.docked_body_id, def.installCost as Record<string, number>, nowMs);
     const completesAt = new Date(
       nowMs + (def.installHours * 3_600_000) / timeScale,
     );
@@ -376,10 +501,14 @@ export async function uninstallGear(
     if (ship.owner_id !== playerId) {
       throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
     }
-    if (ship.status !== 'warehoused' || !ship.docked_body_id) {
+    // W8e : le démontage vaut aussi pour une coque AMARRÉE à un
+    // Crusader — l'item retourne à la balance de bord.
+    const aboardCrusader =
+      ship.status === 'docked' && !ship.docked_body_id && !!ship.follow_ship_id;
+    if (!aboardCrusader && (ship.status !== 'warehoused' || !ship.docked_body_id)) {
       throw new CommandError(
         'not_available',
-        'Le démontage se fait sur une coque ENTREPOSÉE (warehouse)',
+        'Le démontage se fait sur une coque ENTREPOSÉE (warehouse) ou AMARRÉE à un Crusader',
       );
     }
     if (ship.installing_item) {

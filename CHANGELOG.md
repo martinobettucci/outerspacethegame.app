@@ -2,6 +2,34 @@
 
 ## [Non publié]
 
+### W8e (cœur serveur) — le Crusader FABRIQUE À BORD (2026-07-22)
+
+- **Migration 038** : work-orders de BORD (`body_id` nullable +
+  `ship_id` FK ships, CHECK l'un-ou-l'autre) ; `ships.crusader_items`
+  (balance d'items du bord, carte clé → compte).
+- **Items** : `fabricateGearAboard` — ADN COMPLET (canon) : tout hôte
+  réputé actif L3, grades enhanced fabricables d'office ; usinage
+  partiel D'OFFICE (paliers de 5 % payés sur `crusader_stock`, FIFO
+  strict par Crusader, starved/reprise auto) ; balance de bord
+  itemCapacity([3,3,3]) = 450 [TUNE] ; l'item naît dans
+  `crusader_items`.
+- **Équipement des coques AMARRÉES** : install/uninstall sur une coque
+  docked au Crusader — item et coût pris sur le bord, immobilisation
+  12 h (moveShip ET undock refusés pendant un chantier d'équipement),
+  démontage rendu à la balance de bord (pleine → désassemblage 50 %
+  au stock de bord).
+- **Coques construites à bord** : `buildShipAboard` (chantier réputé
+  L3 outillé tout moteur), coque née AMARRÉE si un dock de sa taille
+  est libre — sinon en escorte —, plein de naissance 25 % puisé au
+  stock de bord, métamorphose d'office ; le Crusader ne fabrique PAS
+  de Crusader (pas de source de migration à bord — arbitrage
+  responsable requis, annoncé).
+- **API** : POST `/ships/:id/fabricate`, POST `/ships/:id/build-ship` ;
+  vue flotte : `followShipId` + fiche `crusader` (stock, items, pop).
+  PAS de markets à bord (aucune surface — structurel).
+- Tests : crusader-fab.test 6/6 ; balayage sériel 375/375. UI + E2E :
+  chunk suivant (plan W8e-4 au JOURNAL).
+
 ### W9g — réparation d'atelier payable en acier LOURD (2026-07-22)
 
 - La réparation au sol (coque DOCKÉE, workshop actif — inchangé) se

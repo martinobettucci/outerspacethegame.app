@@ -46,8 +46,12 @@ export async function pickL3Factory(
 export async function createWorkOrder(
   client: pg.PoolClient,
   input: {
-    bodyId: string;
-    factoryBuildingId: string;
+    /** Monde cible — null pour un ordre DE BORD (W8e, Crusader). */
+    bodyId: string | null;
+    factoryBuildingId: string | null;
+    /** W8e : ordre exécuté À BORD de ce Crusader (paliers payés sur
+     *  crusader_stock, FIFO par coque). */
+    shipId?: string;
     kind: 'ship' | 'item';
     payload: Record<string, unknown>;
     cost: Record<string, number>;
@@ -57,11 +61,12 @@ export async function createWorkOrder(
   },
 ): Promise<{ orderId: string; completesAt: Date }> {
   const { rows } = await client.query<{ id: string }>(
-    `INSERT INTO work_orders (body_id, factory_building_id, kind, payload, cost)
-     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    `INSERT INTO work_orders (body_id, factory_building_id, ship_id, kind, payload, cost)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     [
       input.bodyId,
       input.factoryBuildingId,
+      input.shipId ?? null,
       input.kind,
       JSON.stringify(input.payload),
       JSON.stringify(input.cost),
@@ -119,6 +124,37 @@ export async function payStep(
       [bodyId, d.resource, d.available - d.take, nowMs],
     );
   }
+  return true;
+}
+
+/**
+ * W8e — paie 5 % du coût sur le STOCK DE BORD d'un Crusader (carte
+ * statique à ticks quotidiens — pas de lazy à bord, interp annoncée).
+ * Palier atomique : false si UNE ressource manque, rien n'est débité.
+ */
+export async function payStepAboard(
+  client: pg.PoolClient,
+  shipId: string,
+  cost: Record<string, number>,
+  _nowMs: number,
+): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT crusader_stock FROM ships WHERE id = $1 FOR UPDATE`,
+    [shipId],
+  );
+  if (!rows[0]) return false;
+  const stock = { ...((rows[0].crusader_stock ?? {}) as Record<string, number>) };
+  for (const [resource, total] of Object.entries(cost)) {
+    if ((stock[resource] ?? 0) + 1e-9 < total / 20) return false;
+  }
+  for (const [resource, total] of Object.entries(cost)) {
+    stock[resource] = Math.max(0, (stock[resource] ?? 0) - total / 20);
+    if (stock[resource]! <= 1e-9) delete stock[resource];
+  }
+  await client.query(`UPDATE ships SET crusader_stock = $2 WHERE id = $1`, [
+    shipId,
+    JSON.stringify(stock),
+  ]);
   return true;
 }
 

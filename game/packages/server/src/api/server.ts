@@ -52,11 +52,12 @@ import {
   startHarvest,
   stopHarvest,
 } from '../services/harvest.js';
-import { disassembleGear, fabricateGear, installGear, listPlanetGear, uninstallGear } from '../services/gear.js';
+import { disassembleGear, fabricateGear, fabricateGearAboard, installGear, listPlanetGear, uninstallGear } from '../services/gear.js';
 import { setConversion } from '../services/conversions.js';
 import {
   assignCrew,
   buildShip,
+  buildShipAboard,
   fleet,
   landShip,
   buildProbe,
@@ -706,6 +707,40 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => undockFromCrusader(deps.pool, player.id, id));
+  });
+
+  // W8e : fabrication À BORD du Crusader (items — usinage partiel
+  // d'office, stock de bord) et construction de coques à bord.
+  app.post('/ships/:id/fabricate', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({ itemKey: z.string().min(1).max(64) })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      fabricateGearAboard(deps.pool, player.id, id, parsed.data.itemKey, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
+  });
+  app.post('/ships/:id/build-ship', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({
+        category: z.string().min(1).max(16),
+        size: z.string().min(1).max(4),
+        name: z.string().min(2).max(40),
+        engine: z.string().min(1).max(16).optional(),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      buildShipAboard(deps.pool, player.id, id, parsed.data, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   // W9b : actifs de conversion — réglage/lancement (pas de 5 %).

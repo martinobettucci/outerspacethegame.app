@@ -95,6 +95,14 @@ export interface ShipView {
   retrievesAt: string | null;
   /** Règles d'auto-trade du survol (GB §7). */
   autoTrade: { resource: string; belowT: number; buyT: number }[];
+  /** W8c/d : hôte suivi (amarrage ou escorte d'un Crusader). */
+  followShipId: string | null;
+  /** W8e : fiche de bord du Crusader (null pour les autres coques). */
+  crusader: {
+    stock: Record<string, number>;
+    items: Record<string, number>;
+    pop: { children: number; actives: number; seniors: number } | null;
+  } | null;
   /** Harvest rig monté (GB §22, DG §8.8). */
   probeLevel: number;
   harvestRig: boolean;
@@ -366,6 +374,27 @@ export async function fleet(
               ]?.tankU ?? 0,
               r.upgrades,
             ),
+      followShipId: r.follow_ship_id ?? null,
+      // W8e : fiche de bord du Crusader (stock, balance d'items, pop).
+      crusader: r.crusader_infra
+        ? {
+            stock: (r.crusader_stock ?? {}) as Record<string, number>,
+            items: (r.crusader_items ?? {}) as Record<string, number>,
+            pop: r.crusader_pop
+              ? {
+                  children: Number(
+                    (r.crusader_pop as Record<string, unknown>).children ?? 0,
+                  ),
+                  actives: Number(
+                    (r.crusader_pop as Record<string, unknown>).actives ?? 0,
+                  ),
+                  seniors: Number(
+                    (r.crusader_pop as Record<string, unknown>).seniors ?? 0,
+                  ),
+                }
+              : null,
+          }
+        : null,
       mission:
         r.status === 'transit' && r.departed_at
           ? {
@@ -483,6 +512,14 @@ export async function moveShip(
       throw new CommandError(
         'not_available',
         `Procédé batch en cours (${runningBatch.replace(/_/g, ' ')}) — la coque est immobilisée`,
+      );
+    }
+    // W8e : un chantier d'item (installation/démontage à bord d'un
+    // Crusader — au sol la coque est entreposée, déjà immobile).
+    if (ship.installing_item) {
+      throw new CommandError(
+        'not_available',
+        'Chantier d\'équipement en cours — la coque est immobilisée',
       );
     }
     // W5 : coque immobilisée pendant sa MORPHOSE d'adaptation.
@@ -1650,6 +1687,13 @@ export async function undockFromCrusader(
     const ship = await lockOwnedShip(client, playerId, shipId);
     if (!ship.follow_ship_id || !['docked', 'hovering'].includes(ship.status)) {
       throw new CommandError('not_available', "Cette coque n'est ni amarrée ni en escorte d'un Crusader");
+    }
+    // W8e : un chantier d'équipement de bord immobilise jusqu'au terme.
+    if (ship.installing_item) {
+      throw new CommandError(
+        'not_available',
+        'Chantier d\'équipement en cours — restez amarré jusqu\'au terme',
+      );
     }
     await client.query(
       `UPDATE ships SET status = 'idle', follow_ship_id = NULL WHERE id = $1`,
@@ -2829,6 +2873,96 @@ export async function transferCargo(
  * ÉQUIPAGE : l'enforcement MIN_CREW est DIFFÉRÉ (annoncé — cohérent avec
  * les vaisseaux du spawn ; arrive avec le lifecycle NPC, backlog P4).
  */
+/**
+ * W8e — construction À BORD du Crusader : ADN COMPLET (chantier réputé
+ * L3 outillé TOUT moteur d'office), usinage partiel D'OFFICE (paliers
+ * de 5 % payés sur crusader_stock, FIFO de bord). La coque naît AMARRÉE
+ * au Crusader si un dock de sa taille est libre, sinon en ESCORTE
+ * (survol ≤ 1 pc) [interp annoncée]. Le Crusader ne fabrique PAS de
+ * Crusader (la migration de population n'a pas de source à bord —
+ * arbitrage responsable requis, annoncé) ; sondes : voie buildProbe
+ * inchangée (hors périmètre v1, annoncé).
+ */
+export async function buildShipAboard(
+  pool: pg.Pool,
+  playerId: string,
+  crusaderId: string,
+  input: { category: string; size: string; name: string; engine?: string },
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; cost: Record<string, number>; engine: string }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  if (!['combat', 'cargo', 'civil'].includes(input.category)) {
+    throw new CommandError('not_found', 'Catégorie de coque inconnue');
+  }
+  if (isCrusader(input.category, input.size)) {
+    throw new CommandError(
+      'not_available',
+      'Un Crusader ne fabrique pas de Crusader (la migration de population n\'a pas de source à bord)',
+    );
+  }
+  if (
+    input.engine !== undefined &&
+    !(ENGINE_TYPES as readonly string[]).includes(input.engine)
+  ) {
+    throw new CommandError('not_available', 'Type de moteur inconnu');
+  }
+  const hull =
+    HULLS[`${input.category}_${input.size}` as `${HullCategory}_${HullSize}`];
+  if (!hull) throw new CommandError('not_found', 'Coque inconnue');
+  const name = input.name.trim();
+  if (name.length < 2 || name.length > 40) {
+    throw new CommandError('not_available', 'Nom de vaisseau invalide (2–40 caractères)');
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [crusaderId],
+    );
+    const host = rows[0];
+    if (!host) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (host.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (!isCrusader(host.hull_category, host.hull_size) || !host.crusader_infra) {
+      throw new CommandError('not_available', 'Seul un Crusader construit à bord');
+    }
+    const engine = input.engine ?? String(host.engine_type ?? 'cold');
+    const cost = shipBuildCost(hull, 3);
+    const r = await createWorkOrder(client, {
+      bodyId: null,
+      factoryBuildingId: null,
+      shipId: crusaderId,
+      kind: 'ship',
+      payload: {
+        crusaderShipId: crusaderId,
+        playerId,
+        category: input.category,
+        size: input.size,
+        name,
+        engine,
+      },
+      cost: cost as Record<string, number>,
+      totalHours: SHIP_BUILD_HOURS[hull.size as 's' | 'm' | 'l'],
+      nowMs,
+      timeScale,
+    });
+    await client.query('COMMIT');
+    return {
+      completesAt: r.completesAt,
+      cost: cost as Record<string, number>,
+      engine,
+    };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function buildShip(
   pool: pg.Pool,
   playerId: string,

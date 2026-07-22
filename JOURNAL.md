@@ -4876,3 +4876,33 @@ quotidiens (crusader_daily) — les paliers 5 % débitent la carte
 directement ; (b) capacité d'items de bord 450 [TUNE] ; (c) aucune
 techno/DNA vérifiée à bord (ADN complet canon) ; (d) marché : aucune
 surface de bord n'existe — le refus est structurel, prouvé par test.
+
+## 2026-07-22 — W8e-1/2/3 livrés : le Crusader fabrique à bord (cœur serveur)
+
+Conforme au plan persisté. Migration 038 (work-orders de bord :
+body_id nullable + ship_id, CHECK cible ; ships.crusader_items).
+Items : fabricateGearAboard — ADN complet ⇒ aucune gate d'hôte (tout
+est réputé L3, enhanced d'office), usinage partiel D'OFFICE par
+paliers de 5 % sur le stock de bord (payStepAboard — la carte statique
+du bord, pas de lazy), FIFO STRICT par Crusader [interp annoncée],
+starved/reprise auto, cap de balance 450 [TUNE]. Équipement à bord :
+install/uninstall valent pour une coque AMARRÉE (docked +
+follow_ship_id) — item/coût au bord, retour à la balance de bord,
+désassemblage 50 % au stock si pleine ; NOUVELLES GARDES : moveShip et
+undockFromCrusader refusent pendant un chantier d'équipement (au sol
+la coque entreposée était déjà immobile — la garde générale profite à
+tous). Coques : buildShipAboard (L3 d'office, tout moteur — l'outillage
+W2 est réputé complet à bord [interp annoncée]) ; née AMARRÉE si dock
+libre sinon ESCORTE ; plein 25 % au stock de bord (partiel annoncé) ;
+hôte disparu au terme → production PERDUE (annoncé) ; PAS de
+Crusader-de-Crusader (la migration de 25 % de population n'a pas de
+source à bord — à arbitrer par le responsable si souhaité un jour).
+Vue flotte : followShipId + fiche crusader {stock, items, pop}.
+
+Preuves : crusader-fab.test 6/6 (enhanced d'office + paliers exacts,
+starved/reprise, §10, install/uninstall de bord avec undock refusé,
+naissance amarrée plein 25 %) ; balayage sériel 375/375 ; typecheck
+vert. Restent W8e-4 : UI Crusader (dock/escorte/fabrication/
+construction — AUCUNE UI crusader n'existe côté client), E2E (endpoint
+de test spawn-crusader à ajouter, §15 chemin déterministe), captures,
+clôture MASTER_PLAN W8.

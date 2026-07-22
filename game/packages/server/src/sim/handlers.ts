@@ -16,6 +16,7 @@ import {
   COLONY_SEED_STOCK,
   FOOD_RESOURCES,
   CRUSADER,
+  crusaderDocks,
   crusaderMigrants,
   isCrusader,
   DISASSEMBLE_REFUND_FRACTION,
@@ -68,7 +69,7 @@ import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
 import { settleConversion } from '../services/conversions.js';
-import { payStep, WORK_ORDER_RETRY_HOURS } from '../services/workOrders.js';
+import { payStep, payStepAboard, WORK_ORDER_RETRY_HOURS } from '../services/workOrders.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipHull, rebaseShipSurvival, shipMaxHp } from './shipDrain.js';
 
 /**
@@ -183,7 +184,27 @@ export const shieldMorphComplete: EventHandler = async (client, event) => {
 export const itemFabricated: EventHandler = async (client, event) => {
   const bodyId = String(event.payload.bodyId ?? '');
   const itemKey = String(event.payload.itemKey ?? '');
-  if (!bodyId || !itemKey || !GEAR[itemKey]) return;
+  if (!itemKey || !GEAR[itemKey]) return;
+  // W8e : fabrication À BORD — l'item naît dans la balance du Crusader
+  // (ships.crusader_items, carte clé → compte).
+  const shipId = String(event.payload.shipId ?? '');
+  if (!bodyId && shipId) {
+    const { rows } = await client.query(
+      `SELECT crusader_items FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    if (!rows[0]) return;
+    const items = {
+      ...((rows[0].crusader_items ?? {}) as Record<string, number>),
+    };
+    items[itemKey] = (items[itemKey] ?? 0) + 1;
+    await client.query(`UPDATE ships SET crusader_items = $2 WHERE id = $1`, [
+      shipId,
+      JSON.stringify(items),
+    ]);
+    return;
+  }
+  if (!bodyId) return;
   await client.query(
     `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
     [bodyId, itemKey],
@@ -264,11 +285,15 @@ export const workStep: EventHandler = async (client, event) => {
   const nowMs = event.dueAt.getTime();
   // FIFO par usine : un ordre plus ancien inachevé de la même usine
   // passe d'abord — ce palier se replanifie derrière lui.
-  if (order.factory_building_id) {
+  // W8e : à BORD (ship_id), FIFO strict par Crusader [interp annoncée].
+  if (order.factory_building_id || order.ship_id) {
     const { rows: elder } = await client.query(
-      `SELECT 1 FROM work_orders
-       WHERE factory_building_id = $1 AND created_at < $2 LIMIT 1`,
-      [order.factory_building_id, order.created_at],
+      order.ship_id
+        ? `SELECT 1 FROM work_orders
+           WHERE ship_id = $1 AND created_at < $2 LIMIT 1`
+        : `SELECT 1 FROM work_orders
+           WHERE factory_building_id = $1 AND created_at < $2 LIMIT 1`,
+      [order.ship_id ?? order.factory_building_id, order.created_at],
     );
     if (elder[0]) {
       await enqueue(client, 'work_step', new Date(nowMs + stepMs), {
@@ -278,12 +303,20 @@ export const workStep: EventHandler = async (client, event) => {
       return;
     }
   }
-  const paid = await payStep(
-    client,
-    order.body_id,
-    order.cost as Record<string, number>,
-    nowMs,
-  );
+  // W8e : un ordre DE BORD paie ses paliers sur le stock du Crusader.
+  const paid = order.ship_id
+    ? await payStepAboard(
+        client,
+        order.ship_id,
+        order.cost as Record<string, number>,
+        nowMs,
+      )
+    : await payStep(
+        client,
+        order.body_id,
+        order.cost as Record<string, number>,
+        nowMs,
+      );
   if (!paid) {
     // Affamé : retry à LA CADENCE DU PALIER (stepMs porte déjà l'échelle
     // de temps) [TUNE-v1 simplification annoncée — la constante
@@ -556,6 +589,44 @@ export const itemUninstalled: EventHandler = async (client, event) => {
      WHERE id = $1`,
     [shipId, JSON.stringify(accessories)],
   );
+  // W8e : coque AMARRÉE à un Crusader — l'item retourne à la balance
+  // de BORD (450 [TUNE]) ; pleine → désassemblage sur place, 50 % du
+  // coût rendu au STOCK DE BORD [même interp que le monde].
+  if (!ship.docked_body_id && ship.follow_ship_id) {
+    const { rows: hostRows } = await client.query(
+      `SELECT crusader_items, crusader_stock, crusader_infra FROM ships
+       WHERE id = $1 FOR UPDATE`,
+      [ship.follow_ship_id],
+    );
+    const host = hostRows[0];
+    if (host?.crusader_infra) {
+      const items = {
+        ...((host.crusader_items ?? {}) as Record<string, number>),
+      };
+      const stored = Object.values(items).reduce((n, c) => n + c, 0);
+      const cap = itemCapacity(CRUSADER.infra.warehouses as unknown as number[]);
+      if (stored < cap) {
+        items[itemKey] = (items[itemKey] ?? 0) + 1;
+        await client.query(
+          `UPDATE ships SET crusader_items = $2 WHERE id = $1`,
+          [ship.follow_ship_id, JSON.stringify(items)],
+        );
+      } else {
+        const stock = {
+          ...((host.crusader_stock ?? {}) as Record<string, number>),
+        };
+        for (const [resource, amount] of Object.entries(def.fabricationCost)) {
+          stock[resource] =
+            (stock[resource] ?? 0) +
+            (amount as number) * DISASSEMBLE_REFUND_FRACTION;
+        }
+        await client.query(
+          `UPDATE ships SET crusader_stock = $2 WHERE id = $1`,
+          [ship.follow_ship_id, JSON.stringify(stock)],
+        );
+      }
+    }
+  }
   if (ship.docked_body_id) {
     // Balance pleine (ou aucun warehouse) : DÉSASSEMBLAGE sur place —
     // 50 % du coût de fabrication rendu au stock [interp annoncée].
@@ -1301,6 +1372,76 @@ export const colonyEstablished: EventHandler = async (client, event) => {
  */
 export const shipBuilt: EventHandler = async (client, event) => {
   const p = event.payload;
+  // W8e : coque née À BORD d'un Crusader — amarrée si un dock de sa
+  // taille est libre, sinon en ESCORTE (survol ≤ 1 pc) ; plein de
+  // naissance 25 % puisé sur le STOCK DE BORD (partiel annoncé). Hôte
+  // disparu au terme → production PERDUE (annoncé).
+  const aboardId = String(p.crusaderShipId ?? '');
+  if (aboardId) {
+    const { rows: hostRows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [aboardId],
+    );
+    const host = hostRows[0];
+    if (!host || !host.crusader_infra) return;
+    const fuelType = String(p.engine ?? host.engine_type ?? 'cold');
+    const hull =
+      HULLS[`${String(p.category)}_${String(p.size)}` as keyof typeof HULLS];
+    const birthTarget = (hull?.tankU ?? 0) * BUILD_FUEL_FRACTION;
+    const stock = {
+      ...((host.crusader_stock ?? {}) as Record<string, number>),
+    };
+    const birthUnits = Math.min(birthTarget, stock[`fuel_${fuelType}`] ?? 0);
+    if (birthUnits > 0) {
+      stock[`fuel_${fuelType}`] = (stock[`fuel_${fuelType}`] ?? 0) - birthUnits;
+      if (stock[`fuel_${fuelType}`]! <= 1e-9) delete stock[`fuel_${fuelType}`];
+      await client.query(`UPDATE ships SET crusader_stock = $2 WHERE id = $1`, [
+        aboardId,
+        JSON.stringify(stock),
+      ]);
+    }
+    const docks = crusaderDocks();
+    const { rows: used } = await client.query(
+      `SELECT count(*)::int AS n FROM ships
+       WHERE follow_ship_id = $1 AND status = 'docked' AND hull_size = $2`,
+      [aboardId, String(p.size)],
+    );
+    const dockFree =
+      used[0].n < (docks[String(p.size) as 's' | 'm' | 'l'] ?? 0);
+    await client.query(
+      `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
+                          status, docked_body_id, hover_body_id,
+                          follow_ship_id, fuel, cargo, engine_type,
+                          accessories)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL, $8, $9, '{}', $10,
+               '["metamorphic_hull"]'::jsonb)`,
+      [
+        host.owner_id,
+        String(p.category),
+        String(p.size),
+        String(p.name),
+        host.x,
+        host.y,
+        dockFree ? 'docked' : 'hovering',
+        aboardId,
+        JSON.stringify({ [fuelType]: birthUnits }),
+        fuelType,
+      ],
+    );
+    // À bord : réservoir gelé / survie servie par l'hôte (patron W8c/d).
+    const { rows: born } = await client.query(
+      `SELECT * FROM ships
+       WHERE owner_id = $1 AND name = $2 AND follow_ship_id = $3
+       ORDER BY created_at DESC LIMIT 1`,
+      [host.owner_id, String(p.name), aboardId],
+    );
+    if (born[0]) {
+      await rebaseShipDrain(client, born[0], event.dueAt.getTime(), 'none', {
+        survivalServed: true,
+      });
+    }
+    return;
+  }
   const planetId = String(p.planetId ?? '');
   if (!planetId) return;
   const { rows: planet } = await client.query(
