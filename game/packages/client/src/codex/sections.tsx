@@ -227,6 +227,7 @@ function GearBody() {
       <p>{c.gear.fabrication}</p>
       <p>{c.gear.classes}</p>
       <p className="ls-codex-warn">{c.gear.warnBatch}</p>
+      <p>{c.gear.freight}</p>
       <p>{c.gear.removal}</p>
       <ExactRule>
         <p>{c.gear.exactIntro}</p>

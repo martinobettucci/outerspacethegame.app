@@ -109,6 +109,8 @@ export const codexEn = {
       'Fitted gear comes in three temperaments, visible on the ship panel. PASSIVE pieces simply work: the moment one is aboard, the numbers it touches — drains, capacities, timers, tolls — shift accordingly, live. CONTINUOUS pieces are throttled flows: set a percentage and they convert cargo at that pace anywhere, even in transit, burning engine fuel to run; if an input runs dry they throttle themselves to zero. BATCH pieces are one-shot procedures: they take their inputs the instant you start, demand a stopped ship for a fixed process time, and burn no fuel at all — the efficient, patient option.',
     warnBatch:
       'A started batch procedure immobilises the hull until its term — and aborting one does not give the inputs back. Commit only what you can afford to lose the moment you press start.',
+    freight:
+      'Fitted or not, gear also travels as freight. A docked ship can take an item from the local balance into its hold — where it occupies a full container, just like a ton of ore — carry it across the sky, and set it down in another balance. A full balance simply refuses the delivery; nothing is ever melted down in transit.',
     removal:
       'Gear comes off as deliberately as it went on. Uninstalling a piece from a warehoused hull takes time and returns the item to the world’s item balance; disassembling one instead melts it back into a fraction of its fabrication materials. If the local item balance is full, an uninstalled piece is disassembled on the spot.',
     exactIntro: 'The fixed frame around every piece of gear:',
