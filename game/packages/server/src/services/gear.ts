@@ -10,6 +10,7 @@
  * l'ancien n'est pas rendu [TUNE-v1 annoncé]).
  */
 import {
+  canFitGear,
   DISASSEMBLE_REFUND_FRACTION,
   GEAR,
   HULLS,
@@ -219,24 +220,12 @@ export async function installGear(
       ? ship.accessories
       : [];
     const upgrades: InstalledUpgrades = ship.upgrades ?? {};
-    if (def.kind === 'accessory') {
-      if (accessories.includes(itemKey)) {
-        throw new CommandError('not_available', 'Cet accessoire est déjà monté');
-      }
-      if (accessories.length >= hull.slots.accessory) {
-        throw new CommandError(
-          'not_available',
-          `Slots accessoire pleins (${accessories.length}/${hull.slots.accessory})`,
-        );
-      }
-    } else {
-      const family = def.slot as keyof typeof hull.slots;
-      if ((hull.slots[family] ?? 0) <= 0) {
-        throw new CommandError(
-          'not_available',
-          `Cette coque n'a pas de slot ${def.slot}`,
-        );
-      }
+    // W9c : familles de slots PARTAGÉES — upgrades ET accessoires
+    // consomment la capacité de LEUR famille (HULLS.slots).
+    if (def.kind === 'accessory' && accessories.includes(itemKey)) {
+      throw new CommandError('not_available', 'Cet accessoire est déjà monté');
+    }
+    if (def.kind === 'upgrade') {
       const current = upgrades[def.slot as keyof InstalledUpgrades];
       if (current && current >= (def.level ?? 0)) {
         throw new CommandError(
@@ -244,6 +233,15 @@ export async function installGear(
           `Un ${def.slot} L${current} est déjà monté (installez un niveau supérieur)`,
         );
       }
+    }
+    const fit = canFitGear(
+      def,
+      accessories,
+      upgrades as Record<string, number>,
+      hull.slots as unknown as Record<string, number>,
+    );
+    if (!fit.ok) {
+      throw new CommandError('not_available', `Montage refusé : ${fit.reason}`);
     }
     // L'ITEM : une ligne de CE monde, consommée à la commande.
     const { rows: taken } = await client.query(

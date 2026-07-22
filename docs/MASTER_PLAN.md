@@ -116,7 +116,9 @@ le même commit, tests §15, captures §16, docs.
   modes — BATCH (électrolyse : montant sacrifié, pause/reprise) et
   CONTINU (vivarium) ; carburant de fonctionnement [TUNE] ;
   electrolyzer/_l2/enhanced, vivarium/enhanced. → JOURNAL 2026-07-22
-- [ ] **W9c — Familles de slots PARTAGÉES** : upgrades ET accessoires
+- [x] **W9c — Familles de slots PARTAGÉES — LIVRÉ (2026-07-22,
+  slotFamilyUsage/canFitGear + installGear ; GEAR_CATALOG.md fait
+  foi)** : upgrades ET accessoires
   consomment la capacité de leur famille (HULLS.slots) — arbitrage
   upgrade-vs-accessoire ; grades ENHANCED fabriqués sur bâtiment hôte
   L3, le grade se fige À LA FABRICATION ; l'installation n'exige

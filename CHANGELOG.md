@@ -2,6 +2,18 @@
 
 ## [Non publié]
 
+### W9c — familles de slots PARTAGÉES (2026-07-22)
+
+- Upgrades ET accessoires consomment désormais la capacité de LEUR
+  famille (`HULLS.slots`) : helpers purs `slotFamilyUsage`/`canFitGear`
+  (un upgrade qui REMPLACE un niveau inférieur ne coûte pas de slot
+  supplémentaire), `installGear` branché dessus — l'arbitrage
+  upgrade-vs-accessoire du système de builds est en place. Le catalogue
+  faisant foi vit dans **docs/GEAR_CATALOG.md** (statuts ✔/⏳/💬).
+- Tests : shared items 5, gear.test 10/10 (×3), balayage sériel
+  347/347, build vert. Les familles non-accessory se peupleront en
+  W9d/W9e (heat_recycler, cell_cracker…).
+
 ### Taxonomie DÉFINITIVE des actifs (décision responsable 2026-07-22) — refactor W9b
 
 - **CONTINUS** (correction : électrolyse ET vivarium) : mobiles

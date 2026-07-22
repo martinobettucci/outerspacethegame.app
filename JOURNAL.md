@@ -4607,3 +4607,14 @@ intrants perdus [interp annoncée] ; cell_decompressor livré (1 cell →
 W9e. UI Start/Abort pour les batch. Preuves : shared 7 ;
 conversions.test 7/7 (×3) ; balayage sériel 347/347 ; E2E adapté
 vert ; build vert.
+
+## 2026-07-22 — W9c livré : familles de slots partagées
+
+Helpers purs slotFamilyUsage/canFitGear (un upgrade remplaçant un
+niveau inférieur ne coûte pas de slot supplémentaire ; capacité =
+HULLS.slots par famille) branchés dans installGear — l'arbitrage
+upgrade-vs-accessoire est effectif. GEAR_CATALOG.md créé : le
+catalogue COMPLET fait foi (statuts ✔/⏳/💬, gates, std/enhanced) ; le
+TABLEAU FINAL sera livré au responsable à la clôture de W9. Preuves :
+shared items 5 ; gear.test 10/10 (×3) ; balayage sériel 347/347 ;
+build vert.

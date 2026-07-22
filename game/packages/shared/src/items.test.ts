@@ -6,6 +6,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALL_GEAR_KEYS,
+  canFitGear,
+  slotFamilyUsage,
   armorHpMult,
   effectiveTankU,
   engineSpeedMult,
@@ -71,5 +73,23 @@ describe('W6 — catalogue ITEMS', () => {
     expect(itemCapacity([])).toBe(0);
     expect(itemCapacity([1])).toBe(50);
     expect(itemCapacity([2, 3])).toBe(100 + 150);
+  });
+});
+
+describe('W9c — familles de slots PARTAGÉES', () => {
+  const slots = { accessory: 1, engine: 2, armor: 1, fuel: 2, obs: 0, weapon: 0, cargo: 1 };
+  it('un upgrade et un accessoire de même famille se disputent la capacité', () => {
+    // fuel: 2 — upgrade fuel_l2 (1) + 1 accessoire fuel : plein.
+    const u = slotFamilyUsage(['electrolyzer'], { fuel: 2 });
+    expect(u.accessory).toBe(1);
+    expect(u.fuel).toBe(1);
+    expect(canFitGear(GEAR.fuel_l3!, ['electrolyzer'], { fuel: 2 }, slots).ok).toBe(true); // remplace
+    expect(canFitGear(GEAR.fuel_l2!, [], {}, slots).ok).toBe(true);
+    expect(canFitGear(GEAR.obs_l2!, [], {}, slots).ok).toBe(false); // obs: 0
+  });
+  it('accessoire refusé quand sa famille est pleine', () => {
+    const r = canFitGear(GEAR.cell_decompressor!, ['metamorphic_hull'], {}, slots);
+    expect(r.ok).toBe(false); // accessory 1/1
+    expect(r.reason).toMatch(/accessory/);
   });
 });

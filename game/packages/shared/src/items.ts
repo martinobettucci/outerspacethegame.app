@@ -226,6 +226,57 @@ export function itemCapacity(warehouseLevels: number[]): number {
   return cap;
 }
 
+/**
+ * W9c — familles de slots PARTAGÉES (décision responsable 2026-07-22) :
+ * upgrades ET accessoires consomment la capacité de LEUR famille
+ * (HULLS.slots). Occupation par famille : accessoires montés de la
+ * famille + 1 par upgrade installé de la famille.
+ */
+export function slotFamilyUsage(
+  accessories: readonly string[],
+  upgrades: Record<string, number> | null | undefined,
+): Record<ItemSlot, number> {
+  const usage: Record<ItemSlot, number> = {
+    accessory: 0,
+    engine: 0,
+    armor: 0,
+    fuel: 0,
+    obs: 0,
+    weapon: 0,
+  };
+  for (const key of accessories) {
+    const d = GEAR[key];
+    usage[(d?.slot ?? 'accessory') as ItemSlot] += 1;
+  }
+  for (const [fam, lvl] of Object.entries(upgrades ?? {})) {
+    if (lvl && fam in usage) usage[fam as ItemSlot] += 1;
+  }
+  return usage;
+}
+
+/**
+ * Peut-on monter cet item ? (partage de famille W9c). Pour un upgrade
+ * qui REMPLACE un niveau inférieur de sa famille : pas de slot
+ * supplémentaire.
+ */
+export function canFitGear(
+  def: GearDef,
+  accessories: readonly string[],
+  upgrades: Record<string, number> | null | undefined,
+  slots: Record<string, number>,
+): { ok: boolean; reason: string | null } {
+  const family = def.slot as ItemSlot;
+  const cap = slots[family] ?? 0;
+  if (cap <= 0) return { ok: false, reason: `aucun slot ${family}` };
+  const usage = slotFamilyUsage(accessories, upgrades);
+  const replacing = def.kind === 'upgrade' && !!(upgrades ?? {})[family];
+  const needed = replacing ? 0 : 1;
+  if (usage[family] + needed > cap) {
+    return { ok: false, reason: `slots ${family} pleins (${usage[family]}/${cap})` };
+  }
+  return { ok: true, reason: null };
+}
+
 /** Upgrades installés d'une coque : {slot: niveau}. */
 export type InstalledUpgrades = Partial<Record<Exclude<ItemSlot, 'accessory'>, 2 | 3>>;
 
