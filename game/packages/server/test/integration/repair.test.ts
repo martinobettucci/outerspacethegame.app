@@ -132,6 +132,32 @@ describe('acier à sec : la réparation s\'arrête (tout-ou-rien famille)', () =
   });
 });
 
+describe('W9g : payable en acier LOURD (léger d\'abord, lourd au barème dense)', () => {
+  it('steel_l à sec mais steel_h en stock → la réparation SERT, lourd débité à 0,05 T/HP', async () => {
+    await setShipHullForTest(pool, owner, cargo, 40);
+    await setStock(ownerStarter, 'steel_l', 0);
+    await setStock(ownerStarter, 'steel_h', 20);
+    await recompute(ownerStarter);
+    // L2 : 192 HP/j servis par le LOURD seul : −192 × 0,05 = −9,6 T/j.
+    expect(Number((await ship(cargo)).hull_wear_hp_per_day)).toBeCloseTo(192, 6);
+    const { rows: h } = await pool.query(
+      `SELECT rate_t_per_day FROM planet_stock
+       WHERE body_id = $1 AND resource = 'steel_h'`,
+      [ownerStarter],
+    );
+    expect(Number(h[0].rate_t_per_day)).toBeCloseTo(-9.6, 6);
+    expect(await steelRate(ownerStarter)).toBe(0); // le léger n'est pas touché
+    // Les DEUX à sec → la réparation s'arrête.
+    await setStock(ownerStarter, 'steel_h', 0);
+    await recompute(ownerStarter);
+    expect(Number((await ship(cargo)).hull_wear_hp_per_day)).toBe(0);
+    // Restauration pour les cas suivants.
+    await setStock(ownerStarter, 'steel_l', 50);
+    await recompute(ownerStarter);
+    expect(Number((await ship(cargo)).hull_wear_hp_per_day)).toBeCloseTo(192, 6);
+  });
+});
+
 describe('plein : hull_repaired coupe l\'acier', () => {
   it('à ~100 ms du plein, l\'événement matérialise 80/80 et le besoin tombe', async () => {
     // 80 − 192 × (0,1 s / 86 400 s) ≈ 79,99978 — bord à ~100 ms.

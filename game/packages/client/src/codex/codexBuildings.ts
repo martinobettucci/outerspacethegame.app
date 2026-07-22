@@ -83,7 +83,7 @@ export const BUILDING_CODEX: Record<string, CodexBuildingEntry> = {
     note: 'Docks of every active spaceport add up.',
   },
   workshop: {
-    role: 'Repairs hulls and fabricates accessory items — rigs included — for warehoused hulls to install.',
+    role: 'Repairs docked hulls — billed in light steel, heavy steel covering any shortfall — and fabricates accessory items for warehoused hulls to install.',
     instances: 'single',
     note: 'Repair uses your BEST workshop — a second adds nothing.',
   },

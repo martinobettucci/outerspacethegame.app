@@ -153,11 +153,14 @@ le même commit, tests §15, captures §16, docs.
   irréveillable) ; actives2.test 7/7, E2E jump_primer + capture.
   GEAR_CATALOG.md : catalogue COMPLET ✔ ([TUNE] → W9f).
   → JOURNAL 2026-07-22
-- [ ] **W9g — Reprise des ateliers de RÉPARATION (décision 2026-07-22,
-  après W9)** : réparation au sol = DOCKÉ sur une planète, payée en
-  steel LÉGER OU LOURD (barème léger/lourd [TUNE à proposer]) ; le
-  Crusader (jamais docké) se répare par l'accessoire ACTIF fab_bay
-  (W9e). → JOURNAL 2026-07-22
+- [x] **W9g — Reprise des ateliers de RÉPARATION — LIVRÉ
+  (2026-07-22)** : réparation au sol = DOCKÉ sur une planète (déjà
+  canon), désormais payée en steel LÉGER OU LOURD — léger d'abord à
+  0,1 T/HP, le lourd couvre le manque à 0,05 T/HP (barème dense
+  [TUNE-proposé, à valider]) ; consommation normalisée en équivalent
+  léger pour le tout-ou-rien ; le Crusader (jamais docké) se répare
+  par fab_bay (W9e) ; DG §8.7 et Codex workshop mis à jour ;
+  repair.test 7/7. → JOURNAL 2026-07-22
 - [ ] **W9f — TOUR D'ÉQUILIBRAGE des accessoires** (campagne de
   simulation, BALANCE_LOG — exception sous-agents). PARQUÉS :
   probe_cradle, beacon_transponder, gyro_stabilizers,

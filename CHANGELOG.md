@@ -2,6 +2,18 @@
 
 ## [Non publié]
 
+### W9g — réparation d'atelier payable en acier LOURD (2026-07-22)
+
+- La réparation au sol (coque DOCKÉE, workshop actif — inchangé) se
+  paie désormais en steel **léger OU lourd** : le léger est prélevé
+  d'abord (0,1 T/HP), le lourd couvre le manque au barème dense
+  **0,05 T/HP** ([TUNE-proposé, à valider par le responsable]) ;
+  tout-ou-rien conservé (consommation normalisée en équivalent léger).
+- Le Crusader (jamais docké) se répare par **fab_bay** (W9e) — DG §8.7
+  consolidé, Codex workshop mis à jour.
+- Tests : repair.test 7/7 (lourd seul → servi à −9,6 T/j ; les deux à
+  sec → arrêt) ; balayage sériel 369/369.
+
 ### W9e (partie 2) — les 6 actifs couplés au déplacement et au temps (2026-07-22)
 
 - STANCES (continus à débit nul — le throttle est un réglage lu par

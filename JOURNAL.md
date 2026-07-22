@@ -4824,3 +4824,21 @@ sont FIGÉS v1 (GEAR_CATALOG fait foi).
 Preuves : sim rejouée après patch (ratio B 0,50/0,67) ; actives2 7/7
 et shared 210/210 rejoués sur la constante patchée (les assertions
 lisent les constantes) ; balayage sériel 368/368 avant patch.
+
+## 2026-07-22 — W9g livré : la réparation d'atelier se paie en acier léger OU lourd
+
+Décision responsable (2026-07-22, persistée à l'annonce) : réparation
+au sol = coque DOCKÉE (déjà canon) payée en steel léger OU lourd ; le
+Crusader, qui ne docke jamais, passe par fab_bay (livré en W9e).
+Barème PROPOSÉ (à valider) : léger 0,1 T/HP (inchangé), lourd
+0,05 T/HP — l'acier lourd est le métal dense de tier supérieur, ÷2 de
+tonnage. Ordre : léger d'abord, le lourd couvre le manque ;
+tout-ou-rien conservé via une consommation normalisée en équivalent
+léger (production.ts). Constante REPAIR_STEEL_H_T_PER_HP dans
+wear.ts ; DG §8.7 consolidé ; Codex (chapitre Buildings, workshop)
+mis à jour dans le même commit (porte DoD).
+
+Preuves : repair.test 7/7 (nouveau cas : léger à sec + 20 T de lourd →
+réparation SERVIE, lourd débité −9,6 T/j, léger intact ; les deux à
+sec → arrêt ; restauration → reprise) ; balayage sériel 369/369 ;
+codex client 10/10 ; typecheck vert.

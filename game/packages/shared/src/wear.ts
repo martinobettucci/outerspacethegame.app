@@ -145,6 +145,11 @@ export const REPAIR_FRACTION_PER_HOUR = 0.05;
 export const REPAIR_LEVEL_MULT: readonly number[] = [1, 2, 4];
 /** Acier consommé par HP rendu (« costs steel proportional ») [TUNE-v1]. */
 export const REPAIR_STEEL_T_PER_HP = 0.1;
+/** W9g — l'atelier accepte AUSSI l'acier LOURD (décision responsable
+ *  2026-07-22 : « payer en steel léger ou steel lourd ») : barème dense
+ *  ÷2 [TUNE-proposé — à valider par le responsable]. Le léger est
+ *  prélevé d'abord ; le lourd couvre le manque. */
+export const REPAIR_STEEL_H_T_PER_HP = 0.05;
 
 /** Taux de réparation (HP/jour) d'un atelier de niveau donné. */
 export function repairHpPerDay(maxHp: number, workshopLevel: number): number {

@@ -24,6 +24,8 @@ import {
   OXYGEN_PER_1000_PER_DAY,
   POP_NEEDS_PER_1000_PER_DAY,
   RECIPES,
+  REPAIR_STEEL_H_T_PER_HP,
+  REPAIR_STEEL_T_PER_HP,
   storageBrake,
   TRACE_MINING_T_PER_DAY,
   type RecipeId,
@@ -361,10 +363,22 @@ export function computeRates(input: RatesInput): RatesResult {
     water: consumeFamily(['water'], input.hoverSurvivalNeeds?.water ?? 0),
   };
   // Acier de réparation des coques à quai (DG §8.7) — même règle.
-  const repairSteelConsumption = consumeFamily(
-    ['steel_l'],
-    input.repairSteelNeeds ?? 0,
-  );
+  // W9g : payable en steel LÉGER OU LOURD (léger d'abord ; le lourd
+  // couvre le manque au barème dense 0,05 T/HP). La consommation est
+  // NORMALISÉE en équivalent steel_l pour le tout-ou-rien de rebase.
+  const repairNeedL = input.repairSteelNeeds ?? 0;
+  const repairLServed = consumeFamily(['steel_l'], repairNeedL);
+  const repairShortfallL = repairNeedL - repairLServed;
+  const repairHServed =
+    repairShortfallL > EMPTY
+      ? consumeFamily(
+          ['steel_h'],
+          repairShortfallL * (REPAIR_STEEL_H_T_PER_HP / REPAIR_STEEL_T_PER_HP),
+        )
+      : 0;
+  const repairSteelConsumption =
+    repairLServed +
+    repairHServed * (REPAIR_STEEL_T_PER_HP / REPAIR_STEEL_H_T_PER_HP);
 
   return {
     stockRates,

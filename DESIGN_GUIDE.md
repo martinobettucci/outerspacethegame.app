@@ -973,8 +973,12 @@ everyone else needs a spaceport dock ≥ hull size. Landing wear: 1% armor per
 landing [TUNE], waived where a Civic/civil-pilot governor sits.
 
 ### 8.7 Repair & rearm
-Workshop repairs 5% HP/h × level mult (×1/×2/×4) [TUNE]; costs steel
-proportional to HP restored; policy: whom to serve (canon).
+Workshop repairs 5% HP/h × level mult (×1/×2/×4) [TUNE]; requires the hull
+DOCKED on the planet; costs steel proportional to HP restored, payable in
+**light OR heavy steel** (owner decision 2026-07-22): light first at
+0.1 T/HP, heavy covers any shortfall at 0.05 T/HP [TUNE-proposed]; policy:
+whom to serve (canon). The Crusader never docks — its repair path is the
+**fab_bay** active accessory (GEAR_CATALOG, W9e).
 
 ### 8.8 Accessories (workshop-crafted, politics-free)
 - **Harvest rig** — 20 steelL + 5 crystal + 5 gold [TUNE]:
