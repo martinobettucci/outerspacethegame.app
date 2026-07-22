@@ -93,6 +93,8 @@ export const codexEn = {
     lead: 'Every structure belongs to one of two families. SINGLE buildings work alone: a second copy adds nothing (or is simply not allowed) — you grow them by LEVELING. MULTIPLE buildings stack: each copy adds its own output, storage or docks, bounded only by your free tiles and deposits.',
     context:
       'This chapter shows the building types available in THIS world’s tech DNA — as your horizons widen, so does the chapter.',
+    partial:
+      'Where a level-3 industry runs, big works change rhythm: placements, ship keels, gear and level-ups are no longer paid up front. The yard opens an automatic work order that draws the cost in twenty small instalments as the work advances — an empty storehouse simply pauses the site until supplies return, and tearing a site down only ever refunds what was actually paid in.',
     noPlanet: 'Open one of your worlds to browse the building types its tech DNA allows.',
     loadError: 'Could not read this world’s tech DNA — try again.',
     single: 'Single',

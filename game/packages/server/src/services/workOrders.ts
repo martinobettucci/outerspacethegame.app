@@ -52,7 +52,7 @@ export async function createWorkOrder(
     /** W8e : ordre exécuté À BORD de ce Crusader (paliers payés sur
      *  crusader_stock, FIFO par coque). */
     shipId?: string;
-    kind: 'ship' | 'item';
+    kind: 'ship' | 'item' | 'building';
     payload: Record<string, unknown>;
     cost: Record<string, number>;
     totalHours: number;

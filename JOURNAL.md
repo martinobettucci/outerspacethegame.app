@@ -5158,3 +5158,27 @@ placement ET montée de niveau basculent en work-order (20 paliers de
 - tests intégration (pas d'avance, paliers débités, starved/reprise,
   activation au 20e, démolition en cours d'ordre, levelup partiel) ;
 - Codex (porte) : phrase « partial machining » au chapitre Buildings.
+
+## 2026-07-22 — W7-bâtiments livré : l'usinage partiel s'étend au génie civil — W7 CLOS
+
+Conforme au plan persisté. Migration 040 (CHECK kind + 'building') ;
+placeBuilding/levelUpBuilding basculent en work-order sur monde à
+industrie L3 (rien d'avance, completes_at indicatif) ; le handler
+work_step CUMULE config.investedPaid à CHAQUE palier payé (PATCH
+10-4 : un ordre en cours ne gonfle JAMAIS le remboursable — prouvé :
+chantier affamé réapprovisionné de 5 paliers puis démoli → 50 % de
+CES 5 paliers seulement) ; demolishBuilding annule l'ordre ; le
+terminal reste construction_complete (naissance par la voie
+existante) avec une MARGE d'1 s (20 arrondis de palier vs indicatif).
+Interps annoncées : (a) la montée de LA SEULE usine L3 du monde crée
+un ordre sans usine porteuse (factory_building_id NULL — pas de FIFO,
+paliers payés quand même) ; (b) un bâtiment démoli pendant son ordre
+tue l'ordre au palier suivant (garde du handler).
+
+Porte Codex : paragraphe « partial machining » au chapitre Buildings
+(couvre AUSSI rétroactivement les coques/items du cœur W7 — dette de
+gate du 2026-07-21 soldée).
+
+Preuves : building-partial.test 2/2 ; balayage sériel 382/382 ;
+codex client 12/12 ; typecheck ×3 ; migration 040 appliquée à la
+base dev. LE PROGRAMME W7 EST CLOS (MASTER_PLAN → [x]).

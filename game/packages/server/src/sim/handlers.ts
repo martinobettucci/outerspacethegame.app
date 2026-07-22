@@ -79,10 +79,14 @@ import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseSh
 export const constructionComplete: EventHandler = async (client, event) => {
   const buildingId = String(event.payload.buildingId ?? '');
   if (!buildingId) return;
+  // W7-bâtiments : marge d'1 s — l'échéance d'un ordre partiel cumule
+  // 20 arrondis de palier et peut différer de quelques ms de
+  // l'indicatif completes_at.
   const { rows } = await client.query(
     `UPDATE buildings
        SET status = 'active', completes_at = NULL
-     WHERE id = $1 AND status = 'constructing' AND completes_at <= $2
+     WHERE id = $1 AND status = 'constructing'
+       AND completes_at <= $2::timestamptz + interval '1 second'
      RETURNING body_id`,
     [buildingId, event.dueAt],
   );
@@ -332,11 +336,49 @@ export const workStep: EventHandler = async (client, event) => {
     });
     return;
   }
+  // W7-bâtiments : chaque palier payé s'ajoute à investedPaid — la
+  // démolition ne rembourse QUE le réellement-payé (PATCH 10-4), un
+  // ordre en cours ne gonfle jamais le remboursable.
+  if (order.kind === 'building') {
+    const buildingId = String(
+      (order.payload as Record<string, unknown>).buildingId ?? '',
+    );
+    if (buildingId) {
+      const { rows: bRows } = await client.query(
+        `SELECT config FROM buildings WHERE id = $1 FOR UPDATE`,
+        [buildingId],
+      );
+      if (!bRows[0]) {
+        // Bâtiment démoli pendant l'ordre : l'ordre meurt avec lui.
+        await client.query(`DELETE FROM work_orders WHERE id = $1`, [orderId]);
+        return;
+      }
+      const config = { ...((bRows[0].config ?? {}) as Record<string, unknown>) };
+      const invested = {
+        ...((config.investedPaid ?? {}) as Record<string, number>),
+      };
+      for (const [resource, total] of Object.entries(
+        order.cost as Record<string, number>,
+      )) {
+        invested[resource] = (invested[resource] ?? 0) + (total as number) / 20;
+      }
+      config.investedPaid = invested;
+      await client.query(`UPDATE buildings SET config = $2 WHERE id = $1`, [
+        buildingId,
+        JSON.stringify(config),
+      ]);
+    }
+  }
   const done = Number(order.steps_done) + 1;
   if (done >= Number(order.steps_total)) {
     await client.query(`DELETE FROM work_orders WHERE id = $1`, [orderId]);
     // Naissance par la voie EXISTANTE (exactement-une-fois).
-    const kind = order.kind === 'ship' ? 'ship_built' : 'item_fabricated';
+    const kind =
+      order.kind === 'ship'
+        ? 'ship_built'
+        : order.kind === 'building'
+          ? 'construction_complete'
+          : 'item_fabricated';
     await enqueue(client, kind as 'ship_built', event.dueAt, order.payload);
     return;
   }

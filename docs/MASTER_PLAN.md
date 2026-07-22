@@ -64,14 +64,19 @@ le même commit, tests §15, captures §16, docs.
   accessoires (erratum responsable 2026-07-22 — slots occupés, montage
   direct SUPPRIMÉ, migration 034) ; (d) obs/weapon effectifs (P5).
   → JOURNAL 2026-07-21/22
-- [~] **W7 — Usinage partiel (usines L3) — CŒUR LIVRÉ (2026-07-21)** :
+- [x] **W7 — Usinage partiel (usines L3) — LIVRÉ (cœur 2026-07-21 ; bâtiments 2026-07-22)** :
   work_orders (migration 032), 20 paliers de 5 % (rien d'avance), FIFO
   strict par usine, starved/reprise auto, naissance par les événements
   existants, vues avec paliers. work-orders.test 3/3, balayage 330/330.
   E2E work-orders.spec VERT + captures wo-01..02 observées
-  (2026-07-21). **Reste** : BÂTIMENTS en usinage partiel (flux de
-  placement = chantier propre, motif : main de cartes/tuiles/retool).
-  → JOURNAL 2026-07-21
+  (2026-07-21). **Reste LIVRÉ (2026-07-22, W7-bâtiments)** :
+  placement ET montée de niveau en usinage partiel sur monde à
+  industrie L3 (migration 040 kind 'building', rien d'avance,
+  investedPaid cumulé PAR PALIER — PATCH 10-4 —, démolition en cours
+  d'ordre = ordre annulé + 50 % du déjà-payé seulement, marge d'1 s
+  sur construction_complete pour les arrondis de paliers) ;
+  building-partial.test 2/2 ; Codex Buildings § partial machining.
+  W7 EST CLOS. → JOURNAL 2026-07-21/22
 - [x] **W8 — Le CRUSADER — LIVRÉ (W8a–d 2026-07-21, W8e 2026-07-22)** : migration 033
   (stock/pop/infra + follow_ship_id, combat_l existants forcés en
   survol), naissance en survol + 25 % de pop source (proportions

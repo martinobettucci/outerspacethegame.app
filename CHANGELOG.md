@@ -2,6 +2,19 @@
 
 ## [Non publié]
 
+### W7-bâtiments — l'usinage partiel s'étend aux BÂTIMENTS (2026-07-22)
+
+- Sur un monde à industrie L3 active, **placement et montée de
+  niveau** ne se paient plus d'avance : un work-order (migration
+  **040**, kind `building`) débite 20 paliers de 5 % au stock ;
+  `investedPaid` est cumulé **par palier** (PATCH 10-4 : la démolition
+  ne rembourse que le réellement-payé — un chantier affamé démoli à
+  5/20 rend 50 % de 5 paliers, rien de plus) ; l'ordre meurt avec la
+  démolition. Marge d'1 s sur `construction_complete` (arrondis).
+- Codex (chapitre Buildings) : paragraphe « partial machining ».
+- Tests : building-partial.test 2/2 ; balayage sériel 382/382.
+  **Le programme W7 est CLOS.**
+
 ### W6c-b1 — acheminement d'ITEMS par cargo (2026-07-22)
 
 - **Migration 039** : `ships.item_cargo` (liste de clés). Un item en

@@ -55,6 +55,7 @@ import type pg from 'pg';
 import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { enqueue } from '../sim/events.js';
+import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
 // Cycle planets↔governance assumé : governance n'emprunte que
 // CommandError (liaison vive, usage différé) — sûr en ESM.
 import { governanceOf } from './governance.js';
@@ -883,7 +884,14 @@ export async function placeBuilding(
       ),
     );
 
-    await payCost(client, bodyId, planet.climate, def.placementCost, nowMs);
+    // W7-bâtiments : sur un monde à industrie L3 ACTIVE, le placement
+    // bascule en USINAGE PARTIEL — rien d'avance, 20 paliers de 5 %
+    // payés au stock, investedPaid n'enregistre QUE le déjà-payé
+    // (PATCH 10-4). Sinon : chemin historique (paiement à la commande).
+    const partial = await hasL3Factory(client, bodyId);
+    if (!partial) {
+      await payCost(client, bodyId, planet.climate, def.placementCost, nowMs);
+    }
     const buildMs =
       (BUILD_HOURS_BY_LEVEL[0] * 3_600_000) / Math.max(timeScale, 1e-9);
     const completesAt = new Date(nowMs + buildMs);
@@ -896,11 +904,25 @@ export async function placeBuilding(
       // 10-4) : la démolition ne rembourse que là-dessus. Les ruines de
       // spawn et les bâtiments du kit de colonisation enregistrent {}.
       [bodyId, buildingKey, tileIndex, completesAt, recipe, workforce,
-       JSON.stringify({ investedPaid: def.placementCost })],
+       JSON.stringify({ investedPaid: partial ? {} : def.placementCost })],
     );
-    await enqueue(client, 'construction_complete', completesAt, {
-      buildingId: created[0]!.id,
-    });
+    if (partial) {
+      const factoryId = await pickL3Factory(client, bodyId);
+      await createWorkOrder(client, {
+        bodyId,
+        factoryBuildingId: factoryId,
+        kind: 'building',
+        payload: { buildingId: created[0]!.id },
+        cost: def.placementCost as Record<string, number>,
+        totalHours: BUILD_HOURS_BY_LEVEL[0]!,
+        nowMs,
+        timeScale,
+      });
+    } else {
+      await enqueue(client, 'construction_complete', completesAt, {
+        buildingId: created[0]!.id,
+      });
+    }
     await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
     return { buildingId: created[0]!.id, completesAt };
@@ -1321,7 +1343,13 @@ export async function levelUpBuilding(
       }
     }
     const stepCost = def.levelUpCost[targetLevel - 2]!;
-    await payCost(client, bodyId, planet.climate, stepCost, nowMs);
+    // W7-bâtiments : industrie L3 active → montée en USINAGE PARTIEL
+    // (les paliers alimentent investedPaid au fil de l'eau — le handler
+    // work_step cumule) ; sinon paiement à la commande + cumul immédiat.
+    const partial = await hasL3Factory(client, bodyId);
+    if (!partial) {
+      await payCost(client, bodyId, planet.climate, stepCost, nowMs);
+    }
     const buildMs =
       (BUILD_HOURS_BY_LEVEL[targetLevel - 1]! * 3_600_000) /
       Math.max(timeScale, 1e-9);
@@ -1330,7 +1358,7 @@ export async function levelUpBuilding(
     // [TUNE interp — JOURNAL session 30]. On CUMULE le palier payé dans
     // config.investedPaid (PATCH 10-4) : la démolition rembourse ce cumul.
     const prevPaid = readInvestedPaid(rows[0].config);
-    const newPaid = addBundles(prevPaid, stepCost);
+    const newPaid = partial ? prevPaid : addBundles(prevPaid, stepCost);
     await client.query(
       `UPDATE buildings SET level = $2, status = 'constructing',
          completes_at = $3,
@@ -1338,7 +1366,21 @@ export async function levelUpBuilding(
        WHERE id = $1`,
       [buildingId, targetLevel, completesAt, JSON.stringify(newPaid)],
     );
-    await enqueue(client, 'construction_complete', completesAt, { buildingId });
+    if (partial) {
+      const factoryId = await pickL3Factory(client, bodyId);
+      await createWorkOrder(client, {
+        bodyId,
+        factoryBuildingId: factoryId,
+        kind: 'building',
+        payload: { buildingId },
+        cost: stepCost as Record<string, number>,
+        totalHours: BUILD_HOURS_BY_LEVEL[targetLevel - 1]!,
+        nowMs,
+        timeScale,
+      });
+    } else {
+      await enqueue(client, 'construction_complete', completesAt, { buildingId });
+    }
     await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
     return { completesAt, newLevel: targetLevel };
@@ -1401,6 +1443,14 @@ export async function demolishBuilding(
       `UPDATE buildings SET status = 'demolishing', completes_at = $2
        WHERE id = $1`,
       [buildingId, completesAt],
+    );
+    // W7-bâtiments : un ordre d'usinage en cours meurt avec le chantier
+    // (les paliers DÉJÀ payés sont dans investedPaid → remboursés à 50 %
+    // ci-dessus ; les paliers non payés ne le seront jamais).
+    await client.query(
+      `DELETE FROM work_orders
+       WHERE kind = 'building' AND payload->>'buildingId' = $1`,
+      [buildingId],
     );
     await enqueue(client, 'demolition_complete', completesAt, { buildingId });
     await recomputePlanetRates(client, bodyId, nowMs);

@@ -181,6 +181,7 @@ function BuildingsBody({ planetId }: CodexBodyContext) {
   return (
     <>
       <p>{c.buildings.lead}</p>
+      <p>{c.buildings.partial}</p>
       <p>{c.buildings.context}</p>
       {available.kind === 'none' && (
         <p className="ls-codex-warn">{c.buildings.noPlanet}</p>
