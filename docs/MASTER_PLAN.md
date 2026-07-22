@@ -127,6 +127,11 @@ le même commit, tests §15, captures §16, docs.
   ore_hopper, solar_sails, escape_thrusters. → JOURNAL 2026-07-22
 - [ ] **W9e — Actifs restants** : arc_furnace, med_synth, ram_scoop,
   gravity_sling, fab_bay (+enhanced). → JOURNAL 2026-07-22
+- [ ] **W9g — Reprise des ateliers de RÉPARATION (décision 2026-07-22,
+  après W9)** : réparation au sol = DOCKÉ sur une planète, payée en
+  steel LÉGER OU LOURD (barème léger/lourd [TUNE à proposer]) ; le
+  Crusader (jamais docké) se répare par l'accessoire ACTIF fab_bay
+  (W9e). → JOURNAL 2026-07-22
 - [ ] **W9f — TOUR D'ÉQUILIBRAGE des accessoires** (campagne de
   simulation, BALANCE_LOG — exception sous-agents). PARQUÉS :
   probe_cradle, beacon_transponder, gyro_stabilizers,

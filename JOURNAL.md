@@ -4506,3 +4506,15 @@ figé à la fabrication).
 Preuves : shared 6 ; conversions.test 5/5 (×3) ; balayage sériel
 343/345 (census ×2 = flaky R5) ; unit 55 ; build vert. RESTENT
 (annoncés) : UI de bord + E2E/captures — suite immédiate.
+
+## 2026-07-22 — Décision responsable (À FAIRE APRÈS, notée pour mémoire) : reprise des ateliers de réparation
+
+Le responsable fige, pour un chunk ULTÉRIEUR (après le programme W9 en
+cours) :
+- Réparation au sol (workshop) : il faut être DOCKÉ SUR UNE PLANÈTE et
+  payer en STEEL LÉGER OU STEEL LOURD (aujourd'hui : steel_l implicite
+  à 0,1 T/HP — le choix léger/lourd et son barème sont à trancher à
+  l'implémentation [TUNE à proposer : steel_h plus efficace par tonne]).
+- Le CRUSADER ne pouvant pas docker, SA voie de réparation est
+  l'accessoire ACTIF de réparation (fab_bay, catalogue W9e : 1 %/h ×
+  runPct au steel de SOUTE + carburant).
