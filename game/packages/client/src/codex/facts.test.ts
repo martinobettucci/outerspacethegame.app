@@ -27,6 +27,11 @@ import {
   UNEMP_TOLERANCE,
   UNEMP_GRACE_DAYS,
   STARTER_POP,
+  UNINSTALL_HOURS,
+  DISASSEMBLE_REFUND_FRACTION,
+  ENHANCED_FABRICATOR_LEVEL,
+  ENHANCED_RATE_MULT,
+  RUN_PCT_STEP,
 } from '@atg/shared';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
 
@@ -61,6 +66,14 @@ describe('CODEX_FACTS binds live @atg/shared constants (anti-drift)', () => {
     expect(CODEX_FACTS.clinicReductionByLevel).toEqual(CLINIC_REDUCTION);
     expect(CODEX_FACTS.overcapDeathsCoef).toBe(OVERCAP_DEATHS_COEF);
     expect(CODEX_FACTS.starterPop).toBe(STARTER_POP);
+  });
+
+  it('ship gear (W9d)', () => {
+    expect(CODEX_FACTS.gearUninstallHours).toBe(UNINSTALL_HOURS);
+    expect(CODEX_FACTS.gearRefundFraction).toBe(DISASSEMBLE_REFUND_FRACTION);
+    expect(CODEX_FACTS.gearEnhancedFabricatorLevel).toBe(ENHANCED_FABRICATOR_LEVEL);
+    expect(CODEX_FACTS.gearEnhancedRateMult).toBe(ENHANCED_RATE_MULT);
+    expect(CODEX_FACTS.gearRunPctStep).toBe(RUN_PCT_STEP);
   });
 });
 

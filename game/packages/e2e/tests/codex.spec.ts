@@ -14,6 +14,7 @@ import {
   MEDICINE_AGE_WEIGHTS,
   POP_NEEDS_PER_1000_PER_DAY,
   TRACE_MINING_T_PER_DAY,
+  UNINSTALL_HOURS,
 } from '@atg/shared';
 import { registerSovereign, shot } from './lib.ts';
 
@@ -26,11 +27,21 @@ test('Codex : ouvrable depuis chaque écran, deep-link contextuel, 3 chapitres, 
 }) => {
   await registerSovereign(page, `codex-${Date.now()}@test.local`, 'Archivist');
 
-  // --- From the galaxy (default view): opens on Deposits ------------------
+  // --- From the galaxy (default view): opens on Ship gear (W9d) -----------
   await rail(page).getByRole('button', { name: 'Codex' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('heading', { name: 'Codex' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { name: 'Ship gear' })).toBeVisible();
+  // Exact rule discloses a LIVE gear number from @atg/shared.
+  await dialog.getByText('Exact rule & formula').first().click();
+  await expect(
+    dialog.getByText(`${UNINSTALL_HOURS} h`, { exact: false }).first(),
+  ).toBeVisible();
+  await shot(page, 'codex-07-gear-from-galaxy');
+
+  // --- Deposits chapter ----------------------------------------------------
+  await dialog.getByRole('button', { name: 'Deposits & mining' }).click();
   await expect(
     dialog.getByRole('heading', { name: 'Deposits & mining' }),
   ).toBeVisible();

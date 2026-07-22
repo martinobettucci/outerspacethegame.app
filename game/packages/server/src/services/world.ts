@@ -10,6 +10,7 @@
 import {
   intelTierFromSources,
   starFieldRadiusPc,
+  surveyIntelCap,
   normalizeDemographicCounters,
   planetTechAvailability,
   projectPlanetIntel,
@@ -80,6 +81,9 @@ export async function visibleBodies(
                WHEN s.hull_category = 'probe' AND COALESCE(s.probe_level, 1) >= 2
                  THEN $2::float + $3::float
                WHEN s.hull_category = 'probe' THEN $4::float
+               -- W9d signal_mirror : scan vaisseau 20 → 60 / 100 pc.
+               WHEN s.accessories @> '["signal_mirror_enhanced"]'::jsonb THEN 100
+               WHEN s.accessories @> '["signal_mirror"]'::jsonb THEN 60
                ELSE $5::float
              END
       FROM ships s
@@ -217,20 +221,28 @@ export async function bodyIntel(
   // Présence propre : vaisseau à portée de scan ⇒ visible ; sonde à
   // portée ⇒ deep sight [TUNE-GAP].
   const { rows: presenceRows } = await pool.query(
-    `SELECT hull_category FROM ships
+    `SELECT hull_category, accessories FROM ships
      WHERE owner_id = $1 AND status IN ('hovering', 'idle', 'docked', 'stranded')
        AND (x - $2::float)^2 + (y - $3::float)^2 <=
            (CASE WHEN hull_category = 'probe' THEN $4::float ELSE $5::float END)^2`,
     [playerId, body.x, body.y, PROBE_SCAN_PC, SHIP_SCAN_PC],
   );
   const probeOnSite = presenceRows.some((r) => r.hull_category === 'probe');
+  // W9d survey_suite : +1 palier d'intel en présence, plafonné L2/L3.
+  const surveyCap = presenceRows.reduce((cap, r) => {
+    const c = surveyIntelCap(Array.isArray(r.accessories) ? r.accessories : []);
+    return Math.max(cap, c);
+  }, 0 as 0 | 2 | 3);
   if (presenceRows.length > 0) visible = true;
   if (body.owner_id === playerId) visible = true;
 
   const tier =
     body.owner_id === playerId
       ? 4
-      : intelTierFromSources(sources, { visible, probeOnSite });
+      : (() => {
+          const base = intelTierFromSources(sources, { visible, probeOnSite });
+          return surveyCap > base ? Math.min(surveyCap, base + 1) : base;
+        })();
   if (tier === 0) throw notFound;
 
   // Données brutes — chargées quel que soit le palier, la PROJECTION

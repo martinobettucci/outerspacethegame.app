@@ -4670,3 +4670,40 @@ testées, dont loadFracPenalty (la pénalité de charge DG §8.2 sera
 livrée avec trim_vanes en partie 2 — canon, pas une invention).
 Preuves : shared 207 ; balayage sériel 345/347 (census R5) ; build
 vert. Partie 2 : câblage des 19 effets + tests d'intégration.
+
+## 2026-07-22 — W9d partie 2 livrée : les 19 effets passifs câblés + Codex « Ship gear »
+
+Câblage exhaustif dans les systèmes réels (aucun sous-ensemble
+silencieux, règle de complétude) : shipDrain (heat_recycler,
+solar_sails survol GRATUIT à ≤8/15 pc d'une étoile — vérif SQL,
+ballast_shielding, flare_dampers via radiativeWearMult ajouté à
+hullWearPerDay, bilge_purifier, cryo_larder, escape_thrusters) ;
+ships.ts (docking_clamps, mooring_winch, provisions ×cryo_larder,
+cargo_netting partout — charge/vue flotte/conversions —, berth_module,
+moveShip : loadFracPenalty DG §8.2 LIVRÉE + trim_vanes +
+course_optimizer) ; world.ts (signal_mirror en CASE jsonb,
+survey_suite palier d'intel) ; stargates (stargate_caller), junk
+(salvage_grapnel, ore_hopper), market (haggler_matrix).
+
+Porte Codex (DoD §17) : les écrans d'équipement (W9a–c) n'avaient PAS
+de chapitre — dette soldée : chapitre « Ship gear » (fabrication et
+grades figés, 3 tempéraments passif/continu/batch, démontage/
+désassemblage), spoiler-free (aucun item énuméré — le système, pas la
+carte), chiffres LIVE via CODEX_FACTS (nouvelles constantes nommées
+RUN_PCT_STEP, ENHANCED_FABRICATOR_LEVEL — anti-dérive testé) ;
+deep-link GalaxyMap → Ship gear ; codex.spec E2E mis à jour.
+
+Annoncé : stargate_caller et haggler_matrix n'ont pas de fixture
+d'intégration dédiée — multiplicateur unit-testé, appliqué au site de
+paiement UNIQUE (stargates.ts / market.ts), flux couverts par les
+suites existantes. Incident environnement : seed idempotent en échec
+sur dérive lazy de la démo (pyramide 347 vs pop 346,83) → resetDb
+(autorisation responsable) ; API dev relancée avec API_PORT=8081.
+game/JOURNAL.md égaré (piège cwd, 3ᵉ occurrence) supprimé — doublon
+strict d'entrées déjà au JOURNAL racine.
+
+Preuves : passives.test intégration 8/8 ; balayage sériel 353/355
+(census ×2 = flaky R5 connu, passe seul — l'échec api du 1ᵉʳ passage
+ne s'est pas reproduit au 2ᵉ) ; shared 207 ; codex client 10/10 ;
+E2E codex 1/1 avec capture codex-07 OBSERVÉE (nav 5 chapitres, prose,
+warn batch, règle exacte 6 h) ; typecheck vert.

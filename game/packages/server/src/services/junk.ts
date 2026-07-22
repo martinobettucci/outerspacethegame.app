@@ -8,6 +8,8 @@
  * annoncée du « 30 T/day »] dans la limite des conteneurs libres.
  */
 import {
+  claimTimeMult,
+  junkScoopMult,
   CLAIM_HOURS,
   CLAIM_RADIUS_PC,
   containersUsed,
@@ -258,7 +260,13 @@ export async function collectJunk(
       (hull?.containers ?? 0) -
         containersUsed(cargo as Partial<Record<ResourceId, number>>),
     );
-    const scoop = Math.min(JUNK_SCOOP_T, available, freeT);
+    // W9d ore_hopper : scoop de junk élargi [TUNE].
+    const scoop = Math.min(
+      JUNK_SCOOP_T *
+        junkScoopMult(Array.isArray(ship.accessories) ? ship.accessories : []),
+      available,
+      freeT,
+    );
     if (scoop <= 1e-9) {
       throw new CommandError('not_available', 'Soute pleine — aucun conteneur libre');
     }
@@ -330,7 +338,14 @@ export async function startClaim(
         `Trop loin de l'épave (≤ ${CLAIM_RADIUS_PC} pc)`,
       );
     }
-    const claimsAt = new Date(nowMs + (CLAIM_HOURS * 3_600_000) / timeScale);
+    // W9d salvage_grapnel : réclamation accélérée [TUNE].
+    const claimsAt = new Date(
+      nowMs +
+        (CLAIM_HOURS *
+          claimTimeMult(Array.isArray(ship.accessories) ? ship.accessories : []) *
+          3_600_000) /
+          timeScale,
+    );
     await client.query(
       `UPDATE ships SET claiming_target_id = $2 WHERE id = $1`,
       [shipId, targetId],

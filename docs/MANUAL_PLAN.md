@@ -78,10 +78,11 @@ Content authoring surface (client): `src/codex/` — a typed section registry
 - **Presentation:** a dialog overlay using the existing `useDialogFocus`
   (focus trap + Escape + focus return, §22 a11y). Two-pane: section nav +
   content; scrolls internally; responsive (desktop/tablet, §7 of DESIGN_SYSTEM).
-- **Contextual deep-link:** the current first slice maps PlanetView and
-  GalaxyMap to deposits, and Market to efficiency. `view.kind` selects that
-  default; later travel, telescope, census and trading chapters will refine
-  the mapping when they exist.
+- **Contextual deep-link:** PlanetView maps to deposits, Market to
+  efficiency, and GalaxyMap to the "Ship gear" chapter (W9d — gear lives on
+  the map's ship panels). `view.kind` selects that default; later travel,
+  telescope, census and trading chapters will refine the mapping when they
+  exist.
 - **Layered depth:** each section leads with plain language; an expandable
   "Exact rule & formula" block reveals the numbers/curve for min-maxers. Newcomer
   and optimizer served by the same entry.

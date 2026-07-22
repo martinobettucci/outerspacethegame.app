@@ -118,15 +118,22 @@ export function hullWearPerDay(
     harvestDamagePerDay?: number;
     /** W5 : nombre de CHAMPS stellaires non blindés où la coque baigne. */
     starFieldsUnshielded?: number;
+    /** W9d flare_dampers : multiplicateur de l'usure RADIATIVE
+     *  (champ stellaire + zone de hasard) — 1 par défaut. [TUNE] */
+    radiativeWearMult?: number;
   },
 ): number {
+  const radMult = opts.radiativeWearMult ?? 1;
   let wear = 0;
   if (opts.hostileClimateUnshielded) wear += HULL_WEAR_FRACTION_PER_DAY * maxHp;
-  if (opts.hazardZoneUnshielded) wear += HULL_WEAR_FRACTION_PER_DAY * maxHp;
+  if (opts.hazardZoneUnshielded) {
+    wear += HULL_WEAR_FRACTION_PER_DAY * maxHp * radMult;
+  }
   wear +=
     Math.max(0, opts.starFieldsUnshielded ?? 0) *
     HULL_WEAR_FRACTION_PER_DAY *
-    maxHp;
+    maxHp *
+    radMult;
   wear += Math.max(0, opts.harvestDamagePerDay ?? 0);
   return wear;
 }

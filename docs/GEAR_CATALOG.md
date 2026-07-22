@@ -23,25 +23,25 @@
 | harvest_rig | accessory | workshop | récolte stellaire (gradient ≤ 8 pc) | ✔ |
 | junk_collector | accessory | workshop | scoop de junk 30 T/j | ✔ |
 | claim_rig | accessory | workshop | réclamation d'épaves (2 h de proximité) | ✔ |
-| heat_recycler | fuel | refinery | drain de survol −15 % / −25 % | ⏳ W9d |
-| cryo_larder | accessory | lab | capacité de provisions +50 % / +100 % | ⏳ W9d |
-| docking_clamps | accessory | spaceport | séjour à quai étranger ×2 / ×3 | ⏳ W9d |
-| signal_mirror | obs | telescope | scan vaisseau 20 → 60 / 100 pc | ⏳ W9d |
-| survey_suite | obs | research_center | +1 palier d'intel en survol (cap L2 / L3) | ⏳ W9d |
-| ballast_shielding | armor | military_district | dégâts de junk −50 % / −75 % | ⏳ W9d |
-| flare_dampers | armor | obs_station | usure champ/flare −50 % / −75 % (CUMULABLE avec la morphose) | ⏳ W9d |
-| trim_vanes | engine | shipyard | pénalité de charge ÷2 / ÷4 | ⏳ W9d |
-| berth_module | cargo | residential | pax +25 % / +50 % | ⏳ W9d |
-| course_optimizer | engine | research_center | burn de trajet −10 % / −15 % | ⏳ W9d |
-| cargo_netting | cargo | warehouse | +1 / +2 conteneurs | ⏳ W9d |
-| mooring_winch | accessory | warehouse | redéploiement d'entrepôt ÷2 / ÷3 | ⏳ W9d |
-| bilge_purifier | accessory | waterworks | drain de survie équipage −25 % / −50 % | ⏳ W9d |
-| stargate_caller | accessory | stargate_yard | péage de gate étranger −25 % / −50 % | ⏳ W9d |
-| salvage_grapnel | accessory | workshop | réclamation 2 h → 1 h / 0,5 h | ⏳ W9d |
-| haggler_matrix | accessory | commerce_district | prix du négoce inné −10 % / −15 % | ⏳ W9d |
-| ore_hopper | cargo | smelter | scoop de junk +50 % / +100 % | ⏳ W9d |
-| solar_sails | fuel | fuelcell_plant | survol GRATUIT à ≤ 8 / ≤ 15 pc d'une étoile | ⏳ W9d |
-| escape_thrusters | engine | military_district | alarme d'auto-fuite à 40 % / 50 % | ⏳ W9d |
+| heat_recycler | fuel | refinery | drain de survol −15 % / −25 % | ✔ |
+| cryo_larder | accessory | lab | capacité de provisions +50 % / +100 % | ✔ |
+| docking_clamps | accessory | spaceport | séjour à quai étranger ×2 / ×3 | ✔ |
+| signal_mirror | obs | telescope | scan vaisseau 20 → 60 / 100 pc | ✔ |
+| survey_suite | obs | research_center | +1 palier d'intel en survol (cap L2 / L3) | ✔ |
+| ballast_shielding | armor | military_district | dégâts de junk −50 % / −75 % | ✔ |
+| flare_dampers | armor | obs_station | usure champ/flare −50 % / −75 % (CUMULABLE avec la morphose) | ✔ |
+| trim_vanes | engine | shipyard | pénalité de charge ÷2 / ÷4 | ✔ |
+| berth_module | cargo | residential | pax +25 % / +50 % | ✔ |
+| course_optimizer | engine | research_center | burn de trajet −10 % / −15 % | ✔ |
+| cargo_netting | cargo | warehouse | +1 / +2 conteneurs | ✔ |
+| mooring_winch | accessory | warehouse | redéploiement d'entrepôt ÷2 / ÷3 | ✔ |
+| bilge_purifier | accessory | waterworks | drain de survie équipage −25 % / −50 % | ✔ |
+| stargate_caller | accessory | stargate_yard | péage de gate étranger −25 % / −50 % | ✔ |
+| salvage_grapnel | accessory | workshop | réclamation 2 h → 1 h / 0,5 h | ✔ |
+| haggler_matrix | accessory | commerce_district | prix du négoce inné −10 % / −15 % | ✔ |
+| ore_hopper | cargo | smelter | scoop de junk +50 % / +100 % | ✔ |
+| solar_sails | fuel | fuelcell_plant | survol GRATUIT à ≤ 8 / ≤ 15 pc d'une étoile | ✔ |
+| escape_thrusters | engine | military_district | alarme d'auto-fuite à 40 % / 50 % | ✔ |
 
 ## 2. Accessoires ACTIFS CONTINUS (mobiles, brûlent du carburant)
 

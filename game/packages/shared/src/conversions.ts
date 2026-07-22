@@ -98,9 +98,15 @@ export function conversionOf(itemKey: string): ConversionDef | null {
   return null;
 }
 
-/** Réglage valide : 0–100 par pas de 5 (décision responsable). */
+/** Pas de réglage des actifs continus (décision responsable). */
+export const RUN_PCT_STEP = 5;
+
+/** Réglage valide : 0–100 par pas de RUN_PCT_STEP. */
 export function isValidRunPct(runPct: number): boolean {
   return (
-    Number.isInteger(runPct) && runPct >= 0 && runPct <= 100 && runPct % 5 === 0
+    Number.isInteger(runPct) &&
+    runPct >= 0 &&
+    runPct <= 100 &&
+    runPct % RUN_PCT_STEP === 0
   );
 }

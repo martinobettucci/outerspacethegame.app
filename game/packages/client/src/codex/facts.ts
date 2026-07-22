@@ -30,6 +30,11 @@ import {
   UNEMP_TOLERANCE,
   UNEMP_GRACE_DAYS,
   STARTER_POP,
+  UNINSTALL_HOURS,
+  DISASSEMBLE_REFUND_FRACTION,
+  ENHANCED_FABRICATOR_LEVEL,
+  ENHANCED_RATE_MULT,
+  RUN_PCT_STEP,
 } from '@atg/shared';
 
 /** Live values, pulled from the shared canon. No literals — see contract above. */
@@ -57,6 +62,12 @@ export const CODEX_FACTS = {
   clinicReductionByLevel: CLINIC_REDUCTION,
   overcapDeathsCoef: OVERCAP_DEATHS_COEF,
   starterPop: STARTER_POP,
+  // Ship gear
+  gearUninstallHours: UNINSTALL_HOURS,
+  gearRefundFraction: DISASSEMBLE_REFUND_FRACTION,
+  gearEnhancedFabricatorLevel: ENHANCED_FABRICATOR_LEVEL,
+  gearEnhancedRateMult: ENHANCED_RATE_MULT,
+  gearRunPctStep: RUN_PCT_STEP,
 } as const;
 
 /* ---- Formatters (pure, unit-tested) ---------------------------------- */

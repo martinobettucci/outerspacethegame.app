@@ -6,7 +6,7 @@
  * formulae for optimisers. First slice: three chapters.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { Building2, Gauge, Pickaxe, Users } from 'lucide-react';
+import { Building2, Gauge, Pickaxe, Users, Wrench } from 'lucide-react';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import type { View } from '../state.tsx';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
@@ -15,7 +15,12 @@ import { AgePyramidDiagram, DepositDepletionDiagram } from './diagrams.tsx';
 import { api } from '../api.js';
 import { BUILDING_CODEX, CODEX_BUILDING_KEYS } from './codexBuildings.ts';
 
-export type CodexSectionId = 'deposits' | 'population' | 'efficiency' | 'buildings';
+export type CodexSectionId =
+  | 'deposits'
+  | 'population'
+  | 'efficiency'
+  | 'buildings'
+  | 'gear';
 
 /** Contexte de rendu d'un chapitre (planète actuellement ouverte). */
 export interface CodexBodyContext {
@@ -210,11 +215,41 @@ function BuildingsBody({ planetId }: CodexBodyContext) {
   );
 }
 
+function GearBody() {
+  const f = CODEX_FACTS;
+  return (
+    <>
+      <p>{c.gear.lead}</p>
+      <p>{c.gear.fabrication}</p>
+      <p>{c.gear.classes}</p>
+      <p className="ls-codex-warn">{c.gear.warnBatch}</p>
+      <p>{c.gear.removal}</p>
+      <ExactRule>
+        <p>{c.gear.exactIntro}</p>
+        <ul className="ls-codex-facts">
+          <Fact label={c.gear.exactUninstall} value={`${f.gearUninstallHours} h`} />
+          <Fact label={c.gear.exactRefund} value={pct(f.gearRefundFraction)} />
+          <Fact
+            label={c.gear.exactEnhanced}
+            value={`L${f.gearEnhancedFabricatorLevel}`}
+          />
+          <Fact
+            label={c.gear.exactEnhancedRate}
+            value={`×${f.gearEnhancedRateMult}`}
+          />
+          <Fact label={c.gear.exactStep} value={pct(f.gearRunPctStep / 100)} />
+        </ul>
+      </ExactRule>
+    </>
+  );
+}
+
 export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'deposits', title: c.deposits.title, icon: <Pickaxe size={16} />, Body: DepositsBody },
   { id: 'population', title: c.population.title, icon: <Users size={16} />, Body: PopulationBody },
   { id: 'efficiency', title: c.efficiency.title, icon: <Gauge size={16} />, Body: EfficiencyBody },
   { id: 'buildings', title: c.buildings.title, icon: <Building2 size={16} />, Body: BuildingsBody },
+  { id: 'gear', title: c.gear.title, icon: <Wrench size={16} />, Body: GearBody },
 ];
 
 /**
@@ -229,6 +264,7 @@ export function defaultSectionFor(kind: View['kind']): CodexSectionId {
     case 'market':
       return 'efficiency';
     case 'galaxy':
+      return 'gear';
     case 'comms':
     default:
       return 'deposits';

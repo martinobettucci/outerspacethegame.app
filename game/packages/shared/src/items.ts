@@ -65,6 +65,9 @@ const upgrade = (
   note,
 });
 
+/** Niveau du bâtiment hôte exigé pour FABRIQUER un grade enhanced. */
+export const ENHANCED_FABRICATOR_LEVEL = 3;
+
 /** Fabrique la variante ENHANCED d'un accessoire (bâtiment hôte L3,
  *  coût ×2 [TUNE]) — le grade se fige À LA FABRICATION. */
 function enhanced(base: GearDef): GearDef {
@@ -75,7 +78,7 @@ function enhanced(base: GearDef): GearDef {
     key: `${base.key}_enhanced`,
     fabricationCost: cost,
     fabricationHours: base.fabricationHours * 2,
-    fabricatorMinLevel: 3,
+    fabricatorMinLevel: ENHANCED_FABRICATOR_LEVEL,
     note: `${base.note} (enhanced grade — L3 fabrication).`,
   };
 }

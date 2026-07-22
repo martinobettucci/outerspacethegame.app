@@ -12,6 +12,7 @@
  * sortie dispersée U(0–15) pc (hash seedé shipId+tick — DG §9.3).
  */
 import {
+  gateTollMult,
   ALL_RESOURCE_IDS,
   STARGATE_BUILD_HOURS,
   STARGATE_COST,
@@ -252,7 +253,10 @@ export async function traverseStargate(
     ) {
       const cargo: Record<string, number> = { ...(ship.cargo ?? {}) };
       const held = Number(cargo[gate.toll_resource] ?? 0);
-      const toll = Number(gate.toll_amount);
+      // W9d stargate_caller : péage étranger réduit [TUNE].
+      const toll =
+        Number(gate.toll_amount) *
+        gateTollMult(Array.isArray(ship.accessories) ? ship.accessories : []);
       if (held < toll - 1e-9) {
         throw new CommandError(
           'insufficient_resources',

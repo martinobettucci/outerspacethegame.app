@@ -26,7 +26,14 @@ import {
   starIsFlaring,
   SURVIVAL_ALARM_FRACTION,
   survivalCapacityT,
-  survivalDrainTPerDay, hoverIdleFuelUPerDay } from '@atg/shared';
+  survivalDrainTPerDay, hoverIdleFuelUPerDay,
+  fleeAlarmFraction,
+  hoverDrainMult,
+  junkDamageMult,
+  solarSailFreeHoverPc,
+  starFieldWearMult,
+  survivalCapacityMult,
+  survivalDrainMult } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from './events.js';
 import { evalLazy, whenReaches } from './lazy.js';
@@ -106,11 +113,27 @@ export async function rebaseShipDrain(
 ): Promise<{ type: string; units: number; ratePerDay: number }> {
   const evaluated = evalShipFuel(ship, nowMs);
   const units = Math.max(0, opts.setUnits ?? evaluated.units);
-  const perDay = hoverIdleFuelUPerDay(
-    ship.hull_category,
-    ship.hull_size,
-    Number(ship.probe_level ?? 1),
-  );
+  const shipAccessories: string[] = Array.isArray(ship.accessories)
+    ? ship.accessories
+    : [];
+  // W9d heat_recycler : drain de survol réduit [TUNE].
+  let perDay =
+    hoverIdleFuelUPerDay(
+      ship.hull_category,
+      ship.hull_size,
+      Number(ship.probe_level ?? 1),
+    ) * hoverDrainMult(shipAccessories);
+  // W9d solar_sails : survol GRATUIT à portée d'une étoile.
+  const sailPc = solarSailFreeHoverPc(shipAccessories);
+  if (perDay > 0 && sailPc > 0) {
+    const { rows: nearStar } = await client.query(
+      `SELECT 1 FROM bodies
+       WHERE body_type = 'star' AND star_fuel_type IS NOT NULL
+         AND (x - $1)^2 + (y - $2)^2 <= $3^2 LIMIT 1`,
+      [Number(ship.x), Number(ship.y), sailPc],
+    );
+    if (nearStar[0]) perDay = 0;
+  }
   const rate = target === 'tank' && perDay > 0 ? -perDay : 0;
 
   // W1 : préserver les slots NON actifs (multi-fuel des sondes) — une
@@ -198,6 +221,9 @@ export async function rebaseShipSurvival(
     [ship.id],
   );
   const crew = Number(crewRows[0]?.crew ?? 0);
+  const survAccessories: string[] = Array.isArray(ship.accessories)
+    ? ship.accessories
+    : [];
   const evaluated = evalShipSurvival(ship, nowMs);
   const food = Math.max(0, opts.setFoodT ?? evaluated.food);
   const water = Math.max(0, opts.setWaterT ?? evaluated.water);
@@ -206,12 +232,11 @@ export async function rebaseShipSurvival(
   // ou-rien) et transmis ici ; défaut PESSIMISTE — chaque entrée en survol
   // d'un monde possédé passe par un recompute qui rétablit l'exemption
   // dans la même transaction (patron fuel, aucun double-paiement).
-  const perDay = survivalDrainTPerDay(
-    ship.hull_category,
-    ship.status,
-    crew,
-    { planetServes: opts.survivalServed === true },
-  );
+  // W9d bilge_purifier : drain de survie réduit [TUNE].
+  const perDay =
+    survivalDrainTPerDay(ship.hull_category, ship.status, crew, {
+      planetServes: opts.survivalServed === true,
+    }) * survivalDrainMult(survAccessories);
   // [TUNE-v1 annoncé, JOURNAL] : l'horloge ne S'ARME que si des provisions
   // existent (worst > 0) — une coque jamais avitaillée ne meurt pas
   // instantanément au départ (l'Arche de colonisation porte ses vivres en
@@ -240,8 +265,12 @@ export async function rebaseShipSurvival(
   if (rate < 0) {
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as keyof typeof HULLS];
-    const capPerRes = survivalCapacityT(hull?.survivalCrewDays ?? 0, crew);
-    const alarmAt = capPerRes * SURVIVAL_ALARM_FRACTION;
+    // W9d cryo_larder (capacité ×) + escape_thrusters (alarme relevée).
+    const capPerRes =
+      survivalCapacityT(hull?.survivalCrewDays ?? 0, crew) *
+      survivalCapacityMult(survAccessories);
+    const alarmAt =
+      capPerRes * fleeAlarmFraction(survAccessories, SURVIVAL_ALARM_FRACTION);
     const worst = Math.min(food, water);
     if (worst > alarmAt && alarmAt > 0) {
       const at = whenReaches({ amount: worst, ratePerDay: rate, asOfMs: nowMs }, alarmAt);
@@ -405,13 +434,18 @@ export async function rebaseShipHull(
         [junkCellOf(Number(ship.x)), junkCellOf(Number(ship.y))],
       );
       if (junk[0]) {
-        harvestDamagePerDay += junkHazardHpPerDay(
-          evalJunkAmount(
-            Number(junk[0].amount_t),
-            new Date(junk[0].as_of).getTime(),
-            nowMs,
-          ),
-        );
+        // W9d ballast_shielding : dégâts de junk atténués [TUNE].
+        harvestDamagePerDay +=
+          junkHazardHpPerDay(
+            evalJunkAmount(
+              Number(junk[0].amount_t),
+              new Date(junk[0].as_of).getTime(),
+              nowMs,
+            ),
+          ) *
+          junkDamageMult(
+            Array.isArray(ship.accessories) ? ship.accessories : [],
+          );
       }
     }
     if (ship.harvesting_star_id) {
@@ -431,6 +465,10 @@ export async function rebaseShipHull(
     hazardZoneUnshielded,
     harvestDamagePerDay,
     starFieldsUnshielded,
+    // W9d flare_dampers : usure radiative atténuée (cumulable morph).
+    radiativeWearMult: starFieldWearMult(
+      Array.isArray(ship.accessories) ? ship.accessories : [],
+    ),
   });
   // Réparation d'atelier (DG §8.7) : taux SERVI transmis par le recompute
   // planétaire (défaut pessimiste 0) — nul si la coque est déjà pleine.

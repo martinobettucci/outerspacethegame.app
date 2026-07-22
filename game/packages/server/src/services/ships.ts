@@ -18,6 +18,13 @@ import {
   effectiveTankU,
   engineSpeedMult,
   isCrusader,
+  dwellMult,
+  effectiveContainers,
+  loadFracPenalty,
+  paxMult,
+  retrieveTimeMult,
+  survivalCapacityMult,
+  travelBurnMult,
   crusaderDocks,
   ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
@@ -266,16 +273,22 @@ export async function fleet(
       dockedBodyId: r.docked_body_id,
       hoverBodyId: r.hover_body_id,
       cargo: r.cargo ?? {},
-      containers: hullContainers(r.hull_category, r.hull_size),
+      containers: effectiveContainers(
+        hullContainers(r.hull_category, r.hull_size),
+        Array.isArray(r.accessories) ? r.accessories : [],
+      ),
       settlers: r.settlers ?? 0,
       settlerManifest: {
         children: r.settlers_children ?? 0,
         actives: r.settlers_actives ?? r.settlers ?? 0,
         seniors: r.settlers_seniors ?? 0,
       },
-      settlersPax:
-        HULLS[`${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`]
-          ?.pax ?? 0,
+      settlersPax: Math.floor(
+        (HULLS[
+          `${r.hull_category}_${r.hull_size}` as `${HullCategory}_${HullSize}`
+        ]?.pax ?? 0) *
+          paxMult(Array.isArray(r.accessories) ? r.accessories : []),
+      ),
       colonyKit: !!r.colony_kit,
       establishesAt: establishesBy.get(r.id) ?? null,
       retrievesAt: retrievesBy.get(r.id) ?? null,
@@ -529,10 +542,24 @@ export async function moveShip(
     }
 
     const baseStats = hullStats(ship.hull_category, ship.hull_size);
+    const moveAccessories: string[] = Array.isArray(ship.accessories)
+      ? ship.accessories
+      : [];
+    // W9d : pénalité de CHARGE (DG §8.2, loadFrac) atténuée par
+    // trim_vanes ; course_optimizer réduit le burn de trajet [TUNE].
+    const load = loadFracPenalty(
+      containersUsed((ship.cargo ?? {}) as Record<string, number>),
+      effectiveContainers(
+        hullContainers(ship.hull_category, ship.hull_size),
+        moveAccessories,
+      ),
+      moveAccessories,
+    );
     // W6 : les upgrades-items s'appliquent — vitesse moteur, réservoir.
     const stats = {
-      speed: baseStats.speed * engineSpeedMult(ship.upgrades),
-      burnPerPc: baseStats.burnPerPc,
+      speed: baseStats.speed * engineSpeedMult(ship.upgrades) * load.speedMult,
+      burnPerPc:
+        baseStats.burnPerPc * load.burnMult * travelBurnMult(moveAccessories),
       tank: effectiveTankU(baseStats.tank, ship.upgrades),
     };
     let fuelBurned = 0;
@@ -1700,13 +1727,16 @@ export async function landShip(
     // dwell le plus généreux des spaceports actifs prévaut (cohérent avec
     // la politique la plus permissive) ; sans spaceport, défaut canon.
     if (!owned && body.owner_id) {
-      const dwellHours = ports.length
-        ? Math.max(
-            ...ports.map((p) =>
-              Number(p.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT),
-            ),
-          )
-        : DOCK_DWELL_HOURS_DEFAULT;
+      // W9d docking_clamps : le visiteur équipé séjourne ×2/×3 [TUNE].
+      const dwellHours =
+        (ports.length
+          ? Math.max(
+              ...ports.map((p) =>
+                Number(p.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT),
+              ),
+            )
+          : DOCK_DWELL_HOURS_DEFAULT) *
+        dwellMult(Array.isArray(ship.accessories) ? ship.accessories : []);
       await enqueue(
         client,
         'dock_eviction',
@@ -1948,7 +1978,10 @@ export async function provisionShip(
     const crew = Number(crewRows[0]?.crew ?? 0);
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
-    const capPerRes = survivalCapacityT(hull?.survivalCrewDays ?? 0, crew);
+    // W9d cryo_larder : capacité de provisions étendue [TUNE].
+    const capPerRes =
+      survivalCapacityT(hull?.survivalCrewDays ?? 0, crew) *
+      survivalCapacityMult(Array.isArray(ship.accessories) ? ship.accessories : []);
     if (capPerRes <= 1e-9) {
       throw new CommandError('not_available', 'Aucun équipage à nourrir');
     }
@@ -2403,7 +2436,10 @@ export async function retrieveShip(
         );
       }
     }
-    const hours = SHIP_RETRIEVE_HOURS[ship.hull_size as 's' | 'm' | 'l'] ?? 1;
+    // W9d mooring_winch : redéploiement accéléré [TUNE].
+    const hours =
+      (SHIP_RETRIEVE_HOURS[ship.hull_size as 's' | 'm' | 'l'] ?? 1) *
+      retrieveTimeMult(Array.isArray(ship.accessories) ? ship.accessories : []);
     const readyAt = new Date(nowMs + (hours * 3_600_000) / timeScale);
     await enqueue(client, 'ship_retrieved', readyAt, { shipId });
     await client.query('COMMIT');
@@ -2559,7 +2595,10 @@ export async function transferCargo(
     const cargo: Record<string, number> = { ...(ship.cargo ?? {}) };
 
     if (direction === 'load') {
-      const capacity = hullContainers(ship.hull_category, ship.hull_size);
+      const capacity = effectiveContainers(
+        hullContainers(ship.hull_category, ship.hull_size),
+        Array.isArray(ship.accessories) ? ship.accessories : [],
+      );
       const next = { ...cargo, [resource]: (cargo[resource] ?? 0) + tons };
       if (containersUsed(next) > capacity) {
         throw new CommandError(

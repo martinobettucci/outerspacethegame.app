@@ -12,6 +12,7 @@
  */
 import {
   containersUsed,
+  effectiveContainers,
   conversionOf,
   effectiveTankU,
   HULLS,
@@ -37,9 +38,10 @@ export interface ConversionState {
 }
 
 function hullContainers(ship: Row): number {
-  return (
+  return effectiveContainers(
     HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
-      ?.containers ?? 0
+      ?.containers ?? 0,
+    Array.isArray(ship.accessories) ? ship.accessories : [],
   );
 }
 

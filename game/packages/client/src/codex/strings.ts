@@ -99,6 +99,25 @@ export const codexEn = {
     multiple: 'Stacks',
     availableHere: 'types available on this world',
   },
+
+  gear: {
+    title: 'Ship gear',
+    lead: 'Hulls carry gear: accessories you fabricate planet-side, store as items in a warehouse, and bolt onto a warehoused hull. Each piece occupies one slot of its family — and upgrades share those same family slots, so every fitting is an arbitrage between an upgrade and an accessory.',
+    fabrication:
+      'An accessory is fabricated where its host building stands and works, from that world’s stockpile. Its grade is fixed at fabrication: an ENHANCED piece needs a high-level host building to build — but once it exists it is an ordinary item. Installing gear demands no technology at all; anything you buy, salvage or haul in fits any hull with a free slot of the right family.',
+    classes:
+      'Fitted gear comes in three temperaments, visible on the ship panel. PASSIVE pieces simply work: the moment one is aboard, the numbers it touches — drains, capacities, timers, tolls — shift accordingly, live. CONTINUOUS pieces are throttled flows: set a percentage and they convert cargo at that pace anywhere, even in transit, burning engine fuel to run; if an input runs dry they throttle themselves to zero. BATCH pieces are one-shot procedures: they take their inputs the instant you start, demand a stopped ship for a fixed process time, and burn no fuel at all — the efficient, patient option.',
+    warnBatch:
+      'A started batch procedure immobilises the hull until its term — and aborting one does not give the inputs back. Commit only what you can afford to lose the moment you press start.',
+    removal:
+      'Gear comes off as deliberately as it went on. Uninstalling a piece from a warehoused hull takes time and returns the item to the world’s item balance; disassembling one instead melts it back into a fraction of its fabrication materials. If the local item balance is full, an uninstalled piece is disassembled on the spot.',
+    exactIntro: 'The fixed frame around every piece of gear:',
+    exactUninstall: 'Uninstalling a fitted accessory (warehoused hull) takes',
+    exactRefund: 'Disassembly refunds this share of the fabrication cost',
+    exactEnhanced: 'Enhanced grade: host building level required at fabrication',
+    exactEnhancedRate: 'Enhanced continuous gear runs faster by',
+    exactStep: 'Continuous gear throttles in steps of',
+  },
 } as const;
 
 export type CodexStrings = typeof codexEn;

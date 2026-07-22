@@ -12,6 +12,7 @@
  * « self-wash trading is pointless, not dangerous »).
  */
 import {
+  innatePriceMult,
   AMM_FEE_HOUSE_BP,
   ammLpFeeBp,
   ammQuote,
@@ -1314,7 +1315,11 @@ export async function executeInnateTrade(
       throw new CommandError('not_available', 'L\'hospitalité se demande sur place');
     }
 
-    const paidT = buyT * offer.price;
+    // W9d haggler_matrix : prix inné réduit pour l'acheteur équipé [TUNE].
+    const paidT =
+      buyT *
+      offer.price *
+      innatePriceMult(Array.isArray(ship.accessories) ? ship.accessories : []);
     const cargo: Record<string, number> = { ...(ship.cargo ?? {}) };
     if ((cargo[offer.want] ?? 0) + 1e-9 < paidT) {
       throw new CommandError('insufficient_resources', `Soute insuffisante : ${offer.want}`);

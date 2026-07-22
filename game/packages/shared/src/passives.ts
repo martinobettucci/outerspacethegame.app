@@ -136,3 +136,11 @@ export function loadFracPenalty(
     burnMult: 1 + 0.5 * f * mult,
   };
 }
+
+/** W9d cargo_netting : conteneurs EFFECTIFS d'une coque. */
+export function effectiveContainers(
+  baseContainers: number,
+  accessories: readonly string[],
+): number {
+  return baseContainers + containerBonus(accessories);
+}

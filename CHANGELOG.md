@@ -2,6 +2,31 @@
 
 ## [Non publié]
 
+### W9d (partie 2) — les 19 effets passifs CÂBLÉS + chapitre Codex « Ship gear » (2026-07-22)
+
+- Effets branchés dans les systèmes réels : drains de survol
+  (heat_recycler ; solar_sails = survol GRATUIT à portée d'étoile),
+  usure (flare_dampers ÷ champ/flare, cumulable morphose ;
+  ballast_shielding ÷ junk), survie (bilge_purifier drain,
+  cryo_larder capacité + provisions, escape_thrusters seuil d'alarme
+  de fuite), trajet (**pénalité de charge DG §8.2 livrée** : plein =
+  vitesse −15 %/burn +50 %, trim_vanes divise ; course_optimizer
+  −10 % burn), conteneurs (cargo_netting, partout : charge, vue
+  flotte, conversions), pax (berth_module), scan (signal_mirror
+  20 → 60/100 pc en SQL), intel (survey_suite +1 palier),
+  péage de gate (stargate_caller), réclamation (salvage_grapnel),
+  négoce inné (haggler_matrix), scoop (ore_hopper), redéploiement
+  (mooring_winch), séjour à quai (docking_clamps).
+- Codex : nouveau chapitre **« Ship gear »** (fabrication/grades,
+  passif/continu/batch, démontage/désassemblage) — chiffres LIVE de
+  `@atg/shared` (UNINSTALL_HOURS, refund 50 %, L3 enhanced, ×1,5,
+  pas de 5 %) ; deep-link GalaxyMap → Ship gear ; nouvelles
+  constantes nommées RUN_PCT_STEP / ENHANCED_FABRICATOR_LEVEL.
+- Tests : `passives.test.ts` intégration 8/8 (fixtures SQL §15),
+  facts.test anti-dérive étendu, E2E codex.spec mis à jour (capture
+  observée) ; balayage sériel 353/355 (2 échecs = census flaky R5
+  connu, passe seul).
+
 ### W9d (partie 1) — catalogue des 19 passifs + helpers d'effets (2026-07-22)
 
 - GEAR : les **19 passifs** validés entrent au catalogue (× grades
