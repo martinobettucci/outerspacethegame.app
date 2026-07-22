@@ -4798,3 +4798,29 @@ LE CATALOGUE EST COMPLET : GEAR_CATALOG.md tout ✔ — 24 passifs,
 9 continus (dont 2 stances), 10 batch, × grades enhanced (91 clés
 GEAR). Reste W9f (tour d'équilibrage) avant de figer les [TUNE] et de
 livrer le TABLEAU FINAL au responsable.
+
+## 2026-07-22 — W9f livré : Round 11 d'équilibrage du catalogue (BALANCE_LOG)
+
+Premier round à tourner DIRECTEMENT sur les constantes expédiées :
+`tools/balance/gear_v1_sim.mjs` importe `@atg/shared` dist — zéro
+proxy python, zéro dérive possible. Sept batteries (portée
+d'expédition, traversée ram_scoop, parité acier/HP des réparations,
+temps net du jump_primer, prix du jour gagné de la fronde, débit
+batch vs continu, endurance de survol).
+
+PATCH 11-1 (seul défaut confirmé) : RAM_SCOOP.wearHpPerPc 0,5 → 0,1 —
+à 0,5, 60 pc de champ coûtaient 75 % de la coque d'un cargo_s pour
+30 u (ratio valeur 0,10 au tarif atelier). À 0,1 : 15 % cargo_s /
+3 % cargo_l, ratio 0,50/0,67 — prime d'assurance, plus un piège.
+Vérifiés sans patch : jump_primer = convertisseur de temps mort
+(+0,5 × charge seulement si le trajet consomme le boost — règle
+joueur : charge ≈ D/(4,5 × vitesse)) ; fab_bay 6,3× le sol sur
+cargo_s par CONCEPTION (voie Crusader) ; hull_patch_kit 0,10× le sol
+sur cargo_l (canon responsable « 1 T symbolique », surveillé) ;
+asymétrie batch/continu réelle (rendement 0,55 vs 0,50, débit ÷5,5) ;
+cell_cracker ×3–3,4 de portée ; passifs sains. Les autres [TUNE]
+sont FIGÉS v1 (GEAR_CATALOG fait foi).
+
+Preuves : sim rejouée après patch (ratio B 0,50/0,67) ; actives2 7/7
+et shared 210/210 rejoués sur la constante patchée (les assertions
+lisent les constantes) ; balayage sériel 368/368 avant patch.

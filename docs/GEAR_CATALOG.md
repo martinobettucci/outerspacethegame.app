@@ -9,10 +9,10 @@
 > upgrades et accessoires PARTAGENT la capacité de famille (W9c).
 > Grade **enhanced** : fabriqué sur bâtiment hôte L3, figé à la
 > fabrication (continu ×1,5 débit ; batch ÷1,5 temps ; passif effet
-> supérieur). L'installation n'exige AUCUNE techno. Chiffres [TUNE]
-> jusqu'au tour d'équilibrage W9f.
+> supérieur). L'installation n'exige AUCUNE techno. Chiffres v1
+> ÉQUILIBRÉS (BALANCE_LOG Round 11, 2026-07-22 — PATCH 11-1 ram_scoop).
 
-## Statuts : ✔ implémenté (catalogue COMPLET livré, 2026-07-22 — chiffres [TUNE] jusqu'au tour d'équilibrage W9f)
+## Statuts : ✔ implémenté (catalogue COMPLET livré ET équilibré Round 11, 2026-07-22)
 
 ## 1. Accessoires PASSIFS
 
@@ -53,7 +53,7 @@
 | cell_cracker | fuel | fuelcell_plant | 0,1 cell/h à 100 % → 40 u moteur/cell (< 50 du batch), 0,5 u fuel/h | ✔ |
 | arc_furnace | accessory | smelter | 2 junk → 1 steel_l, 5 réf/h à 100 %, 1 u fuel/h | ✔ |
 | med_synth | accessory | lab | 1 eau + 0,5 phosphore → 1 med_1, 2 réf/h à 100 %, 1 u fuel/h | ✔ |
-| ram_scoop | fuel | refinery | STANCE — traversée d'un champ du TYPE MOTEUR : +0,5 u/pc × runPct au réservoir CONTRE usure 0,5 HP/pc ×2 / ×1,5 (réglée au départ) | ✔ |
+| ram_scoop | fuel | refinery | STANCE — traversée d'un champ du TYPE MOTEUR : +0,5 u/pc × runPct au réservoir CONTRE usure 0,1 HP/pc ×2 / ×1,5 (réglée au départ — Round 11) | ✔ |
 | gravity_sling | engine | shipyard | STANCE — départ ≤ 8 pc d'une étoile : vitesse ×(1+runPct/200 %) contre 10 HP × runPct (enhanced ÷2) | ✔ |
 | fab_bay | accessory | workshop | auto-réparation 1 %/h × runPct, 0,5 T steel_l/% de SOUTE + 1 u fuel/h (voie du Crusader — W9g) ; bord de plein → 0 % | ✔ |
 

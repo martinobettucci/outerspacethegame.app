@@ -863,3 +863,58 @@ not the ~flat first pass).
   centroid model (richness no longer rides on the unreachable tail). Revisit
   if stargate reach changes.
 - All §2.2b values remain `[TUNE]`; re-run `spawn_v2_sim.py` after any change.
+
+## Round 11 — W9f accessory catalog economics (2026-07-22) — **PATCHED → shared (RAM_SCOOP)**
+
+First round to run **directly on the shipped constants**: the sim
+(`tools/balance/gear_v1_sim.mjs`) imports `@atg/shared` dist — no python
+proxy, no drift by construction. Seven batteries over the completed W9
+catalog (24 passives, 9 continuous, 10 batch, enhanced grades):
+expedition range, ram-scoop crossing, repair steel-per-HP parity,
+jump-primer net time, gravity-sling price-per-day, batch-vs-continuous
+smelting, hover endurance.
+
+### Findings → patches
+
+1. **F1 — ram_scoop wear was hull-shredding (CONFIRMED, patched).** At
+   0.5 HP/pc × wearMult 2, a routine 60 pc field crossing cost a cargo_s
+   **75 % of its hull** for +30 u of fuel; valued at the workshop repair
+   tariff (0.1 T steel/HP) the harvested fuel was worth **0.10×** the
+   steel bill. → **PATCH 11-1**: `RAM_SCOOP.wearHpPerPc` 0.5 → **0.1**
+   (60 pc = 15 % cargo_s / 3 % cargo_l; value ratio 0.50 std / 0.67 enh
+   — an insurance premium for deep-space refuelling, not a trap).
+2. **F2 — jump_primer is an idle-time converter, not free speed
+   (verified, no patch).** End-to-end the primer nets **+0.5 × charge**
+   days only when the trip consumes the whole boost window
+   (D ≥ 4.5 × charge × speed); overshooting the charge wastes it (net 0
+   at charge 10 j on a 300 pc cargo_l run). Rule of thumb for players:
+   charge ≈ D / (4.5 × speed). Working as intended — the value is
+   pre-charging during forced dwell (loading, fabrication, docks).
+3. **F3 — fab_bay penalizes small hulls by design (documented).**
+   %-based input makes mobile self-repair cost 0.625 T/HP on a cargo_s
+   (6.3× ground) but 0.125 T/HP on a cargo_l (1.3×) — the bay is the
+   **Crusader's** repair path (W9g); small hulls are meant to dock.
+4. **F4 — hull_patch_kit trivializes big-hull steel costs (owner
+   canon, documented).** 1 T symbolique → +25 % max HP = 0.010 T/HP on
+   a cargo_l (10× cheaper than ground). Counterweights: an accessory
+   slot, 12 h immobilized per burst, space-only. Explicitly validated
+   by the owner (« 1T steel symbolique ») — kept, watched.
+5. **F5 — batch vs continuous asymmetry lands as designed (verified).**
+   Smelting: yield 0.55 vs 0.50 and zero fuel for the batch, but
+   **5.5× lower throughput** than the throttled arc_furnace — the
+   taxonomy's promised trade (efficiency vs cadence) is real.
+6. **F6 — hold-as-tank expedition math (verified).** cell_cracker
+   stretches range ×3.0 (cargo_s) / ×3.4 (cargo_l) with cracking done
+   en route; the decompressor beats it per-cell (50 vs 40 u) at the
+   price of 1-day stops per cell (24 cumulative days on a cargo_l).
+   Both fit hull speeds; no patch.
+7. **F7 — passives price sanely (verified).** heat_recycler buys +53
+   hover-days on a cargo_s tank for 20 steel + 10 silicon;
+   gravity_sling saves 4 j per 120 pc (cargo_l) for 10 HP (1 T steel
+   equivalent) gated to the 8 pc star window.
+
+All other [TUNE] figures reviewed against the batteries and **frozen as
+v1** (GEAR_CATALOG.md is the authoritative table). Verification: shared
+210/210, actives/actives2 integration 13/13 re-run on the patched
+constant (assertions read the constants — they adapt), serial sweep
+368/368 pre-patch.

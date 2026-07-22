@@ -250,10 +250,12 @@ export const CONVERSIONS: Record<string, ConversionDef> = {
 
 /** W9e ram_scoop — récolte et usure PAR PC de champ traversé (réglées
  *  au départ, comme le pré-brûlage) : fuel = pc × u/pc × runPct ;
- *  usure supplémentaire = pc × HP/pc × mult (std ×2, enhanced ×1,5). [TUNE] */
+ *  usure supplémentaire = pc × HP/pc × mult (std ×2, enhanced ×1,5).
+ *  PATCH 11-1 (BALANCE_LOG Round 11) : wearHpPerPc 0,5 → 0,1 — à 0,5,
+ *  60 pc de champ coûtaient 75 % de la coque d'un cargo_s pour 30 u. */
 export const RAM_SCOOP = {
   fuelUPerPcAt100: 0.5,
-  wearHpPerPc: 0.5,
+  wearHpPerPc: 0.1,
   wearMult: 2,
   wearMultEnhanced: 1.5,
 } as const;
