@@ -1216,6 +1216,37 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       });
     });
 
+    // W8e : fixture déterministe — un Crusader garni près d'un monde
+    // (E2E §15 ; la naissance réelle est couverte par crusader.test).
+    app.post('/test/spawn-crusader', async (req, reply) => {
+      const player = await requirePlayer(req);
+      const parsed = z
+        .object({ planetId: z.string().uuid(), name: z.string().min(2).max(40) })
+        .safeParse(req.body);
+      if (!parsed.success) return reply.status(400).send({ error: 'invalid_input' });
+      return wrap(reply, async () => {
+        const { rows: planet } = await deps.pool.query(
+          `SELECT x, y, owner_id FROM bodies WHERE id = $1`,
+          [parsed.data.planetId],
+        );
+        if (!planet[0] || planet[0].owner_id !== player.id) {
+          throw new CommandError('forbidden', 'Monde inconnu ou étranger');
+        }
+        const { rows } = await deps.pool.query<{ id: string }>(
+          `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y,
+              status, fuel, engine_type, crusader_stock, crusader_pop,
+              crusader_infra, cargo, accessories)
+           VALUES ($1, 'combat', 'l', $2, $3, $4, 'idle',
+              '{"cold": 400}', 'cold',
+              '{"steel_l": 400, "silicon": 120, "gold": 40, "fuel_cells": 60, "fuel_cold": 120}',
+              '{"children": 100, "actives": 300, "seniors": 100}',
+              '{"residential": 3, "factoriesL3": true}', '{}', '[]')
+           RETURNING id`,
+          [player.id, parsed.data.name, planet[0].x, planet[0].y],
+        );
+        return { crusaderId: rows[0]!.id };
+      });
+    });
     app.post('/test/relocate-ship', async (req, reply) => {
       const player = await requirePlayer(req);
       const parsed = z

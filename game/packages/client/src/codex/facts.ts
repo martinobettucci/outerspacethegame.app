@@ -35,6 +35,9 @@ import {
   ENHANCED_FABRICATOR_LEVEL,
   ENHANCED_RATE_MULT,
   RUN_PCT_STEP,
+  CRUSADER,
+  crusaderDocks,
+  itemCapacity,
 } from '@atg/shared';
 
 /** Live values, pulled from the shared canon. No literals — see contract above. */
@@ -68,6 +71,13 @@ export const CODEX_FACTS = {
   gearEnhancedFabricatorLevel: ENHANCED_FABRICATOR_LEVEL,
   gearEnhancedRateMult: ENHANCED_RATE_MULT,
   gearRunPctStep: RUN_PCT_STEP,
+  // Crusader (chapter gated on ownership)
+  crusaderPopCap: CRUSADER.popCap,
+  crusaderStockCapT: CRUSADER.stockCapT,
+  crusaderMigrationFraction: CRUSADER.migrationFraction,
+  crusaderFixedJobs: CRUSADER.fixedJobs,
+  crusaderDocksPerSize: crusaderDocks(),
+  crusaderItemCap: itemCapacity(CRUSADER.infra.warehouses as unknown as number[]),
 } as const;
 
 /* ---- Formatters (pure, unit-tested) ---------------------------------- */

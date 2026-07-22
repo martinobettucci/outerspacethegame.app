@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import {
   conversionOf,
+  ALL_GEAR_KEYS,
   ALL_RESOURCE_IDS,
   canFitColonyKit,
   COLONY_MIN_SETTLERS,
@@ -178,6 +179,14 @@ export function GalaxyMap() {
   // W9e : durée (jump_primer / cryo L2) et cible (kedge_winch).
   const [convHours, setConvHours] = useState<Record<string, number>>({});
   const [convTgt, setConvTgt] = useState<Record<string, { x: number; y: number }>>({});
+  // W8e : fabrication à bord du Crusader.
+  const [cruItemKey, setCruItemKey] = useState<string>('cargo_netting');
+  const [cruBuild, setCruBuild] = useState<{ category: string; size: string; name: string }>({
+    category: 'cargo',
+    size: 's',
+    name: '',
+  });
+  const [cruInstallKey, setCruInstallKey] = useState<string>('');
   // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
   const [installGearList, setInstallGearList] = useState<
     { itemKey: string; count: number }[]
@@ -2132,6 +2141,342 @@ export function GalaxyMap() {
                 </section>
               );
             })}
+          {/* W8e : le CRUSADER — colonie volante, fabrication à bord. */}
+          {selectedShip.crusader && (
+            <section
+              aria-label={t.galaxy.cruTitle}
+              style={{
+                fontSize: 12,
+                color: 'var(--text-secondary)',
+                display: 'grid',
+                gap: 6,
+                border: '1px solid var(--stroke-subtle)',
+                borderRadius: 'var(--radius-button)',
+                padding: 8,
+              }}
+            >
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {t.galaxy.cruTitle}
+              </strong>
+              {selectedShip.crusader.pop && (
+                <span>
+                  {t.galaxy.cruPop} :{' '}
+                  {selectedShip.crusader.pop.children +
+                    selectedShip.crusader.pop.actives +
+                    selectedShip.crusader.pop.seniors}{' '}
+                  ({selectedShip.crusader.pop.children}/
+                  {selectedShip.crusader.pop.actives}/
+                  {selectedShip.crusader.pop.seniors})
+                </span>
+              )}
+              <span style={{ fontFamily: 'var(--font-mono)' }}>
+                {t.galaxy.cruStock} :{' '}
+                {Object.entries(selectedShip.crusader.stock)
+                  .map(([r, tons]) => `${r.replace(/_/g, ' ')} ${Number(tons).toFixed(0)}`)
+                  .join(' · ') || '—'}
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>
+                {t.galaxy.cruItems} :{' '}
+                {Object.entries(selectedShip.crusader.items)
+                  .map(([k, n]) => `${k.replace(/_/g, ' ')} ×${n}`)
+                  .join(' · ') || '—'}
+              </span>
+              <label style={{ display: 'grid', gap: 2 }}>
+                <span>{t.galaxy.cruFabricate}</span>
+                <select
+                  aria-label={t.galaxy.cruFabricate}
+                  value={cruItemKey}
+                  onChange={(e) => setCruItemKey(e.target.value)}
+                  style={{
+                    background: 'var(--bg-overlay)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: '4px 8px',
+                  }}
+                >
+                  {ALL_GEAR_KEYS.map((k) => (
+                    <option key={k} value={k}>
+                      {k.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .fabricateAboard(selectedShip.id, cruItemKey)
+                    .then(() => {
+                      setNotice(t.galaxy.cruApplied);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(`${t.galaxy.cruRefused} — ${err.message ?? err.error}`),
+                    )
+                }
+                style={{
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  justifySelf: 'start',
+                }}
+              >
+                {t.galaxy.cruFabricateDo}
+              </button>
+              <label style={{ display: 'grid', gap: 2 }}>
+                <span>{t.galaxy.cruBuild}</span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select
+                    aria-label={`${t.galaxy.cruBuild} — category`}
+                    value={cruBuild.category}
+                    onChange={(e) =>
+                      setCruBuild((c) => ({ ...c, category: e.target.value }))
+                    }
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    {['cargo', 'civil', 'combat'].map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    aria-label={`${t.galaxy.cruBuild} — size`}
+                    value={cruBuild.size}
+                    onChange={(e) =>
+                      setCruBuild((c) => ({ ...c, size: e.target.value }))
+                    }
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    {['s', 'm', 'l'].map((s) => (
+                      <option key={s} value={s}>
+                        {s.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </label>
+              <input
+                type="text"
+                aria-label={t.galaxy.cruBuildName}
+                placeholder={t.galaxy.cruBuildName}
+                value={cruBuild.name}
+                onChange={(e) =>
+                  setCruBuild((c) => ({ ...c, name: e.target.value }))
+                }
+                style={{
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '4px 8px',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  api
+                    .buildShipAboard(selectedShip.id, cruBuild)
+                    .then(() => {
+                      setNotice(t.galaxy.cruApplied);
+                      void refreshShips();
+                    })
+                    .catch((err: ApiError) =>
+                      setNotice(`${t.galaxy.cruRefused} — ${err.message ?? err.error}`),
+                    )
+                }
+                style={{
+                  background: 'var(--bg-overlay)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--stroke-subtle)',
+                  borderRadius: 'var(--radius-button)',
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  justifySelf: 'start',
+                }}
+              >
+                {t.galaxy.cruBuildDo}
+              </button>
+            </section>
+          )}
+          {/* W8c/e : coque ordinaire près d'un Crusader — amarrage,
+              escorte, appareillage, équipement depuis le bord. */}
+          {!selectedShip.crusader &&
+            !['probe', 'personal'].includes(selectedShip.hullCategory) &&
+            (() => {
+              const host = selectedShip.followShipId
+                ? ships.find((s) => s.id === selectedShip.followShipId)
+                : ships.find(
+                    (s) =>
+                      s.crusader &&
+                      ['idle', 'hovering'].includes(s.status) &&
+                      Math.hypot(s.x - selectedShip.x, s.y - selectedShip.y) <= 1,
+                  );
+              if (!host) return null;
+              const aboard = !!selectedShip.followShipId;
+              const hostItems = Object.keys(host.crusader?.items ?? {});
+              return (
+                <section
+                  aria-label={t.galaxy.cruDock}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    display: 'grid',
+                    gap: 6,
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                  }}
+                >
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {aboard
+                      ? selectedShip.status === 'docked'
+                        ? t.galaxy.cruDockedAt
+                        : t.galaxy.cruEscorting
+                      : host.name}
+                  </strong>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {!aboard &&
+                      ['idle', 'hovering'].includes(selectedShip.status) && (
+                        <>
+                          {(['dock', 'escort'] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() =>
+                                (mode === 'dock'
+                                  ? api.dockCrusader(selectedShip.id, host.id)
+                                  : api.hoverCrusader(selectedShip.id, host.id)
+                                )
+                                  .then(() => {
+                                    setNotice(t.galaxy.cruApplied);
+                                    void refreshShips();
+                                  })
+                                  .catch((err: ApiError) =>
+                                    setNotice(
+                                      `${t.galaxy.cruRefused} — ${err.message ?? err.error}`,
+                                    ),
+                                  )
+                              }
+                              style={{
+                                background: 'var(--bg-overlay)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--stroke-subtle)',
+                                borderRadius: 'var(--radius-button)',
+                                padding: '6px 10px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {mode === 'dock' ? t.galaxy.cruDock : t.galaxy.cruEscort}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    {aboard && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          api
+                            .undockCrusader(selectedShip.id)
+                            .then(() => {
+                              setNotice(t.galaxy.cruApplied);
+                              void refreshShips();
+                            })
+                            .catch((err: ApiError) =>
+                              setNotice(
+                                `${t.galaxy.cruRefused} — ${err.message ?? err.error}`,
+                              ),
+                            )
+                        }
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '6px 10px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t.galaxy.cruLeave}
+                      </button>
+                    )}
+                  </div>
+                  {aboard &&
+                    selectedShip.status === 'docked' &&
+                    hostItems.length > 0 && (
+                      <>
+                        <label style={{ display: 'grid', gap: 2 }}>
+                          <span>{t.galaxy.cruInstallAboard}</span>
+                          <select
+                            aria-label={t.galaxy.cruInstallAboard}
+                            value={cruInstallKey || hostItems[0]}
+                            onChange={(e) => setCruInstallKey(e.target.value)}
+                            style={{
+                              background: 'var(--bg-overlay)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--stroke-subtle)',
+                              borderRadius: 'var(--radius-button)',
+                              padding: '4px 8px',
+                            }}
+                          >
+                            {hostItems.map((k) => (
+                              <option key={k} value={k}>
+                                {k.replace(/_/g, ' ')} ×{host.crusader!.items[k]}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            api
+                              .installItem(
+                                selectedShip.id,
+                                cruInstallKey || hostItems[0]!,
+                              )
+                              .then(() => {
+                                setNotice(t.galaxy.cruApplied);
+                                void refreshShips();
+                              })
+                              .catch((err: ApiError) =>
+                                setNotice(
+                                  `${t.galaxy.cruRefused} — ${err.message ?? err.error}`,
+                                ),
+                              )
+                          }
+                          style={{
+                            background: 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '6px 10px',
+                            cursor: 'pointer',
+                            justifySelf: 'start',
+                          }}
+                        >
+                          {t.galaxy.cruInstallDo}
+                        </button>
+                      </>
+                    )}
+                </section>
+              );
+            })()}
           {/* W6 : équipement monté (accessoires + upgrades). */}
           {(selectedShip.accessories.length > 0 ||
             Object.keys(selectedShip.upgrades).length > 0) && (

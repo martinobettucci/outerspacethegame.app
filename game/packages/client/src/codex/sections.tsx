@@ -6,7 +6,7 @@
  * formulae for optimisers. First slice: three chapters.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { Building2, Gauge, Pickaxe, Users, Wrench } from 'lucide-react';
+import { Building2, Gauge, Pickaxe, Rocket, Users, Wrench } from 'lucide-react';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import type { View } from '../state.tsx';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
@@ -20,7 +20,8 @@ export type CodexSectionId =
   | 'population'
   | 'efficiency'
   | 'buildings'
-  | 'gear';
+  | 'gear'
+  | 'crusader';
 
 /** Contexte de rendu d'un chapitre (planète actuellement ouverte). */
 export interface CodexBodyContext {
@@ -32,6 +33,9 @@ export interface CodexSection {
   title: string;
   icon: ReactNode;
   Body: (ctx: CodexBodyContext) => ReactNode;
+  /** Spoiler-free (MANUAL_PLAN §1/§6) : chapitre GATÉ sur une capacité
+   *  déjà découverte par CE joueur (l'écran existe pour lui). */
+  requires?: 'crusader';
 }
 
 /** Reusable "Exact rule & formula" disclosure (native <details>, keyboard-safe). */
@@ -244,12 +248,43 @@ function GearBody() {
   );
 }
 
+function CrusaderBody() {
+  const f = CODEX_FACTS;
+  return (
+    <>
+      <p>{c.crusader.lead}</p>
+      <p className="ls-codex-warn">{c.crusader.breath}</p>
+      <p>{c.crusader.docks}</p>
+      <p>{c.crusader.fabrication}</p>
+      <p>{c.crusader.noMarkets}</p>
+      <ExactRule>
+        <p>{c.crusader.exactIntro}</p>
+        <ul className="ls-codex-facts">
+          <Fact label={c.crusader.exactPop} value={count(f.crusaderPopCap)} />
+          <Fact label={c.crusader.exactStock} value={`${count(f.crusaderStockCapT)} T`} />
+          <Fact
+            label={c.crusader.exactMigration}
+            value={pct(f.crusaderMigrationFraction)}
+          />
+          <Fact label={c.crusader.exactJobs} value={count(f.crusaderFixedJobs)} />
+          <Fact
+            label={c.crusader.exactDocks}
+            value={`${f.crusaderDocksPerSize.s} / ${f.crusaderDocksPerSize.m} / ${f.crusaderDocksPerSize.l}`}
+          />
+          <Fact label={c.crusader.exactItems} value={count(f.crusaderItemCap)} />
+        </ul>
+      </ExactRule>
+    </>
+  );
+}
+
 export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'deposits', title: c.deposits.title, icon: <Pickaxe size={16} />, Body: DepositsBody },
   { id: 'population', title: c.population.title, icon: <Users size={16} />, Body: PopulationBody },
   { id: 'efficiency', title: c.efficiency.title, icon: <Gauge size={16} />, Body: EfficiencyBody },
   { id: 'buildings', title: c.buildings.title, icon: <Building2 size={16} />, Body: BuildingsBody },
   { id: 'gear', title: c.gear.title, icon: <Wrench size={16} />, Body: GearBody },
+  { id: 'crusader', title: c.crusader.title, icon: <Rocket size={16} />, Body: CrusaderBody, requires: 'crusader' },
 ];
 
 /**

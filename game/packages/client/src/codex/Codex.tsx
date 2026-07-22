@@ -5,10 +5,11 @@
  * current view. Two-pane: chapter nav + scrolling content. Uses the shared
  * `useDialogFocus` (focus trap, Escape, focus return) for accessibility.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BookOpen, X } from 'lucide-react';
 import { useDialogFocus } from '../components/useDialogFocus.ts';
+import { api } from '../api.js';
 import { CODEX_SECTIONS, type CodexSectionId } from './sections.tsx';
 import { codexEn as c } from './strings.ts';
 import '../styles/codex.css';
@@ -25,7 +26,28 @@ export function Codex({
 }) {
   const dialogRef = useDialogFocus(onClose);
   const [active, setActive] = useState<CodexSectionId>(initialSection);
-  const section = CODEX_SECTIONS.find((s) => s.id === active) ?? CODEX_SECTIONS[0]!;
+  // Spoiler-free (MANUAL_PLAN §1/§6) : les chapitres GATÉS n'apparaissent
+  // que lorsque l'écran correspondant existe pour CE joueur — le chapitre
+  // Crusader exige d'en posséder un (le panneau de bord est alors visible).
+  const [hasCrusader, setHasCrusader] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .fleet()
+      .then(
+        (f) =>
+          !cancelled &&
+          setHasCrusader(f.ships.some((s) => s.crusader !== null)),
+      )
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const sections = CODEX_SECTIONS.filter(
+    (s) => s.requires !== 'crusader' || hasCrusader,
+  );
+  const section = sections.find((s) => s.id === active) ?? sections[0]!;
 
   return createPortal(
     <div
@@ -59,7 +81,7 @@ export function Codex({
         <div className="ls-codex-body">
           <nav className="ls-codex-nav" aria-label={c.navHeading}>
             <span className="ls-codex-nav__heading">{c.navHeading}</span>
-            {CODEX_SECTIONS.map((s) => (
+            {sections.map((s) => (
               <button
                 key={s.id}
                 type="button"

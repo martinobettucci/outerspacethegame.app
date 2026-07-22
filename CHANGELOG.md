@@ -2,6 +2,29 @@
 
 ## [Non publié]
 
+### W8e (UI + E2E + Codex) — le Crusader jouable à l'écran (2026-07-22)
+
+- **Panneau Crusader** (GalaxyMap) : population de bord (C/A/S), stock
+  du bord et balance d'items EN DIRECT, fabrication à bord (sélecteur
+  sur tout le catalogue GEAR — usinage d'office), pose de quille
+  (catégorie/taille/nom).
+- **Coques voisines** : boutons Amarrage / Escorte quand un de VOS
+  Crusaders est à ≤ 1 pc, Appareillage, et INSTALLATION d'un item
+  depuis la balance de bord pour une coque amarrée.
+- **Codex** : nouveau chapitre **« Flying colony »** — GATÉ sur la
+  possession d'un Crusader (règle spoiler-free appliquée à la LISTE
+  des chapitres) ; chiffres LIVE (cap 2 000, soute 800 T, migration
+  25 %, 400 emplois, docks 6/6/6, balance 450) ; anti-dérive testé.
+- **API client** : dockCrusader/hoverCrusader/undockCrusader,
+  fabricateAboard, buildShipAboard ; endpoint de TEST
+  `/test/spawn-crusader` (fixture E2E §15 — la naissance réelle reste
+  couverte par crusader.test).
+- Tests : codex client 23/23 ; E2E crusader.spec 1/1 (5 captures
+  observées : panneau, balance, amarrage, quille à bord, chapitre
+  Codex) ; E2E codex.spec inchangé vert (chapitre invisible sans
+  Crusader) ; balayage sériel 374/375 (pods flaky de sweep — passe
+  seul, famille R5).
+
 ### W8e (cœur serveur) — le Crusader FABRIQUE À BORD (2026-07-22)
 
 - **Migration 038** : work-orders de BORD (`body_id` nullable +

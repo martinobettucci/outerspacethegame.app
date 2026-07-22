@@ -118,6 +118,26 @@ export const codexEn = {
     exactEnhancedRate: 'Enhanced continuous gear runs faster by',
     exactStep: 'Continuous gear throttles in steps of',
   },
+
+  crusader: {
+    title: 'Flying colony',
+    lead: 'A Crusader is a colony that never lands. It is born hovering, carries a quarter of its birth-world\'s people aboard, and everything a settled world does — breathing, eating, aging, working, building — it does from its own hold. There is no ground under it and there never will be.',
+    breath:
+      'Aboard, life runs on the hold. Your people breathe, eat and drink from the ship\'s stock — oxygen straight from storage, with no sky to fall back on. Keep the hold fed by cargo runs, because an empty larder aboard is measured in days and an empty oxygen store is measured in nothing at all.',
+    docks:
+      'Its flying docks berth your other hulls. A docked ship freezes its tank, and its crew eats from the Crusader\'s stores like ground crew; an escorting ship keeps station and follows every move the Crusader makes. Undock and you are simply back in open space.',
+    fabrication:
+      'The decks fabricate. Every workshop, yard and lab a world could host is aboard and running — so any piece of gear, at any grade, can be laid down without a single technology unlocked, paid step by step from the hold as an automatic work order. Finished items wait in the hold balance; docked hulls fit them without ever touching a warehouse. Keels are laid the same way, and a new ship wakes up already berthed.',
+    noMarkets:
+      'What the decks do not have is a marketplace. Nothing aboard is for sale and nothing can be bought; the hold fills the old way — flown in, crate by crate.',
+    exactIntro: 'The fixed frame of the flying colony:',
+    exactPop: 'Population cap aboard',
+    exactStock: 'Fungible hold capacity',
+    exactMigration: 'Share of the birth-world\'s people who board at launch',
+    exactJobs: 'Fixed jobs aboard (unemployment is measured against this)',
+    exactDocks: 'Flying docks (S / M / L berths)',
+    exactItems: 'Item balance aboard',
+  },
 } as const;
 
 export type CodexStrings = typeof codexEn;

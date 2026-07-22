@@ -32,6 +32,9 @@ import {
   ENHANCED_FABRICATOR_LEVEL,
   ENHANCED_RATE_MULT,
   RUN_PCT_STEP,
+  CRUSADER,
+  crusaderDocks,
+  itemCapacity,
 } from '@atg/shared';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
 
@@ -74,6 +77,17 @@ describe('CODEX_FACTS binds live @atg/shared constants (anti-drift)', () => {
     expect(CODEX_FACTS.gearEnhancedFabricatorLevel).toBe(ENHANCED_FABRICATOR_LEVEL);
     expect(CODEX_FACTS.gearEnhancedRateMult).toBe(ENHANCED_RATE_MULT);
     expect(CODEX_FACTS.gearRunPctStep).toBe(RUN_PCT_STEP);
+  });
+
+  it('crusader (W8e — chapter gated on ownership)', () => {
+    expect(CODEX_FACTS.crusaderPopCap).toBe(CRUSADER.popCap);
+    expect(CODEX_FACTS.crusaderStockCapT).toBe(CRUSADER.stockCapT);
+    expect(CODEX_FACTS.crusaderMigrationFraction).toBe(CRUSADER.migrationFraction);
+    expect(CODEX_FACTS.crusaderFixedJobs).toBe(CRUSADER.fixedJobs);
+    expect(CODEX_FACTS.crusaderDocksPerSize).toEqual(crusaderDocks());
+    expect(CODEX_FACTS.crusaderItemCap).toBe(
+      itemCapacity(CRUSADER.infra.warehouses as unknown as number[]),
+    );
   });
 });
 

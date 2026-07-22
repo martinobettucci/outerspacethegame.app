@@ -67,7 +67,7 @@ le même commit, tests §15, captures §16, docs.
   (2026-07-21). **Reste** : BÂTIMENTS en usinage partiel (flux de
   placement = chantier propre, motif : main de cartes/tuiles/retool).
   → JOURNAL 2026-07-21
-- [~] **W8 — Le CRUSADER — W8a LIVRÉ (2026-07-21)** : migration 033
+- [x] **W8 — Le CRUSADER — LIVRÉ (W8a–d 2026-07-21, W8e 2026-07-22)** : migration 033
   (stock/pop/infra + follow_ship_id, combat_l existants forcés en
   survol), naissance en survol + 25 % de pop source (proportions
   d'âges, cap 2 000, staff dégarni), amorçage oxygène/vivres au stock,
@@ -78,8 +78,18 @@ le même commit, tests §15, captures §16, docs.
   réservoir gelé, équipages invités au stock du bord, voyage synchrone,
   API). **W8d LIVRÉ (2026-07-21)** : escorte en survol (bord paie le survol,
   équipages comptés, sync aux arrivées, API hover-crusader),
-  crusader.test 8/8, balayage 338/338. Reste W8e (fabrication à bord
-  ADN complet + usinage partiel d'office, UI, E2E). (le plus gros —
+  crusader.test 8/8, balayage 338/338. **W8e LIVRÉ (2026-07-22, deux
+  commits)** : migration 038 (work-orders de bord + crusader_items),
+  fabricateGearAboard (ADN complet — tout hôte L3 d'office, paliers
+  5 % au stock de bord, FIFO de bord, cap 450), équipement des coques
+  AMARRÉES (install/uninstall au bord, gardes moveShip/undock),
+  buildShipAboard (née amarrée, plein 25 % de bord, pas de
+  Crusader-de-Crusader), PAS de markets (structurel) ; UI Crusader
+  complète (panneau de bord, fabrication, quille, amarrage/escorte/
+  appareillage, installation depuis le bord) ; chapitre Codex
+  « Flying colony » GATÉ sur la possession (spoiler-free, chiffres
+  live) ; crusader-fab.test 6/6, E2E crusader.spec + 5 captures
+  observées. (le plus gros —
   dépend de W6/W7 et de pop v2) : ne se pose JAMAIS (GB à amender —
   intention première draft ; migration : les Crusaders à quai/entrepôt
   FORCÉS en hovering, effet immédiat) ; infra FIXE non

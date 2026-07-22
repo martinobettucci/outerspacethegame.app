@@ -316,6 +316,14 @@ export interface ShipView {
   >;
   installingItem: string | null;
   installCompletesAt: string | null;
+  /** W8c/d : hôte suivi (amarrage ou escorte d'un Crusader). */
+  followShipId: string | null;
+  /** W8e : fiche de bord du Crusader (null pour les autres coques). */
+  crusader: {
+    stock: Record<string, number>;
+    items: Record<string, number>;
+    pop: { children: number; actives: number; seniors: number } | null;
+  } | null;
   junkCollector: boolean;
   claimRig: boolean;
   claimingTargetId: string | null;
@@ -431,6 +439,32 @@ export const api = {
     call<{ completesAt: string }>('POST', `/ships/${shipId}/install`, {
       itemKey,
     }),
+  /** W8c : amarrage / escorte / appareillage au Crusader. */
+  dockCrusader: (shipId: string, crusaderId: string) =>
+    call<{ docked: true }>('POST', `/ships/${shipId}/dock-crusader`, {
+      crusaderId,
+    }),
+  hoverCrusader: (shipId: string, crusaderId: string) =>
+    call<{ hovering: true }>('POST', `/ships/${shipId}/hover-crusader`, {
+      crusaderId,
+    }),
+  undockCrusader: (shipId: string) =>
+    call<{ status: string }>('POST', `/ships/${shipId}/undock-crusader`, {}),
+  /** W8e : fabrication d'un item À BORD du Crusader (usinage d'office). */
+  fabricateAboard: (crusaderId: string, itemKey: string) =>
+    call<{ completesAt: string }>('POST', `/ships/${crusaderId}/fabricate`, {
+      itemKey,
+    }),
+  /** W8e : construction d'une coque À BORD du Crusader. */
+  buildShipAboard: (
+    crusaderId: string,
+    input: { category: string; size: string; name: string; engine?: string },
+  ) =>
+    call<{ completesAt: string; cost: Record<string, number>; engine: string }>(
+      'POST',
+      `/ships/${crusaderId}/build-ship`,
+      input,
+    ),
   /** W9b : règle/lance un ACTIF de conversion (pas de 5 %). */
   setConversion: (
     shipId: string,

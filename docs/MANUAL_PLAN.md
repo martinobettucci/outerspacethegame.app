@@ -83,6 +83,10 @@ Content authoring surface (client): `src/codex/` — a typed section registry
   the map's ship panels). `view.kind` selects that default; later travel,
   telescope, census and trading chapters will refine the mapping when they
   exist.
+- **Gated chapters (W8e):** a chapter may declare `requires` (e.g. the
+  "Flying colony" chapter requires owning a Crusader) — it only appears in
+  the nav once the player's own screens have revealed the capability
+  (spoiler-free rule §1/§6 applied to chapter LISTING, not just content).
 - **Layered depth:** each section leads with plain language; an expandable
   "Exact rule & formula" block reveals the numbers/curve for min-maxers. Newcomer
   and optimizer served by the same entry.

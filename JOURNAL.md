@@ -4906,3 +4906,34 @@ vert. Restent W8e-4 : UI Crusader (dock/escorte/fabrication/
 construction — AUCUNE UI crusader n'existe côté client), E2E (endpoint
 de test spawn-crusader à ajouter, §15 chemin déterministe), captures,
 clôture MASTER_PLAN W8.
+
+## 2026-07-22 — W8e-4 livré : le Crusader jouable à l'écran — PROGRAMME W8 CLOS
+
+UI (GalaxyMap) : panneau « Crusader — flying colony » (pop C/A/S,
+stock et balance d'items EN DIRECT, fabrication sur tout le catalogue
+GEAR — usinage d'office —, pose de quille) ; pour une coque voisine
+(≤ 1 pc d'un de MES Crusaders) : Amarrage / Escorte / Appareillage,
+et installation d'un item DEPUIS la balance de bord une fois amarrée.
+API client : dockCrusader/hoverCrusader/undockCrusader,
+fabricateAboard, buildShipAboard ; endpoint de test
+/test/spawn-crusader (§15 — fixture E2E déterministe, la NAISSANCE
+réelle reste prouvée par crusader.test).
+
+Porte Codex : chapitre « Flying colony » — NOUVEAUTÉ d'architecture :
+les chapitres peuvent déclarer `requires` et n'apparaissent dans la
+NAV que si l'écran correspondant existe pour CE joueur (ici :
+posséder un Crusader) — la règle spoiler-free s'applique à la LISTE
+des chapitres, pas seulement au contenu (MANUAL_PLAN §3 amendé).
+Chiffres live : cap 2 000, soute 800 T, migration 25 %, 400 emplois,
+docks 6/6/6, balance 450 — anti-dérive testé (facts.test).
+
+Preuves : typecheck ×3 ; codex client 23/23 ; E2E crusader.spec 1/1 —
+captures cr-01..05 OBSERVÉES (panneau de bord avec stock/balance,
+item en balance, amarrage, quille « Dinghy » posée — stock débité en
+direct 340/105/50 —, chapitre Codex complet) ; E2E codex.spec vert
+inchangé (le chapitre est INVISIBLE sans Crusader) ; balayage sériel
+374/375 — pods.test échoue en sweep mais passe seul (6/6) :
+contamination inter-fichiers, même famille que census R5, consigné au
+Programme R.
+
+Le PROGRAMME W8 est CLOS (MASTER_PLAN W8 → [x]).
