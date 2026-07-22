@@ -2,6 +2,31 @@
 
 ## [Non publié]
 
+### W9e (partie 2) — les 6 actifs couplés au déplacement et au temps (2026-07-22)
+
+- STANCES (continus à débit nul — le throttle est un réglage lu par
+  moveShip) : **ram_scoop** (traversée d'un champ stellaire du TYPE
+  MOTEUR : +0,5 u/pc × runPct crédités au réservoir CONTRE une usure
+  de traversée 0,5 HP/pc ×2 — enhanced ×1,5 ; réglée au départ comme
+  le pré-brûlage), **gravity_sling** (départ ≤ 8 pc d'une étoile :
+  vitesse ×(1 + runPct/200 %) contre 10 HP × runPct, enhanced ÷2).
+- **jump_primer** : charge LIBRE (1 h–10 j, gratuite, à l'arrêt) →
+  boost vitesse ×1,5 pendant 3 × la charge (enhanced ×4,5) — champ
+  « Duration » dans l'UI, état « Jump boost — until » affiché.
+- **kedge_winch** : 1 j → 5 pc SANS carburant vers une cible (x, y) ;
+  MODE BOOST (< 1 u restant) : tout est brûlé, 10 pc.
+- **deep_scan_pulse** : 12 h → instantané d'intel **L3 PERSISTÉ**
+  (migration **037** `player_body_intel`) du corps sous scan le plus
+  proche ; plancher appliqué dans bodyIntel (la connaissance acquise
+  ne se périme pas — v1 annoncée).
+- **cryo_stasis_pod** : stase 7 j — survie (et vieillissement) GELÉE,
+  coque immobile, réveil à la demande en 10 min (bouton « Wake ») ;
+  L2 (enhanced) : AUTOPILOTE cryostatique — durée choisie, le voyage
+  part en stase, irréveillable avant le terme.
+- Tests : actives2.test 7/7 ; E2E jump_primer UI (captures) ;
+  balayage sériel 368/368. **Le catalogue GEAR_CATALOG.md est
+  désormais COMPLET (✔ partout, chiffres [TUNE] → W9f).**
+
 ### W9e (partie 1) — les 9 actifs « recette » (2026-07-22)
 
 - CONTINUS : **cell_cracker** (la soute-réservoir — 0,1 cell/h à

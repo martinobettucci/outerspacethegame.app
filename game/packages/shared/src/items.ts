@@ -224,6 +224,13 @@ export const GEAR: Record<string, GearDef> = {
   smelting_run: { key: 'smelting_run', kind: 'accessory', slot: 'accessory', fabricator: 'smelter', fabricationCost: { steel_l: 30 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Batch smelt at rest — junk to steel, better yield.' },
   apothecary_still: { key: 'apothecary_still', kind: 'accessory', slot: 'accessory', fabricator: 'lab', fabricationCost: { steel_l: 20, silicon: 10, phosphor: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Patient distillation — batch medicine, no burn.' },
   hull_patch_kit: { key: 'hull_patch_kit', kind: 'accessory', slot: 'accessory', fabricator: 'workshop', fabricationCost: { steel_l: 20 }, fabricationHours: 24, installCost: { steel_l: 5 }, installHours: 12, note: 'Plates and sealant — a day of patching restores a quarter of the hull.' },
+  // W9e partie 2 — actifs couplés au déplacement et au temps.
+  ram_scoop: { key: 'ram_scoop', kind: 'accessory', slot: 'fuel', fabricator: 'refinery', fabricationCost: { steel_l: 30, silicon: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Scoops star-field fuel in transit — the crossing gnaws the hull.' },
+  gravity_sling: { key: 'gravity_sling', kind: 'accessory', slot: 'engine', fabricator: 'shipyard', fabricationCost: { steel_l: 35, fuel_cells: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Rides a star\'s well at departure — speed for hull damage.' },
+  jump_primer: { key: 'jump_primer', kind: 'accessory', slot: 'engine', fabricator: 'shipyard', fabricationCost: { steel_l: 30, silicon: 20, gold: 5 }, fabricationHours: 48, installCost: { steel_l: 10 }, installHours: 12, note: 'Charge at rest, then jump — boosted speed for three times the charge.' },
+  kedge_winch: { key: 'kedge_winch', kind: 'accessory', slot: 'accessory', fabricator: 'spaceport', fabricationCost: { steel_l: 30 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Hauls the hull on nothing — slow parsecs without a drop of fuel.' },
+  deep_scan_pulse: { key: 'deep_scan_pulse', kind: 'accessory', slot: 'obs', fabricator: 'research_center', fabricationCost: { silicon: 35, gold: 15 }, fabricationHours: 48, installCost: { steel_l: 10 }, installHours: 12, note: 'A half-day pulse — a strategic snapshot of the nearest scanned body.' },
+  cryo_stasis_pod: { key: 'cryo_stasis_pod', kind: 'accessory', slot: 'accessory', fabricator: 'lab', fabricationCost: { steel_l: 25, silicon: 20, phosphor: 10 }, fabricationHours: 48, installCost: { steel_l: 10 }, installHours: 12, note: 'Deep sleep — survival and aging frozen; ten minutes to wake.' },
   engine_l2: upgrade('engine', 2, 'shipyard', { steel_l: 40, fuel_cells: 20 }, 'Speed ×1.15.'),
   engine_l3: upgrade('engine', 3, 'shipyard', { steel_h: 60, fuel_cells: 50 }, 'Speed ×1.30.'),
   armor_l2: upgrade('armor', 2, 'shipyard', { steel_l: 50 }, 'Hull ×1.3.'),
@@ -248,6 +255,8 @@ for (const key of [
   'cell_cracker', 'arc_furnace', 'med_synth', 'fab_bay',
   'electrolysis_vat', 'hydroponic_run', 'smelting_run',
   'apothecary_still', 'hull_patch_kit',
+  'ram_scoop', 'gravity_sling', 'jump_primer', 'kedge_winch',
+  'deep_scan_pulse', 'cryo_stasis_pod',
 ]) {
   GEAR[`${key}_enhanced`] = enhanced(GEAR[key]!);
 }

@@ -26,9 +26,13 @@ import {
   survivalCapacityMult,
   travelBurnMult,
   crusaderDocks,
+  CONVERSIONS,
   ENGINE_TYPES,
   FUEL_ORDER_DEFAULT,
+  GRAVITY_SLING,
+  RAM_SCOOP,
   recipeEngine,
+  starFieldRadiusPc,
   totalFuelUnits,
   buildableSizes,
   canAcceptLanding,
@@ -62,7 +66,7 @@ import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
-import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival } from '../sim/shipDrain.js';
+import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival, type ShipRow } from '../sim/shipDrain.js';
 import { releaseHarvest } from './harvest.js';
 import { releaseClaim } from './junk.js';
 import { armAutoTradeOnHover } from './hoverTrade.js';
@@ -415,6 +419,30 @@ function hullStats(category: string, size: string | null): {
 /**
  * Lance un vol libre vers un corps ou une coordonnée (GB §6).
  */
+/** W9e ram_scoop — longueur (pc) du segment [A,B] traversant le disque
+ *  de centre C rayon r (géométrie pure, testée via l'intégration). */
+function segCircleIntersectionPc(
+  ax: number, ay: number, bx: number, by: number,
+  cx: number, cy: number, r: number,
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-9) return 0;
+  const ux = dx / len;
+  const uy = dy / len;
+  const fx = ax - cx;
+  const fy = ay - cy;
+  const b = fx * ux + fy * uy;
+  const c = fx * fx + fy * fy - r * r;
+  const disc = b * b - c;
+  if (disc <= 0) return 0;
+  const s = Math.sqrt(disc);
+  const t1 = Math.max(0, -b - s);
+  const t2 = Math.min(len, -b + s);
+  return Math.max(0, t2 - t1);
+}
+
 export async function moveShip(
   pool: pg.Pool,
   playerId: string,
@@ -448,8 +476,10 @@ export async function moveShip(
       ship.follow_ship_id = null;
     }
     // W9-batch : un procédé BATCH immobilise la coque jusqu'au terme.
+    // W9e : EXCEPTION cryo L2 (enhanced) — l'AUTOPILOTE cryostatique
+    // voyage en stase (équipage gelé, irréveillable).
     const runningBatch = batchProcessRunning(ship, nowMs);
-    if (runningBatch) {
+    if (runningBatch && runningBatch !== 'cryo_stasis_pod_enhanced') {
       throw new CommandError(
         'not_available',
         `Procédé batch en cours (${runningBatch.replace(/_/g, ' ')}) — la coque est immobilisée`,
@@ -562,6 +592,106 @@ export async function moveShip(
         baseStats.burnPerPc * load.burnMult * travelBurnMult(moveAccessories),
       tank: effectiveTankU(baseStats.tank, ship.upgrades),
     };
+    // W9e — stances et boosts de déplacement (conversions du bord).
+    const moveConvs = (ship.conversions ?? {}) as Record<
+      string,
+      { runPct?: number; boostUntilMs?: number }
+    >;
+    let extraWearHp = 0;
+    // jump_primer : boost ×1,5 tant que la charge libérée court.
+    const primerState =
+      moveConvs.jump_primer_enhanced ?? moveConvs.jump_primer;
+    const primerDef = CONVERSIONS.jump_primer;
+    if (
+      primerState?.boostUntilMs &&
+      primerState.boostUntilMs > nowMs &&
+      primerDef?.mode === 'batch' &&
+      primerDef.charge
+    ) {
+      stats.speed *= primerDef.charge.boostSpeedMult;
+    }
+    // gravity_sling : départ ≤ windowPc d'une étoile — vitesse
+    // ×(1 + runPct/200) CONTRE des dégâts de coque ∝ runPct.
+    const slingKey = moveAccessories.includes('gravity_sling_enhanced')
+      ? 'gravity_sling_enhanced'
+      : 'gravity_sling';
+    const slingPct = moveConvs[slingKey]?.runPct ?? 0;
+    if (slingPct > 0) {
+      const { rows: nearStar } = await client.query(
+        `SELECT 1 FROM bodies WHERE body_type = 'star'
+           AND (x - $1::float)^2 + (y - $2::float)^2 <= $3::float^2
+         LIMIT 1`,
+        [origin.x, origin.y, GRAVITY_SLING.windowPc],
+      );
+      if (nearStar[0]) {
+        stats.speed *= 1 + slingPct / 200;
+        extraWearHp +=
+          GRAVITY_SLING.damageHpAt100 *
+          (slingPct / 100) *
+          (slingKey.endsWith('_enhanced')
+            ? GRAVITY_SLING.damageMultEnhanced
+            : 1);
+      }
+    }
+    // W9e ram_scoop : STANCE — la traversée des champs stellaires du
+    // TYPE MOTEUR récolte du carburant ∝ runPct contre une usure de
+    // traversée (réglée AU DÉPART, comme le pré-brûlage — interp
+    // annoncée, JOURNAL).
+    let scoopFuel = 0;
+    const scoopKey = moveAccessories.includes('ram_scoop_enhanced')
+      ? 'ram_scoop_enhanced'
+      : 'ram_scoop';
+    const scoopPct = moveConvs[scoopKey]?.runPct ?? 0;
+    if (scoopPct > 0 && ship.engine_type) {
+      const maxField = 51; // ≥ starFieldRadiusPc max (cf. shipDrain)
+      const { rows: fieldStars } = await client.query(
+        `SELECT x, y, r_nova FROM bodies
+         WHERE body_type = 'star' AND star_fuel_type = $1
+           AND x BETWEEN $2::float AND $3::float
+           AND y BETWEEN $4::float AND $5::float`,
+        [
+          ship.engine_type,
+          Math.min(origin.x, destX) - maxField,
+          Math.max(origin.x, destX) + maxField,
+          Math.min(origin.y, destY) - maxField,
+          Math.max(origin.y, destY) + maxField,
+        ],
+      );
+      let pcInField = 0;
+      for (const s of fieldStars) {
+        const r = starFieldRadiusPc(Number(s.r_nova ?? 0));
+        if (r <= 0) continue;
+        pcInField += segCircleIntersectionPc(
+          origin.x, origin.y, destX, destY,
+          Number(s.x), Number(s.y), r,
+        );
+      }
+      if (pcInField > 0) {
+        scoopFuel = pcInField * RAM_SCOOP.fuelUPerPcAt100 * (scoopPct / 100);
+        extraWearHp +=
+          pcInField *
+          RAM_SCOOP.wearHpPerPc *
+          (scoopKey.endsWith('_enhanced')
+            ? RAM_SCOOP.wearMultEnhanced
+            : RAM_SCOOP.wearMult);
+      }
+    }
+    // W9e sling/scoop : les dégâts de manœuvre s'appliquent au départ
+    // (plancher canon 1 HP — un péage, jamais une mort).
+    if (extraWearHp > 0) {
+      const hull = evalShipHull(ship as ShipRow, nowMs);
+      if (hull.maxHp > 0) {
+        const newHp = Math.max(1, hull.hp - extraWearHp);
+        ship.hull_hp = newHp;
+        ship.hull_as_of = new Date(nowMs).toISOString();
+        await client.query(
+          `UPDATE ships SET hull_hp = $2,
+              hull_as_of = to_timestamp($3 / 1000.0)
+           WHERE id = $1`,
+          [shipId, newHp, nowMs],
+        );
+      }
+    }
     let fuelBurned = 0;
     let stockMutatedBodyId: string | null = null;
     if (stats.burnPerPc > 0) {
@@ -645,6 +775,14 @@ export async function moveShip(
           fuelObj[t] = (fuelObj[t] ?? 0) - take;
           toBurn -= take;
         }
+      }
+      // W9e ram_scoop : la récolte de traversée se crédite APRÈS le
+      // pré-brûlage, bornée au réservoir (l'excédent est perdu).
+      if (scoopFuel > 0) {
+        fuelObj[fuelType] = Math.min(
+          stats.tank,
+          (fuelObj[fuelType] ?? 0) + scoopFuel,
+        );
       }
       // Transit : drain désarmé (le vol paie en pré-brûlage, pas en taux).
       await client.query(

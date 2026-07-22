@@ -303,7 +303,16 @@ export interface ShipView {
   /** W9b : actifs de conversion en cours {itemKey: état}. */
   conversions: Record<
     string,
-    { runPct: number; direction: string; processEndsAtMs?: number; startedAtMs: number }
+    {
+      runPct: number;
+      direction: string;
+      processEndsAtMs?: number;
+      startedAtMs: number;
+      /** W9e jump_primer : boost armé jusqu'à cet instant. */
+      boostUntilMs?: number;
+      /** W9e cryo : réveil (10 min) en cours. */
+      waking?: boolean;
+    }
   >;
   installingItem: string | null;
   installCompletesAt: string | null;
@@ -429,13 +438,19 @@ export const api = {
       itemKey: string;
       runPct: number;
       direction?: 'forward' | 'reverse';
+      /** W9e : durée (h-jeu) — charge du jump_primer, stase cryo L2. */
+      hours?: number;
+      /** W9e kedge_winch : cible du halage. */
+      target?: { x: number; y: number };
     },
   ) =>
-    call<{ state: { runPct: number; processEndsAtMs?: number } | null }>(
-      'POST',
-      `/ships/${shipId}/conversion`,
-      input,
-    ),
+    call<{
+      state: {
+        runPct: number;
+        processEndsAtMs?: number;
+        boostUntilMs?: number;
+      } | null;
+    }>('POST', `/ships/${shipId}/conversion`, input),
   /** W3 : ancre une sonde L3 et lance le transfert (règlement au bord). */
   anchorTransfer: (probeId: string, input: { toShipId: string; units: number }) =>
     call<{ endsAt: string; unitsPlanned: number; fuelType: string }>(

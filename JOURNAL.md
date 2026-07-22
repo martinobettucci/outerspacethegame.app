@@ -4745,3 +4745,56 @@ déplacement), jump_primer (charge libre → boost ×1,5 pendant 3× la
 charge), kedge_winch (+ mode boost drift), deep_scan_pulse (instantané
 d'intel L3), cryo_stasis_pod (gel survie+vieillissement, réveil
 10 min, L2 autopilote).
+
+## 2026-07-22 — W9e partie 2 livrée : les 6 actifs de déplacement/temps — CATALOGUE COMPLET
+
+Interprétations v1 ANNONCÉES (chiffres [TUNE] → W9f) :
+
+- STANCES : ram_scoop et gravity_sling sont des continus à débit NUL —
+  le throttle est un réglage persistant lu par moveShip, pas un flux de
+  soute. La récolte/l'usure du ram_scoop se règlent AU DÉPART (comme le
+  pré-brûlage) : géométrie segment-disque exacte des champs du TYPE
+  MOTEUR sur la trajectoire (+0,5 u/pc × runPct au réservoir borné ;
+  usure 0,5 HP/pc ×2, enhanced ×1,5, plancher 1 HP).
+- gravity_sling : fenêtre de 8 pc au DÉPART seulement ; ×(1+runPct/200 %)
+  sur tout le trajet ; 10 HP × runPct au lancement (enhanced ÷2).
+- jump_primer : la charge est un batch à durée LIBRE (paramètre `hours`,
+  1 h–240 h) ; au terme, l'état devient un BUFF (`boostUntilMs`) qui ne
+  bloque plus la coque ; un bord de nettoyage est planifié à
+  l'expiration. Boost ×1,5 appliqué au DÉPART pour tout le trajet.
+  Enhanced : durée de boost ×1,5 (donc ×4,5 la charge).
+- kedge_winch : cible (x, y) obligatoire, coque en espace (jamais à
+  quai) ; au terme la coque est déplacée de 5 pc (10 en boost) VERS la
+  cible, bornés à la distance restante ; abandon = temps perdu, rien à
+  rendre. MODE BOOST : lancé avec < 1 u — le réservoir est vidé d'un
+  coup à l'activation.
+- deep_scan_pulse : cible = le corps SOUS SCAN (shipScanPc, signal_mirror
+  compris) le plus proche, FIGÉ à l'activation ; au terme, un instantané
+  L3 est PERSISTÉ (migration 037, table player_body_intel) et sert de
+  PLANCHER dans bodyIntel — v1 : la connaissance acquise ne se périme
+  pas.
+- cryo_stasis_pod : la stase gèle la SURVIE (survival_rate 0, réarmée au
+  réveil) ; le vieillissement n'existe pas mécaniquement pour les
+  équipages PNJ v1 — le gel du vieillissement est donc satisfait à vide
+  et documenté (le jour où un vieillissement d'équipage naît, la stase
+  doit le geler). « Abandonner » une stase L1 = RÉVEIL en 10 min
+  (toujours gelé pendant) ; L2 (enhanced) = autopilote : durée choisie
+  (`hours`, ≤ 100 j), moveShip AUTORISÉ en stase (seule exception à
+  l'immobilisation batch), réveil REFUSÉ avant le terme.
+
+UI : champ « Duration (game-hours) » (primer, cryo L2), cibles X/Y
+(kedge), état « Jump boost — until », bouton « Wake (10 min) » (cryo),
+statut « waking ». API : `hours` et `target` sur POST /ships/:id/conversion.
+
+Preuves : actives2.test 7/7 (sling vitesse+dégâts, scoop crédit net +
+usure exacte 2×fieldR, primer garde durée + boost ×1,5 mesuré à
+l'arrivée, kedge 5 pc / boost 10 pc + réservoir vidé, cryo L1 gel +
+réveil + réarmement, cryo L2 voyage en stase + irréveillable, deep scan
+tier 3 persisté servi sans présence) ; balayage sériel 368/368 (census
+compris ce passage) ; E2E conversions 3/3, captures cv-05/cv-06
+OBSERVÉES (champ durée, boost armé avec échéance) ; typecheck ×3.
+
+LE CATALOGUE EST COMPLET : GEAR_CATALOG.md tout ✔ — 24 passifs,
+9 continus (dont 2 stances), 10 batch, × grades enhanced (91 clés
+GEAR). Reste W9f (tour d'équilibrage) avant de figer les [TUNE] et de
+livrer le TABLEAU FINAL au responsable.

@@ -52,6 +52,12 @@ describe('W6 — catalogue ITEMS', () => {
         'fab_bay_enhanced', 'electrolysis_vat_enhanced',
         'hydroponic_run_enhanced', 'smelting_run_enhanced',
         'apothecary_still_enhanced', 'hull_patch_kit_enhanced',
+        // W9e partie 2 — déplacement/temps (× grades enhanced).
+        'ram_scoop', 'gravity_sling', 'jump_primer', 'kedge_winch',
+        'deep_scan_pulse', 'cryo_stasis_pod',
+        'ram_scoop_enhanced', 'gravity_sling_enhanced',
+        'jump_primer_enhanced', 'kedge_winch_enhanced',
+        'deep_scan_pulse_enhanced', 'cryo_stasis_pod_enhanced',
         'engine_l2',
         'engine_l3',
         'armor_l2',

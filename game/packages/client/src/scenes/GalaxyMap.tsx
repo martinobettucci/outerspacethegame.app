@@ -175,6 +175,9 @@ export function GalaxyMap() {
   // W9b : réglage des actifs de conversion (par item sélectionné).
   const [convPct, setConvPct] = useState<Record<string, number>>({});
   const [convRev, setConvRev] = useState<Record<string, boolean>>({});
+  // W9e : durée (jump_primer / cryo L2) et cible (kedge_winch).
+  const [convHours, setConvHours] = useState<Record<string, number>>({});
+  const [convTgt, setConvTgt] = useState<Record<string, { x: number; y: number }>>({});
   // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
   const [installGearList, setInstallGearList] = useState<
     { itemKey: string; count: number }[]
@@ -1967,13 +1970,75 @@ export function GalaxyMap() {
                   {state && (
                     <span style={{ fontFamily: 'var(--font-mono)' }}>
                       {def.mode === 'batch'
-                        ? `${t.galaxy.convProcess} — ${
-                            state.processEndsAtMs
-                              ? new Date(state.processEndsAtMs).toLocaleTimeString('en-US')
-                              : '…'
-                          }`
+                        ? state.boostUntilMs
+                          ? `${t.galaxy.convBoost} ${new Date(state.boostUntilMs).toLocaleTimeString('en-US')}`
+                          : `${t.galaxy.convProcess} — ${
+                              state.processEndsAtMs
+                                ? new Date(state.processEndsAtMs).toLocaleTimeString('en-US')
+                                : '…'
+                            }${state.waking ? ` · ${t.galaxy.convWaking}` : ''}`
                         : `${state.runPct}%${state.runPct === 0 ? ` · ${t.galaxy.convStarved}` : ''}`}
                     </span>
+                  )}
+                  {/* W9e : durée requise — charge du jump_primer, stase cryo L2. */}
+                  {def.mode === 'batch' &&
+                    (def.charge || (def.stasis && a.endsWith('_enhanced'))) &&
+                    !state?.processEndsAtMs && (
+                      <label style={{ display: 'grid', gap: 2 }}>
+                        <span>{t.galaxy.convHours}</span>
+                        <input
+                          type="number"
+                          min={def.charge?.minHours ?? 1}
+                          max={def.charge?.maxHours ?? def.stasis?.maxHours ?? 240}
+                          aria-label={`${t.galaxy.convHours} ${a}`}
+                          value={String(convHours[a] ?? def.charge?.minHours ?? 24)}
+                          onChange={(e) =>
+                            setConvHours((c) => ({ ...c, [a]: Number(e.target.value) }))
+                          }
+                          style={{
+                            background: 'var(--bg-overlay)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--stroke-subtle)',
+                            borderRadius: 'var(--radius-button)',
+                            padding: '4px 8px',
+                            width: 120,
+                          }}
+                        />
+                      </label>
+                    )}
+                  {/* W9e kedge_winch : cible du halage. */}
+                  {def.mode === 'batch' && def.kedge && !state?.processEndsAtMs && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {(['x', 'y'] as const).map((axis) => (
+                        <label key={axis} style={{ display: 'grid', gap: 2 }}>
+                          <span>
+                            {axis === 'x' ? t.galaxy.convTargetX : t.galaxy.convTargetY}
+                          </span>
+                          <input
+                            type="number"
+                            aria-label={`${axis === 'x' ? t.galaxy.convTargetX : t.galaxy.convTargetY} ${a}`}
+                            value={String(convTgt[a]?.[axis] ?? '')}
+                            onChange={(e) =>
+                              setConvTgt((c) => ({
+                                ...c,
+                                [a]: {
+                                  x: axis === 'x' ? Number(e.target.value) : (c[a]?.x ?? 0),
+                                  y: axis === 'y' ? Number(e.target.value) : (c[a]?.y ?? 0),
+                                },
+                              }))
+                            }
+                            style={{
+                              background: 'var(--bg-overlay)',
+                              color: 'var(--text-primary)',
+                              border: '1px solid var(--stroke-subtle)',
+                              borderRadius: 'var(--radius-button)',
+                              padding: '4px 8px',
+                              width: 100,
+                            }}
+                          />
+                        </label>
+                      ))}
+                    </div>
                   )}
                   {def.mode === 'continuous' && (
                   <label style={{ display: 'grid', gap: 2 }}>
@@ -2021,10 +2086,20 @@ export function GalaxyMap() {
                           runPct:
                             def.mode === 'batch'
                               ? state?.processEndsAtMs
-                                ? 0 // abandon (intrants perdus)
+                                ? 0 // abandon (intrants perdus) / réveil cryo
                                 : 100 // lancement du procédé
                               : (convPct[a] ?? state?.runPct ?? 0),
                           ...(convRev[a] ? { direction: 'reverse' as const } : {}),
+                          // W9e : durée (charge / stase L2) et cible (kedge).
+                          ...(def.mode === 'batch' &&
+                          (def.charge || (def.stasis && a.endsWith('_enhanced'))) &&
+                          !state?.processEndsAtMs
+                            ? { hours: convHours[a] ?? def.charge?.minHours ?? 24 }
+                            : {}),
+                          ...(def.mode === 'batch' && def.kedge && convTgt[a] &&
+                          !state?.processEndsAtMs
+                            ? { target: convTgt[a] }
+                            : {}),
                         })
                         .then(() => {
                           setNotice(t.galaxy.convApplied);
@@ -2048,7 +2123,9 @@ export function GalaxyMap() {
                   >
                     {def.mode === 'batch'
                       ? state?.processEndsAtMs
-                        ? t.galaxy.convAbort
+                        ? def.stasis
+                          ? t.galaxy.convWake
+                          : t.galaxy.convAbort
                         : t.galaxy.convStart
                       : t.galaxy.convApply}
                   </button>

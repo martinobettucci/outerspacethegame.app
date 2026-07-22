@@ -717,6 +717,12 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
         itemKey: z.string().min(1).max(64),
         runPct: z.number().int().min(0).max(100),
         direction: z.enum(['forward', 'reverse']).optional(),
+        // W9e : charge du jump_primer / durée de stase cryo L2 (h-jeu).
+        hours: z.number().positive().max(10_000).optional(),
+        // W9e kedge_winch : cible du halage.
+        target: z
+          .object({ x: z.number(), y: z.number() })
+          .optional(),
       })
       .safeParse(req.body);
     if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });

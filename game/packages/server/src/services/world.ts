@@ -236,13 +236,24 @@ export async function bodyIntel(
   if (presenceRows.length > 0) visible = true;
   if (body.owner_id === playerId) visible = true;
 
+  // W9e deep_scan_pulse : un instantané PERSISTÉ fixe un PLANCHER de
+  // palier (v1 : la connaissance acquise ne se périme pas — annoncé).
+  const { rows: snapshotRows } = await pool.query(
+    `SELECT tier FROM player_body_intel
+     WHERE player_id = $1 AND body_id = $2`,
+    [playerId, bodyId],
+  );
+  const snapshotFloor = Number(snapshotRows[0]?.tier ?? 0);
   const tier =
     body.owner_id === playerId
       ? 4
-      : (() => {
-          const base = intelTierFromSources(sources, { visible, probeOnSite });
-          return surveyCap > base ? Math.min(surveyCap, base + 1) : base;
-        })();
+      : Math.max(
+          snapshotFloor,
+          (() => {
+            const base = intelTierFromSources(sources, { visible, probeOnSite });
+            return surveyCap > base ? Math.min(surveyCap, base + 1) : base;
+          })(),
+        );
   if (tier === 0) throw notFound;
 
   // Données brutes — chargées quel que soit le palier, la PROJECTION

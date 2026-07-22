@@ -12,7 +12,7 @@
 > supérieur). L'installation n'exige AUCUNE techno. Chiffres [TUNE]
 > jusqu'au tour d'équilibrage W9f.
 
-## Statuts : ✔ implémenté · ⏳ validé à implémenter (« go pour tout », 2026-07-22 — plus aucun 💬)
+## Statuts : ✔ implémenté (catalogue COMPLET livré, 2026-07-22 — chiffres [TUNE] jusqu'au tour d'équilibrage W9f)
 
 ## 1. Accessoires PASSIFS
 
@@ -53,8 +53,8 @@
 | cell_cracker | fuel | fuelcell_plant | 0,1 cell/h à 100 % → 40 u moteur/cell (< 50 du batch), 0,5 u fuel/h | ✔ |
 | arc_furnace | accessory | smelter | 2 junk → 1 steel_l, 5 réf/h à 100 %, 1 u fuel/h | ✔ |
 | med_synth | accessory | lab | 1 eau + 0,5 phosphore → 1 med_1, 2 réf/h à 100 %, 1 u fuel/h | ✔ |
-| ram_scoop | fuel | refinery | EN TRANSIT dans un champ stellaire : récolte le fuel du type ∝ runPct CONTRE usure ×2 / ×1,5 | ⏳ W9e |
-| gravity_sling | engine | shipyard | départ ≤ 8 pc d'une étoile : vitesse ×(1+runPct/2) contre dégâts ∝ runPct | ⏳ W9e |
+| ram_scoop | fuel | refinery | STANCE — traversée d'un champ du TYPE MOTEUR : +0,5 u/pc × runPct au réservoir CONTRE usure 0,5 HP/pc ×2 / ×1,5 (réglée au départ) | ✔ |
+| gravity_sling | engine | shipyard | STANCE — départ ≤ 8 pc d'une étoile : vitesse ×(1+runPct/200 %) contre 10 HP × runPct (enhanced ÷2) | ✔ |
 | fab_bay | accessory | workshop | auto-réparation 1 %/h × runPct, 0,5 T steel_l/% de SOUTE + 1 u fuel/h (voie du Crusader — W9g) ; bord de plein → 0 % | ✔ |
 
 ## 3. Accessoires ACTIFS BATCH (immobiles, zéro carburant, efficaces)
@@ -62,11 +62,11 @@
 | Accessoire | Slot | Gate | Procédé (arrêt + temps figé) std / enh | Statut |
 |---|---|---|---|---|
 | cell_decompressor | accessory | fuelcell_plant | 1 fuel_cell → 24 h / 16 h → +50 fuel moteur (au réservoir) | ✔ |
-| cryo_stasis_pod | accessory | lab | gel de la survie ET du vieillissement 7 j ; réveil à la demande en 10 min ; L2 (enhanced) : AUTOPILOTE cryostatique (voyage gelé, durée choisie, irréveillable pendant) | ⏳ W9e |
-| jump_primer | engine | shipyard | charge LIBRE (1 h–10 j) → boost vitesse ×1,5 pendant 3 × le temps de charge | ⏳ W9e |
-| deep_scan_pulse | obs | research_center | 12 h → un instantané d'intel L3 d'un corps sous scan | ⏳ W9e |
+| cryo_stasis_pod | accessory | lab | stase 7 j — survie ET vieillissement GELÉS, coque immobile ; réveil à la demande en 10 min ; L2 (enhanced) : AUTOPILOTE — durée choisie (≤ 100 j), voyage en stase, irréveillable | ✔ |
+| jump_primer | engine | shipyard | charge LIBRE (1 h–10 j, gratuite, à l'arrêt) → boost vitesse ×1,5 pendant 3 × la charge (enhanced : ×4,5) | ✔ |
+| deep_scan_pulse | obs | research_center | 12 h → instantané d'intel L3 PERSISTÉ du corps sous scan le plus proche (plancher, figé à l'activation) | ✔ |
 | hull_patch_kit | accessory | workshop | 1 T steel_l → 12 h → +25 % des HP MAX (borné au plein) | ✔ |
-| kedge_winch | accessory | spaceport | 1 j → 5 pc sans carburant ; MODE BOOST (< 1 fuel restant) : tout brûlé, drift 10 pc/j | ⏳ W9e |
+| kedge_winch | accessory | spaceport | 1 j → 5 pc SANS carburant vers une cible ; MODE BOOST (< 1 u restant) : tout brûlé, 10 pc | ✔ |
 | electrolysis_vat | accessory | workshop | 20 eau → 22 O2 + 22 H, 12 h (rendement +10 %) | ✔ |
 | hydroponic_run | accessory | farm | 10 O2 → 22 food_1, 12 h (+10 %) | ✔ |
 | smelting_run | accessory | smelter | 20 junk → 11 steel_l, 12 h (+10 %) | ✔ |

@@ -15,17 +15,22 @@ import {
   effectiveContainers,
   conversionOf,
   effectiveTankU,
+  ENHANCED_RATE_MULT,
+  ENHANCED_SUFFIX,
   HULLS,
   isValidRunPct,
+  shipScanPc,
   type HullCategory,
   type HullSize,
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { SHIP_SCAN_PC } from './world.js';
 import {
   evalShipFuel,
   evalShipHull,
   rebaseShipDrain,
+  rebaseShipSurvival,
   type ShipRow,
 } from '../sim/shipDrain.js';
 import { CommandError } from './planets.js';
@@ -40,6 +45,19 @@ export interface ConversionState {
    *  jusque-là. */
   processEndsAtMs?: number;
   startedAtMs: number;
+  /** W9e jump_primer : durée de charge choisie (h-jeu). */
+  chargeHours?: number;
+  /** W9e jump_primer : boost de vitesse actif jusqu'à cet instant. */
+  boostUntilMs?: number;
+  /** W9e kedge_winch : cible du halage. */
+  targetX?: number;
+  targetY?: number;
+  /** W9e kedge_winch : MODE BOOST (< 1 u au lancement — tout brûlé). */
+  boost?: boolean;
+  /** W9e deep_scan_pulse : corps sous scan figé à l'activation. */
+  targetBodyId?: string;
+  /** W9e cryo_stasis_pod : réveil en cours (10 min) — toujours gelé. */
+  waking?: boolean;
 }
 
 function hullContainers(ship: Row): number {
@@ -78,6 +96,19 @@ export async function settleConversion(
   if (!state || !def) return state ?? null;
 
   if (def.mode === 'batch') {
+    // W9e jump_primer : un BOOST expiré se nettoie au bord.
+    if (!state.processEndsAtMs && state.boostUntilMs) {
+      if (state.boostUntilMs <= nowMs + 1) {
+        delete conversions[itemKey];
+        ship.conversions = conversions;
+        await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
+          ship.id,
+          JSON.stringify(conversions),
+        ]);
+        return null;
+      }
+      return state;
+    }
     if (!state.processEndsAtMs || state.processEndsAtMs > nowMs + 1) {
       return state; // procédé encore en cours : rien à régler
     }
@@ -121,6 +152,68 @@ export async function settleConversion(
         await rebaseShipDrain(client, ship as ShipRow, nowMs, 'none', {});
       }
     }
+    // W9e jump_primer : au terme de la CHARGE, le boost s'arme (durée =
+    // boostDurationMult × charge ; grade enhanced ×1,5 en plus).
+    if (def.charge && state.chargeHours) {
+      const durMult =
+        def.charge.boostDurationMult *
+        (itemKey.endsWith(ENHANCED_SUFFIX) ? ENHANCED_RATE_MULT : 1);
+      const boostUntilMs =
+        nowMs + (state.chargeHours * durMult * 3_600_000) / timeScale;
+      conversions[itemKey] = {
+        runPct: 0,
+        direction: 'forward',
+        startedAtMs: nowMs,
+        boostUntilMs,
+      };
+      ship.conversions = conversions;
+      await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
+        ship.id,
+        JSON.stringify(conversions),
+      ]);
+      await client.query(
+        `DELETE FROM events
+         WHERE processed_at IS NULL AND kind = 'conversion_edge'
+           AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
+        [String(ship.id), itemKey],
+      );
+      await enqueue(client, 'conversion_edge', new Date(boostUntilMs + 1), {
+        shipId: String(ship.id),
+        itemKey,
+      });
+      return conversions[itemKey]!;
+    }
+    // W9e kedge_winch : au terme, la coque est HALÉE vers la cible —
+    // `pc` parsecs (boostPc en mode boost), sans carburant.
+    if (def.kedge && state.targetX !== undefined && state.targetY !== undefined) {
+      const sx = Number(ship.x);
+      const sy = Number(ship.y);
+      const dist = Math.hypot(state.targetX - sx, state.targetY - sy);
+      const stepPc = state.boost ? def.kedge.boostPc : def.kedge.pc;
+      if (dist > 1e-9) {
+        const f = Math.min(1, stepPc / dist);
+        const nx = sx + (state.targetX - sx) * f;
+        const ny = sy + (state.targetY - sy) * f;
+        ship.x = nx;
+        ship.y = ny;
+        await client.query(`UPDATE ships SET x = $2, y = $3 WHERE id = $1`, [
+          ship.id,
+          nx,
+          ny,
+        ]);
+      }
+    }
+    // W9e deep_scan_pulse : instantané d'intel PERSISTÉ (plancher).
+    if (def.scanSnapshotTier && state.targetBodyId) {
+      await client.query(
+        `INSERT INTO player_body_intel (player_id, body_id, tier)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (player_id, body_id)
+         DO UPDATE SET tier = GREATEST(player_body_intel.tier, EXCLUDED.tier),
+                       granted_at = now()`,
+        [ship.owner_id, state.targetBodyId, def.scanSnapshotTier],
+      );
+    }
     delete conversions[itemKey];
     ship.conversions = conversions;
     await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
@@ -133,6 +226,11 @@ export async function settleConversion(
          AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
       [String(ship.id), itemKey],
     );
+    // W9e cryo_stasis_pod : fin de stase (ou de réveil) — la survie se
+    // RÉARME (le gel est levé).
+    if (def.stasis) {
+      await rebaseShipSurvival(client, ship as ShipRow, nowMs, {});
+    }
     return null;
   }
 
@@ -316,6 +414,11 @@ export async function setConversion(
     itemKey: string;
     runPct: number;
     direction?: 'forward' | 'reverse';
+    /** W9e jump_primer (durée de charge) / cryo enhanced (durée de
+     *  stase choisie), en h-jeu. */
+    hours?: number;
+    /** W9e kedge_winch : cible du halage. */
+    target?: { x: number; y: number };
   },
   opts: { nowMs?: number; timeScale?: number } = {},
 ): Promise<{ state: ConversionState | null }> {
@@ -354,8 +457,39 @@ export async function setConversion(
 
     if (def.mode === 'batch') {
       if (input.runPct === 0) {
-        // Abandon : intrants PERDUS (annoncé), immobilisation levée.
-        if (state) {
+        // W9e cryo_stasis_pod : « abandonner » une stase = SE RÉVEILLER
+        // (10 min, toujours gelé) ; l'autopilote (enhanced) refuse.
+        if (def.stasis && state?.processEndsAtMs && state.processEndsAtMs > nowMs) {
+          if (input.itemKey.endsWith(ENHANCED_SUFFIX)) {
+            throw new CommandError(
+              'not_available',
+              'Autopilote cryostatique — irréveillable avant le terme',
+            );
+          }
+          if (!state.waking) {
+            const wakeEndsMs =
+              nowMs + ((def.stasis.wakeMinutes / 60) * 3_600_000) / timeScale;
+            state = {
+              ...state,
+              waking: true,
+              processEndsAtMs: Math.min(state.processEndsAtMs, wakeEndsMs),
+            };
+            conversions[input.itemKey] = state;
+            await client.query(
+              `DELETE FROM events
+               WHERE processed_at IS NULL AND kind = 'conversion_edge'
+                 AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
+              [shipId, input.itemKey],
+            );
+            await enqueue(
+              client,
+              'conversion_edge',
+              new Date(state.processEndsAtMs! + 1),
+              { shipId, itemKey: input.itemKey },
+            );
+          }
+        } else if (state) {
+          // Abandon : intrants PERDUS (annoncé), immobilisation levée.
           delete conversions[input.itemKey];
           state = null;
         }
@@ -369,6 +503,78 @@ export async function setConversion(
             'not_available',
             'Le procédé batch exige l\'arrêt (survol/arrêt/quai)',
           );
+        }
+        // W9e — paramètres et gardes des batch SPÉCIAUX.
+        let processHours = def.processHours;
+        const extra: Partial<ConversionState> = {};
+        if (def.charge) {
+          const h = Number(input.hours);
+          if (
+            !Number.isFinite(h) ||
+            h < def.charge.minHours ||
+            h > def.charge.maxHours
+          ) {
+            throw new CommandError(
+              'not_available',
+              `Charge libre : ${def.charge.minHours} h à ${def.charge.maxHours} h-jeu`,
+            );
+          }
+          processHours = h;
+          extra.chargeHours = h;
+        }
+        if (def.stasis && input.itemKey.endsWith(ENHANCED_SUFFIX)) {
+          // L2 autopilote : la DURÉE de stase est choisie au lancement.
+          const h = Number(input.hours);
+          if (!Number.isFinite(h) || h < 1 || h > def.stasis.maxHours) {
+            throw new CommandError(
+              'not_available',
+              `Durée de stase requise : 1 h à ${def.stasis.maxHours} h-jeu`,
+            );
+          }
+          processHours = h;
+        }
+        if (def.kedge) {
+          if (ship.status === 'docked') {
+            throw new CommandError(
+              'not_available',
+              'Le treuil ne hale qu\'en espace (pas à quai)',
+            );
+          }
+          const tgt = input.target;
+          if (
+            !tgt ||
+            !Number.isFinite(tgt.x) ||
+            !Number.isFinite(tgt.y)
+          ) {
+            throw new CommandError('not_available', 'Cible de halage requise');
+          }
+          extra.targetX = tgt.x;
+          extra.targetY = tgt.y;
+          // MODE BOOST : lancé avec < 1 u restant — TOUT est brûlé d'un
+          // coup, la dérive passe à boostPc.
+          const tank = evalShipFuel(ship, nowMs);
+          if (tank.units < 1) {
+            extra.boost = true;
+            await rebaseShipDrain(client, ship as ShipRow, nowMs, 'none', {
+              setUnits: 0,
+            });
+            ship.fuel = { ...(ship.fuel ?? {}), [tank.type]: 0 };
+          }
+        }
+        if (def.scanSnapshotTier) {
+          // Cible = corps SOUS SCAN le plus proche, figé à l'activation.
+          const scanPc = shipScanPc(accessories, SHIP_SCAN_PC);
+          const { rows: nearest } = await client.query(
+            `SELECT id FROM bodies
+             WHERE body_type = 'planet' AND owner_id IS DISTINCT FROM $1
+               AND (x - $2::float)^2 + (y - $3::float)^2 <= $4::float^2
+             ORDER BY (x - $2::float)^2 + (y - $3::float)^2 LIMIT 1`,
+            [playerId, Number(ship.x), Number(ship.y), scanPc],
+          );
+          if (!nearest[0]) {
+            throw new CommandError('not_available', 'Aucun corps sous scan');
+          }
+          extra.targetBodyId = nearest[0].id;
         }
         // Intrants consommés À L'ACTIVATION (depuis la soute).
         const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
@@ -389,12 +595,13 @@ export async function setConversion(
           shipId,
           JSON.stringify(cargo),
         ]);
-        const endsAtMs = nowMs + (def.processHours * 3_600_000) / timeScale;
+        const endsAtMs = nowMs + (processHours * 3_600_000) / timeScale;
         state = {
           runPct: 100,
           direction: 'forward',
           processEndsAtMs: endsAtMs,
           startedAtMs: nowMs,
+          ...extra,
         };
         conversions[input.itemKey] = state;
         await enqueue(client, 'conversion_edge', new Date(endsAtMs + 1), {
@@ -420,6 +627,11 @@ export async function setConversion(
       shipId,
       JSON.stringify(conversions),
     ]);
+    // W9e cryo : le gel (ou son maintien pendant le réveil) se reflète
+    // immédiatement sur le taux de survie.
+    if (def.mode === 'batch' && def.stasis) {
+      await rebaseShipSurvival(client, ship as ShipRow, nowMs, {});
+    }
     if (def.mode === 'continuous') {
       await client.query(
         `DELETE FROM events

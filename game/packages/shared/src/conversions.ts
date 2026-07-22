@@ -30,6 +30,9 @@ export interface ContinuousDef {
   /** Carburant brûlé par h-jeu à 100 % (u, type moteur). [TUNE] */
   fuelUPerHourAt100: number;
   reversible?: boolean;
+  /** W9e — STANCE de déplacement (rate 0 : le throttle est un réglage
+   *  lu par moveShip, pas un flux de soute). */
+  stance?: 'ram_scoop' | 'gravity_sling';
 }
 
 export interface BatchDef {
@@ -41,6 +44,27 @@ export interface BatchDef {
   output: Partial<Record<ConversionOutputKey, number>>;
   /** Durée du procédé (h-jeu), coque À L'ARRÊT et immobilisée. [TUNE] */
   processHours: number;
+  /** W9e jump_primer : charge LIBRE (le joueur choisit la durée entre
+   *  min et max) ; au terme, boost vitesse ×boostSpeedMult pendant
+   *  boostDurationMult × la durée de charge. */
+  charge?: {
+    minHours: number;
+    maxHours: number;
+    boostSpeedMult: number;
+    boostDurationMult: number;
+  };
+  /** W9e kedge_winch : au terme, déplace la coque de `pc` VERS la cible
+   *  fournie à l'activation — sans carburant. MODE BOOST : lancé avec
+   *  < 1 u restant, tout est brûlé et la dérive passe à `boostPc`. */
+  kedge?: { pc: number; boostPc: number };
+  /** W9e deep_scan_pulse : au terme, instantané d'intel du palier `tier`
+   *  sur le corps SOUS SCAN le plus proche (figé à l'activation). */
+  scanSnapshotTier?: 2 | 3;
+  /** W9e cryo_stasis_pod : stase — survie (et vieillissement) GELÉE
+   *  pendant le procédé ; réveil à la demande en `wakeMinutes` (L1).
+   *  Le grade enhanced (L2) autorise le VOYAGE en stase (autopilote,
+   *  durée choisie, irréveillable avant le terme). */
+  stasis?: { wakeMinutes: number; maxHours: number };
 }
 
 export type ConversionDef = ContinuousDef | BatchDef;
@@ -157,7 +181,90 @@ export const CONVERSIONS: Record<string, ConversionDef> = {
     output: { hp_pct: 25 },
     processHours: 12,
   },
+  // W9e partie 2 — actifs couplés au DÉPLACEMENT et au TEMPS. [TUNE]
+  /** Écope à bélier : STANCE — en TRANSIT dans un champ stellaire du
+   *  type moteur, récolte du carburant ∝ runPct CONTRE une usure de
+   *  traversée (×2 std, ×1,5 enhanced — voir RAM_SCOOP). */
+  ram_scoop: {
+    itemKey: 'ram_scoop',
+    mode: 'continuous',
+    input: {},
+    output: {},
+    ratePerHourAt100: 0,
+    fuelUPerHourAt100: 0,
+    stance: 'ram_scoop',
+  },
+  /** Fronde gravitationnelle : STANCE — départ ≤ 8 pc d'une étoile,
+   *  vitesse ×(1 + runPct/2) contre des dégâts ∝ runPct (GRAVITY_SLING). */
+  gravity_sling: {
+    itemKey: 'gravity_sling',
+    mode: 'continuous',
+    input: {},
+    output: {},
+    ratePerHourAt100: 0,
+    fuelUPerHourAt100: 0,
+    stance: 'gravity_sling',
+  },
+  /** Amorce de saut : charge libre 1 h–10 j, GRATUITE — au terme, boost
+   *  vitesse ×1,5 pendant 3 × le temps de charge. */
+  jump_primer: {
+    itemKey: 'jump_primer',
+    mode: 'batch',
+    input: {},
+    output: {},
+    processHours: 0,
+    charge: { minHours: 1, maxHours: 240, boostSpeedMult: 1.5, boostDurationMult: 3 },
+  },
+  /** Treuil d'ancre : 1 j → 5 pc SANS carburant vers la cible fournie ;
+   *  MODE BOOST (< 1 u restant) : tout brûlé, dérive 10 pc/j. */
+  kedge_winch: {
+    itemKey: 'kedge_winch',
+    mode: 'batch',
+    input: {},
+    output: {},
+    processHours: 24,
+    kedge: { pc: 5, boostPc: 10 },
+  },
+  /** Impulsion de scan profond : 12 h → un instantané d'intel L3 du
+   *  corps sous scan le plus proche (figé à l'activation). */
+  deep_scan_pulse: {
+    itemKey: 'deep_scan_pulse',
+    mode: 'batch',
+    input: {},
+    output: {},
+    processHours: 12,
+    scanSnapshotTier: 3,
+  },
+  /** Capsule de cryostase : survie (et vieillissement) GELÉE 7 j ;
+   *  réveil à la demande en 10 min. L2 (enhanced) : autopilote
+   *  cryostatique — voyage en stase, durée choisie, irréveillable. */
+  cryo_stasis_pod: {
+    itemKey: 'cryo_stasis_pod',
+    mode: 'batch',
+    input: {},
+    output: {},
+    processHours: 168,
+    stasis: { wakeMinutes: 10, maxHours: 2400 },
+  },
 };
+
+/** W9e ram_scoop — récolte et usure PAR PC de champ traversé (réglées
+ *  au départ, comme le pré-brûlage) : fuel = pc × u/pc × runPct ;
+ *  usure supplémentaire = pc × HP/pc × mult (std ×2, enhanced ×1,5). [TUNE] */
+export const RAM_SCOOP = {
+  fuelUPerPcAt100: 0.5,
+  wearHpPerPc: 0.5,
+  wearMult: 2,
+  wearMultEnhanced: 1.5,
+} as const;
+
+/** W9e gravity_sling — fenêtre de départ et dégâts au lancement :
+ *  vitesse ×(1 + runPct/200), dégâts = HP × runPct/100 (enhanced ÷2). [TUNE] */
+export const GRAVITY_SLING = {
+  windowPc: 8,
+  damageHpAt100: 10,
+  damageMultEnhanced: 0.5,
+} as const;
 
 /** Grades ENHANCED (fabriqués sur bâtiment hôte L3) : débit ×1,5
  *  (continus) ou procédé ÷1,5 (batch). */

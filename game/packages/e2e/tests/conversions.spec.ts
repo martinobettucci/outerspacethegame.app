@@ -168,3 +168,68 @@ test('W9e batch UI : hull_patch_kit — intrants à l\'activation, procédé aff
   }).toPass({ timeout: 30_000 });
   await shot(page, 'cv-04-batch-done');
 });
+
+test('W9e jump_primer UI : durée de charge choisie, boost armé au terme', async ({
+  page,
+}) => {
+  test.setTimeout(420_000);
+
+  const email = pickEmailByDna(`e2e-cx-${runId}`, () => true, 0);
+  const planetId = await registerSovereign(page, email, 'Jumper', 'Scientific');
+  for (const [resource, tons] of [
+    ['fuel_cold', 60],
+    ['fuel_hot', 60],
+    ['fuel_gas', 60],
+  ] as const) {
+    const g = await page.request.post('/api/test/grant', {
+      data: { planetId, resource, tons },
+    });
+    expect(g.ok()).toBe(true);
+  }
+  const fleet0 = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+    ships: { id: string; name: string }[];
+  };
+  const haulerId = fleet0.ships.find((s) => s.name === 'First hauler')!.id;
+  await installRigViaPipeline(page, planetId, haulerId, 'jump_primer');
+  const rf = await page.request.post(`/api/ships/${haulerId}/refuel`, { data: {} });
+  expect(rf.ok()).toBe(true);
+
+  const haulerPanel = page.getByRole('complementary', { name: 'First hauler' });
+  await expect(async () => {
+    await page.getByLabel('Galaxy contact index').selectOption(`ship:${haulerId}`);
+    await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 30_000 });
+  const section = haulerPanel.getByRole('region', {
+    name: /Active gear — jump primer/,
+  });
+  await expect(section).toBeVisible();
+  // Durée de charge : 24 h-jeu (12 s réels @ ×7200).
+  await section.getByLabel(/Duration \(game-hours\)/).fill('24');
+  await shot(page, 'cv-05-primer-charge');
+  await section
+    .getByRole('button', { name: 'Start process (inputs consumed, hull held)' })
+    .click();
+  await expect(page.getByRole('status')).toContainText('Active gear engaged');
+  // Au terme de la charge : le BOOST est armé (72 h-jeu).
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: {
+            id: string;
+            conversions: Record<string, { boostUntilMs?: number }>;
+          }[];
+        };
+        const st = f.ships.find((x) => x.id === haulerId)!.conversions.jump_primer;
+        return st?.boostUntilMs && st.boostUntilMs > Date.now() ? 'boosted' : 'waiting';
+      },
+      { timeout: 120_000 },
+    )
+    .toBe('boosted');
+  await expect(async () => {
+    await page.getByLabel('Galaxy contact index').selectOption(`ship:${haulerId}`);
+    await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 30_000 });
+  await expect(section.getByText(/Jump boost — until/)).toBeVisible();
+  await shot(page, 'cv-06-primer-boosted');
+});

@@ -209,6 +209,19 @@ export function evalShipSurvival(
  * capacité de coque) et survival_out (mort). Appelé aux mêmes points que
  * le rebase du fuel — l'équipage est compté ici (une requête).
  */
+/** W9e — la capsule de cryostase est-elle en STASE active ? (lu sur la
+ *  ligne, sans import du service — la stase gèle la survie.) */
+export function cryoStasisActive(ship: ShipRow, nowMs: number): boolean {
+  const conv = (ship.conversions ?? {}) as Record<
+    string,
+    { processEndsAtMs?: number }
+  >;
+  for (const key of ['cryo_stasis_pod', 'cryo_stasis_pod_enhanced']) {
+    if ((conv[key]?.processEndsAtMs ?? 0) > nowMs) return true;
+  }
+  return false;
+}
+
 export async function rebaseShipSurvival(
   client: pg.PoolClient,
   ship: ShipRow,
@@ -233,10 +246,13 @@ export async function rebaseShipSurvival(
   // d'un monde possédé passe par un recompute qui rétablit l'exemption
   // dans la même transaction (patron fuel, aucun double-paiement).
   // W9d bilge_purifier : drain de survie réduit [TUNE].
-  const perDay =
-    survivalDrainTPerDay(ship.hull_category, ship.status, crew, {
-      planetServes: opts.survivalServed === true,
-    }) * survivalDrainMult(survAccessories);
+  // W9e cryo_stasis_pod : STASE active → survie (et vieillissement)
+  // GELÉE — drain nul jusqu'au terme (réveil compris).
+  const perDay = cryoStasisActive(ship, nowMs)
+    ? 0
+    : survivalDrainTPerDay(ship.hull_category, ship.status, crew, {
+        planetServes: opts.survivalServed === true,
+      }) * survivalDrainMult(survAccessories);
   // [TUNE-v1 annoncé, JOURNAL] : l'horloge ne S'ARME que si des provisions
   // existent (worst > 0) — une coque jamais avitaillée ne meurt pas
   // instantanément au départ (l'Arche de colonisation porte ses vivres en

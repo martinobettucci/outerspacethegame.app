@@ -134,16 +134,25 @@ le même commit, tests §15, captures §16, docs.
   berth_module, course_optimizer, cargo_netting, mooring_winch,
   bilge_purifier, stargate_caller, salvage_grapnel, haggler_matrix,
   ore_hopper, solar_sails, escape_thrusters. → JOURNAL 2026-07-22
-- [~] **W9e — Actifs restants — PARTIE 1 LIVRÉE (2026-07-22 : les 9
-  « recettes » — continus cell_cracker (soute-réservoir, sortie fuel
-  au réservoir borné), arc_furnace, med_synth (bi-intrant), fab_bay
-  (sortie hp_pct, bord de plein) ; batch electrolysis_vat,
-  hydroponic_run, smelting_run, apothecary_still (+10 %),
-  hull_patch_kit (+25 % HP max) ; moteur étendu aux sorties
-  spéciales fuel/hp_pct ; actives.test 6/6, E2E batch UI + capture)**.
-  PARTIE 2 restante : ram_scoop, gravity_sling (couplés au
-  déplacement), jump_primer, kedge_winch, deep_scan_pulse,
-  cryo_stasis_pod (amendements validés). → JOURNAL 2026-07-22
+- [x] **W9e — Actifs restants — LIVRÉ (2026-07-22, deux parties)**.
+  Partie 1 : les 9 « recettes » — continus cell_cracker
+  (soute-réservoir, sortie fuel au réservoir borné), arc_furnace,
+  med_synth (bi-intrant), fab_bay (sortie hp_pct, bord de plein) ;
+  batch electrolysis_vat, hydroponic_run, smelting_run,
+  apothecary_still (+10 %), hull_patch_kit (+25 % HP max) ; moteur
+  étendu aux sorties spéciales fuel/hp_pct ; actives.test 6/6, E2E
+  batch UI + capture. Partie 2 : STANCES de déplacement ram_scoop
+  (récolte de traversée CONTRE usure, réglée au départ) et
+  gravity_sling (fenêtre 8 pc, vitesse contre dégâts) ; jump_primer
+  (charge libre 1 h–10 j → boost ×1,5 pendant 3× la charge, UI
+  durée) ; kedge_winch (5 pc sans carburant vers cible, MODE BOOST
+  tout-brûlé 10 pc) ; deep_scan_pulse (instantané d'intel L3
+  persisté — migration 037 player_body_intel, plancher dans
+  bodyIntel) ; cryo_stasis_pod (stase 7 j : survie GELÉE, réveil
+  10 min ; L2 autopilote : durée choisie, voyage en stase,
+  irréveillable) ; actives2.test 7/7, E2E jump_primer + capture.
+  GEAR_CATALOG.md : catalogue COMPLET ✔ ([TUNE] → W9f).
+  → JOURNAL 2026-07-22
 - [ ] **W9g — Reprise des ateliers de RÉPARATION (décision 2026-07-22,
   après W9)** : réparation au sol = DOCKÉ sur une planète, payée en
   steel LÉGER OU LOURD (barème léger/lourd [TUNE à proposer]) ; le

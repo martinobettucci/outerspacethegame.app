@@ -62,6 +62,30 @@ describe('W9b — taxonomie définitive des actifs', () => {
     }
   });
 
+  it('W9e partie 2 : stances à débit nul, batch à paramètres (charge/kedge/scan/stase)', () => {
+    for (const k of ['ram_scoop', 'gravity_sling']) {
+      const d = CONVERSIONS[k]!;
+      expect(d.mode).toBe('continuous');
+      expect((d as { ratePerHourAt100: number }).ratePerHourAt100).toBe(0);
+      expect((d as { stance?: string }).stance).toBe(k);
+    }
+    const primer = CONVERSIONS.jump_primer!;
+    expect(primer.mode).toBe('batch');
+    expect((primer as { charge?: object }).charge).toMatchObject({
+      minHours: 1, maxHours: 240, boostSpeedMult: 1.5, boostDurationMult: 3,
+    });
+    expect((CONVERSIONS.kedge_winch as { kedge?: object }).kedge).toEqual({
+      pc: 5, boostPc: 10,
+    });
+    expect(
+      (CONVERSIONS.deep_scan_pulse as { scanSnapshotTier?: number }).scanSnapshotTier,
+    ).toBe(3);
+    expect((CONVERSIONS.cryo_stasis_pod as { stasis?: object }).stasis).toEqual({
+      wakeMinutes: 10, maxHours: 2400,
+    });
+    expect((CONVERSIONS.cryo_stasis_pod as { processHours: number }).processHours).toBe(168);
+  });
+
   it('réglage par pas de 5 % (0–100)', () => {
     expect(isValidRunPct(0)).toBe(true);
     expect(isValidRunPct(55)).toBe(true);
