@@ -15,7 +15,7 @@
 import type { BuildingKey } from './buildings.js';
 import type { CostBundle } from './resources.js';
 
-export type ItemSlot = 'accessory' | 'engine' | 'armor' | 'obs' | 'weapon' | 'fuel';
+export type ItemSlot = 'accessory' | 'engine' | 'armor' | 'obs' | 'weapon' | 'fuel' | 'cargo';
 
 export interface GearDef {
   key: string;
@@ -190,6 +190,27 @@ export const GEAR: Record<string, GearDef> = {
     installHours: 12,
     note: 'A sealed garden — grows food from oxygen while the lights burn fuel.',
   },
+  // W9d — les 19 PASSIFS du catalogue (effets dans passives.ts,
+  // chiffres [TUNE] jusqu'à W9f). Gates = bâtiment hôte thématique.
+  heat_recycler: { key: 'heat_recycler', kind: 'accessory', slot: 'fuel', fabricator: 'refinery', fabricationCost: { steel_l: 20, silicon: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Recaptures idle heat — hover drain −15%.' },
+  cryo_larder: { key: 'cryo_larder', kind: 'accessory', slot: 'accessory', fabricator: 'lab', fabricationCost: { steel_l: 15, silicon: 10, phosphor: 5 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Deep-cold stores — crew provisions capacity +50%.' },
+  docking_clamps: { key: 'docking_clamps', kind: 'accessory', slot: 'accessory', fabricator: 'spaceport', fabricationCost: { steel_l: 25, aluminium: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Heavy moorings — foreign dock dwell ×2.' },
+  signal_mirror: { key: 'signal_mirror', kind: 'accessory', slot: 'obs', fabricator: 'telescope', fabricationCost: { silicon: 25, gold: 5 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Folded optics — ship scan 20 → 60 pc.' },
+  survey_suite: { key: 'survey_suite', kind: 'accessory', slot: 'obs', fabricator: 'research_center', fabricationCost: { silicon: 30, gold: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Field instruments — +1 intel tier while hovering (cap L2).' },
+  ballast_shielding: { key: 'ballast_shielding', kind: 'accessory', slot: 'armor', fabricator: 'military_district', fabricationCost: { steel_l: 30 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Kinetic baffles — junk-field damage −50%.' },
+  flare_dampers: { key: 'flare_dampers', kind: 'accessory', slot: 'armor', fabricator: 'obs_station', fabricationCost: { steel_l: 20, silicon: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Ablative weave — star-field & flare wear −50% (stacks with morphing).' },
+  trim_vanes: { key: 'trim_vanes', kind: 'accessory', slot: 'engine', fabricator: 'shipyard', fabricationCost: { steel_l: 25, aluminium: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Load trim — weight penalty halved.' },
+  berth_module: { key: 'berth_module', kind: 'accessory', slot: 'cargo', fabricator: 'residential', fabricationCost: { steel_l: 30, aluminium: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Stacked berths — passenger capacity +25%.' },
+  course_optimizer: { key: 'course_optimizer', kind: 'accessory', slot: 'engine', fabricator: 'research_center', fabricationCost: { silicon: 25, gold: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Plotting core — travel burn −10%.' },
+  cargo_netting: { key: 'cargo_netting', kind: 'accessory', slot: 'cargo', fabricator: 'warehouse', fabricationCost: { steel_l: 15 }, fabricationHours: 24, installCost: { steel_l: 5 }, installHours: 12, note: 'Rigged webbing — +1 container.' },
+  mooring_winch: { key: 'mooring_winch', kind: 'accessory', slot: 'accessory', fabricator: 'warehouse', fabricationCost: { steel_l: 20 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Powered moorings — warehouse redeploy time halved.' },
+  bilge_purifier: { key: 'bilge_purifier', kind: 'accessory', slot: 'accessory', fabricator: 'waterworks', fabricationCost: { steel_l: 15, silicon: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Closed-loop recycling — crew survival drain −25%.' },
+  stargate_caller: { key: 'stargate_caller', kind: 'accessory', slot: 'accessory', fabricator: 'stargate_yard', fabricationCost: { silicon: 30, gold: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Gate handshake — foreign gate tolls −25%.' },
+  salvage_grapnel: { key: 'salvage_grapnel', kind: 'accessory', slot: 'accessory', fabricator: 'workshop', fabricationCost: { steel_l: 25, gold: 5 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Claw and cable — wreck claims in half the time.' },
+  haggler_matrix: { key: 'haggler_matrix', kind: 'accessory', slot: 'accessory', fabricator: 'commerce_district', fabricationCost: { silicon: 20, gold: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Trade heuristics — innate prices −10%.' },
+  ore_hopper: { key: 'ore_hopper', kind: 'accessory', slot: 'cargo', fabricator: 'smelter', fabricationCost: { steel_l: 25 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Wide intake — junk scooping +50%.' },
+  solar_sails: { key: 'solar_sails', kind: 'accessory', slot: 'fuel', fabricator: 'fuelcell_plant', fabricationCost: { silicon: 30, aluminium: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Starlight canvas — free hover within 8 pc of a star.' },
+  escape_thrusters: { key: 'escape_thrusters', kind: 'accessory', slot: 'engine', fabricator: 'military_district', fabricationCost: { steel_l: 25, fuel_cells: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Hair-trigger burn — auto-flee alarm at 40%.' },
   engine_l2: upgrade('engine', 2, 'shipyard', { steel_l: 40, fuel_cells: 20 }, 'Speed ×1.15.'),
   engine_l3: upgrade('engine', 3, 'shipyard', { steel_h: 60, fuel_cells: 50 }, 'Speed ×1.30.'),
   armor_l2: upgrade('armor', 2, 'shipyard', { steel_l: 50 }, 'Hull ×1.3.'),
@@ -204,7 +225,14 @@ export const GEAR: Record<string, GearDef> = {
 
 // Grades ENHANCED des actifs W9b (le catalogue passif W9d ajoutera les
 // siens) — enregistrés après coup pour rester DRY.
-for (const key of ['electrolyzer', 'electrolyzer_l2', 'vivarium', 'cell_decompressor']) {
+for (const key of [
+  'electrolyzer', 'electrolyzer_l2', 'vivarium', 'cell_decompressor',
+  'heat_recycler', 'cryo_larder', 'docking_clamps', 'signal_mirror',
+  'survey_suite', 'ballast_shielding', 'flare_dampers', 'trim_vanes',
+  'berth_module', 'course_optimizer', 'cargo_netting', 'mooring_winch',
+  'bilge_purifier', 'stargate_caller', 'salvage_grapnel',
+  'haggler_matrix', 'ore_hopper', 'solar_sails', 'escape_thrusters',
+]) {
   GEAR[`${key}_enhanced`] = enhanced(GEAR[key]!);
 }
 
@@ -243,6 +271,7 @@ export function slotFamilyUsage(
     fuel: 0,
     obs: 0,
     weapon: 0,
+    cargo: 0,
   };
   for (const key of accessories) {
     const d = GEAR[key];

@@ -4660,3 +4660,13 @@ Note d'implémentation W9d persistée : trim_vanes exige la pénalité de
 charge loadFrac (DG §8.2, jamais implémentée) — elle sera LIVRÉE avec
 W9d (speedEff = v×(1−0,15×loadFrac), burnEff = b×(1+0,5×loadFrac),
 loadFrac = conteneurs utilisés/conteneurs) : canon DG, pas une invention.
+
+## 2026-07-22 — W9d partie 1 livrée : catalogue des 19 passifs + helpers
+
+GEAR passe à 51 accessoires (19 passifs × 2 grades ajoutés, familles
+fuel/obs/armor/engine/cargo/accessory, gates thématiques — ItemSlot
+étendu à cargo) ; passives.ts : les 19 effets en fonctions PURES
+testées, dont loadFracPenalty (la pénalité de charge DG §8.2 sera
+livrée avec trim_vanes en partie 2 — canon, pas une invention).
+Preuves : shared 207 ; balayage sériel 345/347 (census R5) ; build
+vert. Partie 2 : câblage des 19 effets + tests d'intégration.

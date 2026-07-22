@@ -9,6 +9,7 @@ export * from './units.js';
 export * from './conversions.js';
 export * from './crusader.js';
 export * from './items.js';
+export * from './passives.js';
 export * from './ships.js';
 export * from './recipes.js';
 export * from './techtree.js';

@@ -2,6 +2,25 @@
 
 ## [Non publié]
 
+### W9d (partie 1) — catalogue des 19 passifs + helpers d'effets (2026-07-22)
+
+- GEAR : les **19 passifs** validés entrent au catalogue (× grades
+  enhanced auto — **51 accessoires** au total), familles de slots
+  réparties (fuel/obs/armor/engine/cargo/accessory), gates thématiques
+  (refinery, lab, spaceport, telescope, research_center,
+  military_district, obs_station, shipyard, residential, warehouse,
+  waterworks, stargate_yard, workshop, commerce_district, smelter,
+  fuelcell_plant) ; type ItemSlot étendu à `cargo`.
+- `passives.ts` : les 19 effets en helpers PURS testés (multiplicateurs
+  std/enhanced) + **loadFracPenalty** (la pénalité de charge DG §8.2,
+  jamais implémentée, arrive avec trim_vanes — partie 2).
+- Tests : shared 207 (passives 2 + items élargis), balayage sériel
+  345/347 (census ×2 = flaky R5), build vert.
+- **Partie 2 (suite immédiate)** : câblage des 19 effets à leurs
+  systèmes (drains, docks, scan SQL, intel, junk, champs, loadFrac,
+  pax, burn, conteneurs, redéploiement, survie, péages, réclamation,
+  négoce, scoop, solar sails, alarme de fuite) + tests d'intégration.
+
 ### W9c — familles de slots PARTAGÉES (2026-07-22)
 
 - Upgrades ET accessoires consomment désormais la capacité de LEUR

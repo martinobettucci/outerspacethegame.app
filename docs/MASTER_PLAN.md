@@ -123,7 +123,8 @@ le même commit, tests §15, captures §16, docs.
   upgrade-vs-accessoire ; grades ENHANCED fabriqués sur bâtiment hôte
   L3, le grade se fige À LA FABRICATION ; l'installation n'exige
   aucune techno (confirmé). → JOURNAL 2026-07-22
-- [ ] **W9d — Passifs (19 × 2 grades, effets BRANCHÉS)** : heat_recycler,
+- [~] **W9d — Passifs (19 × 2 grades) — CATALOGUE + HELPERS LIVRÉS
+  (2026-07-22, partie 2 : câblage des effets en cours)** : heat_recycler,
   cryo_larder, docking_clamps, signal_mirror, survey_suite,
   ballast_shielding, flare_dampers (cumulable morph), trim_vanes,
   berth_module, course_optimizer, cargo_netting, mooring_winch,
