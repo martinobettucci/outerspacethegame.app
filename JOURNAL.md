@@ -4527,3 +4527,20 @@ réversibles, état starved/batch restant affiché) ; E2E
 conversions.spec : électrolyseur granté §15 + installé par les vraies
 commandes, 1 T d'eau, réglage 50 % dans l'UI, sorties O2+H constatées
 au bord, batch clos — VERT ; captures cv-01..02 observées. W9b [x].
+
+## 2026-07-22 — VALIDÉ (responsable) : convertisseur de cells + NOUVELLE CLASSE « one-shot »
+
+1. Nouvel accessoire ACTIF modulable : BRÛLE des fuel_cells pour
+   générer du CARBURANT (type moteur) — la soute devient un réservoir
+   compact pour les très grandes expéditions. (Catalogue : cell_cracker,
+   à intégrer en W9e.)
+2. NOUVELLE CLASSE validée : accessoires ACTIFS À USAGE UNIQUE —
+   opération one-shot à TEMPS FIGÉ exigeant de RESTER À L'ARRÊT
+   pendant toute la durée. Exemple canon du responsable : décompresser
+   une fuel cell → 1 JOUR à l'arrêt → +50 fuel [TUNE temps/montants].
+   L'arbitrage est CONTRE L'HORLOGE DE SURVIE de l'équipage (rester
+   immobile coûte des provisions). Temps/montants à équilibrer (W9f).
+   AMBIGUÏTÉ à trancher par le responsable : « usage unique » =
+   l'OPÉRATION est one-shot (l'accessoire reste monté, relançable) OU
+   l'ITEM est CONSOMMÉ à l'usage (vraie famille de consommables) — les
+   deux lectures sont proposées ci-dessous.
