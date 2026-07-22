@@ -4544,3 +4544,26 @@ au bord, batch clos — VERT ; captures cv-01..02 observées. W9b [x].
    l'OPÉRATION est one-shot (l'accessoire reste monté, relançable) OU
    l'ITEM est CONSOMMÉ à l'usage (vraie famille de consommables) — les
    deux lectures sont proposées ci-dessous.
+
+## 2026-07-22 — PROPOSITION (en discussion) : famille one-shot + gates des actifs W9e
+
+Suggestions soumises au responsable pour la classe ONE-SHOT (temps
+figé, à l'arrêt, arbitrage horloge de survie/immobilisation ;
+chiffres [TUNE]) :
+- cell_decompressor (fuelcell_plant) : 1 fuel_cell → 1 j → +50 fuel
+  (type moteur) — l'exemple canon du responsable.
+- cryo_stasis_pod (lab) : 12 h de mise en route → l'horloge de survie
+  de l'équipage est GELÉE 7 j (attente longue sans mourir) — le
+  vaisseau reste inerte pendant le gel.
+- jump_primer (shipyard) : 1 j de charge → le PROCHAIN trajet part à
+  vitesse ×1,5 (one-shot, perdu si non utilisé sous 3 j).
+- deep_scan_pulse (research_center) : 12 h → un instantané d'intel L3
+  d'UN corps sous scan (sans télescope).
+- hull_patch_kit (workshop) : 12 h → +25 % des HP max rendus, sans
+  atelier ni steel — le pansement de campagne.
+- kedge_winch (spaceport) : 1 j → treuille la coque de 5 pc SANS
+  carburant (sortie de panne sèche en zone morte).
+Gates PROPOSÉS des actifs W9e restants [interp à confirmer] :
+arc_furnace→smelter, ram_scoop→refinery, gravity_sling→shipyard,
+fab_bay→workshop, cell_cracker→fuelcell_plant (validé ce jour),
+med_synth→lab (déjà figé).
