@@ -4567,3 +4567,30 @@ Gates PROPOSÉS des actifs W9e restants [interp à confirmer] :
 arc_furnace→smelter, ram_scoop→refinery, gravity_sling→shipyard,
 fab_bay→workshop, cell_cracker→fuelcell_plant (validé ce jour),
 med_synth→lab (déjà figé).
+
+## 2026-07-22 — VALIDÉ (responsable) : taxonomie DÉFINITIVE des accessoires
+
+Correction et cadre définitif (amende le W9b livré) :
+1. PASSIFS — petit avantage permanent, aucun réglage.
+2. ACTIFS CONTINUS — vivarium ET ÉLECTROLYSE (correction : les deux
+   sont CONTINUS) : ne nécessitent PAS d'arrêt (fonctionnent partout),
+   modulables (pas de 5 %), mais MOINS EFFICIENTS car ils BRÛLENT
+   activement du carburant ; intrants consommés au fil de l'eau depuis
+   la soute ; starvation → 0 %.
+3. ACTIFS BATCH — intrants CONSOMMÉS À L'ACTIVATION, nécessitent
+   L'ARRÊT et un TEMPS DE PROCÉDÉ figé (le navire reste en survol/
+   arrêt, immobilisé pendant le procédé), mais PLUS EFFICACES : les
+   accessoires batch NE BRÛLENT PAS de carburant (seul le drain normal
+   de survol du navire court). Pas de throttle : une opération = temps
+   figé, entrées→sorties figées. Exemple canon : décompresser 1
+   fuel_cell → 1 jour → +50 fuel. (Résout l'ambiguïté A/B : lecture A,
+   opération one-shot, l'accessoire reste monté.)
+4. Le CATALOGUE se conçoit AUTOUR de cet axe : mêmes conversions
+   déclinables en PAIRES continu-mobile-gourmand vs
+   batch-immobile-efficace [TUNE ratios] — l'arbitrage cœur du jeu
+   (mobilité vs efficience vs horloge de survie).
+
+Refactor immédiat requis sur W9b : electrolyzer/_l2 passent CONTINUS
+(eau tirée de la soute au fil de l'eau) ; la mécanique batch est
+réaffectée à la classe BATCH (arrêt + immobilisation + temps figé +
+zéro carburant) avec cell_decompressor comme premier item (validé).
