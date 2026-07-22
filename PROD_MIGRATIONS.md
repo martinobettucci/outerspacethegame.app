@@ -52,6 +52,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 36 | `game/packages/server/migrations/036_conversions.sql` | W9b : `ships.conversions` (actifs de conversion) | 031 | DROP de la colonne |
 | 37 | `game/packages/server/migrations/037_deep_scan_intel.sql` | W9e : table `player_body_intel` (instantanés d'intel du deep_scan_pulse — plancher de palier persisté) | 001 | DROP TABLE player_body_intel |
 | 38 | `game/packages/server/migrations/038_crusader_fabrication.sql` | W8e : work_orders de BORD (body_id nullable + ship_id) ; `ships.crusader_items` (balance d'items du Crusader) | 032, 033 | DROP COLUMN ship_id + SET NOT NULL body_id ; DROP COLUMN crusader_items |
+| 39 | `game/packages/server/migrations/039_item_cargo.sql` | W6c-b1 : `ships.item_cargo` (fret d'items — 1 conteneur chacun, DG §7) | 031 | DROP COLUMN item_cargo |
 
 ## Services à déployer (au premier déploiement)
 

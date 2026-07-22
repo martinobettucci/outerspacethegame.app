@@ -17,6 +17,7 @@ import {
   ammLpFeeBp,
   ammQuote,
   containersUsed,
+  containersUsedTotal,
   fixedTradeOutput,
   isAmmSlot,
   validateAmmSeed,
@@ -354,10 +355,10 @@ export async function executeTrade(
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
     const capacity = hull?.containers ?? 0;
-    if (containersUsed(cargo) > capacity) {
+    if (containersUsedTotal(cargo, ship.item_cargo) > capacity) {
       throw new CommandError(
         'not_available',
-        `Conteneurs insuffisants pour encaisser (${containersUsed(cargo)}/${capacity})`,
+        `Conteneurs insuffisants pour encaisser (${containersUsedTotal(cargo, ship.item_cargo)}/${capacity})`,
       );
     }
 
@@ -801,10 +802,10 @@ export async function executeAmmTrade(
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
     const capacity = hull?.containers ?? 0;
-    if (containersUsed(cargo) > capacity) {
+    if (containersUsedTotal(cargo, ship.item_cargo) > capacity) {
       throw new CommandError(
         'not_available',
-        `Conteneurs insuffisants pour encaisser (${containersUsed(cargo)}/${capacity})`,
+        `Conteneurs insuffisants pour encaisser (${containersUsedTotal(cargo, ship.item_cargo)}/${capacity})`,
       );
     }
 
@@ -1060,10 +1061,10 @@ export async function executeAmmRoute(
     cargo[get] = (cargo[get] ?? 0) + outT;
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
-    if (containersUsed(cargo) > (hull?.containers ?? 0)) {
+    if (containersUsedTotal(cargo, ship.item_cargo) > (hull?.containers ?? 0)) {
       throw new CommandError(
         'not_available',
-        `Conteneurs insuffisants pour encaisser (${containersUsed(cargo)}/${hull?.containers ?? 0})`,
+        `Conteneurs insuffisants pour encaisser (${containersUsedTotal(cargo, ship.item_cargo)}/${hull?.containers ?? 0})`,
       );
     }
 
@@ -1348,10 +1349,10 @@ export async function executeInnateTrade(
     cargo[offer.sell] = (cargo[offer.sell] ?? 0) + buyT;
     const hull =
       HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
-    if (containersUsed(cargo) > (hull?.containers ?? 0)) {
+    if (containersUsedTotal(cargo, ship.item_cargo) > (hull?.containers ?? 0)) {
       throw new CommandError(
         'not_available',
-        `Conteneurs insuffisants (${containersUsed(cargo)}/${hull?.containers ?? 0})`,
+        `Conteneurs insuffisants (${containersUsedTotal(cargo, ship.item_cargo)}/${hull?.containers ?? 0})`,
       );
     }
 

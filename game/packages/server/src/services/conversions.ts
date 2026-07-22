@@ -12,6 +12,7 @@
  */
 import {
   containersUsed,
+  containersUsedTotal,
   effectiveContainers,
   conversionOf,
   effectiveTankU,
@@ -117,7 +118,7 @@ export async function settleConversion(
     const containers = hullContainers(ship);
     for (const [res, tons] of Object.entries(def.output)) {
       if (res === 'fuel' || res === 'hp_pct') continue;
-      const free = Math.max(0, containers - containersUsed(cargo));
+      const free = Math.max(0, containers - containersUsedTotal(cargo, ship.item_cargo));
       const take = Math.min(tons as number, free);
       if (take > 0) cargo[res] = (cargo[res] ?? 0) + take;
     }
@@ -294,7 +295,7 @@ export async function settleConversion(
     for (const [res, perRef] of Object.entries(output)) {
       if (res === 'fuel' || res === 'hp_pct') continue;
       const want = refT * (perRef as number);
-      const free = Math.max(0, containers - containersUsed(cargo));
+      const free = Math.max(0, containers - containersUsedTotal(cargo, ship.item_cargo));
       const take = Math.min(want, free);
       if (take > 0) cargo[res] = (cargo[res] ?? 0) + take;
     }

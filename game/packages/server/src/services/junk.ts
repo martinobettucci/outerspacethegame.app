@@ -13,6 +13,7 @@ import {
   CLAIM_HOURS,
   CLAIM_RADIUS_PC,
   containersUsed,
+  containersUsedTotal,
   evalJunkAmount,
   HULLS,
   JUNK_CELL_PC,
@@ -258,7 +259,7 @@ export async function collectJunk(
     const freeT = Math.max(
       0,
       (hull?.containers ?? 0) -
-        containersUsed(cargo as Partial<Record<ResourceId, number>>),
+        containersUsedTotal(cargo as Partial<Record<ResourceId, number>>, ship.item_cargo),
     );
     // W9d ore_hopper : scoop de junk élargi [TUNE].
     const scoop = Math.min(

@@ -54,8 +54,13 @@ le même commit, tests §15, captures §16, docs.
   327/327 ; E2E gear.spec VERT + captures gr-01..03 observées
   (2026-07-21, pile décalée ATG_API_PORT=8081 — le 8080 est squatté par
   un service Windows étranger). **Restent** : (a) arbre ADN dédié des
-  accessoires (v1 : gate = bâtiment hôte disponible) ; (b) achat/
-  acheminement par cargo (marché des items) ; (c) ✔ rigs convertis en
+  accessoires (v1 : gate = bâtiment hôte disponible) ; (b) ✔ ACHEMINEMENT par cargo
+  LIVRÉ (2026-07-22, W6c-b1 : migration 039 ships.item_cargo, un item
+  = UN conteneur — canon DG §7 « or 1 large item » —, capacité TOTALE
+  via containersUsedTotal partout, load/unload à quai d'un monde
+  possédé OU d'un Crusader, balance pleine → refus, UI + item-cargo
+  tests 4/4 + E2E + captures) ; le MARCHÉ des items reste une
+  proposition non validée (canal manuel — JOURNAL W6c-b2) ; (c) ✔ rigs convertis en
   accessoires (erratum responsable 2026-07-22 — slots occupés, montage
   direct SUPPRIMÉ, migration 034) ; (d) obs/weapon effectifs (P5).
   → JOURNAL 2026-07-21/22

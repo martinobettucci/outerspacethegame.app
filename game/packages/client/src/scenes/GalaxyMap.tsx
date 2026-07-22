@@ -187,13 +187,19 @@ export function GalaxyMap() {
     name: '',
   });
   const [cruInstallKey, setCruInstallKey] = useState<string>('');
+  const [itemLoadSel, setItemLoadSel] = useState<string>('');
   // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
   const [installGearList, setInstallGearList] = useState<
     { itemKey: string; count: number }[]
   >([]);
   const [installSel, setInstallSel] = useState('');
   useEffect(() => {
-    if (selectedShip?.status !== 'warehoused' || !selectedShip.dockedBodyId) {
+    // W6c-b1 : la liste sert l'INSTALLATION (coque entreposée) ET le
+    // CHARGEMENT de fret (coque à quai d'un monde possédé).
+    if (
+      !selectedShip?.dockedBodyId ||
+      !['warehoused', 'docked'].includes(selectedShip.status)
+    ) {
       setInstallGearList([]);
       return;
     }
@@ -2591,8 +2597,8 @@ export function GalaxyMap() {
                 }}
               >
                 <Package size={13} aria-hidden /> {t.galaxy.cargoTitle} —{' '}
-                {containersUsed(selectedShip.cargo)}/{selectedShip.containers}{' '}
-                {t.galaxy.containers}
+                {containersUsed(selectedShip.cargo) + selectedShip.itemCargo.length}/
+                {selectedShip.containers} {t.galaxy.containers}
               </strong>
               {Object.keys(selectedShip.cargo).length === 0 ? (
                 <span>{t.galaxy.cargoEmpty}</span>
@@ -2603,6 +2609,107 @@ export function GalaxyMap() {
                   </span>
                 ))
               )}
+              {/* W6c-b1 : items en soute (un conteneur chacun) — décharge à quai. */}
+              {selectedShip.itemCargo.length > 0 && (
+                <span style={{ fontFamily: 'var(--font-mono)' }}>
+                  {t.galaxy.itemHold} :{' '}
+                  {selectedShip.itemCargo
+                    .map((k) => k.replace(/_/g, ' '))
+                    .join(' · ')}
+                </span>
+              )}
+              {selectedShip.status === 'docked' &&
+                selectedShip.dockedBodyId &&
+                installGearList.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <select
+                      aria-label={t.galaxy.itemLoad}
+                      value={itemLoadSel || installGearList[0]?.itemKey || ''}
+                      onChange={(e) => setItemLoadSel(e.target.value)}
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 6px',
+                        fontSize: 12,
+                        maxWidth: 150,
+                      }}
+                    >
+                      {installGearList.map((i) => (
+                        <option key={i.itemKey} value={i.itemKey}>
+                          {i.itemKey.replace(/_/g, ' ')} ×{i.count}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        api
+                          .itemCargoMove(
+                            selectedShip.id,
+                            itemLoadSel || installGearList[0]!.itemKey,
+                            'load',
+                          )
+                          .then(() => {
+                            setNotice(t.galaxy.itemLoaded);
+                            void refreshShips();
+                          })
+                          .catch((err: ApiError) =>
+                            setNotice(
+                              `${t.galaxy.itemFreightRefused} — ${err.message ?? err.error}`,
+                            ),
+                          )
+                      }
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 10px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t.galaxy.itemLoad}
+                    </button>
+                  </div>
+                )}
+              {selectedShip.itemCargo.length > 0 &&
+                selectedShip.status === 'docked' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      api
+                        .itemCargoMove(
+                          selectedShip.id,
+                          selectedShip.itemCargo[0]!,
+                          'unload',
+                        )
+                        .then(() => {
+                          setNotice(t.galaxy.itemUnloaded);
+                          void refreshShips();
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(
+                            `${t.galaxy.itemFreightRefused} — ${err.message ?? err.error}`,
+                          ),
+                        )
+                    }
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '4px 10px',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      justifySelf: 'start',
+                    }}
+                  >
+                    {t.galaxy.itemUnload}
+                  </button>
+                )}
               {['hovering', 'idle', 'stranded'].includes(selectedShip.status) &&
                 Object.keys(selectedShip.cargo).length > 0 && (
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

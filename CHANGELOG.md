@@ -2,6 +2,25 @@
 
 ## [Non publié]
 
+### W6c-b1 — acheminement d'ITEMS par cargo (2026-07-22)
+
+- **Migration 039** : `ships.item_cargo` (liste de clés). Un item en
+  soute occupe **UN conteneur** (canon DG §7 « 1 T of one fungible,
+  or 1 large item ») — la capacité TOTALE (fongibles + items) est
+  désormais vérifiée par `containersUsedTotal` sur TOUS les flux
+  (chargement, marchés, canal manuel, auto-trade, scoop de junk,
+  sorties de conversions, pénalité de charge au départ).
+- **Commandes** : charge/décharge À QUAI — monde possédé (lignes
+  planet_items) ou Crusader (balance de bord) ; balance pleine →
+  REFUS (le fret ne désassemble jamais) ; POST /ships/:id/item-cargo.
+- **UI** : « Item hold » dans le panneau vaisseau, chargement par
+  sélecteur depuis la balance du monde à quai, déchargement ;
+  compteur de conteneurs incluant les items.
+- Tests : item-cargo.test 4/4 (consommation de ligne, capacité totale
+  bloquant fongible ET fret, refus balance pleine, §10, aller-retour
+  Crusader) ; balayage sériel 380/380 ; E2E item-cargo.spec avec
+  warehouse bâti par les vraies commandes (captures observées).
+
 ### R4 (partiel) — univers saturé typé ; spawn prouvé visuellement (2026-07-22)
 
 - **Univers saturé** : l'épuisement du placement de spawn (poche de

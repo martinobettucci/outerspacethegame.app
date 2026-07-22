@@ -14,6 +14,7 @@ import {
   AUTO_TRADE_MAX_COST_PER_T,
   autoTradeDestination,
   containersUsed,
+  containersUsedTotal,
   fixedTradeOutput,
   HULLS,
   isAmmSlot,
@@ -94,7 +95,7 @@ function destinationLevel(
     return { level, capLeft: Number.POSITIVE_INFINITY };
   }
   const cargo = (ship.cargo ?? {}) as Partial<Record<ResourceId, number>>;
-  const free = (hull?.containers ?? 0) - containersUsed(cargo);
+  const free = (hull?.containers ?? 0) - containersUsedTotal(cargo, ship.item_cargo);
   return { level: Number(cargo[resource] ?? 0), capLeft: Math.max(0, free) };
 }
 
@@ -164,8 +165,9 @@ export async function runAutoTrade(
                 : Math.max(
                     0,
                     (hull?.containers ?? 0) -
-                      containersUsed(
+                      containersUsedTotal(
                         (ship.cargo ?? {}) as Partial<Record<ResourceId, number>>,
+                        ship.item_cargo,
                       ),
                   );
         // Le stock du monde PAIE (il vend rule.resource).

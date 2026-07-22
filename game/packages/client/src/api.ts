@@ -316,6 +316,8 @@ export interface ShipView {
   >;
   installingItem: string | null;
   installCompletesAt: string | null;
+  /** W6c-b1 : items en soute (un conteneur chacun). */
+  itemCargo: string[];
   /** W8c/d : hôte suivi (amarrage ou escorte d'un Crusader). */
   followShipId: string | null;
   /** W8e : fiche de bord du Crusader (null pour les autres coques). */
@@ -438,6 +440,12 @@ export const api = {
   installItem: (shipId: string, itemKey: string) =>
     call<{ completesAt: string }>('POST', `/ships/${shipId}/install`, {
       itemKey,
+    }),
+  /** W6c-b1 : fret d'items — charge/décharge à quai. */
+  itemCargoMove: (shipId: string, itemKey: string, direction: 'load' | 'unload') =>
+    call<{ itemCargo: string[] }>('POST', `/ships/${shipId}/item-cargo`, {
+      itemKey,
+      direction,
     }),
   /** W8c : amarrage / escorte / appareillage au Crusader. */
   dockCrusader: (shipId: string, crusaderId: string) =>

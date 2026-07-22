@@ -5101,3 +5101,28 @@ items »). Découpage :
   48 h, patron manual_offers existant) — les marchés fongibles (taux,
   AMM) ne savent pas porter du non-fongible sans dénaturer leur
   contrat. RIEN n'est codé avant validation.
+
+## 2026-07-22 — W6c-b1 livré : l'acheminement d'items par cargo
+
+Conforme au plan persisté — avec une DÉCOUVERTE de canon : DG §7
+spécifiait DÉJÀ « 1 container = 1 T of one fungible, or 1 LARGE
+ITEM » — la règle « un item = un conteneur » n'est pas une interp,
+c'est le canon qui attendait son implémentation. Migration 039
+(ships.item_cargo) ; helper partagé containersUsedTotal(cargo,
+itemCargo) branché sur LES 18 sites de capacité (chargement fongible,
+marchés taux/AMM/route, canal manuel, auto-trade, scoop de junk,
+sorties de conversions continues ET batch, pénalité de charge DG §8.2
+au départ — un item PÈSE) ; loadItemCargo/unloadItemCargo (à quai
+d'un monde possédé : lignes planet_items ; amarré à un Crusader :
+balance de bord ; balance pleine → REFUS — le fret est un choix
+d'entrepôt, jamais une perte) ; API + client + UI (« Item hold »,
+sélecteur de chargement, compteur incluant les items).
+
+Preuves : item-cargo.test 4/4 (dont : 1 item + 2 T = 3/3 → la 3e
+tonne fongible ET le 2e item refusés — la capacité est bien TOTALE) ;
+balayage sériel 380/380 ; E2E item-cargo.spec 1/1 — warehouse bâti
+par les VRAIES commandes (unlock depot→warehouse, 409 toléré sur le
+pré-déverrouillé), captures ic-01/02 OBSERVÉES (« Cargo hold — 1/3 »,
+« Item hold : cargo netting », toasts) ; typecheck ×3. Leçon
+d'environnement : migration 039 à appliquer à la base dev AVANT
+l'E2E (pnpm migrate — le message d'erreur PG l'a dit tout net).

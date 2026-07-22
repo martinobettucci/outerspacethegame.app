@@ -11,8 +11,10 @@
  */
 import {
   canFitGear,
+  containersUsedTotal,
   CRUSADER,
   DISASSEMBLE_REFUND_FRACTION,
+  effectiveContainers,
   GEAR,
   HULLS,
   isCrusader,
@@ -468,6 +470,221 @@ export async function listPlanetGear(
       completesAt: new Date(r.due_at).toISOString(),
     })),
   };
+}
+
+/**
+ * W6c-b1 — CHARGE un item en soute (acheminement par cargo) : coque
+ * DOCKÉE sur un monde possédé (une ligne planet_items consommée) ou
+ * AMARRÉE à un Crusader (balance de bord décrémentée). Un item occupe
+ * UN conteneur [TUNE-v1] — la capacité est vérifiée via
+ * containersUsedTotal. Opération instantanée (patron fret fongible).
+ */
+export async function loadItemCargo(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  itemKey: string,
+): Promise<{ itemCargo: string[] }> {
+  const def = GEAR[itemKey];
+  if (!def) throw new CommandError('not_found', 'Item inconnu');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    const ship: Row | undefined = rows[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    if (['probe', 'personal'].includes(ship.hull_category)) {
+      throw new CommandError('not_available', 'Cette coque n\'a pas de soute');
+    }
+    const aboardCrusaderId =
+      ship.status === 'docked' && !ship.docked_body_id && ship.follow_ship_id
+        ? String(ship.follow_ship_id)
+        : null;
+    if (!aboardCrusaderId && !(ship.status === 'docked' && ship.docked_body_id)) {
+      throw new CommandError(
+        'not_available',
+        'Le fret d\'items se charge À QUAI (monde possédé ou Crusader)',
+      );
+    }
+    const hull =
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`];
+    const capacity = effectiveContainers(
+      hull?.containers ?? 0,
+      Array.isArray(ship.accessories) ? ship.accessories : [],
+    );
+    const itemCargo: string[] = Array.isArray(ship.item_cargo) ? [...ship.item_cargo] : [];
+    const used = containersUsedTotal(
+      (ship.cargo ?? {}) as Record<string, number>,
+      itemCargo,
+    );
+    if (used + 1 > capacity) {
+      throw new CommandError(
+        'not_available',
+        `Conteneurs insuffisants (${used}/${capacity}) — un item occupe un conteneur`,
+      );
+    }
+    if (aboardCrusaderId) {
+      const { rows: hostRows } = await client.query(
+        `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+        [aboardCrusaderId],
+      );
+      const host = hostRows[0];
+      if (!host?.crusader_infra || host.owner_id !== playerId) {
+        throw new CommandError('not_available', 'Hôte de bord indisponible');
+      }
+      const items = { ...((host.crusader_items ?? {}) as Record<string, number>) };
+      if ((items[itemKey] ?? 0) < 1) {
+        throw new CommandError('insufficient_resources', 'Aucun exemplaire dans la balance de bord');
+      }
+      items[itemKey]! -= 1;
+      if (items[itemKey]! <= 0) delete items[itemKey];
+      await client.query(`UPDATE ships SET crusader_items = $2 WHERE id = $1`, [
+        aboardCrusaderId,
+        JSON.stringify(items),
+      ]);
+    } else {
+      const { rows: world } = await client.query(
+        `SELECT owner_id FROM bodies WHERE id = $1`,
+        [ship.docked_body_id],
+      );
+      if (world[0]?.owner_id !== playerId) {
+        throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
+      }
+      const { rows: taken } = await client.query(
+        `DELETE FROM planet_items
+         WHERE id = (SELECT id FROM planet_items
+                     WHERE body_id = $1 AND item_key = $2
+                     ORDER BY created_at LIMIT 1 FOR UPDATE)
+         RETURNING id`,
+        [ship.docked_body_id, itemKey],
+      );
+      if (!taken[0]) {
+        throw new CommandError('insufficient_resources', 'Aucun exemplaire de cet item ici');
+      }
+    }
+    itemCargo.push(itemKey);
+    await client.query(`UPDATE ships SET item_cargo = $2 WHERE id = $1`, [
+      shipId,
+      JSON.stringify(itemCargo),
+    ]);
+    await client.query('COMMIT');
+    return { itemCargo };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * W6c-b1 — DÉCHARGE un item de la soute vers la balance du lieu de
+ * quai. Balance PLEINE → REFUS (le fret ne désassemble jamais — c'est
+ * un choix d'entrepôt, pas une perte).
+ */
+export async function unloadItemCargo(
+  pool: pg.Pool,
+  playerId: string,
+  shipId: string,
+  itemKey: string,
+): Promise<{ itemCargo: string[] }> {
+  const def = GEAR[itemKey];
+  if (!def) throw new CommandError('not_found', 'Item inconnu');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    const ship: Row | undefined = rows[0];
+    if (!ship) throw new CommandError('not_found', 'Vaisseau inconnu');
+    if (ship.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Ce vaisseau ne vous obéit pas');
+    }
+    const itemCargo: string[] = Array.isArray(ship.item_cargo) ? [...ship.item_cargo] : [];
+    const at = itemCargo.indexOf(itemKey);
+    if (at === -1) {
+      throw new CommandError('insufficient_resources', 'Cet item n\'est pas en soute');
+    }
+    const aboardCrusaderId =
+      ship.status === 'docked' && !ship.docked_body_id && ship.follow_ship_id
+        ? String(ship.follow_ship_id)
+        : null;
+    if (!aboardCrusaderId && !(ship.status === 'docked' && ship.docked_body_id)) {
+      throw new CommandError(
+        'not_available',
+        'Le fret d\'items se décharge À QUAI (monde possédé ou Crusader)',
+      );
+    }
+    if (aboardCrusaderId) {
+      const { rows: hostRows } = await client.query(
+        `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+        [aboardCrusaderId],
+      );
+      const host = hostRows[0];
+      if (!host?.crusader_infra || host.owner_id !== playerId) {
+        throw new CommandError('not_available', 'Hôte de bord indisponible');
+      }
+      const items = { ...((host.crusader_items ?? {}) as Record<string, number>) };
+      const stored = Object.values(items).reduce((n, c) => n + c, 0);
+      const cap = itemCapacity(CRUSADER.infra.warehouses as unknown as number[]);
+      if (stored + 1 > cap) {
+        throw new CommandError('not_available', `Balance de bord pleine (${stored}/${cap})`);
+      }
+      items[itemKey] = (items[itemKey] ?? 0) + 1;
+      await client.query(`UPDATE ships SET crusader_items = $2 WHERE id = $1`, [
+        aboardCrusaderId,
+        JSON.stringify(items),
+      ]);
+    } else {
+      const { rows: world } = await client.query(
+        `SELECT owner_id FROM bodies WHERE id = $1`,
+        [ship.docked_body_id],
+      );
+      if (world[0]?.owner_id !== playerId) {
+        throw new CommandError('forbidden', 'Ce monde ne vous appartient pas');
+      }
+      const { rows: wh } = await client.query(
+        `SELECT level FROM buildings
+         WHERE body_id = $1 AND key = 'warehouse' AND status = 'active'`,
+        [ship.docked_body_id],
+      );
+      const cap = itemCapacity(wh.map((w) => Number(w.level)));
+      const { rows: stored } = await client.query(
+        `SELECT count(*)::int AS n FROM planet_items WHERE body_id = $1`,
+        [ship.docked_body_id],
+      );
+      if (stored[0].n + 1 > cap) {
+        throw new CommandError(
+          'not_available',
+          `Balance d'items pleine (${stored[0].n}/${cap}) — un warehouse actif en stocke 50 × niveau`,
+        );
+      }
+      await client.query(
+        `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+        [ship.docked_body_id, itemKey],
+      );
+    }
+    itemCargo.splice(at, 1);
+    await client.query(`UPDATE ships SET item_cargo = $2 WHERE id = $1`, [
+      shipId,
+      JSON.stringify(itemCargo),
+    ]);
+    await client.query('COMMIT');
+    return { itemCargo };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**

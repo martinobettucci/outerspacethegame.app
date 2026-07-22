@@ -306,6 +306,18 @@ export function containersUsed(cargo: Record<string, number>): number {
 }
 
 /**
+ * W6c-b1 — conteneurs TOTAUX d'un manifeste : fongibles (DG §7) + items
+ * en soute (objets discrets — UN conteneur chacun [TUNE-v1], JOURNAL
+ * 2026-07-22). TOUTE vérification de capacité passe par ici.
+ */
+export function containersUsedTotal(
+  cargo: Record<string, number>,
+  itemCargo: readonly string[] | null | undefined,
+): number {
+  return containersUsed(cargo) + (itemCargo?.length ?? 0);
+}
+
+/**
  * Politique d'atterrissage v1 (GB §9 « self / friends / neighbours », liste
  * complète OPEN) : `self` | `everyone` — friends/neighbours arrivent avec
  * les factions (P4). [TUNE-v1]

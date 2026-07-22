@@ -38,6 +38,7 @@ import {
   canAcceptLanding,
   canLand,
   containersUsed,
+  containersUsedTotal,
   DOCK_DWELL_HOURS_DEFAULT,
   DOCK_RESERVED_SELF_DEFAULT,
   fitsVehicleSlot,
@@ -95,6 +96,8 @@ export interface ShipView {
   retrievesAt: string | null;
   /** Règles d'auto-trade du survol (GB §7). */
   autoTrade: { resource: string; belowT: number; buyT: number }[];
+  /** W6c-b1 : items en soute (un conteneur chacun). */
+  itemCargo: string[];
   /** W8c/d : hôte suivi (amarrage ou escorte d'un Crusader). */
   followShipId: string | null;
   /** W8e : fiche de bord du Crusader (null pour les autres coques). */
@@ -374,6 +377,7 @@ export async function fleet(
               ]?.tankU ?? 0,
               r.upgrades,
             ),
+      itemCargo: Array.isArray(r.item_cargo) ? (r.item_cargo as string[]) : [],
       followShipId: r.follow_ship_id ?? null,
       // W8e : fiche de bord du Crusader (stock, balance d'items, pop).
       crusader: r.crusader_infra
@@ -615,7 +619,7 @@ export async function moveShip(
     // W9d : pénalité de CHARGE (DG §8.2, loadFrac) atténuée par
     // trim_vanes ; course_optimizer réduit le burn de trajet [TUNE].
     const load = loadFracPenalty(
-      containersUsed((ship.cargo ?? {}) as Record<string, number>),
+      containersUsedTotal((ship.cargo ?? {}) as Record<string, number>, ship.item_cargo),
       effectiveContainers(
         hullContainers(ship.hull_category, ship.hull_size),
         moveAccessories,
@@ -2782,10 +2786,10 @@ export async function transferCargo(
         Array.isArray(ship.accessories) ? ship.accessories : [],
       );
       const next = { ...cargo, [resource]: (cargo[resource] ?? 0) + tons };
-      if (containersUsed(next) > capacity) {
+      if (containersUsedTotal(next, ship.item_cargo) > capacity) {
         throw new CommandError(
           'not_available',
-          `Conteneurs insuffisants (${containersUsed(next)}/${capacity})`,
+          `Conteneurs insuffisants (${containersUsedTotal(next, ship.item_cargo)}/${capacity})`,
         );
       }
       const { rows: stockRows } = await client.query(

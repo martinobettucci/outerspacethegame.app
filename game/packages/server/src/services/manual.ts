@@ -22,6 +22,7 @@ import {
   ALL_RESOURCE_IDS,
   canOpenOffer,
   containersUsed,
+  containersUsedTotal,
   HULLS,
   offerExpiresAtMs,
   validateManualOffer,
@@ -431,10 +432,10 @@ export async function respondManualOffer(
       HULLS[
         `${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`
       ];
-    if (containersUsed(cargo) > (hull?.containers ?? 0)) {
+    if (containersUsedTotal(cargo, ship.item_cargo) > (hull?.containers ?? 0)) {
       throw new CommandError(
         'not_available',
-        `Conteneurs de l'acheteur insuffisants (${containersUsed(cargo)}/${hull?.containers ?? 0})`,
+        `Conteneurs de l'acheteur insuffisants (${containersUsedTotal(cargo, ship.item_cargo)}/${hull?.containers ?? 0})`,
       );
     }
 
