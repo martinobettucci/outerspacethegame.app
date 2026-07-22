@@ -107,18 +107,29 @@ le même commit, tests §15, captures §16, docs.
   (migration 035 backfill des coques existantes) ; morphShield (W5)
   EXIGE l'accessoire ; le démonter EFFACE l'adaptation active [interp
   annoncée]. → JOURNAL 2026-07-22
-- [ ] **W9b — Électrolyseur** : accessoire workshop, commande de bord
-  {eau sacrifiée, efficience 0–100 %} — entrée prise à la SOUTE au
-  lancement, débit = 20 × runPct T/h [TUNE], règlement au BORD
-  (conversion_complete) + annulation pro-rata (patron W3) ; sorties
-  O2 + H à parts égales en soute (refus au lancement si la soute ne
-  couvre pas les sorties) ; BRÛLE du carburant en marche [TUNE] ;
-  réglage figé au lancement [interp annoncée] ; electrolyzer_l2 = item
-  distinct qui sait AUSSI l'inverse (O2+H→eau), un seul électrolyseur
-  monté à la fois. → JOURNAL 2026-07-22
-- [ ] **W9c — Vivarium** : accessoire workshop sans niveaux — consomme
-  carburant + oxygène, produit de la nourriture (mêmes mécaniques).
-  → JOURNAL 2026-07-22
+- [ ] **W9b — Moteur d'ACTIFS + électrolyseurs + vivarium** : processus
+  modulés par pas de 5 % (0–100 %), fonctionnent PARTOUT (survol,
+  transit, arrêt), STARVATION d'un intrant → 0 % automatique ; deux
+  modes — BATCH (électrolyse : montant sacrifié, pause/reprise) et
+  CONTINU (vivarium) ; carburant de fonctionnement [TUNE] ;
+  electrolyzer/_l2/enhanced, vivarium/enhanced. → JOURNAL 2026-07-22
+- [ ] **W9c — Familles de slots PARTAGÉES** : upgrades ET accessoires
+  consomment la capacité de leur famille (HULLS.slots) — arbitrage
+  upgrade-vs-accessoire ; grades ENHANCED fabriqués sur bâtiment hôte
+  L3, le grade se fige À LA FABRICATION ; l'installation n'exige
+  aucune techno (confirmé). → JOURNAL 2026-07-22
+- [ ] **W9d — Passifs (19 × 2 grades, effets BRANCHÉS)** : heat_recycler,
+  cryo_larder, docking_clamps, signal_mirror, survey_suite,
+  ballast_shielding, flare_dampers (cumulable morph), trim_vanes,
+  berth_module, course_optimizer, cargo_netting, mooring_winch,
+  bilge_purifier, stargate_caller, salvage_grapnel, haggler_matrix,
+  ore_hopper, solar_sails, escape_thrusters. → JOURNAL 2026-07-22
+- [ ] **W9e — Actifs restants** : arc_furnace, med_synth, ram_scoop,
+  gravity_sling, fab_bay (+enhanced). → JOURNAL 2026-07-22
+- [ ] **W9f — TOUR D'ÉQUILIBRAGE des accessoires** (campagne de
+  simulation, BALANCE_LOG — exception sous-agents). PARQUÉS :
+  probe_cradle, beacon_transponder, gyro_stabilizers,
+  fermentation_vats (motifs au JOURNAL). → JOURNAL 2026-07-22
 
 ## Programme R — Restes figés d'avant les sondes L3
 

@@ -4426,3 +4426,65 @@ Ma proposition (EN ATTENTE de validation) :
 - Questions posées : partage de capacité famille ? actifs à l'arrêt
   sauf exceptions ? non-cumul flare_dampers/morph ? exclusions par
   coque ? tour d'équilibrage post-implémentation ?
+
+## 2026-07-22 — VALIDÉ (responsable) : système d'accessoires complet
+
+Réponses du responsable à la proposition du jour — TOUT est figé :
+1. Partage de capacité de FAMILLE entre upgrades et accessoires :
+   OUI (« sinon ça n'a pas de sens »).
+2. Les ACTIFS fonctionnent PARTOUT (survol, transit, à l'arrêt — peu
+   importe). S'ils STARVENT une condition d'activation (intrant ou
+   carburant manquant), ils passent AUTOMATIQUEMENT à 0 % d'activation.
+   Réglage par PAS DE 5 %. (Réconciliation avec l'électrolyse validée
+   antérieurement : deux modes d'actifs — BATCH (électrolyse : montant
+   sacrifié au lancement, la starvation de carburant PAUSE à 0 %,
+   reprise en re-réglant) et CONTINU (vivarium & co : tourne tant que
+   les intrants suivent, sinon 0 %).)
+3. flare_dampers CUMULABLE avec la morphose : oui — le passif limite
+   les dégâts d'un « oubli de morph » en traversée de champ.
+4. AUCUNE exclusion par coque (builds plus drôles).
+5. TOUR D'ÉQUILIBRAGE maintenant : oui, il en faut un (campagne de
+   simulation, BALANCE_LOG — exception sous-agents applicable).
+6. Catalogue BEAUCOUP plus fourni. Gating de FABRICATION validé
+   (bâtiment hôte présent sur la planète de fabrication) + VERSIONS
+   « ENHANCED » liées au NIVEAU du bâtiment (le grade s'opère À LA
+   FABRICATION). Un accessoire MONTÉ ne dépend que de ses conditions
+   d'ACTIVATION : acheté ailleurs, il se monte partout où il « fit »
+   (l'installation n'exige AUCUNE techno — déjà le cas, confirmé).
+
+CATALOGUE FIGÉ (base + enhanced fabriquée sur bâtiment hôte L3 —
+chiffres [TUNE], v1) :
+- Passifs : heat_recycler (fuel, refinery, −15 %/−25 % hover),
+  cryo_larder (acc, lab, +50 %/+100 % provisions), docking_clamps
+  (acc, spaceport, dwell ×2/×3), signal_mirror (obs, telescope, scan
+  60/100 pc), survey_suite (obs, research_center, +1 palier intel cap
+  L2/L3), ballast_shielding (armor, military_district, junk −50 %/
+  −75 %), flare_dampers (armor, obs_station, champ/flare −50 %/−75 %,
+  cumulable), trim_vanes (engine, shipyard, pénalité de charge ÷2/÷4),
+  berth_module (cargo, residential, pax +25 %/+50 %), course_optimizer
+  (engine, research_center, burn de trajet −10 %/−15 %), cargo_netting
+  (cargo, warehouse, +1/+2 conteneurs), mooring_winch (acc, warehouse,
+  redéploiement ÷2/÷3), bilge_purifier (acc, waterworks, survie
+  équipage −25 %/−50 %), stargate_caller (acc, stargate_yard, péage
+  étranger −25 %/−50 %), salvage_grapnel (acc, workshop, réclamation
+  2 h→1 h/0,5 h), haggler_matrix (acc, commerce_district, prix inné
+  −10 %/−15 %), ore_hopper (cargo, smelter, scoop de junk +50 %/
+  +100 %), solar_sails (fuel, fuelcell_plant, survol GRATUIT à ≤ 8/
+  ≤ 15 pc d'une étoile), escape_thrusters (engine, military_district,
+  alarme d'auto-fuite à 40 %/50 %).
+- Actifs : electrolyzer (+_l2 inverse, validés) + enhanced (débit
+  ×1,5) ; vivarium (+enh) ; arc_furnace (junk→steel_l, fuel, +enh) ;
+  med_synth (water+phosphor→med_1, fuel, lab, +enh) ; ram_scoop (fuel,
+  EN TRANSIT dans un champ : récolte ∝ runPct contre usure ×2 / ×1,5
+  enh) ; gravity_sling (engine, départ ≤ 8 pc : vitesse ×(1+runPct/2)
+  contre dégâts ∝ runPct, ratio enh meilleur) ; fab_bay (acc,
+  auto-réparation 1 %/h × runPct au steel de soute + fuel, +enh).
+- PARQUÉS (motifs) : probe_cradle (transport/lancement de sondes =
+  chantier propre), beacon_transponder (politiques P4),
+  gyro_stabilizers (l'usure d'atterrissage n'est pas implémentée),
+  fermentation_vats (pas de système de péremption).
+
+Découpage d'exécution : W9b moteur d'actifs + électrolyseurs +
+vivarium ; W9c familles partagées (slot pools) ; W9d passifs (19 × 2
+grades, effets branchés) ; W9e actifs restants ; W9f TOUR
+D'ÉQUILIBRAGE (simulation, BALANCE_LOG).
