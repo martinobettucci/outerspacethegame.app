@@ -206,11 +206,16 @@ le même commit, tests §15, captures §16, docs.
   vraie). ✔ E2E visuel du spawn — spawn-visual.spec (350 exacts
   depuis STARTER_POP, grâce de colonie, ADN, main des premiers pas,
   flotte de naissance ; captures sp-01/02 observées ; la CAP de pop
-  affichée varie par monde — non assertée). RESTENT : gating
-  fonctionnel des non-industries par staffing [TUNE-v1 — proposition
-  à soumettre au responsable : change ce que le joueur doit staffer] ;
-  scan riche des sondes (ADN/gisements, intel scientifique) ; intel
-  des VAISSEAUX L1/L2/L3 (chunk flotte).
+  affichée varie par monde — non assertée). ✔ scan riche des
+  sondes — CONSTAT 2026-07-22 : déjà livré par le chunk Q (projection
+  d'intel) et PROUVÉ par intel.test (palier 4 = gisements chiffrés +
+  techDna ; sonde sur site = deep sight ; +1 source scientifique) —
+  la ligne était périmée. ↪ intel des VAISSEAUX L1/L2/L3 : REPOINTÉ
+  vers P5/combat — les upgrades obs sont DORMANTS par décision (W6),
+  l'intel de coque n'a pas de support avant leur réveil. RESTE (1) :
+  gating fonctionnel des non-industries par staffing — PROPOSITION
+  PERSISTÉE AU JOURNAL (non validée : change la boucle du joueur,
+  arbitrage responsable requis).
 - [x] **R5 — Stabiliser census — CORRIGÉ À LA RACINE (2026-07-22)** :
   cause = des ASSERTIONS ABSOLUES sur des agrégats GLOBAUX par
   conception (census DG §11.5 ; prix des pods dérivés du census) dans

@@ -5040,3 +5040,41 @@ Restent (R4) : gating staffing des non-industries — je ne le code pas
 sans proposition validée : il CHANGE la boucle du joueur (staffer ses
 télescopes/cliniques pour qu'ils fonctionnent) — proposition à
 formuler ; scan riche des sondes ; intel vaisseaux L1/L2/L3.
+
+## 2026-07-22 — R4 : constat scan riche, repointage intel vaisseaux, PROPOSITION gating staffing (NON VALIDÉE)
+
+Constats d'inventaire : (a) le « scan riche des sondes (ADN/gisements,
+intel scientifique) » listé en R4 est DÉJÀ livré — le chunk Q
+(projection d'intel par liste blanche) expose au palier 4 les
+gisements chiffrés (remainingT/initialT/dryAt) et le techDna, la sonde
+sur site donne le deep sight et la source scientifique son +1 —
+intel.test le prouve depuis lors ; la ligne datait d'avant Q et était
+périmée. (b) l'« intel des VAISSEAUX L1/L2/L3 » présuppose les
+upgrades obs — DORMANTS jusqu'au combat par décision (W6) : repointé
+vers P5, rien à coder avant leur réveil.
+
+PROPOSITION (à valider par le responsable — RIEN n'est codé) :
+gating fonctionnel des non-industries par staffing. Deux options :
+
+- **Option A (seuil binaire)** : la FONCTION d'un bâtiment
+  non-industriel exige workforce ≥ 50 % de jobsOptimal [TUNE] — en
+  dessous, le bâtiment reste « active » pour la démographie (postes,
+  Ē, natalité) mais sa fonction est COUPÉE. Simple à lire en jeu
+  (badge « understaffed »), pas de dégradé à équilibrer.
+- **Option B (continu)** : la fonction est MULTIPLIÉE par e(u) (la
+  cloche existante) — un télescope à moitié staffé voit moins loin,
+  une clinique réduit moins. Plus riche, mais chaque fonction devient
+  un chiffre à équilibrer (W9f-bis).
+
+Portée EXHAUSTIVE si validé (fonction par bâtiment) : telescope
+(scope), clinic (réduction), workshop (réparation + hôte de
+fabrication), warehouse (balance d'items + redéploiement), spaceport
+(accueil des docks), shipyard (construction), probe_pad (cap de
+production), lab/research_center/obs_station/smelter/refinery/
+fuelcell_plant/waterworks-hôtes (gates de fabrication GEAR),
+depot (bonus de stockage), market/commerce_district (négoce),
+residential (EXEMPT proposé — la natalité passe déjà par Ē),
+stargate_yard (chantier de gate), casino/diplomatic_district/
+faction_hq (effets P4 — dormants). Impact joueur : il faut STAFFER
+ses bâtiments de service, pas seulement ses usines — c'est un
+changement de boucle, d'où l'arbitrage demandé.
