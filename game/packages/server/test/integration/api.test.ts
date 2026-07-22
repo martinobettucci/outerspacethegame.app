@@ -238,6 +238,28 @@ describe('tech + construction (GB §18, DG §5/§6)', () => {
     });
     expect(duplicate.statusCode).toBe(409);
     expect(duplicate.json().error).toBe('max_instances');
+
+    // R2 (2026-07-22) : la politique single vaut pour TOUS les singles
+    // de la table validée — preuve directe sur un second workshop
+    // (fixture §15 : unlock + première instance posés en SQL).
+    await pool.query(
+      `INSERT INTO tech_unlocks (body_id, node_key)
+       VALUES ($1, 'workshop') ON CONFLICT DO NOTHING`,
+      [starterA],
+    );
+    await pool.query(
+      `INSERT INTO buildings (body_id, key, level, tile_index, status, workforce)
+       VALUES ($1, 'workshop', 1, 4, 'active', 0)`,
+      [starterA],
+    );
+    const workshopDup = await app.inject({
+      method: 'POST',
+      url: `/planets/${starterA}/build`,
+      payload: { building: 'workshop', tileIndex: 3 },
+      headers: { cookie: cookieA },
+    });
+    expect(workshopDup.statusCode).toBe(409);
+    expect(workshopDup.json().error).toBe('max_instances');
   });
 
   it('refus vérifiés : tuile occupée, nœud non déverrouillé, double unlock', async () => {

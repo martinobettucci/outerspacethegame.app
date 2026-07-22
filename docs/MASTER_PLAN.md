@@ -182,9 +182,14 @@ le même commit, tests §15, captures §16, docs.
   précisé au BACKLOG l.90 (tranche nommée 64 px au repos, cible ≥44 px,
   dépliage au survol/focus/sélection, reduced-motion) + tests
   géométriques + captures 2 viewports.
-- [ ] **R2 — Application des caps `maxInstances`** (politique
-  d'instances VALIDÉE — table single/multiple au BACKLOG l.92) ; le
-  Codex contextuel est déjà livré (V3).
+- [x] **R2 — Application des caps `maxInstances` — LIVRÉ
+  (2026-07-22)** : les 14 « single » de la table validée portent
+  `maxInstances: 1` dans le canon partagé (12 ajoutés — telescope et
+  clinic l'avaient) ; garde service placeBuilding inchangée (le refus
+  `max_instances` vaut désormais pour tous) ; test anti-dérive
+  Codex ⟺ canon (codexBuildings.test) ; preuve API sur un second
+  workshop ; seed dev revalidé. Le Codex contextuel était déjà livré
+  (V3).
 - [ ] **R3 — Sprites de stock du HUD** : mêmes stubs que le ledger
   stats, TAILLE RÉDUITE adaptée à la densité (PlanetView).
 - [ ] **R4 — Pop v2, restes** : gating fonctionnel des non-industries

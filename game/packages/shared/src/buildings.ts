@@ -256,6 +256,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   workshop: def({
     key: 'workshop',
+    maxInstances: 1,
     tier: 1,
     politics: null,
     usesTile: true,
@@ -281,6 +282,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   residential: def({
     key: 'residential',
+    maxInstances: 1,
     tier: 1,
     politics: null,
     politicsFromLevel: { level: 2, archetype: 'civic' },
@@ -297,6 +299,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   lab: def({
     key: 'lab',
+    maxInstances: 1,
     tier: 2,
     politics: null,
     usesTile: true,
@@ -321,6 +324,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   obs_station: def({
     key: 'obs_station',
+    maxInstances: 1,
     tier: 2,
     politics: null,
     usesTile: true,
@@ -362,6 +366,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   research_center: def({
     key: 'research_center',
+    maxInstances: 1,
     tier: 3,
     politics: 'scientific',
     usesTile: true,
@@ -371,6 +376,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   diplomatic_district: def({
     key: 'diplomatic_district',
+    maxInstances: 1,
     tier: 3,
     politics: 'diplomatic',
     usesTile: true,
@@ -380,6 +386,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   casino: def({
     key: 'casino',
+    maxInstances: 1,
     tier: 3,
     politics: 'mercantile',
     usesTile: true,
@@ -388,6 +395,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   commerce_district: def({
     key: 'commerce_district',
+    maxInstances: 1,
     tier: 3,
     politics: 'mercantile',
     usesTile: true,
@@ -396,6 +404,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   faction_hq: def({
     key: 'faction_hq',
+    maxInstances: 1,
     tier: 3,
     politics: 'diplomatic',
     usesTile: true,
@@ -404,6 +413,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   stargate_yard: def({
     key: 'stargate_yard',
+    maxInstances: 1,
     tier: 4,
     politics: null,
     usesTile: true,
@@ -412,6 +422,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   terraformer: def({
     key: 'terraformer',
+    maxInstances: 1,
     tier: 4,
     politics: 'civic',
     usesTile: true,
@@ -420,6 +431,7 @@ export const BUILDINGS: Record<BuildingKey, BuildingDef> = {
   }),
   artificial_planet_yard: def({
     key: 'artificial_planet_yard',
+    maxInstances: 1,
     tier: 5,
     politics: 'industrialist',
     usesTile: true,

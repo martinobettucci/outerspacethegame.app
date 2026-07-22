@@ -4,7 +4,7 @@
  * la politique d'instances VALIDÉE (responsable 2026-07-20, JOURNAL).
  */
 import { describe, expect, it } from 'vitest';
-import { ALL_BUILDING_KEYS } from '@atg/shared';
+import { ALL_BUILDING_KEYS, BUILDINGS } from '@atg/shared';
 import { BUILDING_CODEX, CODEX_BUILDING_KEYS } from './codexBuildings.ts';
 
 describe('Codex bâtiments', () => {
@@ -41,5 +41,15 @@ describe('Codex bâtiments', () => {
         'workshop',
       ].sort(),
     );
+  });
+
+  it('R2 anti-dérive : « single » du Codex ⟺ maxInstances: 1 dans le canon partagé', () => {
+    for (const key of CODEX_BUILDING_KEYS) {
+      const single = BUILDING_CODEX[key]!.instances === 'single';
+      expect(
+        BUILDINGS[key]!.maxInstances === 1,
+        `${key} : Codex "${BUILDING_CODEX[key]!.instances}" vs maxInstances ${BUILDINGS[key]!.maxInstances ?? '∅'}`,
+      ).toBe(single);
+    }
   });
 });

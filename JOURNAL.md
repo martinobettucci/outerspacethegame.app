@@ -4959,3 +4959,24 @@ tests de PRIX restent absolus et propres dans leur univers).
 Preuves : census+pods seuls 9/9 ; balayage sériel COMPLET 375/375
 deux fois de suite (premier sweep 100 % vert de l'histoire du dépôt
 depuis l'apparition du flaky).
+
+## 2026-07-22 — R2 livré : les caps maxInstances appliqués aux 14 singles
+
+La table single/multiple validée (2026-07-20) vivait dans le Codex et
+la garde `maxInstances` de placeBuilding n'était branchée que sur
+telescope et clinic. R2 : les 12 autres singles reçoivent
+`maxInstances: 1` dans le canon partagé (workshop, residential, lab,
+obs_station, research_center, diplomatic_district, casino,
+commerce_district, faction_hq, stargate_yard, terraformer,
+artificial_planet_yard) — la garde existante (refus AVANT la tuile,
+« max 1 » annonçable même monde plein) s'applique désormais à tous.
+Anti-dérive : codexBuildings.test prouve Codex « single » ⟺
+maxInstances 1 (toute divergence future casse) ; api.test prouve le
+refus 409 max_instances sur un second workshop (fixture §15 : unlock
++ première instance SQL — la garde d'unlock passe AVANT le cap).
+Niveau DB : pas d'index unique généralisé (le télescope garde le sien
+de la migration 025) — garde service §10, annoncé.
+
+Preuves : codex client 12/12 ; api.test 12/12 ; balayage sériel
+375/375 (3e vert consécutif) ; resetDb + seed dev PASSENT (les seeds
+ne posaient aucun single en double) ; typecheck vert.

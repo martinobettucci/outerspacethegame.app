@@ -2,6 +2,22 @@
 
 ## [Non publié]
 
+### R2 + R5 — politique d'instances appliquée ; flaky de sweep éradiqués (2026-07-22)
+
+- **R2** : les **14 bâtiments « single »** de la table validée
+  (2026-07-20) portent désormais `maxInstances: 1` dans `@atg/shared`
+  (12 ajoutés : workshop, residential, lab, obs_station,
+  research_center, diplomatic_district, casino, commerce_district,
+  faction_hq, stargate_yard, terraformer, artificial_planet_yard) —
+  le refus backend `max_instances` de placeBuilding vaut pour tous ;
+  test anti-dérive Codex ⟺ canon ; preuve API sur un second workshop ;
+  seed dev revalidé (resetDb vert).
+- **R5** : cause racine des flaky census/pods identifiée — assertions
+  ABSOLUES sur des agrégats GLOBAUX par conception (census DG §11.5,
+  prix des pods dérivés) en base de test partagée ; correctifs
+  baseline+delta (census) et stock de cap surdimensionné (pods).
+  Balayage sériel 375/375 ×3 consécutifs.
+
 ### W8e (UI + E2E + Codex) — le Crusader jouable à l'écran (2026-07-22)
 
 - **Panneau Crusader** (GalaxyMap) : population de bord (C/A/S), stock
