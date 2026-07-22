@@ -4518,3 +4518,12 @@ cours) :
 - Le CRUSADER ne pouvant pas docker, SA voie de réparation est
   l'accessoire ACTIF de réparation (fab_bay, catalogue W9e : 1 %/h ×
   runPct au steel de SOUTE + carburant).
+
+## 2026-07-22 — W9b clos : UI de bord des actifs + E2E
+
+Section « Active gear » par accessoire de conversion monté (throttle
+par pas de 5 %, batch pour l'électrolyse, case inverse pour les
+réversibles, état starved/batch restant affiché) ; E2E
+conversions.spec : électrolyseur granté §15 + installé par les vraies
+commandes, 1 T d'eau, réglage 50 % dans l'UI, sorties O2+H constatées
+au bord, batch clos — VERT ; captures cv-01..02 observées. W9b [x].

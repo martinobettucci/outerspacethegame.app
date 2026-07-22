@@ -21,8 +21,11 @@
 - Tests : shared conversions 3 + items 3, intégration
   conversions.test.ts 5/5 (×3), balayage sériel 343/345 (census ×2 =
   flaky R5), unit 55, build vert.
-- **Restent (suite immédiate du chunk)** : UI de bord des actifs +
-  E2E/captures ; puis W9c familles partagées.
+- **UI de bord livrée (suite du chunk)** : section « Active gear » par
+  accessoire monté (throttle 0–100 % pas de 5, batch, inverse pour les
+  réversibles, état starved/batch restant) ; E2E conversions.spec VERT
+  (électrolyse UI : batch sacrifié, sorties au bord) + captures
+  cv-01..02 observées. Prochain : W9c familles partagées.
 
 ### W9a — coque métamorphose d'office + démontage/désassemblage (décisions responsable 2026-07-22)
 

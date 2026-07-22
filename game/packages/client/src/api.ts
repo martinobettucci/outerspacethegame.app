@@ -300,6 +300,11 @@ export interface ShipView {
   /** W6 : accessoires montés et upgrades {slot: niveau}. */
   accessories: string[];
   upgrades: Record<string, number>;
+  /** W9b : actifs de conversion en cours {itemKey: état}. */
+  conversions: Record<
+    string,
+    { runPct: number; direction: string; batchLeftT: number | null; startedAtMs: number }
+  >;
   installingItem: string | null;
   installCompletesAt: string | null;
   junkCollector: boolean;
@@ -417,6 +422,21 @@ export const api = {
     call<{ completesAt: string }>('POST', `/ships/${shipId}/install`, {
       itemKey,
     }),
+  /** W9b : règle/lance un ACTIF de conversion (pas de 5 %). */
+  setConversion: (
+    shipId: string,
+    input: {
+      itemKey: string;
+      runPct: number;
+      batchT?: number;
+      direction?: 'forward' | 'reverse';
+    },
+  ) =>
+    call<{ state: { runPct: number; batchLeftT: number | null } | null }>(
+      'POST',
+      `/ships/${shipId}/conversion`,
+      input,
+    ),
   /** W3 : ancre une sonde L3 et lance le transfert (règlement au bord). */
   anchorTransfer: (probeId: string, input: { toShipId: string; units: number }) =>
     call<{ endsAt: string; unitsPlanned: number; fuelType: string }>(

@@ -27,6 +27,7 @@ import {
   Warehouse as WarehouseIcon,
 } from 'lucide-react';
 import {
+  conversionOf,
   ALL_RESOURCE_IDS,
   canFitColonyKit,
   COLONY_MIN_SETTLERS,
@@ -171,6 +172,10 @@ export function GalaxyMap() {
   // W3 : ancrage tanker d'une sonde L3.
   const [anchorTo, setAnchorTo] = useState('');
   const [anchorUnits, setAnchorUnits] = useState('10');
+  // W9b : réglage des actifs de conversion (par item sélectionné).
+  const [convPct, setConvPct] = useState<Record<string, number>>({});
+  const [convBatch, setConvBatch] = useState<Record<string, string>>({});
+  const [convRev, setConvRev] = useState<Record<string, boolean>>({});
   // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
   const [installGearList, setInstallGearList] = useState<
     { itemKey: string; count: number }[]
@@ -1937,6 +1942,133 @@ export function GalaxyMap() {
                 </section>
               );
             })()}
+          {/* W9b : actifs de conversion des accessoires montés. */}
+          {selectedShip.accessories
+            .filter((a) => conversionOf(a))
+            .map((a) => {
+              const def = conversionOf(a)!;
+              const state = selectedShip.conversions[a];
+              return (
+                <section
+                  key={a}
+                  aria-label={`${t.galaxy.convTitle} — ${a.replace(/_/g, ' ')}`}
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                    display: 'grid',
+                    gap: 6,
+                    border: '1px solid var(--stroke-subtle)',
+                    borderRadius: 'var(--radius-button)',
+                    padding: 8,
+                  }}
+                >
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    {a.replace(/_/g, ' ')} — {t.galaxy.convTitle}
+                  </strong>
+                  {state && (
+                    <span style={{ fontFamily: 'var(--font-mono)' }}>
+                      {state.runPct}%
+                      {state.runPct === 0 ? ` · ${t.galaxy.convStarved}` : ''}
+                      {state.batchLeftT !== null
+                        ? ` · ${t.galaxy.convBatchLeft} ${Number(state.batchLeftT).toFixed(1)} T`
+                        : ''}
+                    </span>
+                  )}
+                  <label style={{ display: 'grid', gap: 2 }}>
+                    <span>{t.galaxy.convRun}</span>
+                    <select
+                      aria-label={`${t.galaxy.convRun} ${a}`}
+                      value={String(convPct[a] ?? state?.runPct ?? 0)}
+                      onChange={(e) =>
+                        setConvPct((c) => ({ ...c, [a]: Number(e.target.value) }))
+                      }
+                      style={{
+                        background: 'var(--bg-overlay)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--stroke-subtle)',
+                        borderRadius: 'var(--radius-button)',
+                        padding: '4px 8px',
+                      }}
+                    >
+                      {Array.from({ length: 21 }, (_, i) => i * 5).map((p) => (
+                        <option key={p} value={p}>
+                          {p}%
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {def.mode === 'batch' && !(state && (state.batchLeftT ?? 0) > 0) && (
+                    <label style={{ display: 'grid', gap: 2 }}>
+                      <span>{t.galaxy.convBatch}</span>
+                      <input
+                        aria-label={`${t.galaxy.convBatch} ${a}`}
+                        value={convBatch[a] ?? ''}
+                        onChange={(e) =>
+                          setConvBatch((c) => ({ ...c, [a]: e.target.value }))
+                        }
+                        inputMode="decimal"
+                        style={{
+                          background: 'var(--bg-overlay)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--stroke-subtle)',
+                          borderRadius: 'var(--radius-button)',
+                          padding: '4px 8px',
+                          width: 80,
+                        }}
+                      />
+                    </label>
+                  )}
+                  {def.reversible && (
+                    <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={convRev[a] ?? false}
+                        onChange={(e) =>
+                          setConvRev((c) => ({ ...c, [a]: e.target.checked }))
+                        }
+                      />
+                      <span>{t.galaxy.convReverse}</span>
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      api
+                        .setConversion(selectedShip.id, {
+                          itemKey: a,
+                          runPct: convPct[a] ?? state?.runPct ?? 0,
+                          ...(def.mode === 'batch' &&
+                          !(state && (state.batchLeftT ?? 0) > 0) &&
+                          Number(convBatch[a]) > 0
+                            ? { batchT: Number(convBatch[a]) }
+                            : {}),
+                          ...(convRev[a] ? { direction: 'reverse' as const } : {}),
+                        })
+                        .then(() => {
+                          setNotice(t.galaxy.convApplied);
+                          void refreshShips();
+                        })
+                        .catch((err: ApiError) =>
+                          setNotice(
+                            `${t.galaxy.convRefused} — ${err.message ?? err.error}`,
+                          ),
+                        )
+                    }
+                    style={{
+                      background: 'var(--bg-overlay)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--stroke-subtle)',
+                      borderRadius: 'var(--radius-button)',
+                      padding: '6px 10px',
+                      cursor: 'pointer',
+                      justifySelf: 'start',
+                    }}
+                  >
+                    {t.galaxy.convApply}
+                  </button>
+                </section>
+              );
+            })}
           {/* W6 : équipement monté (accessoires + upgrades). */}
           {(selectedShip.accessories.length > 0 ||
             Object.keys(selectedShip.upgrades).length > 0) && (
