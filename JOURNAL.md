@@ -5126,3 +5126,35 @@ pré-déverrouillé), captures ic-01/02 OBSERVÉES (« Cargo hold — 1/3 »,
 « Item hold : cargo netting », toasts) ; typecheck ×3. Leçon
 d'environnement : migration 039 à appliquer à la base dev AVANT
 l'E2E (pnpm migrate — le message d'erreur PG l'a dit tout net).
+
+## 2026-07-22 — W6c-a : PROPOSITION arbre ADN des accessoires (NON VALIDÉE) ; W7-bâtiments : plan de chunk PERSISTÉ
+
+**W6c-a (proposition, rien à coder sans décision)** : le v1 en vigueur
+gate la fabrication d'un accessoire sur la PRÉSENCE ACTIVE du bâtiment
+hôte (et son niveau pour les grades enhanced) — simple et lisible.
+L'« arbre ADN dédié » envisagerait des nœuds de recherche PROPRES aux
+accessoires (déblocage par monde, coût de recherche, prérequis entre
+accessoires). Avis : le gain de profondeur est réel mais le coût de
+lisibilité aussi (deux arbres à comprendre) ; le v1 met déjà un VRAI
+coût d'accès (bâtir et alimenter l'hôte). Recommandation : GARDER le
+v1 et n'ouvrir l'arbre dédié que si l'équilibrage (usage réel des 43
+accessoires) montre un besoin de gating plus fin. À trancher.
+
+**W7-bâtiments (plan de chunk, à coder maintenant)** : étendre
+l'usinage partiel aux BÂTIMENTS — sur un monde à industrie L3 active,
+placement ET montée de niveau basculent en work-order (20 paliers de
+5 %, rien d'avance) au lieu du paiement à la commande :
+
+- migration 040 : CHECK de work_orders étendu à kind 'building' ;
+- workStep : terminal 'building' → construction_complete existant
+  (naissance par la voie actuelle, exactement-une-fois) ; chaque
+  palier payé INCRÉMENTE config.investedPaid du bâtiment (PATCH 10-4 :
+  la démolition ne rembourse QUE le réellement-payé — un ordre en
+  cours ne doit jamais gonfler le remboursable) ;
+- placeBuilding/levelUpBuilding : branche L3 (pas de payCost,
+  completes_at indicatif, ordre créé) ;
+- demolishBuilding : ANNULE l'ordre en attente du bâtiment (les
+  paliers déjà payés restent dans investedPaid → remboursés à 50 %) ;
+- tests intégration (pas d'avance, paliers débités, starved/reprise,
+  activation au 20e, démolition en cours d'ordre, levelup partiel) ;
+- Codex (porte) : phrase « partial machining » au chapitre Buildings.
