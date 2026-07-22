@@ -2,6 +2,28 @@
 
 ## [Non publié]
 
+### W9b — moteur d'ACTIFS + électrolyseurs + vivarium (serveur) (2026-07-22)
+
+- Actifs de conversion (défs partagées `conversions.ts`) : réglage
+  0–100 % par PAS DE 5, fonctionnent PARTOUT (survol, transit, arrêt),
+  STARVATION d'un intrant/carburant → 0 % AUTOMATIQUE ; deux modes —
+  BATCH (électrolyse : eau SACRIFIÉE au lancement depuis la soute,
+  production au BORD `conversion_edge`, pro-rata aux ajustements,
+  lancement refusé si la soute ne peut accueillir la production
+  totale) et CONTINU (vivarium : O2 de soute + carburant → nourriture,
+  horizon de matérialisation 24 h-jeu [TUNE]).
+- Catalogue : electrolyzer (20 T/h à 100 %), electrolyzer_l2
+  (RÉVERSIBLE : O2+H → eau), vivarium (5 T/h, 0,5 T O2/T) + grades
+  ENHANCED (débit ×1,5, fabrication bâtiment hôte L3, coût ×2, le
+  grade se fige à la fabrication) ; `fabricatorMinLevel` branché.
+- Migration 036 (`ships.conversions`), route POST /ships/:id/conversion,
+  vue flotte, timeScale injecté au worker (baseHandlers(timeScale)).
+- Tests : shared conversions 3 + items 3, intégration
+  conversions.test.ts 5/5 (×3), balayage sériel 343/345 (census ×2 =
+  flaky R5), unit 55, build vert.
+- **Restent (suite immédiate du chunk)** : UI de bord des actifs +
+  E2E/captures ; puis W9c familles partagées.
+
 ### W9a — coque métamorphose d'office + démontage/désassemblage (décisions responsable 2026-07-22)
 
 - Nouveaux items GEAR : **metamorphic_hull** (accessoire, workshop) —

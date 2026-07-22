@@ -67,6 +67,7 @@ import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
+import { settleConversion } from '../services/conversions.js';
 import { payStep, WORK_ORDER_RETRY_HOURS } from '../services/workOrders.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipHull, rebaseShipSurvival, shipMaxHp } from './shipDrain.js';
 
@@ -591,6 +592,27 @@ export const itemUninstalled: EventHandler = async (client, event) => {
     if (fresh[0]) await rebaseShipHull(client, fresh[0], event.dueAt.getTime());
   }
 };
+
+
+/**
+ * conversion_edge { shipId, itemKey } — échéance d'un actif (W9b) :
+ * règle le couru pro-rata (fin de batch, starvation → 0 %, horizon
+ * continu) et replanifie si l'actif tourne encore. Le timeScale est
+ * injecté par le worker (baseHandlers(timeScale)) — défaut 1.
+ */
+export const conversionEdge =
+  (timeScale = 1): EventHandler =>
+  async (client, event) => {
+    const shipId = String(event.payload.shipId ?? '');
+    const itemKey = String(event.payload.itemKey ?? '');
+    if (!shipId || !itemKey) return;
+    const { rows } = await client.query(
+      `SELECT * FROM ships WHERE id = $1 FOR UPDATE`,
+      [shipId],
+    );
+    if (!rows[0]) return;
+    await settleConversion(client, rows[0], itemKey, event.dueAt.getTime(), timeScale);
+  };
 
 /** demolition_complete { buildingId } — retire le bâtiment puis rebase. */
 export const demolitionComplete: EventHandler = async (client, event) => {
@@ -2012,8 +2034,9 @@ export const autoTradeCheck: EventHandler = async (client, event) => {
   if (fresh[0]) await scheduleAutoTradeCheck(client, fresh[0], nowMs);
 };
 
-export function baseHandlers(): Record<string, EventHandler> {
+export function baseHandlers(timeScale = 1): Record<string, EventHandler> {
   return {
+    conversion_edge: conversionEdge(timeScale),
     construction_complete: constructionComplete,
     demolition_complete: demolitionComplete,
     stock_edge: stockEdge,

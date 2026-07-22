@@ -25,6 +25,8 @@ export interface GearDef {
   level?: 2 | 3;
   /** Bâtiment hôte de FABRICATION (doit être ACTIF sur le monde). */
   fabricator: BuildingKey;
+  /** Niveau minimal du bâtiment hôte (grades ENHANCED : 3). [TUNE] */
+  fabricatorMinLevel?: 2 | 3;
   fabricationCost: CostBundle;
   /** Durée de fabrication (h-jeu). [TUNE] */
   fabricationHours: number;
@@ -62,6 +64,21 @@ const upgrade = (
   dormant,
   note,
 });
+
+/** Fabrique la variante ENHANCED d'un accessoire (bâtiment hôte L3,
+ *  coût ×2 [TUNE]) — le grade se fige À LA FABRICATION. */
+function enhanced(base: GearDef): GearDef {
+  const cost: Record<string, number> = {};
+  for (const [k, v] of Object.entries(base.fabricationCost)) cost[k] = (v as number) * 2;
+  return {
+    ...base,
+    key: `${base.key}_enhanced`,
+    fabricationCost: cost,
+    fabricationHours: base.fabricationHours * 2,
+    fabricatorMinLevel: 3,
+    note: `${base.note} (enhanced grade — L3 fabrication).`,
+  };
+}
 
 export const GEAR: Record<string, GearDef> = {
   /** W3 : porte le nombre de sondes ancrées de 1 à 2. */
@@ -171,6 +188,12 @@ export const GEAR: Record<string, GearDef> = {
   weapon_l2: upgrade('weapon', 2, 'weapon_foundry', { steel_l: 60, fuel_cells: 15 }, 'Weapons (dormant until combat).', true),
   weapon_l3: upgrade('weapon', 3, 'weapon_foundry', { steel_h: 90, fuel_cells: 40 }, 'Weapons (dormant until combat).', true),
 };
+
+// Grades ENHANCED des actifs W9b (le catalogue passif W9d ajoutera les
+// siens) — enregistrés après coup pour rester DRY.
+for (const key of ['electrolyzer', 'electrolyzer_l2', 'vivarium']) {
+  GEAR[`${key}_enhanced`] = enhanced(GEAR[key]!);
+}
 
 export const ALL_GEAR_KEYS = Object.keys(GEAR);
 

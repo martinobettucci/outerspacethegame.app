@@ -15,7 +15,7 @@ const pool = createPool();
 const censusIntervalMs =
   (GAME_DAY_SECONDS * 1000) / config.CENSUS_PER_DAY / config.TIME_SCALE;
 const handlers = {
-  ...baseHandlers(),
+  ...baseHandlers(config.TIME_SCALE),
   census_run: censusRun(censusIntervalMs),
   survival_low: survivalLow(config.TIME_SCALE),
 };

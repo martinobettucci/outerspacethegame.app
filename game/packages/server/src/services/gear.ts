@@ -98,15 +98,17 @@ export async function fabricateGear(
     if (planet[0].owner_id !== playerId) {
       throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
     }
+    const minLevel = def.fabricatorMinLevel ?? 1;
     const { rows: host } = await client.query(
       `SELECT 1 FROM buildings
-       WHERE body_id = $1 AND key = $2 AND status = 'active' LIMIT 1`,
-      [planetId, def.fabricator],
+       WHERE body_id = $1 AND key = $2 AND status = 'active'
+         AND level >= $3 LIMIT 1`,
+      [planetId, def.fabricator, minLevel],
     );
     if (!host[0]) {
       throw new CommandError(
         'not_available',
-        `Un ${def.fabricator} ACTIF est requis pour fabriquer cet item`,
+        `Un ${def.fabricator} ACTIF${minLevel > 1 ? ` L${minLevel}+` : ''} est requis pour fabriquer cet item`,
       );
     }
     // Balance d'items (50 × mult par warehouse actif — AD réveillé) :

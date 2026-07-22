@@ -6,6 +6,7 @@ export * from './formulas.js';
 export * from './rng.js';
 export * from './buildings.js';
 export * from './units.js';
+export * from './conversions.js';
 export * from './crusader.js';
 export * from './items.js';
 export * from './ships.js';

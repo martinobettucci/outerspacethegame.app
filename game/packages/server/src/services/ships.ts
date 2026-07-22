@@ -97,6 +97,11 @@ export interface ShipView {
   /** W6 : accessoires montés (items non-fongibles) et upgrades {slot: L}. */
   accessories: string[];
   upgrades: Record<string, number>;
+  /** W9b : actifs de conversion en cours {itemKey: état}. */
+  conversions: Record<
+    string,
+    { runPct: number; direction: string; batchLeftT: number | null; startedAtMs: number }
+  >;
   installingItem: string | null;
   installCompletesAt: string | null;
   junkCollector: boolean;
@@ -298,6 +303,7 @@ export async function fleet(
       morphCompletesAt: morphEndsBy.get(String(r.id)) ?? null,
       accessories: Array.isArray(r.accessories) ? r.accessories : [],
       upgrades: r.upgrades ?? {},
+      conversions: r.conversions ?? {},
       installingItem: r.installing_item ?? null,
       installCompletesAt: installEndsBy.get(String(r.id)) ?? null,
       junkCollector: !!r.junk_collector,

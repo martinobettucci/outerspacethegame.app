@@ -53,6 +53,7 @@ import {
   stopHarvest,
 } from '../services/harvest.js';
 import { disassembleGear, fabricateGear, installGear, listPlanetGear, uninstallGear } from '../services/gear.js';
+import { setConversion } from '../services/conversions.js';
 import {
   assignCrew,
   buildShip,
@@ -705,6 +706,26 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
     const player = await requirePlayer(req);
     const { id } = req.params as { id: string };
     return wrap(reply, () => undockFromCrusader(deps.pool, player.id, id));
+  });
+
+  // W9b : actifs de conversion — réglage/lancement (pas de 5 %).
+  app.post('/ships/:id/conversion', async (req, reply) => {
+    const player = await requirePlayer(req);
+    const { id } = req.params as { id: string };
+    const parsed = z
+      .object({
+        itemKey: z.string().min(1).max(64),
+        runPct: z.number().int().min(0).max(100),
+        batchT: z.number().positive().optional(),
+        direction: z.enum(['forward', 'reverse']).optional(),
+      })
+      .safeParse(req.body);
+    if (!parsed.success) return reply.status(400).send({ error: 'invalid_body' });
+    return wrap(reply, () =>
+      setConversion(deps.pool, player.id, id, parsed.data, {
+        timeScale: deps.config.TIME_SCALE,
+      }),
+    );
   });
 
   // W9a : démontage d'un accessoire / désassemblage d'un item.

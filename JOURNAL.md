@@ -4488,3 +4488,21 @@ Découpage d'exécution : W9b moteur d'actifs + électrolyseurs +
 vivarium ; W9c familles partagées (slot pools) ; W9d passifs (19 × 2
 grades, effets branchés) ; W9e actifs restants ; W9f TOUR
 D'ÉQUILIBRAGE (simulation, BALANCE_LOG).
+
+## 2026-07-22 — W9b (serveur) livré : moteur d'actifs, électrolyseurs, vivarium
+
+Conforme à la spec validée du jour : défs partagées (CONVERSIONS,
+conversionOf avec grades enhanced ×1,5, isValidRunPct pas de 5),
+migration 036, service setConversion/settleConversion (patron W3 :
+règlement au bord conversion_edge + pro-rata ; batch sacrifié au
+lancement, refus si la soute ne couvre pas la production totale —
+1 conteneur = 1 T oblige les grosses électrolyses sur coques M/L,
+cohérent ; starvation intrant/carburant → 0 % automatique ; continu à
+horizon 24 h-jeu [TUNE]), carburant de fonctionnement au réservoir
+(type moteur), route API, vue flotte, timeScale injecté au worker.
+ENHANCED : fabricatorMinLevel 3 branché (coût ×2, débit ×1,5, grade
+figé à la fabrication).
+
+Preuves : shared 6 ; conversions.test 5/5 (×3) ; balayage sériel
+343/345 (census ×2 = flaky R5) ; unit 55 ; build vert. RESTENT
+(annoncés) : UI de bord + E2E/captures — suite immédiate.

@@ -107,7 +107,8 @@ le même commit, tests §15, captures §16, docs.
   (migration 035 backfill des coques existantes) ; morphShield (W5)
   EXIGE l'accessoire ; le démonter EFFACE l'adaptation active [interp
   annoncée]. → JOURNAL 2026-07-22
-- [ ] **W9b — Moteur d'ACTIFS + électrolyseurs + vivarium** : processus
+- [~] **W9b — Moteur d'ACTIFS + électrolyseurs + vivarium — SERVEUR
+  LIVRÉ (2026-07-22, restent UI de bord + E2E)** : processus
   modulés par pas de 5 % (0–100 %), fonctionnent PARTOUT (survol,
   transit, arrêt), STARVATION d'un intrant → 0 % automatique ; deux
   modes — BATCH (électrolyse : montant sacrifié, pause/reprise) et

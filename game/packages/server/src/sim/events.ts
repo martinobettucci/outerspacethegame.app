@@ -36,6 +36,7 @@ export type EventKind =
   | 'item_fabricated'
   | 'item_installed'
   | 'item_uninstalled'
+  | 'conversion_edge'
   | 'work_step'
   | 'crusader_daily'
   | 'noop';
