@@ -1,21 +1,19 @@
-/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W9b; JOURNAL 2026-07-22 (actifs partout, starvation→0 %, pas de 5 %, batch/continu). */
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W9b; JOURNAL 2026-07-22 (taxonomie DÉFINITIVE : continus mobiles/gourmands, batch immobiles/efficaces). */
 /**
- * W9b — ACTIFS de conversion : réglage 0–100 % par pas de 5, fonctionne
- * PARTOUT (survol, transit, arrêt). Règlement au BORD (patron W3) :
- * `conversion_edge` à l'échéance projetée (fin de batch, starvation de
- * carburant/intrant, horizon continu) ; tout AJUSTEMENT règle d'abord
- * le couru PRO-RATA. Starvation → runPct 0 automatique (le batch
- * restant attend, reprise par re-réglage).
- *
- * BATCH (électrolyse) : l'intrant est SACRIFIÉ au lancement (retiré de
- * la soute) ; les sorties naissent au règlement, bornées par la place
- * en soute (l'excédent est VENTÉ, annoncé — le lancement refuse si la
- * soute ne peut pas accueillir la production TOTALE).
- * CONTINU (vivarium) : intrants de soute consommés au règlement.
+ * W9b — ACTIFS de conversion (taxonomie définitive 2026-07-22) :
+ * - CONTINUS : partout, pas de 5 %, intrants tirés de la SOUTE au fil
+ *   de l'eau, carburant brûlé activement ; starvation → 0 % auto ;
+ *   règlement au BORD (horizon/starvation) + pro-rata aux ajustements.
+ * - BATCH : intrants consommés À L'ACTIVATION, coque À L'ARRÊT et
+ *   IMMOBILISÉE pendant `processHours`, ZÉRO carburant brûlé ; sorties
+ *   au terme (clé spéciale `fuel` = unités du TYPE MOTEUR directement
+ *   au réservoir, bornées à la capacité effective) ; abandon = intrants
+ *   PERDUS [interp annoncée].
  */
 import {
   containersUsed,
   conversionOf,
+  effectiveTankU,
   HULLS,
   isValidRunPct,
   type HullCategory,
@@ -32,7 +30,9 @@ type Row = Record<string, any>;
 export interface ConversionState {
   runPct: number;
   direction: 'forward' | 'reverse';
-  batchLeftT: number | null;
+  /** BATCH : fin de procédé (ms epoch réels) — l'immobilisation dure
+   *  jusque-là. */
+  processEndsAtMs?: number;
   startedAtMs: number;
 }
 
@@ -43,13 +43,20 @@ function hullContainers(ship: Row): number {
   );
 }
 
+/** Un procédé BATCH court-il encore ? (garde moveShip). */
+export function batchProcessRunning(ship: Row, nowMs: number): string | null {
+  const conversions = (ship.conversions ?? {}) as Record<string, ConversionState>;
+  for (const [itemKey, state] of Object.entries(conversions)) {
+    if (state.processEndsAtMs && state.processEndsAtMs > nowMs) return itemKey;
+  }
+  return null;
+}
+
 /**
- * Règle PRO-RATA le couru d'UN actif depuis son startedAtMs : convertit
- * min(débit × heures-jeu, batch/intrants, carburant, place), écrit
- * soute/réservoir, renvoie l'état à jour (runPct 0 si starvation).
- * Mutations sur `ship` (fuel/cargo/conversions) reflétées en BDD par
- * l'appelant via les UPDATE de cette fonction. S'exécute DANS la
- * transaction appelante, coque verrouillée FOR UPDATE.
+ * Règle le couru d'UN actif. CONTINU : pro-rata (intrants de soute,
+ * carburant, place — starvation → 0 %). BATCH : au terme uniquement
+ * (sorties créditées, immobilisation levée). Transaction appelante,
+ * coque verrouillée FOR UPDATE.
  */
 export async function settleConversion(
   client: pg.PoolClient,
@@ -62,28 +69,70 @@ export async function settleConversion(
   const state = conversions[itemKey];
   const def = conversionOf(itemKey);
   if (!state || !def) return state ?? null;
+
+  if (def.mode === 'batch') {
+    if (!state.processEndsAtMs || state.processEndsAtMs > nowMs + 1) {
+      return state; // procédé encore en cours : rien à régler
+    }
+    // Terme du procédé : sorties créditées.
+    const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
+    const containers = hullContainers(ship);
+    for (const [res, tons] of Object.entries(def.output)) {
+      if (res === 'fuel') continue;
+      const free = Math.max(0, containers - containersUsed(cargo));
+      const take = Math.min(tons as number, free);
+      if (take > 0) cargo[res] = (cargo[res] ?? 0) + take;
+    }
+    ship.cargo = cargo;
+    await client.query(`UPDATE ships SET cargo = $2 WHERE id = $1`, [
+      ship.id,
+      JSON.stringify(cargo),
+    ]);
+    const fuelOut = Number((def.output as Record<string, number>).fuel ?? 0);
+    if (fuelOut > 0) {
+      const tank = evalShipFuel(ship, nowMs);
+      const cap = effectiveTankU(
+        HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
+          ?.tankU ?? 0,
+        ship.upgrades,
+      );
+      const newUnits = Math.min(cap, tank.units + fuelOut);
+      await rebaseShipDrain(client, ship as ShipRow, nowMs, 'none', {
+        setUnits: newUnits,
+      });
+      ship.fuel = { ...(ship.fuel ?? {}), [tank.type]: newUnits };
+    }
+    delete conversions[itemKey];
+    ship.conversions = conversions;
+    await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
+      ship.id,
+      JSON.stringify(conversions),
+    ]);
+    await client.query(
+      `DELETE FROM events
+       WHERE processed_at IS NULL AND kind = 'conversion_edge'
+         AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
+      [String(ship.id), itemKey],
+    );
+    return null;
+  }
+
+  // CONTINU.
   const elapsedH = Math.max(0, ((nowMs - state.startedAtMs) / 3_600_000) * timeScale);
   const rate = (def.ratePerHourAt100 * state.runPct) / 100;
-  let refT = rate * elapsedH; // tonnes de référence potentielles
+  let refT = rate * elapsedH;
   const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
   const input = state.direction === 'reverse' ? def.output : def.input;
   const output = state.direction === 'reverse' ? def.input : def.output;
-
-  // Bornes : batch restant OU intrants de soute.
   let starved = false;
-  if (def.mode === 'batch') {
-    refT = Math.min(refT, state.batchLeftT ?? 0);
-  } else {
-    for (const [res, perRef] of Object.entries(input)) {
-      const avail = Math.max(0, cargo[res] ?? 0);
-      const cap = perRef ? avail / (perRef as number) : Infinity;
-      if (cap < refT - 1e-9) {
-        refT = Math.min(refT, cap);
-        starved = true;
-      }
+  for (const [res, perRef] of Object.entries(input)) {
+    const avail = Math.max(0, cargo[res] ?? 0);
+    const cap = perRef ? avail / (perRef as number) : Infinity;
+    if (cap < refT - 1e-9) {
+      refT = Math.min(refT, cap);
+      starved = true;
     }
   }
-  // Borne carburant de fonctionnement (h effectives = refT / rate).
   const tank = evalShipFuel(ship, nowMs);
   if (rate > 0 && def.fuelUPerHourAt100 > 0) {
     const fuelPerH = (def.fuelUPerHourAt100 * state.runPct) / 100;
@@ -94,17 +143,10 @@ export async function settleConversion(
     }
   }
   refT = Math.max(0, refT);
-
-  // Écritures : intrants, sorties (bornées à la place — l'excédent est
-  // venté, annoncé), carburant.
   if (refT > 0) {
-    if (def.mode === 'batch') {
-      state.batchLeftT = Math.max(0, (state.batchLeftT ?? 0) - refT);
-    } else {
-      for (const [res, perRef] of Object.entries(input)) {
-        cargo[res] = Math.max(0, (cargo[res] ?? 0) - refT * (perRef as number));
-        if (cargo[res]! <= 1e-9) delete cargo[res];
-      }
+    for (const [res, perRef] of Object.entries(input)) {
+      cargo[res] = Math.max(0, (cargo[res] ?? 0) - refT * (perRef as number));
+      if (cargo[res]! <= 1e-9) delete cargo[res];
     }
     const containers = hullContainers(ship);
     for (const [res, perRef] of Object.entries(output)) {
@@ -120,43 +162,34 @@ export async function settleConversion(
       ship.id,
       JSON.stringify(cargo),
     ]);
-    // Réservoir matérialisé via le rebase standard (préserve les slots).
     await rebaseShipDrain(client, ship as ShipRow, nowMs, 'none', {
       setUnits: newUnits,
     });
     ship.fuel = { ...(ship.fuel ?? {}), [tank.type]: newUnits };
   }
-
-  // Fin de batch ou starvation → 0 % automatique (décision responsable).
-  const done = def.mode === 'batch' && (state.batchLeftT ?? 0) <= 1e-9;
-  if (done) {
-    delete conversions[itemKey];
-  } else {
-    if (starved) state.runPct = 0;
-    state.startedAtMs = nowMs;
-    conversions[itemKey] = state;
-  }
+  if (starved) state.runPct = 0;
+  state.startedAtMs = nowMs;
+  conversions[itemKey] = state;
   ship.conversions = conversions;
   await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
     ship.id,
     JSON.stringify(conversions),
   ]);
-  // Purge des bords périmés de CET item puis replanification.
   await client.query(
     `DELETE FROM events
      WHERE processed_at IS NULL AND kind = 'conversion_edge'
        AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
     [String(ship.id), itemKey],
   );
-  if (!done && conversions[itemKey] && conversions[itemKey].runPct > 0) {
-    await scheduleEdge(client, ship, itemKey, conversions[itemKey], nowMs, timeScale);
+  if (state.runPct > 0) {
+    await scheduleContinuousEdge(client, ship, itemKey, state, nowMs, timeScale);
   }
   return conversions[itemKey] ?? null;
 }
 
-/** Projette la prochaine échéance (fin de batch, sec de carburant,
- * starvation d'intrant continu, ou horizon 24 h-jeu) et l'enfile. */
-async function scheduleEdge(
+/** CONTINU : prochaine échéance (starvation d'intrant/carburant ou
+ *  horizon 24 h-jeu de matérialisation). */
+async function scheduleContinuousEdge(
   client: pg.PoolClient,
   ship: Row,
   itemKey: string,
@@ -165,19 +198,15 @@ async function scheduleEdge(
   timeScale: number,
 ): Promise<void> {
   const def = conversionOf(itemKey);
-  if (!def || state.runPct <= 0) return;
+  if (!def || def.mode !== 'continuous' || state.runPct <= 0) return;
   const rate = (def.ratePerHourAt100 * state.runPct) / 100;
   if (rate <= 0) return;
-  let horizonH = 24; // matérialisation continue [TUNE]
-  if (def.mode === 'batch') {
-    horizonH = Math.min(horizonH, (state.batchLeftT ?? 0) / rate);
-  } else {
-    const input = state.direction === 'reverse' ? def.output : def.input;
-    const cargo = (ship.cargo ?? {}) as Record<string, number>;
-    for (const [res, perRef] of Object.entries(input)) {
-      const avail = Math.max(0, cargo[res] ?? 0);
-      if (perRef) horizonH = Math.min(horizonH, avail / (perRef as number) / rate);
-    }
+  let horizonH = 24; // [TUNE]
+  const input = state.direction === 'reverse' ? def.output : def.input;
+  const cargo = (ship.cargo ?? {}) as Record<string, number>;
+  for (const [res, perRef] of Object.entries(input)) {
+    const avail = Math.max(0, cargo[res] ?? 0);
+    if (perRef) horizonH = Math.min(horizonH, avail / (perRef as number) / rate);
   }
   const fuelPerH = (def.fuelUPerHourAt100 * state.runPct) / 100;
   if (fuelPerH > 0) {
@@ -192,10 +221,10 @@ async function scheduleEdge(
 }
 
 /**
- * Règle/lance un actif : l'accessoire doit être MONTÉ ; pas de 5 % ;
- * batch : `batchT` sacrifié de la soute au lancement (refus si la soute
- * ne peut accueillir la production totale) ; `direction` reverse
- * réservé aux items réversibles. runPct 0 = OFF (le batch attend).
+ * Règle un CONTINU (runPct pas de 5, 0 = off) ou lance/abandonne un
+ * BATCH (runPct > 0 = lancement : coque À L'ARRÊT exigée, intrants
+ * consommés à l'activation, immobilisée `processHours` ; runPct 0 =
+ * abandon, intrants PERDUS [interp annoncée]).
  */
 export async function setConversion(
   pool: pg.Pool,
@@ -204,7 +233,6 @@ export async function setConversion(
   input: {
     itemKey: string;
     runPct: number;
-    batchT?: number;
     direction?: 'forward' | 'reverse';
   },
   opts: { nowMs?: number; timeScale?: number } = {},
@@ -217,7 +245,7 @@ export async function setConversion(
     throw new CommandError('not_available', 'Réglage par pas de 5 % (0–100)');
   }
   const direction = input.direction ?? 'forward';
-  if (direction === 'reverse' && !def.reversible) {
+  if (direction === 'reverse' && (def.mode !== 'continuous' || !def.reversible)) {
     throw new CommandError('not_available', 'Cet actif ne sait pas inverser');
   }
   const client = await pool.connect();
@@ -238,90 +266,88 @@ export async function setConversion(
     if (!accessories.includes(input.itemKey)) {
       throw new CommandError('not_available', 'Cet accessoire n\'est pas monté');
     }
-    // Règle le couru de CET item avant tout changement.
     await settleConversion(client, ship, input.itemKey, nowMs, timeScale);
     const conversions = { ...((ship.conversions ?? {}) as Record<string, ConversionState>) };
-    let state = conversions[input.itemKey] ?? null;
+    let state: ConversionState | null = conversions[input.itemKey] ?? null;
 
-    if (def.mode === 'batch' && input.batchT !== undefined) {
-      if (state && (state.batchLeftT ?? 0) > 1e-9) {
-        throw new CommandError('not_available', 'Un batch est déjà engagé — attendez sa fin ou son épuisement');
-      }
-      if (!(input.batchT > 0)) {
-        throw new CommandError('not_available', 'Montant de batch invalide');
-      }
-      const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
-      const inRes = direction === 'reverse' ? def.output : def.input;
-      const outRes = direction === 'reverse' ? def.input : def.output;
-      for (const [res, perRef] of Object.entries(inRes)) {
-        const need = input.batchT * (perRef as number);
-        if ((cargo[res] ?? 0) + 1e-9 < need) {
+    if (def.mode === 'batch') {
+      if (input.runPct === 0) {
+        // Abandon : intrants PERDUS (annoncé), immobilisation levée.
+        if (state) {
+          delete conversions[input.itemKey];
+          state = null;
+        }
+      } else {
+        if (state?.processEndsAtMs && state.processEndsAtMs > nowMs) {
+          throw new CommandError('not_available', 'Un procédé est déjà en cours');
+        }
+        // BATCH : coque À L'ARRÊT (jamais en transit).
+        if (ship.status === 'transit') {
           throw new CommandError(
-            'insufficient_resources',
-            `Soute : ${res} ${Number(cargo[res] ?? 0).toFixed(1)}/${need} T`,
+            'not_available',
+            'Le procédé batch exige l\'arrêt (survol/arrêt/quai)',
           );
         }
+        // Intrants consommés À L'ACTIVATION (depuis la soute).
+        const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
+        for (const [res, tons] of Object.entries(def.input)) {
+          if ((cargo[res] ?? 0) + 1e-9 < (tons as number)) {
+            throw new CommandError(
+              'insufficient_resources',
+              `Soute : ${res} ${Number(cargo[res] ?? 0).toFixed(1)}/${tons} T`,
+            );
+          }
+        }
+        for (const [res, tons] of Object.entries(def.input)) {
+          cargo[res] = Math.max(0, (cargo[res] ?? 0) - (tons as number));
+          if (cargo[res]! <= 1e-9) delete cargo[res];
+        }
+        ship.cargo = cargo;
+        await client.query(`UPDATE ships SET cargo = $2 WHERE id = $1`, [
+          shipId,
+          JSON.stringify(cargo),
+        ]);
+        const endsAtMs = nowMs + (def.processHours * 3_600_000) / timeScale;
+        state = {
+          runPct: 100,
+          direction: 'forward',
+          processEndsAtMs: endsAtMs,
+          startedAtMs: nowMs,
+        };
+        conversions[input.itemKey] = state;
+        await enqueue(client, 'conversion_edge', new Date(endsAtMs + 1), {
+          shipId,
+          itemKey: input.itemKey,
+        });
       }
-      // La soute doit pouvoir accueillir la production TOTALE (pire cas).
-      const after = { ...cargo };
-      for (const [res, perRef] of Object.entries(inRes)) {
-        after[res] = Math.max(0, (after[res] ?? 0) - input.batchT * (perRef as number));
-        if (after[res]! <= 1e-9) delete after[res];
-      }
-      let outTotal = 0;
-      for (const [res, perRef] of Object.entries(outRes)) {
-        after[res] = (after[res] ?? 0) + input.batchT * (perRef as number);
-        outTotal += input.batchT * (perRef as number);
-      }
-      if (containersUsed(after) > hullContainers(ship)) {
-        throw new CommandError(
-          'not_available',
-          `La soute ne peut pas accueillir les ${outTotal.toFixed(0)} T produites — videz des conteneurs`,
-        );
-      }
-      // SACRIFIÉ au lancement.
-      for (const [res, perRef] of Object.entries(inRes)) {
-        cargo[res] = Math.max(0, (cargo[res] ?? 0) - input.batchT * (perRef as number));
-        if (cargo[res]! <= 1e-9) delete cargo[res];
-      }
-      ship.cargo = cargo;
-      await client.query(`UPDATE ships SET cargo = $2 WHERE id = $1`, [
-        shipId,
-        JSON.stringify(cargo),
-      ]);
-      state = {
-        runPct: input.runPct,
-        direction,
-        batchLeftT: input.batchT,
-        startedAtMs: nowMs,
-      };
-    } else if (state) {
-      state = { ...state, runPct: input.runPct, direction, startedAtMs: nowMs };
     } else {
-      if (def.mode === 'batch') {
-        throw new CommandError('not_available', 'Aucun batch engagé — fournissez un montant');
+      if (input.runPct === 0) {
+        delete conversions[input.itemKey];
+        state = null;
+      } else {
+        state = {
+          runPct: input.runPct,
+          direction,
+          startedAtMs: nowMs,
+        };
+        conversions[input.itemKey] = state;
       }
-      state = { runPct: input.runPct, direction, batchLeftT: null, startedAtMs: nowMs };
-    }
-    if (state.runPct === 0 && def.mode === 'continuous') {
-      delete conversions[input.itemKey];
-      state = null;
-    } else {
-      conversions[input.itemKey] = state;
     }
     ship.conversions = conversions;
     await client.query(`UPDATE ships SET conversions = $2 WHERE id = $1`, [
       shipId,
       JSON.stringify(conversions),
     ]);
-    await client.query(
-      `DELETE FROM events
-       WHERE processed_at IS NULL AND kind = 'conversion_edge'
-         AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
-      [shipId, input.itemKey],
-    );
-    if (state && state.runPct > 0) {
-      await scheduleEdge(client, ship, input.itemKey, state, nowMs, timeScale);
+    if (def.mode === 'continuous') {
+      await client.query(
+        `DELETE FROM events
+         WHERE processed_at IS NULL AND kind = 'conversion_edge'
+           AND payload->>'shipId' = $1 AND payload->>'itemKey' = $2`,
+        [shipId, input.itemKey],
+      );
+      if (state && state.runPct > 0) {
+        await scheduleContinuousEdge(client, ship, input.itemKey, state, nowMs, timeScale);
+      }
     }
     await client.query('COMMIT');
     return { state };

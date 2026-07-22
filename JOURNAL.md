@@ -4594,3 +4594,16 @@ Refactor immédiat requis sur W9b : electrolyzer/_l2 passent CONTINUS
 (eau tirée de la soute au fil de l'eau) ; la mécanique batch est
 réaffectée à la classe BATCH (arrêt + immobilisation + temps figé +
 zéro carburant) avec cell_decompressor comme premier item (validé).
+
+## 2026-07-22 — Refactor W9b livré : taxonomie définitive appliquée
+
+Électrolyseurs passés CONTINUS (eau de soute au fil de l'eau,
+carburant brûlé, starvation → 0 % — prouvé) ; classe BATCH réaffectée :
+intrants à l'activation, arrêt exigé + immobilisation (moveShip
+refuse), temps de procédé figé, ZÉRO carburant, sortie `fuel` créditée
+au réservoir du type moteur (bornée au réservoir effectif) ; abandon =
+intrants perdus [interp annoncée] ; cell_decompressor livré (1 cell →
+24 h → +50 fuel ; enhanced ÷1,5) ; cell_cracker (continu) au catalogue
+W9e. UI Start/Abort pour les batch. Preuves : shared 7 ;
+conversions.test 7/7 (×3) ; balayage sériel 347/347 ; E2E adapté
+vert ; build vert.

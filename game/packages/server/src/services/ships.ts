@@ -60,6 +60,7 @@ import { releaseHarvest } from './harvest.js';
 import { releaseClaim } from './junk.js';
 import { armAutoTradeOnHover } from './hoverTrade.js';
 import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
+import { batchProcessRunning } from './conversions.js';
 import { CommandError } from './planets.js';
 
 export interface ShipView {
@@ -432,6 +433,14 @@ export async function moveShip(
         [shipId],
       );
       ship.follow_ship_id = null;
+    }
+    // W9-batch : un procédé BATCH immobilise la coque jusqu'au terme.
+    const runningBatch = batchProcessRunning(ship, nowMs);
+    if (runningBatch) {
+      throw new CommandError(
+        'not_available',
+        `Procédé batch en cours (${runningBatch.replace(/_/g, ' ')}) — la coque est immobilisée`,
+      );
     }
     // W5 : coque immobilisée pendant sa MORPHOSE d'adaptation.
     if (ship.morphing_shield) {

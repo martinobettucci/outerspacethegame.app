@@ -303,7 +303,7 @@ export interface ShipView {
   /** W9b : actifs de conversion en cours {itemKey: état}. */
   conversions: Record<
     string,
-    { runPct: number; direction: string; batchLeftT: number | null; startedAtMs: number }
+    { runPct: number; direction: string; processEndsAtMs?: number; startedAtMs: number }
   >;
   installingItem: string | null;
   installCompletesAt: string | null;
@@ -428,11 +428,10 @@ export const api = {
     input: {
       itemKey: string;
       runPct: number;
-      batchT?: number;
       direction?: 'forward' | 'reverse';
     },
   ) =>
-    call<{ state: { runPct: number; batchLeftT: number | null } | null }>(
+    call<{ state: { runPct: number; processEndsAtMs?: number } | null }>(
       'POST',
       `/ships/${shipId}/conversion`,
       input,

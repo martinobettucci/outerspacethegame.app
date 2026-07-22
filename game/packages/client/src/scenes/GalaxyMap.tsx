@@ -174,7 +174,6 @@ export function GalaxyMap() {
   const [anchorUnits, setAnchorUnits] = useState('10');
   // W9b : réglage des actifs de conversion (par item sélectionné).
   const [convPct, setConvPct] = useState<Record<string, number>>({});
-  const [convBatch, setConvBatch] = useState<Record<string, string>>({});
   const [convRev, setConvRev] = useState<Record<string, boolean>>({});
   // W6 : items disponibles sur le monde de la coque ENTREPOSÉE.
   const [installGearList, setInstallGearList] = useState<
@@ -1967,13 +1966,16 @@ export function GalaxyMap() {
                   </strong>
                   {state && (
                     <span style={{ fontFamily: 'var(--font-mono)' }}>
-                      {state.runPct}%
-                      {state.runPct === 0 ? ` · ${t.galaxy.convStarved}` : ''}
-                      {state.batchLeftT !== null
-                        ? ` · ${t.galaxy.convBatchLeft} ${Number(state.batchLeftT).toFixed(1)} T`
-                        : ''}
+                      {def.mode === 'batch'
+                        ? `${t.galaxy.convProcess} — ${
+                            state.processEndsAtMs
+                              ? new Date(state.processEndsAtMs).toLocaleTimeString('en-US')
+                              : '…'
+                          }`
+                        : `${state.runPct}%${state.runPct === 0 ? ` · ${t.galaxy.convStarved}` : ''}`}
                     </span>
                   )}
+                  {def.mode === 'continuous' && (
                   <label style={{ display: 'grid', gap: 2 }}>
                     <span>{t.galaxy.convRun}</span>
                     <select
@@ -1997,28 +1999,8 @@ export function GalaxyMap() {
                       ))}
                     </select>
                   </label>
-                  {def.mode === 'batch' && !(state && (state.batchLeftT ?? 0) > 0) && (
-                    <label style={{ display: 'grid', gap: 2 }}>
-                      <span>{t.galaxy.convBatch}</span>
-                      <input
-                        aria-label={`${t.galaxy.convBatch} ${a}`}
-                        value={convBatch[a] ?? ''}
-                        onChange={(e) =>
-                          setConvBatch((c) => ({ ...c, [a]: e.target.value }))
-                        }
-                        inputMode="decimal"
-                        style={{
-                          background: 'var(--bg-overlay)',
-                          color: 'var(--text-primary)',
-                          border: '1px solid var(--stroke-subtle)',
-                          borderRadius: 'var(--radius-button)',
-                          padding: '4px 8px',
-                          width: 80,
-                        }}
-                      />
-                    </label>
                   )}
-                  {def.reversible && (
+                  {def.mode === 'continuous' && def.reversible && (
                     <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <input
                         type="checkbox"
@@ -2036,12 +2018,12 @@ export function GalaxyMap() {
                       api
                         .setConversion(selectedShip.id, {
                           itemKey: a,
-                          runPct: convPct[a] ?? state?.runPct ?? 0,
-                          ...(def.mode === 'batch' &&
-                          !(state && (state.batchLeftT ?? 0) > 0) &&
-                          Number(convBatch[a]) > 0
-                            ? { batchT: Number(convBatch[a]) }
-                            : {}),
+                          runPct:
+                            def.mode === 'batch'
+                              ? state?.processEndsAtMs
+                                ? 0 // abandon (intrants perdus)
+                                : 100 // lancement du procédé
+                              : (convPct[a] ?? state?.runPct ?? 0),
                           ...(convRev[a] ? { direction: 'reverse' as const } : {}),
                         })
                         .then(() => {
@@ -2064,7 +2046,11 @@ export function GalaxyMap() {
                       justifySelf: 'start',
                     }}
                   >
-                    {t.galaxy.convApply}
+                    {def.mode === 'batch'
+                      ? state?.processEndsAtMs
+                        ? t.galaxy.convAbort
+                        : t.galaxy.convStart
+                      : t.galaxy.convApply}
                   </button>
                 </section>
               );

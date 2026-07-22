@@ -2,6 +2,25 @@
 
 ## [Non publié]
 
+### Taxonomie DÉFINITIVE des actifs (décision responsable 2026-07-22) — refactor W9b
+
+- **CONTINUS** (correction : électrolyse ET vivarium) : mobiles
+  (partout), modulables 5 %, intrants tirés de la SOUTE au fil de
+  l'eau, BRÛLENT du carburant, starvation → 0 %.
+- **BATCH** : intrants consommés À L'ACTIVATION, coque À L'ARRÊT et
+  IMMOBILISÉE pendant un temps de procédé figé, ZÉRO carburant brûlé
+  (plus efficaces) ; abandon = intrants PERDUS [interp annoncée].
+  Premier item : **cell_decompressor** (validé — 1 fuel_cell → 24 h →
+  +50 fuel du type moteur, borné au réservoir effectif ; enhanced :
+  procédé ÷1,5) ; **cell_cracker** (continu, fuel_cells→carburant)
+  validé pour W9e — la soute devient réservoir compact.
+- UI : continus = throttle ; batch = « Start process » (coque tenue) /
+  « Abort (inputs lost) » + échéance affichée.
+- Tests : shared 7, conversions.test réécrit 7/7 (×3 — continu au fil
+  de l'eau + starvation, batch immobilisation/terme/+50 fuel/abandon),
+  balayage sériel **347/347**, E2E conversions.spec adapté VERT, build
+  vert.
+
 ### W9b — moteur d'ACTIFS + électrolyseurs + vivarium (serveur) (2026-07-22)
 
 - Actifs de conversion (défs partagées `conversions.ts`) : réglage

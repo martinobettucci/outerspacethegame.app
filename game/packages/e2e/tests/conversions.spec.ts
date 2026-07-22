@@ -1,9 +1,9 @@
 /** @verifies This test file verifies: docs/MASTER_PLAN.md §W9b; JOURNAL 2026-07-22. */
 /**
- * E2E — W9b actifs de conversion : électrolyseur granté (§15) et
- * installé par les vraies commandes, 4 T d'eau chargées en soute,
- * réglage UI (pas de 5 %, batch sacrifié) — au bord, 4 O2 + 4 H
- * apparaissent en soute et le batch se clôt.
+ * E2E — W9b actifs de conversion (taxonomie définitive) : électrolyseur
+ * CONTINU granté (§15) et installé par les vraies commandes, 1 T d'eau
+ * en soute, throttle 50 % dans l'UI — l'eau se convertit au fil de
+ * l'eau, O2+H apparaissent, la starvation ramène à 0 %.
  */
 import { expect, test } from '@playwright/test';
 import { installRigViaPipeline, pickEmailByDna, registerSovereign, shot } from './lib.js';
@@ -44,7 +44,8 @@ test('électrolyse : batch réglé dans l\'UI, sorties au bord', async ({ page }
   });
   expect(load.ok()).toBe(true);
 
-  // 3. Réglage UI : throttle 50 %, batch 1 T.
+  // 3. Réglage UI : throttle 50 % (CONTINU — l'eau de soute se
+  //    convertit au fil de l'eau, taxonomie 2026-07-22).
   const haulerPanel = page.getByRole('complementary', { name: 'First hauler' });
   await expect(async () => {
     await page.getByLabel('Galaxy contact index').selectOption(`ship:${haulerId}`);
@@ -56,7 +57,6 @@ test('électrolyse : batch réglé dans l\'UI, sorties au bord', async ({ page }
   await expect(section).toBeVisible();
   await shot(page, 'cv-01-active-gear');
   await section.getByLabel(/Throttle/).selectOption('50');
-  await section.getByLabel(/Batch/).fill('1');
   await section.getByRole('button', { name: 'Engage' }).click();
   await expect(page.getByRole('status')).toContainText('Active gear engaged');
 
@@ -72,9 +72,10 @@ test('électrolyse : batch réglé dans l\'UI, sorties au bord', async ({ page }
           }[];
         };
         const s = f.ships.find((x) => x.id === haulerId)!;
+        const st = s.conversions.electrolyzer as { runPct: number } | undefined;
         return (s.cargo.oxygen ?? 0) > 0.9 &&
           (s.cargo.hydrogen ?? 0) > 0.9 &&
-          !s.conversions.electrolyzer
+          (!st || st.runPct === 0)
           ? 'done'
           : 'flowing';
       },

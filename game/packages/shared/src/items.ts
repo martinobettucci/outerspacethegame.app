@@ -165,6 +165,19 @@ export const GEAR: Record<string, GearDef> = {
     installHours: 12,
     note: 'Runs the split both ways — water from oxygen and hydrogen too.',
   },
+  /** W9-batch — décompresseur de cells : 1 fuel_cell → 50 fuel, 1 jour
+   *  À L'ARRÊT, zéro carburant brûlé (exemple canon 2026-07-22). */
+  cell_decompressor: {
+    key: 'cell_decompressor',
+    kind: 'accessory',
+    slot: 'accessory',
+    fabricator: 'fuelcell_plant',
+    fabricationCost: { steel_l: 25, silicon: 10, gold: 5 },
+    fabricationHours: 24,
+    installCost: { steel_l: 10 },
+    installHours: 12,
+    note: 'Cracks one fuel cell into raw drive fuel — a day at rest, no burn.',
+  },
   /** W9c — vivarium : carburant + oxygène → nourriture (sans niveaux). */
   vivarium: {
     key: 'vivarium',
@@ -191,7 +204,7 @@ export const GEAR: Record<string, GearDef> = {
 
 // Grades ENHANCED des actifs W9b (le catalogue passif W9d ajoutera les
 // siens) — enregistrés après coup pour rester DRY.
-for (const key of ['electrolyzer', 'electrolyzer_l2', 'vivarium']) {
+for (const key of ['electrolyzer', 'electrolyzer_l2', 'vivarium', 'cell_decompressor']) {
   GEAR[`${key}_enhanced`] = enhanced(GEAR[key]!);
 }
 

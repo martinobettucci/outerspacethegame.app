@@ -716,7 +716,6 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       .object({
         itemKey: z.string().min(1).max(64),
         runPct: z.number().int().min(0).max(100),
-        batchT: z.number().positive().optional(),
         direction: z.enum(['forward', 'reverse']).optional(),
       })
       .safeParse(req.body);
