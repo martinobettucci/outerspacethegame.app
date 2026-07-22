@@ -78,7 +78,7 @@ describe('W9b — électrolyse CONTINUE (correction 2026-07-22)', () => {
       setConversion(pool, owner, bigId, { itemKey: 'electrolyzer', runPct: 33 }, FAST),
     ).rejects.toMatchObject({ code: 'not_available' });
     await expect(
-      setConversion(pool, owner, bigId, { itemKey: 'arc_furnace' as string, runPct: 50 }, FAST),
+      setConversion(pool, owner, bigId, { itemKey: 'phlogiston_coil' as string, runPct: 50 }, FAST),
     ).rejects.toMatchObject({ code: 'not_found' });
     await expect(
       setConversion(

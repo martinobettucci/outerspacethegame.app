@@ -50,12 +50,12 @@
 | electrolyzer | accessory | workshop | eau → O2+H (1:1:1), 20 / 30 T/h, 1 u fuel/h | ✔ |
 | electrolyzer_l2 | accessory | workshop | idem + INVERSE (O2+H → eau) | ✔ |
 | vivarium | accessory | workshop | 0,5 O2 → 1 nourriture, 5 / 7,5 T/h, 1 u fuel/h | ✔ |
-| cell_cracker | fuel | fuelcell_plant | fuel_cells → carburant moteur (mobile — la soute-réservoir) [ratio TUNE < décompresseur] | ⏳ W9e |
-| arc_furnace | accessory | smelter | junk → steel_l, brûle du fuel | ⏳ W9e |
-| med_synth | accessory | lab | eau+phosphor → med_1, brûle du fuel | ⏳ W9e |
+| cell_cracker | fuel | fuelcell_plant | 0,1 cell/h à 100 % → 40 u moteur/cell (< 50 du batch), 0,5 u fuel/h | ✔ |
+| arc_furnace | accessory | smelter | 2 junk → 1 steel_l, 5 réf/h à 100 %, 1 u fuel/h | ✔ |
+| med_synth | accessory | lab | 1 eau + 0,5 phosphore → 1 med_1, 2 réf/h à 100 %, 1 u fuel/h | ✔ |
 | ram_scoop | fuel | refinery | EN TRANSIT dans un champ stellaire : récolte le fuel du type ∝ runPct CONTRE usure ×2 / ×1,5 | ⏳ W9e |
 | gravity_sling | engine | shipyard | départ ≤ 8 pc d'une étoile : vitesse ×(1+runPct/2) contre dégâts ∝ runPct | ⏳ W9e |
-| fab_bay | accessory | workshop | auto-réparation 1 %/h × runPct au steel de SOUTE + fuel (voie de réparation du Crusader — W9g) | ⏳ W9e |
+| fab_bay | accessory | workshop | auto-réparation 1 %/h × runPct, 0,5 T steel_l/% de SOUTE + 1 u fuel/h (voie du Crusader — W9g) ; bord de plein → 0 % | ✔ |
 
 ## 3. Accessoires ACTIFS BATCH (immobiles, zéro carburant, efficaces)
 
@@ -65,12 +65,12 @@
 | cryo_stasis_pod | accessory | lab | gel de la survie ET du vieillissement 7 j ; réveil à la demande en 10 min ; L2 (enhanced) : AUTOPILOTE cryostatique (voyage gelé, durée choisie, irréveillable pendant) | ⏳ W9e |
 | jump_primer | engine | shipyard | charge LIBRE (1 h–10 j) → boost vitesse ×1,5 pendant 3 × le temps de charge | ⏳ W9e |
 | deep_scan_pulse | obs | research_center | 12 h → un instantané d'intel L3 d'un corps sous scan | ⏳ W9e |
-| hull_patch_kit | accessory | workshop | 12 h → +25 % des HP max, 1 T steel_l symbolique | ⏳ W9e |
+| hull_patch_kit | accessory | workshop | 1 T steel_l → 12 h → +25 % des HP MAX (borné au plein) | ✔ |
 | kedge_winch | accessory | spaceport | 1 j → 5 pc sans carburant ; MODE BOOST (< 1 fuel restant) : tout brûlé, drift 10 pc/j | ⏳ W9e |
-| electrolysis_vat | accessory | workshop | contrepartie batch de l'électrolyse (rendement +10 %) | ⏳ W9e |
-| hydroponic_run | accessory | farm | contrepartie batch du vivarium | ⏳ W9e |
-| smelting_run | accessory | smelter | contrepartie batch de l'arc_furnace | ⏳ W9e |
-| apothecary_still | accessory | lab | contrepartie batch du med_synth | ⏳ W9e |
+| electrolysis_vat | accessory | workshop | 20 eau → 22 O2 + 22 H, 12 h (rendement +10 %) | ✔ |
+| hydroponic_run | accessory | farm | 10 O2 → 22 food_1, 12 h (+10 %) | ✔ |
+| smelting_run | accessory | smelter | 20 junk → 11 steel_l, 12 h (+10 %) | ✔ |
+| apothecary_still | accessory | lab | 10 eau + 5 phosphore → 11 med_1, 12 h (+10 %) | ✔ |
 
 ## 4. UPGRADES (rappel — pas des accessoires, mêmes familles de slots)
 

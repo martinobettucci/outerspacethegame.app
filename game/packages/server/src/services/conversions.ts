@@ -22,7 +22,12 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
-import { evalShipFuel, rebaseShipDrain, type ShipRow } from '../sim/shipDrain.js';
+import {
+  evalShipFuel,
+  evalShipHull,
+  rebaseShipDrain,
+  type ShipRow,
+} from '../sim/shipDrain.js';
 import { CommandError } from './planets.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +85,7 @@ export async function settleConversion(
     const cargo = { ...((ship.cargo ?? {}) as Record<string, number>) };
     const containers = hullContainers(ship);
     for (const [res, tons] of Object.entries(def.output)) {
-      if (res === 'fuel') continue;
+      if (res === 'fuel' || res === 'hp_pct') continue;
       const free = Math.max(0, containers - containersUsed(cargo));
       const take = Math.min(tons as number, free);
       if (take > 0) cargo[res] = (cargo[res] ?? 0) + take;
@@ -103,6 +108,18 @@ export async function settleConversion(
         setUnits: newUnits,
       });
       ship.fuel = { ...(ship.fuel ?? {}), [tank.type]: newUnits };
+    }
+    // W9e hull_patch_kit : sortie `hp_pct` = % des HP MAX réparés,
+    // bornés au plein (l'excédent est perdu — kit symbolique).
+    const hpOut = Number((def.output as Record<string, number>).hp_pct ?? 0);
+    if (hpOut > 0) {
+      const hull = evalShipHull(ship as ShipRow, nowMs);
+      if (hull.maxHp > 0) {
+        const newHp = Math.min(hull.maxHp, hull.hp + (hpOut / 100) * hull.maxHp);
+        ship.hull_hp = newHp;
+        ship.hull_as_of = new Date(nowMs).toISOString();
+        await rebaseShipDrain(client, ship as ShipRow, nowMs, 'none', {});
+      }
     }
     delete conversions[itemKey];
     ship.conversions = conversions;
@@ -144,6 +161,31 @@ export async function settleConversion(
       starved = true;
     }
   }
+  // W9e — sorties SPÉCIALES : bord de plein = starvation (auto 0 %).
+  const fuelOutPerRef = Number((output as Record<string, number>).fuel ?? 0);
+  const tankCap = effectiveTankU(
+    HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
+      ?.tankU ?? 0,
+    ship.upgrades,
+  );
+  if (fuelOutPerRef > 0) {
+    const space = Math.max(0, tankCap - tank.units);
+    if (space / fuelOutPerRef < refT - 1e-9) {
+      refT = Math.min(refT, space / fuelOutPerRef);
+      starved = true;
+    }
+  }
+  const hpPctPerRef = Number((output as Record<string, number>).hp_pct ?? 0);
+  const hull = hpPctPerRef > 0 ? evalShipHull(ship as ShipRow, nowMs) : null;
+  if (hull) {
+    const hpPerRef = (hpPctPerRef / 100) * hull.maxHp;
+    const maxRefByHull =
+      hpPerRef > 0 ? Math.max(0, hull.maxHp - hull.hp) / hpPerRef : 0;
+    if (maxRefByHull < refT - 1e-9) {
+      refT = Math.min(refT, maxRefByHull);
+      starved = true;
+    }
+  }
   refT = Math.max(0, refT);
   if (refT > 0) {
     for (const [res, perRef] of Object.entries(input)) {
@@ -152,13 +194,25 @@ export async function settleConversion(
     }
     const containers = hullContainers(ship);
     for (const [res, perRef] of Object.entries(output)) {
+      if (res === 'fuel' || res === 'hp_pct') continue;
       const want = refT * (perRef as number);
       const free = Math.max(0, containers - containersUsed(cargo));
       const take = Math.min(want, free);
       if (take > 0) cargo[res] = (cargo[res] ?? 0) + take;
     }
     const fuelSpent = (def.fuelUPerHourAt100 * state.runPct * (refT / rate)) / 100;
-    const newUnits = Math.max(0, tank.units - fuelSpent);
+    const newUnits = Math.min(
+      tankCap,
+      Math.max(0, tank.units - fuelSpent) + refT * fuelOutPerRef,
+    );
+    if (hull) {
+      const newHp = Math.min(
+        hull.maxHp,
+        hull.hp + refT * (hpPctPerRef / 100) * hull.maxHp,
+      );
+      ship.hull_hp = newHp;
+      ship.hull_as_of = new Date(nowMs).toISOString();
+    }
     ship.cargo = cargo;
     await client.query(`UPDATE ships SET cargo = $2 WHERE id = $1`, [
       ship.id,
@@ -214,6 +268,32 @@ async function scheduleContinuousEdge(
   if (fuelPerH > 0) {
     const tank = evalShipFuel(ship, nowMs);
     horizonH = Math.min(horizonH, tank.units / fuelPerH);
+  }
+  // W9e — bords de PLEIN des sorties spéciales (réservoir, coque).
+  const outDef = state.direction === 'reverse' ? def.input : def.output;
+  const fuelOutPerRef = Number((outDef as Record<string, number>).fuel ?? 0);
+  if (fuelOutPerRef > 0) {
+    const tank = evalShipFuel(ship, nowMs);
+    const cap = effectiveTankU(
+      HULLS[`${ship.hull_category}_${ship.hull_size}` as `${HullCategory}_${HullSize}`]
+        ?.tankU ?? 0,
+      ship.upgrades,
+    );
+    horizonH = Math.min(
+      horizonH,
+      Math.max(0, cap - tank.units) / (fuelOutPerRef * rate),
+    );
+  }
+  const hpPctPerRef = Number((outDef as Record<string, number>).hp_pct ?? 0);
+  if (hpPctPerRef > 0) {
+    const hull = evalShipHull(ship as ShipRow, nowMs);
+    if (hull.maxHp > 0) {
+      horizonH = Math.min(
+        horizonH,
+        Math.max(0, hull.maxHp - hull.hp) /
+          ((hpPctPerRef / 100) * hull.maxHp * rate),
+      );
+    }
   }
   const due = new Date(nowMs + Math.max(1, (horizonH * 3_600_000) / timeScale));
   await enqueue(client, 'conversion_edge', due, {

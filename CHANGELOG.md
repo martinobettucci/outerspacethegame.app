@@ -2,6 +2,27 @@
 
 ## [Non publié]
 
+### W9e (partie 1) — les 9 actifs « recette » (2026-07-22)
+
+- CONTINUS : **cell_cracker** (la soute-réservoir — 0,1 cell/h à
+  100 % → 40 u moteur/cell, < 50 du batch ; carburant crédité au
+  RÉSERVOIR, borné au plein → starvation), **arc_furnace** (2 junk →
+  1 steel_l), **med_synth** (1 eau + 0,5 phosphore → 1 med_1,
+  bi-intrant), **fab_bay** (auto-réparation 1 %/h × runPct à l'acier
+  de SOUTE + fuel — bord de PLEIN de coque → 0 % ; la voie de
+  réparation du Crusader, W9g).
+- BATCH (+10 % de rendement, 12 h, zéro fuel) : **electrolysis_vat**
+  (20 eau → 22 O2 + 22 H), **hydroponic_run** (10 O2 → 22 food_1),
+  **smelting_run** (20 junk → 11 steel_l), **apothecary_still**
+  (10 eau + 5 phosphore → 11 med_1), **hull_patch_kit** (1 T steel_l
+  → +25 % des HP MAX, borné au plein).
+- Moteur : sorties SPÉCIALES `fuel` (au réservoir, bornée) et
+  `hp_pct` (réparation, bornée) pour les DEUX modes ; bords de plein
+  planifiés ; grades enhanced auto (GEAR → 69 accessoires).
+- Tests : conversions unit 6/6, actives.test intégration 6/6, E2E
+  batch UI hull_patch_kit (capture observée) ; l'UI Active gear
+  générique couvre les nouveaux actifs sans changement.
+
 ### W9d (partie 2) — les 19 effets passifs CÂBLÉS + chapitre Codex « Ship gear » (2026-07-22)
 
 - Effets branchés dans les systèmes réels : drains de survol

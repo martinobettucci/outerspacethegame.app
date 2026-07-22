@@ -88,3 +88,83 @@ test('électrolyse : batch réglé dans l\'UI, sorties au bord', async ({ page }
   }).toPass({ timeout: 30_000 });
   await shot(page, 'cv-02-outputs-in-hold');
 });
+
+test('W9e batch UI : hull_patch_kit — intrants à l\'activation, procédé affiché, clos au terme', async ({
+  page,
+}) => {
+  test.setTimeout(420_000);
+
+  const email = pickEmailByDna(`e2e-cw-${runId}`, () => true, 0);
+  const planetId = await registerSovereign(page, email, 'Patcher', 'Scientific');
+  for (const [resource, tons] of [
+    ['steel_l', 40],
+    ['fuel_cold', 60],
+    ['fuel_hot', 60],
+    ['fuel_gas', 60],
+  ] as const) {
+    const g = await page.request.post('/api/test/grant', {
+      data: { planetId, resource, tons },
+    });
+    expect(g.ok()).toBe(true);
+  }
+  const fleet0 = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+    ships: { id: string; name: string }[];
+  };
+  const haulerId = fleet0.ships.find((s) => s.name === 'First hauler')!.id;
+
+  await installRigViaPipeline(page, planetId, haulerId, 'hull_patch_kit');
+  const rf = await page.request.post(`/api/ships/${haulerId}/refuel`, { data: {} });
+  expect(rf.ok()).toBe(true);
+  const load = await page.request.post(`/api/ships/${haulerId}/cargo`, {
+    data: { resource: 'steel_l', tons: 1, direction: 'load' },
+  });
+  expect(load.ok()).toBe(true);
+
+  const haulerPanel = page.getByRole('complementary', { name: 'First hauler' });
+  await expect(async () => {
+    await page.getByLabel('Galaxy contact index').selectOption(`ship:${haulerId}`);
+    await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 30_000 });
+  const section = haulerPanel.getByRole('region', {
+    name: /Active gear — hull patch kit/,
+  });
+  await expect(section).toBeVisible();
+  await section
+    .getByRole('button', { name: 'Start process (inputs consumed, hull held)' })
+    .click();
+  await expect(page.getByRole('status')).toContainText('Active gear engaged');
+  // Intrants consommés À L'ACTIVATION : 1 T d'acier sortie de soute.
+  await expect
+    .poll(async () => {
+      const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+        ships: { id: string; cargo: Record<string, number> }[];
+      };
+      return f.ships.find((x) => x.id === haulerId)!.cargo.steel_l ?? 0;
+    })
+    .toBeLessThan(0.1);
+  // Procédé affiché (échéance) + bouton d'abandon.
+  await expect(section.getByText(/Process running — ends/)).toBeVisible();
+  await expect(
+    section.getByRole('button', { name: 'Abort process (inputs lost)' }),
+  ).toBeVisible();
+  await shot(page, 'cv-03-batch-running');
+  // Au terme (12 h-jeu @ ×7200 ≈ 6 s réels) : procédé clos.
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; conversions: Record<string, unknown> }[];
+        };
+        return f.ships.find((x) => x.id === haulerId)!.conversions.hull_patch_kit
+          ? 'running'
+          : 'done';
+      },
+      { timeout: 90_000 },
+    )
+    .toBe('done');
+  await expect(async () => {
+    await page.getByLabel('Galaxy contact index').selectOption(`ship:${haulerId}`);
+    await expect(haulerPanel).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 30_000 });
+  await shot(page, 'cv-04-batch-done');
+});

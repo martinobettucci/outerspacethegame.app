@@ -14,12 +14,17 @@
  */
 import type { ResourceId } from './resources.js';
 
+/** Clés de sortie SPÉCIALES (W9e) : `fuel` = unités du TYPE MOTEUR
+ *  directement au réservoir (bornées à la capacité effective) ;
+ *  `hp_pct` = % des HP MAX de la coque réparés (borné au plein). */
+export type ConversionOutputKey = ResourceId | 'fuel' | 'hp_pct';
+
 export interface ContinuousDef {
   itemKey: string;
   mode: 'continuous';
   /** Intrants consommés par tonne de référence. */
   input: Partial<Record<ResourceId, number>>;
-  output: Partial<Record<ResourceId, number>>;
+  output: Partial<Record<ConversionOutputKey, number>>;
   /** Tonnes de référence converties par h-jeu à 100 %. [TUNE] */
   ratePerHourAt100: number;
   /** Carburant brûlé par h-jeu à 100 % (u, type moteur). [TUNE] */
@@ -32,9 +37,8 @@ export interface BatchDef {
   mode: 'batch';
   /** Entrées consommées À L'ACTIVATION (tonnes ; 'fuel' interdit ici). */
   input: Partial<Record<ResourceId, number>>;
-  /** Sorties au terme du procédé. `fuel: n` = n unités du TYPE MOTEUR
-   *  directement au réservoir. */
-  output: Partial<Record<ResourceId | 'fuel', number>>;
+  /** Sorties au terme du procédé (clés spéciales : voir ci-dessus). */
+  output: Partial<Record<ConversionOutputKey, number>>;
   /** Durée du procédé (h-jeu), coque À L'ARRÊT et immobilisée. [TUNE] */
   processHours: number;
 }
@@ -69,6 +73,45 @@ export const CONVERSIONS: Record<string, ConversionDef> = {
     ratePerHourAt100: 5,
     fuelUPerHourAt100: 1,
   },
+  // W9e — CONTINUS restants (chiffres [TUNE] jusqu'à W9f).
+  /** La soute-réservoir : craque des fuel_cells en carburant MOTEUR en
+   *  route — moins efficient que le décompresseur batch (40 < 50). */
+  cell_cracker: {
+    itemKey: 'cell_cracker',
+    mode: 'continuous',
+    input: { fuel_cells: 1 },
+    output: { fuel: 40 },
+    ratePerHourAt100: 0.1,
+    fuelUPerHourAt100: 0.5,
+  },
+  /** Fonderie d'arc : junk de soute → acier léger (2:1). */
+  arc_furnace: {
+    itemKey: 'arc_furnace',
+    mode: 'continuous',
+    input: { junk: 2 },
+    output: { steel_l: 1 },
+    ratePerHourAt100: 5,
+    fuelUPerHourAt100: 1,
+  },
+  /** Synthétiseur médical : eau + phosphore → médecine de campagne. */
+  med_synth: {
+    itemKey: 'med_synth',
+    mode: 'continuous',
+    input: { water: 1, phosphor: 0.5 },
+    output: { med_1: 1 },
+    ratePerHourAt100: 2,
+    fuelUPerHourAt100: 1,
+  },
+  /** Baie de fabrication : auto-réparation 1 %/h × runPct à l'acier de
+   *  SOUTE + carburant — la voie de réparation du Crusader (W9g). */
+  fab_bay: {
+    itemKey: 'fab_bay',
+    mode: 'continuous',
+    input: { steel_l: 0.5 },
+    output: { hp_pct: 1 },
+    ratePerHourAt100: 1,
+    fuelUPerHourAt100: 1,
+  },
   // BATCH (immobiles, efficaces, zéro carburant brûlé) — exemple canon.
   cell_decompressor: {
     itemKey: 'cell_decompressor',
@@ -76,6 +119,43 @@ export const CONVERSIONS: Record<string, ConversionDef> = {
     input: { fuel_cells: 1 },
     output: { fuel: 50 },
     processHours: 24,
+  },
+  // W9e — contreparties BATCH (rendement +10 % vs continu, 12 h). [TUNE]
+  electrolysis_vat: {
+    itemKey: 'electrolysis_vat',
+    mode: 'batch',
+    input: { water: 20 },
+    output: { oxygen: 22, hydrogen: 22 },
+    processHours: 12,
+  },
+  hydroponic_run: {
+    itemKey: 'hydroponic_run',
+    mode: 'batch',
+    input: { oxygen: 10 },
+    output: { food_1: 22 },
+    processHours: 12,
+  },
+  smelting_run: {
+    itemKey: 'smelting_run',
+    mode: 'batch',
+    input: { junk: 20 },
+    output: { steel_l: 11 },
+    processHours: 12,
+  },
+  apothecary_still: {
+    itemKey: 'apothecary_still',
+    mode: 'batch',
+    input: { water: 10, phosphor: 5 },
+    output: { med_1: 11 },
+    processHours: 12,
+  },
+  /** Kit de colmatage : 1 T d'acier symbolique → +25 % des HP max. */
+  hull_patch_kit: {
+    itemKey: 'hull_patch_kit',
+    mode: 'batch',
+    input: { steel_l: 1 },
+    output: { hp_pct: 25 },
+    processHours: 12,
   },
 };
 

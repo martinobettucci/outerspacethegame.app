@@ -4707,3 +4707,41 @@ Preuves : passives.test intégration 8/8 ; balayage sériel 353/355
 ne s'est pas reproduit au 2ᵉ) ; shared 207 ; codex client 10/10 ;
 E2E codex 1/1 avec capture codex-07 OBSERVÉE (nav 5 chapitres, prose,
 warn batch, règle exacte 6 h) ; typecheck vert.
+
+## 2026-07-22 — W9e partie 1 livrée : les 9 actifs « recette »
+
+Moteur de conversion étendu aux sorties SPÉCIALES, pour les deux
+modes : `fuel` (unités du type moteur créditées AU RÉSERVOIR, bornées
+à la capacité effective — le plein est un bord : starvation → 0 % en
+continu, excédent perdu en batch) et `hp_pct` (% des HP MAX réparés,
+borné au plein — même sémantique de bord). scheduleContinuousEdge
+planifie ces bords (réservoir plein, coque pleine).
+
+Livrés : cell_cracker (0,1 cell/h à 100 % → 40 u/cell < 50 du batch —
+la soute devient réservoir des grandes expéditions), arc_furnace
+(2 junk → 1 steel_l, 5 réf/h), med_synth (1 eau + 0,5 phosphore →
+1 med_1 — bi-intrant : le premier intrant épuisé starve), fab_bay
+(1 %/h × runPct, 0,5 T steel_l/% + 1 u fuel/h) ; batch +10 % :
+electrolysis_vat, hydroponic_run, smelting_run, apothecary_still,
+hull_patch_kit (1 T symbolique → +25 % HP max). GEAR : 69 accessoires
+(× enhanced). Tous chiffres [TUNE] jusqu'à W9f.
+
+Corrections de tests induites : conversions.test « actif inconnu »
+utilisait arc_furnace (désormais réel) → clé fictive ;
+items.test EXHAUSTIF étendu aux 18 clés nouvelles.
+
+Preuves : shared 209/209 ; actives.test 6/6 ; conversions.test 7/7 ;
+balayage sériel 358/361 (census ×2 flaky R5 connu + la garde corrigée
+depuis) ; E2E conversions 2/2 dont batch UI hull_patch_kit — captures
+cv-03/cv-04 OBSERVÉES (procédé affiché avec échéance, acier débité
+0/3, abandon disponible, coque 80/80 bornée au plein) ; typecheck ×3.
+L'UI Active gear (générique via conversionOf) couvre les 9 nouveaux
+actifs sans modification — le chapitre Codex « Ship gear » (W9d)
+décrit déjà les trois tempéraments, aucun contenu non découvert
+ajouté.
+
+Partie 2 à suivre : ram_scoop et gravity_sling (couplés au
+déplacement), jump_primer (charge libre → boost ×1,5 pendant 3× la
+charge), kedge_winch (+ mode boost drift), deep_scan_pulse (instantané
+d'intel L3), cryo_stasis_pod (gel survie+vieillissement, réveil
+10 min, L2 autopilote).

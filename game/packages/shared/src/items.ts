@@ -214,6 +214,16 @@ export const GEAR: Record<string, GearDef> = {
   ore_hopper: { key: 'ore_hopper', kind: 'accessory', slot: 'cargo', fabricator: 'smelter', fabricationCost: { steel_l: 25 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Wide intake — junk scooping +50%.' },
   solar_sails: { key: 'solar_sails', kind: 'accessory', slot: 'fuel', fabricator: 'fuelcell_plant', fabricationCost: { silicon: 30, aluminium: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Starlight canvas — free hover within 8 pc of a star.' },
   escape_thrusters: { key: 'escape_thrusters', kind: 'accessory', slot: 'engine', fabricator: 'military_district', fabricationCost: { steel_l: 25, fuel_cells: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Hair-trigger burn — auto-flee alarm at 40%.' },
+  // W9e — ACTIFS restants (recettes dans conversions.ts, [TUNE] W9f).
+  cell_cracker: { key: 'cell_cracker', kind: 'accessory', slot: 'fuel', fabricator: 'fuelcell_plant', fabricationCost: { steel_l: 25, silicon: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Cracks fuel cells into drive fuel on the move — the cargo-hold reservoir.' },
+  arc_furnace: { key: 'arc_furnace', kind: 'accessory', slot: 'accessory', fabricator: 'smelter', fabricationCost: { steel_l: 35, silicon: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Melts junk into light steel while the arc burns fuel.' },
+  med_synth: { key: 'med_synth', kind: 'accessory', slot: 'accessory', fabricator: 'lab', fabricationCost: { steel_l: 20, silicon: 15, phosphor: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Brews field medicine from water and phosphor.' },
+  fab_bay: { key: 'fab_bay', kind: 'accessory', slot: 'accessory', fabricator: 'workshop', fabricationCost: { steel_l: 40, silicon: 15, gold: 5 }, fabricationHours: 48, installCost: { steel_l: 10 }, installHours: 12, note: 'Onboard fabricators — self-repair from hold steel, burning fuel.' },
+  electrolysis_vat: { key: 'electrolysis_vat', kind: 'accessory', slot: 'accessory', fabricator: 'workshop', fabricationCost: { steel_l: 25, silicon: 15 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Batch electrolysis at rest — better yield, no burn.' },
+  hydroponic_run: { key: 'hydroponic_run', kind: 'accessory', slot: 'accessory', fabricator: 'farm', fabricationCost: { steel_l: 20, water: 10, phosphor: 5 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'A still garden — batch food from oxygen, no burn.' },
+  smelting_run: { key: 'smelting_run', kind: 'accessory', slot: 'accessory', fabricator: 'smelter', fabricationCost: { steel_l: 30 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Batch smelt at rest — junk to steel, better yield.' },
+  apothecary_still: { key: 'apothecary_still', kind: 'accessory', slot: 'accessory', fabricator: 'lab', fabricationCost: { steel_l: 20, silicon: 10, phosphor: 10 }, fabricationHours: 24, installCost: { steel_l: 10 }, installHours: 12, note: 'Patient distillation — batch medicine, no burn.' },
+  hull_patch_kit: { key: 'hull_patch_kit', kind: 'accessory', slot: 'accessory', fabricator: 'workshop', fabricationCost: { steel_l: 20 }, fabricationHours: 24, installCost: { steel_l: 5 }, installHours: 12, note: 'Plates and sealant — a day of patching restores a quarter of the hull.' },
   engine_l2: upgrade('engine', 2, 'shipyard', { steel_l: 40, fuel_cells: 20 }, 'Speed ×1.15.'),
   engine_l3: upgrade('engine', 3, 'shipyard', { steel_h: 60, fuel_cells: 50 }, 'Speed ×1.30.'),
   armor_l2: upgrade('armor', 2, 'shipyard', { steel_l: 50 }, 'Hull ×1.3.'),
@@ -235,6 +245,9 @@ for (const key of [
   'berth_module', 'course_optimizer', 'cargo_netting', 'mooring_winch',
   'bilge_purifier', 'stargate_caller', 'salvage_grapnel',
   'haggler_matrix', 'ore_hopper', 'solar_sails', 'escape_thrusters',
+  'cell_cracker', 'arc_furnace', 'med_synth', 'fab_bay',
+  'electrolysis_vat', 'hydroponic_run', 'smelting_run',
+  'apothecary_still', 'hull_patch_kit',
 ]) {
   GEAR[`${key}_enhanced`] = enhanced(GEAR[key]!);
 }

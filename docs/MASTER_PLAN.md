@@ -134,8 +134,16 @@ le même commit, tests §15, captures §16, docs.
   berth_module, course_optimizer, cargo_netting, mooring_winch,
   bilge_purifier, stargate_caller, salvage_grapnel, haggler_matrix,
   ore_hopper, solar_sails, escape_thrusters. → JOURNAL 2026-07-22
-- [ ] **W9e — Actifs restants** : arc_furnace, med_synth, ram_scoop,
-  gravity_sling, fab_bay (+enhanced). → JOURNAL 2026-07-22
+- [~] **W9e — Actifs restants — PARTIE 1 LIVRÉE (2026-07-22 : les 9
+  « recettes » — continus cell_cracker (soute-réservoir, sortie fuel
+  au réservoir borné), arc_furnace, med_synth (bi-intrant), fab_bay
+  (sortie hp_pct, bord de plein) ; batch electrolysis_vat,
+  hydroponic_run, smelting_run, apothecary_still (+10 %),
+  hull_patch_kit (+25 % HP max) ; moteur étendu aux sorties
+  spéciales fuel/hp_pct ; actives.test 6/6, E2E batch UI + capture)**.
+  PARTIE 2 restante : ram_scoop, gravity_sling (couplés au
+  déplacement), jump_primer, kedge_winch, deep_scan_pulse,
+  cryo_stasis_pod (amendements validés). → JOURNAL 2026-07-22
 - [ ] **W9g — Reprise des ateliers de RÉPARATION (décision 2026-07-22,
   après W9)** : réparation au sol = DOCKÉ sur une planète, payée en
   steel LÉGER OU LOURD (barème léger/lourd [TUNE à proposer]) ; le
