@@ -4618,3 +4618,21 @@ catalogue COMPLET fait foi (statuts ✔/⏳/💬, gates, std/enhanced) ; le
 TABLEAU FINAL sera livré au responsable à la clôture de W9. Preuves :
 shared items 5 ; gear.test 10/10 (×3) ; balayage sériel 347/347 ;
 build vert.
+
+## 2026-07-22 — Rationales détaillées des 9 items 💬 (exposées au responsable)
+
+Explications données pour validation (résumé) : cryo_stasis_pod (gèle
+l'horloge de survie 7 j contre inertie totale — cible assise en P5) ;
+jump_primer (×1,5 le prochain trajet, charge périmable 3 j, slot
+engine en concurrence avec upgrades/trim_vanes/course_optimizer) ;
+deep_scan_pulse (instantané L3 qui VIEILLIT, jamais L4, 12 h statique) ;
+hull_patch_kit (+25 % HP sans steel ni atelier — générosité à trancher
+en W9f, patch en plein champ partiellement auto-consommé) ;
+kedge_winch (5 pc/j sans fuel, utilisable échoué — pari de survie) ;
+electrolysis_vat (+10 % rendement, zéro fuel — le choix
+mobilité/efficience) ; hydroponic_run (gate FARM — spécialisation
+planétaire) ; smelting_run (immobilisé AU-DESSUS du champ de junk qui
+mord — synergie ballast_shielding) ; apothecary_still (logistique
+médicale hors réseau). Colle du système : horloge de survie pendant
+les batch, slots de famille partagés (W9c), gates dispersés = marché
+d'items, enhanced ÷1,5.
