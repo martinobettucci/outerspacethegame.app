@@ -4842,3 +4842,37 @@ Preuves : repair.test 7/7 (nouveau cas : léger à sec + 20 T de lourd →
 réparation SERVIE, lourd débité −9,6 T/j, léger intact ; les deux à
 sec → arrêt ; restauration → reprise) ; balayage sériel 369/369 ;
 codex client 10/10 ; typecheck vert.
+
+## 2026-07-22 — W8e : plan de découpage PERSISTÉ (avant code, CLAUDE.md §5)
+
+Objectif (MASTER_PLAN W8, validé en bloc 2026-07-21) : le Crusader
+FABRIQUE TOUT — ADN complet, usines L3 avec usinage partiel D'OFFICE,
+3 warehouses L3, PAS de markets. Découpage :
+
+- **W8e-1 — Items à bord** : migration 038 (`work_orders.body_id`
+  nullable + `ship_id` FK ships avec CHECK l'un-ou-l'autre ;
+  `ships.crusader_items` jsonb, carte clé→compte) ; `fabricateGear`
+  accepte le Crusader — ADN complet ⇒ TOUT hôte réputé actif L3
+  (grades enhanced fabricables d'office), balance d'items de bord =
+  itemCapacity([3,3,3]) = 450, usinage partiel D'OFFICE (work-order
+  payé par paliers de 5 % sur `crusader_stock`) ; handlers work_step /
+  item_fabricated appris du bord ; PAS de fabrication à la commande à
+  bord (les usines L3 sont d'office). Tests intégration.
+- **W8e-2 — Pipeline d'équipement à bord** : install/uninstall/
+  disassemble pour les coques DOCKÉES AU Crusader (status docked +
+  follow_ship_id), items tirés de/rendus à `crusader_items`, coût
+  d'installation payé au stock de bord, immobilisation 12 h inchangée.
+  Tests intégration (§10 compris).
+- **W8e-3 — Coques à bord** : `buildShip` sur le Crusader (shipyard de
+  l'ADN complet) — usinage partiel d'office, coût au stock de bord,
+  coque née DOCKÉE au Crusader si un dock de sa taille est libre,
+  sinon en survol à ≤ 1 pc [interp annoncée]. Tests intégration.
+- **W8e-4 — UI + E2E + clôture** : panneau Crusader (fabriquer, balance
+  d'items, ordres en cours, installer sur coque amarrée), E2E complet,
+  captures observées, MASTER_PLAN W8 → [x], PROD_MIGRATIONS 038, DAT.
+
+Interps annoncées : (a) le stock de bord est une carte STATIQUE à ticks
+quotidiens (crusader_daily) — les paliers 5 % débitent la carte
+directement ; (b) capacité d'items de bord 450 [TUNE] ; (c) aucune
+techno/DNA vérifiée à bord (ADN complet canon) ; (d) marché : aucune
+surface de bord n'existe — le refus est structurel, prouvé par test.
