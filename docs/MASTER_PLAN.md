@@ -178,10 +178,15 @@ le même commit, tests §15, captures §16, docs.
 
 ## Programme R — Restes figés d'avant les sondes L3
 
-- [ ] **R1 — Fold final de la main de cartes (chunk AO)** : contrat
-  précisé au BACKLOG l.90 (tranche nommée 64 px au repos, cible ≥44 px,
-  dépliage au survol/focus/sélection, reduced-motion) + tests
-  géométriques + captures 2 viewports.
+- [x] **R1 — Fold final de la main de cartes — PROUVÉ (2026-07-22)** :
+  l'implémentation CSS du contrat (tranche nommée 64 px, dépliage au
+  survol/focus-within/sélection, reduced-motion) datait du chunk AO —
+  R1 livre les PREUVES manquantes : E2E card-hand-fold.spec (géométrie
+  au pixel ±3, cible ≥44 px, premier-plan réel via elementFromPoint,
+  clavier avec repli au blur, reduced-motion sans transition, viewport
+  plancher 1280×800) + captures fold-01..03 observées. Géométrie non
+  testable en unit (client sans DOM-lib — annoncé) ; computeCardStates
+  reste couvert par CardHand.test.
 - [x] **R2 — Application des caps `maxInstances` — LIVRÉ
   (2026-07-22)** : les 14 « single » de la table validée portent
   `maxInstances: 1` dans le canon partagé (12 ajoutés — telescope et

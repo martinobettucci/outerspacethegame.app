@@ -2,6 +2,16 @@
 
 ## [Non publié]
 
+### R1 — le fold de la main de cartes PROUVÉ (2026-07-22)
+
+- Contrat du chunk AO (BACKLOG « Card hand v2 ») prouvé par E2E
+  dédié : tranche NOMMÉE de 64 px au repos (géométrie mesurée ±3 px,
+  cible ≥ 44 px), dépliage au survol/focus clavier/sélection avec
+  passage au PREMIER PLAN réel (elementFromPoint), repli au blur,
+  reduced-motion sans transition, viewport plancher 1280×800 ;
+  captures fold-01..03 observées. Aucun changement de code UI —
+  l'implémentation existait, les preuves manquaient.
+
 ### R2 + R5 — politique d'instances appliquée ; flaky de sweep éradiqués (2026-07-22)
 
 - **R2** : les **14 bâtiments « single »** de la table validée

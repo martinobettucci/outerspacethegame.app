@@ -4980,3 +4980,22 @@ de la migration 025) — garde service §10, annoncé.
 Preuves : codex client 12/12 ; api.test 12/12 ; balayage sériel
 375/375 (3e vert consécutif) ; resetDb + seed dev PASSENT (les seeds
 ne posaient aucun single en double) ; typecheck vert.
+
+## 2026-07-22 — R1 prouvé : le fold de la main de cartes
+
+L'implémentation CSS du fold (tranche nommée 64 px, dépliage au
+survol/focus-within/sélection, reduced-motion) existait depuis le
+chunk AO — mais SANS preuve (statut [~] mérité). R1 livre les preuves
+du contrat BACKLOG l.90 : E2E card-hand-fold.spec — espacement des
+bords gauches = 64 px ±3 mesuré carte à carte, hauteur de cible
+≥ 44 px, tranche NOMMÉE visible, dépliage par survol DE LA TRANCHE
+(le centre d'une carte repliée est recouvert par la voisine — c'est
+le contrat), premier-plan RÉEL prouvé par elementFromPoint au centre,
+focus clavier déplie / le blur replie (focus-within maintient pendant
+la traversée des boutons internes — voulu), reduced-motion : état
+conservé, transition-property none, viewport plancher 1280×800.
+Captures fold-01..03 OBSERVÉES (tranches TELESCOPE/PROBE PAD/DEPOT/
+MINE au repos, FARM dépliée au premier plan avec coûts et Unlock).
+Annoncé : géométrie non testable côté unit (client sans DOM-lib) —
+computeCardStates reste couvert par CardHand.test. Aucun changement
+de code UI dans ce chunk.
