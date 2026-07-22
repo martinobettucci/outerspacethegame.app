@@ -5078,3 +5078,26 @@ stargate_yard (chantier de gate), casino/diplomatic_district/
 faction_hq (effets P4 — dormants). Impact joueur : il faut STAFFER
 ses bâtiments de service, pas seulement ses usines — c'est un
 changement de boucle, d'où l'arbitrage demandé.
+
+## 2026-07-22 — W6c-b : plan de chunk PERSISTÉ (acheminement d'items par cargo)
+
+Reste validé de W6 (« achat/acheminement par cargo — marché des
+items »). Découpage :
+
+- **W6c-b1 — ACHEMINEMENT (ce chunk)** : migration 039
+  (`ships.item_cargo` jsonb, liste de clés d'items) ; un item en soute
+  occupe UN conteneur [TUNE-v1 : objet discret, DG §7 étendu] — toutes
+  les capacités passent par un helper partagé
+  `containersUsedTotal(cargo, itemCargo)` (chargement fongible,
+  sorties de conversions, vue flotte) ; commandes LOAD (coque DOCKÉE
+  sur un monde possédé : une ligne planet_items → la soute ; ou
+  AMARRÉE à un Crusader : crusader_items → soute) et UNLOAD (inverse,
+  refus balance pleine — le fret ne force jamais un désassemblage) ;
+  API + client + UI (panneau vaisseau : soute d'items ; charge depuis
+  le panneau) ; tests intégration + E2E.
+- **W6c-b2 — MARCHÉ des items (PROPOSITION non validée, à arbitrer)** :
+  v1 proposé = le canal MANUEL étendu aux items (offre « je donne
+  l'item X contre N tonnes de Y » épinglée au vaisseau à quai, TTL
+  48 h, patron manual_offers existant) — les marchés fongibles (taux,
+  AMM) ne savent pas porter du non-fongible sans dénaturer leur
+  contrat. RIEN n'est codé avant validation.
