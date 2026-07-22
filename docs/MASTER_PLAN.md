@@ -210,8 +210,13 @@ le même commit, tests §15, captures §16, docs.
   quotidien (le contrat testé est le CAP, pas le barème du moment).
   Balayage sériel 375/375 ×2 consécutifs. (Erratum W2 : hover n'était
   PAS ordonno-dépendant — régression W1 seed-dépendante, corrigée.)
-- [ ] **R6 — Captures §16 en attente de port 8080** : V1 halo/cercles,
-  V2 UI sondes, V3 chapitre Codex, zoom galaxie, key BuildingPanel.
+- [~] **R6 — Captures §16 — QUASI CLOS (2026-07-22)** : V1 halo/
+  cercles + V2 panneau sondes + zoom galaxie −/+ produits par
+  capture-sweep.spec (r6-01..03, observés) ; V3 chapitre Codex couvert
+  depuis par les captures codex-01..07 (W9d) et cr-05 (W8e).
+  RELIQUAT : la capture « key BuildingPanel » exige un hit-test de
+  tuile PixiJS (hook DOM dans PlanetView.tsx — GELÉ par le chantier
+  @spec du responsable) ; à reprendre quand le gel sera levé.
 - [ ] **R7 — Quirk cap sondes** [TUNE-v1 à trancher] : le cap 5/j/pad
   compte les sondes VIVANTES nées aujourd'hui (une destruction
   rembourse un slot) — garder ou passer à un compteur de production

@@ -4999,3 +4999,17 @@ MINE au repos, FARM dépliée au premier plan avec coûts et Unlock).
 Annoncé : géométrie non testable côté unit (client sans DOM-lib) —
 computeCardStates reste couvert par CardHand.test. Aucun changement
 de code UI dans ce chunk.
+
+## 2026-07-22 — R6 quasi clos : captures §16 en souffrance produites
+
+capture-sweep.spec (pile 8081) : halo/cercles de sélection d'une sonde
+(V1) + panneau sondes (V2) + zoom galaxie −/+ — captures r6-01..03
+OBSERVÉES (halo bleu autour de la sonde en survol, panneau Hull/Star
+scoop/Land/Send ship, contrôle de zoom en bas de carte). V3 (chapitre
+Codex) était déjà couvert par codex-01..07 (W9d) et cr-05 (W8e).
+RELIQUAT ANNONCÉ : « key BuildingPanel » — le plateau est un canvas
+PixiJS sans hook DOM cliquable ; le hook irait dans PlanetView.tsx,
+GELÉ par le chantier @spec du responsable (« laisse pour le moment »).
+R6 reste [~] avec ce seul reliquat, motif tracé au MASTER_PLAN.
+La sonde de la fixture est construite par les VRAIES commandes
+(grant §15 → probe_pad L1 → /probes) — aucun état fabriqué.
