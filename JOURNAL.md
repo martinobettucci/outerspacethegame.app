@@ -4394,3 +4394,35 @@ commandes.
 Preuves : shared items 3 ; gear.test 10/10 (×3) ; balayage sériel
 340/340 ; unit 55 ; E2E gear+shields+harvest+junk+claim 5/5 sériels ;
 build vert.
+
+## 2026-07-22 — PROPOSITION EN DISCUSSION (non validée) : familles de slots & catalogue d'accessoires
+
+Constat validé par le responsable : (1) pas de mapping accessoire →
+famille de slot (tout va au slot générique « accessory ») ; (2) trop
+peu d'accessoires pour des builds/arbitrages réels. Principes donnés :
+un bon accessoire CONTOURNE une contrainte existante, petit avantage
+sans casser l'équilibre ; PASSIF (très petit) ou ACTIF (modulable,
+compromis avec coût d'usage — patron vivarium/électrolyse) ; gating
+par l'ADN des bâtiments.
+
+Ma proposition (EN ATTENTE de validation) :
+- Mapping : un accessoire déclare sa FAMILLE de slot ; upgrades ET
+  accessoires PARTAGENT la capacité de la famille (HULLS.slots) —
+  l'arbitrage upgrade-vs-accessoire naît là.
+- Passifs [TUNE] : heat_recycler (fuel, −15 % hover, refinery),
+  cryo_larder (accessory, +50 % provisions, lab), docking_clamps
+  (accessory, dwell ×2, spaceport), signal_mirror (obs, scan 60 pc,
+  telescope), survey_suite (obs, +1 palier intel plafonné L2,
+  research_center), ballast_shielding (armor, −50 % junk,
+  military_district), flare_dampers (armor, −50 % champ/flare —
+  non-cumul avec morph apparié, obs_station), trim_vanes (engine,
+  pénalité de poids ÷2, shipyard), berth_module (cargo, +25 % pax,
+  residential).
+- Actifs [TUNE] : arc_furnace (junk→steel_l, brûle fuel), med_synth
+  (water+phosphor→med_1, lab), ram_scoop (fuel en transit dans un
+  champ : récolte ∝ runPct contre usure ×2), gravity_sling (départ
+  ≤ 8 pc d'étoile : vitesse ×(1+runPct/2) contre dégâts ∝ runPct),
+  fab_bay (auto-réparation 1 %/h×runPct au steel de soute).
+- Questions posées : partage de capacité famille ? actifs à l'arrêt
+  sauf exceptions ? non-cumul flare_dampers/morph ? exclusions par
+  coque ? tour d'équilibrage post-implémentation ?
