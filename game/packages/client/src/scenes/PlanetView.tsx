@@ -1,3 +1,4 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Isometric planet view”/“Building catalog”/“Industry” and §P2.pop; GAME_BOOK.md §9/§10/§17/§18/§26; DESIGN_GUIDE.md §3/§5/§6; docs/ASSET_PIPELINE.md §1–§3; docs/DESIGN_SYSTEM.md §5/§5.1. */
 /**
  * Vue planète isométrique — GB §17 : grille de tuiles iso PixiJS (décision
  * P0.4), sprites 512×256 posés sur les tuiles, overlays climat, main de
@@ -28,10 +29,15 @@ import { ALL_RESOURCE_IDS, BUILDINGS, INNATE_TRADABLE } from '@atg/shared';
 import { CardHand, type CardAction } from '../components/CardHand.tsx';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import { RecipePicker } from '../components/RecipePicker.tsx';
-import { BuildingPanel } from '../components/BuildingPanel.tsx';
+import { BuildingPanel, routeResources } from '../components/BuildingPanel.tsx';
 import { PlanetStats } from '../components/PlanetStats.tsx';
 import { TechTree } from '../components/TechTree.tsx';
 import { OperationTimer } from '../components/OperationTimer.tsx';
+import {
+  ResourceInline,
+  ResourceIcon,
+  ResourceStockDeck,
+} from '../components/InventoryVisuals.tsx';
 import {
   buildingClimateOverlay,
   buildingSprite,
@@ -847,6 +853,16 @@ export function PlanetView({ planetId }: { planetId: string }) {
                   onClick={() => setSelectedBuildingId(building.id)}
                   aria-label={`Inspect ${building.key.replace(/_/g, ' ')} ${building.status}`}
                 >
+                  {building.recipe && routeResources(building.recipe).length > 0 && (
+                    <span
+                      className="planet-active-works__resources"
+                      aria-label={`Resources handled: ${routeResources(building.recipe).join(', ')}`}
+                    >
+                      {routeResources(building.recipe).map((resource) => (
+                        <ResourceIcon key={resource} resource={resource} size={18} />
+                      ))}
+                    </span>
+                  )}
                   <OperationTimer
                     completesAt={building.completesAt!}
                     label={`${building.key.replace(/_/g, ' ')} · L${building.level}`}
@@ -992,6 +1008,18 @@ export function PlanetView({ planetId }: { planetId: string }) {
                     );
                   }
                 }}
+                onDisassemble={async (itemKey) => {
+                  try {
+                    await api.disassembleItem(planetId, itemKey);
+                    setNotice(`Disassembled ${itemKey.replace(/_/g, ' ')} — recovered matter returned to stock.`);
+                    refreshGear();
+                    await refresh();
+                  } catch (err) {
+                    setNotice(
+                      `Disassembly refused — ${(err as ApiError).message ?? t.errors.generic}`,
+                    );
+                  }
+                }}
                 onBuildShip={async (input) => {
                   try {
                     await api.buildShip(planetId, input);
@@ -1087,56 +1115,8 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 }}
               />
             </div>
-            <table style={{ fontSize: 12, borderSpacing: 0 }}>
-              <caption
-                style={{
-                  textAlign: 'left',
-                  fontSize: 12,
-                  color: 'var(--text-secondary)',
-                  paddingBottom: 4,
-                }}
-              >
-                {t.planet.stock}
-              </caption>
-              <tbody>
-                {Object.entries(planet.stock)
-                  .filter(([, v]) => v.amount > 0.5 || Math.abs(v.ratePerDay) > 0.01)
-                  .sort(([a], [b]) => a.localeCompare(b))
-                  .map(([res, v]) => (
-                    <tr key={res}>
-                      <td style={{ color: 'var(--text-secondary)', paddingRight: 10 }}>
-                        {res.replace('_', ' ')}
-                      </td>
-                      <td
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          textAlign: 'right',
-                          color: res === 'fuel_cells' ? 'var(--accent-200)' : undefined,
-                        }}
-                      >
-                        {v.amount.toFixed(0)} T
-                      </td>
-                      <td
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          textAlign: 'right',
-                          paddingLeft: 8,
-                          color:
-                            v.ratePerDay > 0.01
-                              ? 'var(--success-500)'
-                              : v.ratePerDay < -0.01
-                                ? 'var(--danger-500)'
-                                : 'var(--text-disabled)',
-                        }}
-                      >
-                        {v.ratePerDay > 0 ? '+' : ''}
-                        {v.ratePerDay.toFixed(1)}
-                        {t.planet.perDay}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <span className="ls-panel-kicker">{t.planet.stock} / complete catalogue</span>
+            <ResourceStockDeck stock={planet.stock} />
           </div>
 
           <div style={{ display: 'grid', gap: 4 }}>
@@ -1149,7 +1129,7 @@ export function PlanetView({ planetId }: { planetId: string }) {
                 {planet.deposits.map((d) => (
                   <tr key={d.resource}>
                     <td style={{ color: 'var(--text-secondary)', paddingRight: 10 }}>
-                      {d.resource.replace('_', ' ')}
+                      <ResourceInline resource={d.resource} size={22} />
                     </td>
                     <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                       {Math.round(d.remainingT).toLocaleString('en-US')} T

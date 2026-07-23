@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Industry”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3/§5.1/§6. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P2 “Industry”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3/§5.1/§6; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Choix de recette à la construction — canon GB §9 : « une industrie mint
  * exactement une chose », choisie en posant la carte.
@@ -14,6 +14,7 @@ import { ArrowRight, Factory, Pickaxe, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
+import { ResourceIcon } from './InventoryVisuals.tsx';
 import { useDialogFocus } from './useDialogFocus.ts';
 import '../styles/planet-panels.css';
 
@@ -29,7 +30,13 @@ export function RecipePicker({
   onCancel: () => void;
 }) {
   const dialogRef = useDialogFocus(onCancel);
-  const options: { recipe: string; label: string; hint: string }[] = [];
+  const options: {
+    recipe: string;
+    label: string;
+    hint: string;
+    inputs: string[];
+    outputs: string[];
+  }[] = [];
 
   if (building === 'mine' || building === 'crystal_extractor') {
     const depositByRes = new Map(planet.deposits.map((d) => [d.resource, d]));
@@ -42,6 +49,8 @@ export function RecipePicker({
           hint: dep
             ? `${t.planet.recipeDeposit} ${Math.round(dep.remainingT).toLocaleString('en-US')} T`
             : `${t.planet.recipeTrace.replace('2', String(TRACE_MINING_T_PER_DAY))}`,
+          inputs: [],
+          outputs: [res],
         });
       }
       // Gisements d'abord (les plus rentables), puis la trace.
@@ -58,6 +67,8 @@ export function RecipePicker({
           recipe: `extract:${crystal}`,
           label: `Extract ${crystal.replace('_', ' ')}`,
           hint: `${t.planet.recipeDeposit} ${Math.round(dep.remainingT).toLocaleString('en-US')} T`,
+          inputs: [],
+          outputs: [crystal],
         });
       }
     }
@@ -70,7 +81,13 @@ export function RecipePicker({
       const outs = Object.entries(r.outputs)
         .map(([res, q]) => `${q} ${res.replace('_', ' ')}`)
         .join(' + ');
-      options.push({ recipe: r.id, label: outs, hint: `${ins} → ${outs}` });
+      options.push({
+        recipe: r.id,
+        label: outs,
+        hint: `${ins} → ${outs}`,
+        inputs: Object.keys(r.inputs),
+        outputs: Object.keys(r.outputs),
+      });
     }
   }
 
@@ -117,6 +134,15 @@ export function RecipePicker({
               </span>
               <span className="ls-recipe-option__copy">
                 <span className="ls-recipe-option__label">{o.label}</span>
+                <span className="cmd-recipe-flow" aria-hidden="true">
+                  {o.inputs.map((resource) => (
+                    <ResourceIcon key={`in:${resource}`} resource={resource} size={22} />
+                  ))}
+                  {o.inputs.length > 0 && <ArrowRight size={12} />}
+                  {o.outputs.map((resource) => (
+                    <ResourceIcon key={`out:${resource}`} resource={resource} size={22} />
+                  ))}
+                </span>
                 <span className="ls-recipe-option__hint">{o.hint}</span>
               </span>
               <ArrowRight

@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Building catalog”/“Industry” and §P4 “Markets”/“Docks”/“Manual channel”; docs/MASTER_PLAN.md §W2/§W6/§W7; GAME_BOOK.md §9/§13/§14/§25; DESIGN_GUIDE.md §5.1/§6/§8/§11. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Building catalog”/“Industry” and §P4 “Markets”/“Docks”/“Manual channel”; docs/MASTER_PLAN.md §W2/§W6/§W7; GAME_BOOK.md §9/§13/§14/§25; DESIGN_GUIDE.md §5.1/§6/§8/§11; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Building command inspector. Every simulation control and payload remains
  * unchanged; the presentation groups them into readable instrument modules
@@ -24,6 +24,7 @@ import {
   engineRecipe,
   GEAR,
   HULLS,
+  RECIPES,
   recipeEngine,
   shipBuildCost,
   type CostBundle,
@@ -33,7 +34,14 @@ import {
 import type { PlanetBuilding, PlanetDocks } from '../api.js';
 import { t } from '../i18n/en.js';
 import { EfficiencyCurve } from './EfficiencyCurve.tsx';
+import {
+  ItemTile,
+  ResourceCost,
+  ResourceIcon,
+  ResourceInline,
+} from './InventoryVisuals.tsx';
 import { OperationTimer } from './OperationTimer.tsx';
+import { WarehouseModal } from './WarehouseModal.tsx';
 import '../styles/planet-panels.css';
 
 function costText(cost: CostBundle): string {
@@ -45,6 +53,17 @@ function costText(cost: CostBundle): string {
         }`,
     )
     .join(' + ');
+}
+
+export function routeResources(recipe: string): string[] {
+  if (recipe.startsWith('extract:')) return [recipe.slice(8)];
+  if (recipe.startsWith('engine_')) return [`fuel_${recipe.slice(7)}`];
+  const definition = RECIPES[recipe as keyof typeof RECIPES];
+  if (!definition) return [];
+  return [...new Set([
+    ...Object.keys(definition.inputs),
+    ...Object.keys(definition.outputs),
+  ])];
 }
 
 export function BuildingPanel({
@@ -63,6 +82,7 @@ export function BuildingPanel({
   onBuildShip,
   onRetoolRecipe,
   onFabricate,
+  onDisassemble,
   gearInventory,
   shipBuilds,
   onRetool,
@@ -136,6 +156,8 @@ export function BuildingPanel({
   onRetoolRecipe?: (recipe: string) => void;
   /** W6 : fabrication d'items (bâtiments hôtes : workshop/shipyard/foundry). */
   onFabricate?: (itemKey: string) => void;
+  /** W9a : désassemblage depuis le command deck du warehouse. */
+  onDisassemble?: (itemKey: string) => Promise<void> | void;
   gearInventory?: {
     items: { itemKey: string; count: number }[];
     capacity: number;
@@ -156,6 +178,7 @@ export function BuildingPanel({
   const [workforce, setWorkforce] = useState(building.workforce);
   const [runPct, setRunPct] = useState(building.runPct);
   const [confirmDemolish, setConfirmDemolish] = useState(false);
+  const [warehouseOpen, setWarehouseOpen] = useState(false);
   const slot0raw = building.marketSlots?.[0];
   const slot0 =
     slot0raw && !('mode' in slot0raw) ? slot0raw : undefined;
@@ -220,8 +243,18 @@ export function BuildingPanel({
           <span className="ls-panel-kicker">
             Surface unit / {building.key.replace(/_/g, ' ')} · L{building.level}
           </span>
-          <h3 className="ls-panel-title">
-            {building.key.replace(/_/g, ' ')}
+          <h3 className="ls-panel-title cmd-building-title">
+            <span>{building.key.replace(/_/g, ' ')}</span>
+            {building.recipe && (
+              <span
+                className="cmd-building-title__resources"
+                aria-label={`Resources handled: ${routeResources(building.recipe).join(', ')}`}
+              >
+                {routeResources(building.recipe).map((resource) => (
+                  <ResourceIcon key={resource} resource={resource} size={19} />
+                ))}
+              </span>
+            )}
           </h3>
           <span
             className="ls-status-pill"
@@ -263,6 +296,11 @@ export function BuildingPanel({
       {building.recipe && (
         <p className="ls-production-route">
           <span>Production route</span>
+          <span className="ls-production-route__icons" aria-hidden="true">
+            {routeResources(building.recipe).map((resource) => (
+              <ResourceIcon key={resource} resource={resource} size={25} />
+            ))}
+          </span>
           <strong>
             {building.recipe.startsWith('extract:')
               ? `Extracting ${building.recipe.slice(8).replace('_', ' ')}`
@@ -280,7 +318,17 @@ export function BuildingPanel({
       {limitingText && (
         <p className="ls-limiting-line" data-tone={limitingTone}>
           <AlertTriangle size={13} aria-hidden />
-          <span>{limitingText}</span>
+          {building.limiting?.startsWith('input:') ? (
+            <span className="cmd-limiting-resource">
+              <span>{t.planet.inputStarved}</span>
+              <ResourceInline
+                resource={building.limiting.slice(6)}
+                size={20}
+              />
+            </span>
+          ) : (
+            <span>{limitingText}</span>
+          )}
         </p>
       )}
 
@@ -385,6 +433,14 @@ export function BuildingPanel({
             </p>
           )}
           <p className="ls-section-subtitle">{t.planet.vehiclesHint}</p>
+          <button
+            type="button"
+            className="ls-button ls-button--accent ls-button--block"
+            aria-haspopup="dialog"
+            onClick={() => setWarehouseOpen(true)}
+          >
+            <Store size={14} aria-hidden /> Open warehouse
+          </button>
           <p className="ls-section-subtitle">{t.planet.warehouseVisibilityHint}</p>
           <label className="ls-field">
             <span>{t.planet.warehouseVisibility}</span>
@@ -402,6 +458,19 @@ export function BuildingPanel({
             </select>
           </label>
         </section>
+      )}
+
+      {warehouseOpen && building.key === 'warehouse' && (
+        <WarehouseModal
+          warehouseLevel={building.level}
+          items={gearInventory?.items ?? []}
+          capacity={gearInventory?.capacity ?? 0}
+          fabricating={gearInventory?.fabricating ?? []}
+          vehicles={vehicles}
+          docks={docks}
+          onDisassemble={onDisassemble}
+          onClose={() => setWarehouseOpen(false)}
+        />
       )}
 
       {building.key === 'stargate_yard' && stargateContext && (
@@ -644,16 +713,14 @@ export function BuildingPanel({
               </div>
             )}
 
-            <span className="ls-mono-line">
-              {costText(
-                shipBuildCost(
-                  HULLS[
-                    `${yardCategory}_${yardSize}` as `${HullCategory}_${HullSize}`
-                  ],
-                  building.level as 1 | 2 | 3,
-                ),
+            <ResourceCost
+              cost={shipBuildCost(
+                HULLS[
+                  `${yardCategory}_${yardSize}` as `${HullCategory}_${HullSize}`
+                ],
+                building.level as 1 | 2 | 3,
               )}
-            </span>
+            />
 
             <label className="ls-field">
               <span>{t.planet.yardName}</span>
@@ -694,33 +761,60 @@ export function BuildingPanel({
             </div>
             <p className="ls-section-subtitle">{t.planet.gearHint}</p>
             {gearInventory && (
-              <span className="ls-mono-line">
-                {t.planet.gearInventory} :{' '}
-                {gearInventory.items.length === 0
-                  ? '—'
-                  : gearInventory.items
-                      .map((i) => `${i.itemKey.replace(/_/g, ' ')} ×${i.count}`)
-                      .join(', ')}{' '}
-                ({gearInventory.items.reduce((s, i) => s + i.count, 0)}/
-                {gearInventory.capacity})
-              </span>
+              <div className="cmd-fabrication-balance">
+                <header>
+                  <span>{t.planet.gearInventory}</span>
+                  <strong>
+                    {gearInventory.items.reduce((s, i) => s + i.count, 0)}/
+                    {gearInventory.capacity}
+                  </strong>
+                </header>
+                <div className="cmd-cell-grid">
+                  {gearInventory.items.length === 0 ? (
+                    <span className="ls-muted-copy">No completed items.</span>
+                  ) : gearInventory.items.map((item) => (
+                    <ItemTile
+                      key={item.itemKey}
+                      itemKey={item.itemKey}
+                      count={item.count}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
             {gearInventory && gearInventory.fabricating.length > 0 && (
-              <span className="ls-mono-line">
-                {t.planet.gearFabricating} :{' '}
-                {gearInventory.fabricating
-                  .map((f) => f.itemKey.replace(/_/g, ' '))
-                  .join(', ')}
-              </span>
+              <div className="cmd-fabrication-balance">
+                <header>
+                  <span>{t.planet.gearFabricating}</span>
+                  <strong>{gearInventory.fabricating.length}</strong>
+                </header>
+                <div className="cmd-cell-grid">
+                  {gearInventory.fabricating.map((item, index) => (
+                    <ItemTile
+                      key={`${item.itemKey}:${item.completesAt}:${index}`}
+                      itemKey={item.itemKey}
+                      state="fabricating"
+                      footer={
+                        <small className="cmd-item-eta">
+                          ETA {new Date(item.completesAt).toLocaleTimeString('en-US')}
+                        </small>
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
             )}
-            {Object.values(GEAR)
-              .filter((d) => d.fabricator === building.key)
-              .map((d) => (
-                <div key={d.key} className="ls-inline-fields">
-                  <span className="ls-mono-line" style={{ flex: 1 }}>
-                    {d.key.replace(/_/g, ' ')} — {costText(d.fabricationCost)}
-                    {d.dormant ? ' (dormant)' : ''}
-                  </span>
+            <div className="cmd-fabrication-catalog">
+              {Object.values(GEAR)
+                .filter((d) => d.fabricator === building.key)
+                .map((d) => (
+                  <article key={d.key} className="cmd-fabrication-recipe">
+                    <ItemTile itemKey={d.key} />
+                    <div className="cmd-fabrication-recipe__copy">
+                      <strong>{d.key.replace(/_/g, ' ')}</strong>
+                      <small>{d.slot} · {d.fabricationHours} h{d.dormant ? ' · dormant' : ''}</small>
+                      <ResourceCost cost={d.fabricationCost} size={22} />
+                    </div>
                   <button
                     type="button"
                     className="ls-button"
@@ -728,8 +822,9 @@ export function BuildingPanel({
                   >
                     {t.planet.gearFabricate}
                   </button>
-                </div>
-              ))}
+                  </article>
+                ))}
+            </div>
           </section>
         )}
 
@@ -1071,6 +1166,13 @@ export function BuildingPanel({
             </button>
           )}
         </section>
+      )}
+
+      {canLevelUp && levelUpCost && (
+        <div className="cmd-level-cost">
+          <span>Level-up matter</span>
+          <ResourceCost cost={levelUpCost} size={22} />
+        </div>
       )}
 
       <div className="ls-building-actions">

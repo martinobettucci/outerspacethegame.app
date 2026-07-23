@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”/§P2.codex; docs/MANUAL_PLAN.md §2–§7; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Codex prose (English). Centralised here as a dedicated i18n namespace.
  *
@@ -95,6 +95,8 @@ export const codexEn = {
       'This chapter shows the building types available in THIS world’s tech DNA — as your horizons widen, so does the chapter.',
     partial:
       'Where a level-3 industry runs, big works change rhythm: placements, ship keels, gear and level-ups are no longer paid up front. The yard opens an automatic work order that draws the cost in twenty small instalments as the work advances — an empty storehouse simply pauses the site until supplies return, and tearing a site down only ever refunds what was actually paid in.',
+    warehouse:
+      'Open a warehouse to see what is physically there. Fabricated items are grouped into engine, armour, fuel, observation, weapon, cargo and accessory bays; stored vehicles keep separate S, M and L vaults. Select an object cell to reveal its legal actions in the dossier beside the grids.',
     noPlanet: 'Open one of your worlds to browse the building types its tech DNA allows.',
     loadError: 'Could not read this world’s tech DNA — try again.',
     single: 'Single',
@@ -107,6 +109,8 @@ export const codexEn = {
     lead: 'Hulls carry gear: accessories you fabricate planet-side, store as items in a warehouse, and bolt onto a warehoused hull. Each piece occupies one slot of its family — and upgrades share those same family slots, so every fitting is an arbitrage between an upgrade and an accessory.',
     fabrication:
       'An accessory is fabricated where its host building stands and works, from that world’s stockpile. Its grade is fixed at fabrication: an ENHANCED piece needs a high-level host building to build — but once it exists it is an ordinary item. Installing gear demands no technology at all; anything you buy, salvage or haul in fits any hull with a free slot of the right family.',
+    management:
+      'A quick ship selection keeps fuel, hull and their current flows visible. Open the hull for hands-on work: the real ship sprite sits in its empty maintenance cradle, fitted systems occupy their true family slots, cargo occupies visible boxes and the instrument column stays alongside them. Select the object you mean to use, install, remove, activate or unload; its dossier then shows only actions that are legal now.',
     classes:
       'Fitted gear comes in three temperaments, visible on the ship panel. PASSIVE pieces simply work: the moment one is aboard, the numbers it touches — drains, capacities, timers, tolls — shift accordingly, live. CONTINUOUS pieces are throttled flows: set a percentage and they convert cargo at that pace anywhere, even in transit, burning engine fuel to run; if an input runs dry they throttle themselves to zero. BATCH pieces are one-shot procedures: they take their inputs the instant you start, demand a stopped ship for a fixed process time, and burn no fuel at all — the efficient, patient option.',
     warnBatch:

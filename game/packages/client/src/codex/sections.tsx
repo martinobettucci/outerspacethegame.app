@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2.codex; docs/MANUAL_PLAN.md §2–§7. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”/§P2.codex; docs/MANUAL_PLAN.md §2–§7; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Codex chapter registry — spoiler-free "systems only" content
  * (docs/MANUAL_PLAN.md §1, §6). Each body composes prose from `codexEn` with
@@ -182,6 +182,7 @@ function BuildingsBody({ planetId }: CodexBodyContext) {
     <>
       <p>{c.buildings.lead}</p>
       <p>{c.buildings.partial}</p>
+      <p>{c.buildings.warehouse}</p>
       <p>{c.buildings.context}</p>
       {available.kind === 'none' && (
         <p className="ls-codex-warn">{c.buildings.noPlanet}</p>
@@ -226,6 +227,7 @@ function GearBody() {
     <>
       <p>{c.gear.lead}</p>
       <p>{c.gear.fabrication}</p>
+      <p>{c.gear.management}</p>
       <p>{c.gear.classes}</p>
       <p className="ls-codex-warn">{c.gear.warnBatch}</p>
       <p>{c.gear.freight}</p>

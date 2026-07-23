@@ -5211,3 +5211,33 @@ Périmètre strict : les interactions de gestion choisir/installer/retirer/
 détruire/activer/désactiver/utiliser/charger. Le reste des écrans ne change
 pas. Accessibilité clavier, libellés complets, confirmations destructives et
 géométrie stable des états vides restent des contrats de livraison.
+
+## 2026-07-23 — P0.3 livré : stocks, warehouse et coques deviennent des objets manipulables
+
+La directive icon-first est livrée sur les surfaces touchées. Le stock de
+planète expose tout le catalogue (zéros inclus) avec icônes, quantités et
+flux ; le ledger reprend les mêmes marques en 15 px. Les bâtiments montrent
+les ressources de leur route au voisinage du nom, dans leurs recettes, coûts,
+files et états de rééquipement.
+
+Le warehouse s'ouvre désormais en command deck : sept familles d'items en
+grilles denses avec cases vides persistantes, file de fabrication portant
+l'icône de l'objet, réserves de véhicules S/M/L, sélection ambre et dossier
+d'action. Le command deck de coque matérialise les capacités RÉELLES de
+`HULLS`, les accessoires/upgrades montés, les conteneurs et la réserve locale ;
+la sélection de l'objet ouvre les seules commandes légales. La télémétrie
+fuel/coque et leurs flux reste visible dans la sélection rapide.
+
+Correction de direction pendant la revue : l'image de baie générée ne doit
+JAMAIS simuler l'UI ni le vaisseau. La plaque finale est un hangar physique
+VIDE, sans menus, texte, cases ou silhouette, avec un berceau éclairé à
+gauche. `shipSprite(hullCategory, hullSize)` est restauré comme couche live
+séparée au-dessus. Ce contrat est ajouté à DESIGN_SYSTEM §5.1 : rails,
+pinces et éclairage peuvent être peints ; slots, cargo, compteurs et
+sélection restent de vrais contrôles DOM.
+
+Porte Codex soldée (Buildings + Ship gear). Preuves observées à 1440×900 :
+catalogue stock, stats compactes, warehouse peuplé (7 familles + fabrication
+active), coque Cargo-S avec réserve locale ; console applicative 0 erreur
+après authentification. Vérifications : typecheck client ; Vitest 24/24 ;
+build Vite vert (seul avertissement de chunk historique).

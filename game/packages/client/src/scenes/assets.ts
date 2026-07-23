@@ -100,3 +100,10 @@ export function cardArt(buildingKey: string): string {
 export function resourceArt(resource: string): string {
   return `resources/res_${resource}.gif`;
 }
+
+/** Coque de base dans le command deck ; personal/probe gardent leurs clés. */
+export function shipSprite(category: string, size: string | null): string {
+  if (category === 'personal') return 'ships/ship_personal.gif';
+  if (category === 'probe') return 'ships/ship_probe.gif';
+  return `ships/ship_${category}_${size ?? 's'}.gif`;
+}

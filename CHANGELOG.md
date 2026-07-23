@@ -2,6 +2,33 @@
 
 ## [Non publié]
 
+### P0.3 — command deck icon-first, gestion en ouvrant l'objet (2026-07-23)
+
+- Stock planète : catalogue COMPLET, zéros compris, groupé par famille avec
+  icône-stub, quantité et flux ; même source dans le ledger de stats en
+  variante compacte 15 px. Routes, recettes, coûts, rééquipement et travail
+  de bâtiment portent les icônes des ressources concernées.
+- Items : stub visuel stable par famille de slot, grade et état ; visible dans
+  la recette, la file de fabrication, la balance du warehouse, la soute et le
+  slot monté.
+- Warehouse : `Open warehouse` ouvre un command deck avec grilles physiques
+  engine/armor/fuel/obs/weapon/cargo/accessory, réserves S/M/L séparées,
+  cellules vides explicites, file de fabrication iconographique et dossier
+  de l'objet sélectionné (désassemblage confirmé).
+- Vaisseau : la sélection rapide garde fuel, flux fuel, coque et flux coque ;
+  `Open hull` ouvre les vrais slots de la coque, les boîtes de soute, la
+  réserve locale et les instruments. L'accessoire/objet sélectionné pilote
+  les actions installer/retirer/charger/décharger/activer/utiliser.
+- Art : la baie n'embarque AUCUN faux vaisseau ni faux widget. Une plaque
+  issue de la génération d'image intégrée montre seulement un hangar vide et
+  son berceau ; le sprite
+  live `category + size` reste une couche séparée au premier plan.
+- Codex et `docs/DESIGN_SYSTEM.md` §5.1 alignés ; `CLAUDE.md` impose la lecture
+  complète de la charte avant toute modification ou commit UI/UX.
+- Preuves : typecheck client vert ; 24/24 tests client ; build Vite vert ;
+  revue Playwright réelle à 1440×900, console 0 erreur après authentification,
+  captures stock/stats/warehouse/coque observées.
+
 ### W7-bâtiments — l'usinage partiel s'étend aux BÂTIMENTS (2026-07-22)
 
 - Sur un monde à industrie L3 active, **placement et montée de

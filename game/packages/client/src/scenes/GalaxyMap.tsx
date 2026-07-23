@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen”, §P3 “Galaxy map”/“Free flight”/“Telescope intel”/“Junk fields”/“Stargates”, and §P4 “Ping/ping-back”/“Manual channel”; docs/MASTER_PLAN.md §W4/§W5; GAME_BOOK.md §2/§4–§7/§13/§22; DESIGN_GUIDE.md §2/§4.1/§9/§10.4. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Universe gen”, §P3 “Galaxy map”/“Free flight”/“Telescope intel”/“Junk fields”/“Stargates”, and §P4 “Ping/ping-back”/“Manual channel”; docs/MASTER_PLAN.md §W4/§W5; GAME_BOOK.md §2/§4–§7/§13/§22; DESIGN_GUIDE.md §2/§4.1/§7–§10.4; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Carte galaxie — GB §17 : champ d'étoiles three.js stylé 3D, navigation
  * 2D (pan/zoom), corps en pixel-sprites (DESIGN_SYSTEM §11.3), brouillard
@@ -25,6 +25,7 @@ import {
   Soup,
   Telescope,
   Warehouse as WarehouseIcon,
+  Boxes,
 } from 'lucide-react';
 import {
   conversionOf,
@@ -51,6 +52,7 @@ import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
 import { FleetOperations } from '../components/FleetOperations.tsx';
 import { OperationTimer } from '../components/OperationTimer.tsx';
+import { ShipCommandDeck } from '../components/ShipCommandDeck.tsx';
 import {
   BLACK_HOLE_SPRITE,
   loadSpriteCanvas,
@@ -153,6 +155,7 @@ export function GalaxyMap() {
   const [selected, setSelected] = useState<GalaxyBody | null>(null);
   const [ships, setShips] = useState<ShipView[]>([]);
   const [selectedShip, setSelectedShip] = useState<ShipView | null>(null);
+  const [openHullId, setOpenHullId] = useState<string | null>(null);
   const [targeting, setTargeting] = useState<
     | { kind: 'ship'; shipId: string }
     | { kind: 'probe'; planetId: string }
@@ -1408,6 +1411,7 @@ export function GalaxyMap() {
         }}
       />
       {selectedShip && (
+        <>
         <aside
           aria-label={selectedShip.name}
           className="galaxy-panel galaxy-panel--ship"
@@ -1722,6 +1726,20 @@ export function GalaxyMap() {
                 </span>
               )}
             </section>
+          )}
+          {!['personal', 'probe'].includes(selectedShip.hullCategory) && (
+            <button
+              type="button"
+              className="cmd-open-hull"
+              aria-haspopup="dialog"
+              onClick={() => setOpenHullId(selectedShip.id)}
+            >
+              <Boxes size={16} aria-hidden />
+              <span>
+                <strong>Open hull</strong>
+                <small>cargo · installed systems · ship instruments</small>
+              </span>
+            </button>
           )}
           {['cargo', 'combat'].includes(selectedShip.hullCategory) &&
             selectedShip.crewCount === 0 &&
@@ -4465,6 +4483,78 @@ export function GalaxyMap() {
             </button>
           )}
         </aside>
+        {openHullId === selectedShip.id && (
+          <ShipCommandDeck
+            ship={selectedShip}
+            availableItems={installGearList}
+            onClose={() => setOpenHullId(null)}
+            onInstall={async (itemKey) => {
+              try {
+                await api.installItem(selectedShip.id, itemKey);
+                setNotice(`Installation started — ${itemKey.replace(/_/g, ' ')} now occupies its hull bay.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`Installation refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+            onUninstall={async (itemKey) => {
+              try {
+                await api.uninstallItem(selectedShip.id, itemKey);
+                setNotice(`Removal started — ${itemKey.replace(/_/g, ' ')} will return to the warehouse.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`Removal refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+            onLoadItem={async (itemKey) => {
+              try {
+                await api.itemCargoMove(selectedShip.id, itemKey, 'load');
+                setNotice(`Item loaded — ${itemKey.replace(/_/g, ' ')} occupies one cargo box.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`Item load refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+            onUnloadItem={async (itemKey) => {
+              try {
+                await api.itemCargoMove(selectedShip.id, itemKey, 'unload');
+                setNotice(`Item unloaded — ${itemKey.replace(/_/g, ' ')} returned to the warehouse balance.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`Item unload refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+            onUnloadResource={async (resource, tons) => {
+              try {
+                await api.transferCargo(selectedShip.id, {
+                  resource,
+                  tons,
+                  direction: 'unload',
+                });
+                setNotice(`Cargo unloaded — ${tons} T ${resource.replace(/_/g, ' ')}.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`Cargo unload refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+            onSetConversion={async (input) => {
+              try {
+                await api.setConversion(selectedShip.id, input);
+                setNotice(`${input.itemKey.replace(/_/g, ' ')} controls applied.`);
+                await refreshShips();
+              } catch (err) {
+                const failure = err as ApiError;
+                setNotice(`System control refused — ${failure.message ?? failure.error}`);
+              }
+            }}
+          />
+        )}
+        </>
       )}
       {bodies.length === 0 && (
         <p

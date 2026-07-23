@@ -464,6 +464,16 @@ ATG keeps its groovy-dark palette, type, sprites and semantic colors.
 - `Open hull` opens the ship command deck. The hull silhouette is flanked by
   real slot-family grids sized from the hull catalogue. Installed upgrades and
   accessories occupy those cells; empty slots are explicit.
+- The hull-bay artwork is an **environment-only plate**: an empty physical
+  hangar with a deliberately lit docking cradle. It must contain no
+  pre-rendered ship, fake inventory grid, menu, label or decorative UI. The
+  live category/size ship sprite is a separate foreground layer positioned
+  over that cradle, so the object on screen is always the ship the player
+  selected. Replacing a ship asset therefore changes the opened hull without
+  regenerating the hangar.
+- Docking rails, clamps, work lights and floor seams may live in the
+  environmental plate. Slot banks, cargo cells, selection frames, counts and
+  instruments are real DOM controls and must never be baked into the image.
 - Cargo is a container grid. Each fungible tonne/container shows its resource
   icon; a non-fungible item occupies one box with its item icon. Used/total is
   repeated in text. Ship statistics live in a compact instrument column.

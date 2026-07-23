@@ -563,6 +563,7 @@
 }
 
 .planet-active-works__list > button {
+  position: relative;
   display: block;
   min-height: 0;
   padding: 0;
@@ -570,6 +571,19 @@
   border-radius: 8px;
   background: transparent;
   text-align: left;
+}
+
+.planet-active-works__resources {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  right: 8px;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.planet-active-works__resources + .ls-operation-timer .ls-operation-timer__copy {
+  padding-right: 52px;
 }
 
 .planet-active-works__list > button:hover .ls-operation-timer {

@@ -441,6 +441,18 @@ export const api = {
     call<{ completesAt: string }>('POST', `/ships/${shipId}/install`, {
       itemKey,
     }),
+  /** W9a / command deck : retire un item d'une coque entreposée. */
+  uninstallItem: (shipId: string, itemKey: string) =>
+    call<{ completesAt: string }>('POST', `/ships/${shipId}/uninstall`, {
+      itemKey,
+    }),
+  /** W9a / warehouse command deck : détruit un item stocké contre matière. */
+  disassembleItem: (planetId: string, itemKey: string) =>
+    call<{ refunded: Record<string, number> }>(
+      'POST',
+      `/planets/${planetId}/items/disassemble`,
+      { itemKey },
+    ),
   /** W6c-b1 : fret d'items — charge/décharge à quai. */
   itemCargoMove: (shipId: string, itemKey: string, direction: 'load' | 'unload') =>
     call<{ itemCargo: string[] }>('POST', `/ships/${shipId}/item-cargo`, {
