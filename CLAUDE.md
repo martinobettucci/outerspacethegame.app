@@ -125,6 +125,13 @@ Tout projet comportant une interface maintient un fichier :
 
 "docs/DESIGN_SYSTEM.md"
 
+Avant toute modification, revue ou commit qui touche l'UI ou l'UX, lire
+**intégralement** le fichier local "docs/DESIGN_SYSTEM.md". Vérifier ensuite le
+diff UI/UX contre ce document avant de commit. Cette lecture et cette
+vérification sont obligatoires même pour une correction visuelle jugée
+mineure ; le commit maintient le design system dans le même changement si une
+nouvelle règle, un nouveau composant ou un écart est introduit.
+
 Ce document décrit au minimum :
 
 - les couleurs ;

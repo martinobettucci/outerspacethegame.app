@@ -1,10 +1,12 @@
 # DESIGN SYSTEM — ATG (« groovy dark »)
 
-> **STATUS: FINAL v1** (2026-07-12). Validated against four generated UI
+> **STATUS: FINAL v1.1** (2026-07-23). v1 was validated against four generated UI
 > prototypes (`docs/design/prototypes/01–04`, model `gpt-image-2`), each
-> visually reviewed — see §12 for the review findings and corrections.
-> This document keeps evolving with the product; changes go through the
-> same generate-observe-amend loop.
+> visually reviewed — see §11 for the review findings and corrections. v1.1
+> adds the owner-validated icon-first command-deck language (§5.1), integrating
+> it with the already implemented surfaces listed in §5. This document keeps
+> evolving with the product; changes go through the same
+> specify-build-observe-amend loop.
 
 ## 1. Art direction
 
@@ -25,6 +27,11 @@ shaded darker (documented exception to the light-theme default, CLAUDE.md §4
   visible upgrade overlays bolted on hulls (modular sprite composition,
   GAMEBOOK §26). No photorealism, no generic AI-theme gloss — intentional
   composition only.
+- **Open the object**: inventory and equipment are spatial game objects, not
+  rows in an administration form. When a player manages a warehouse, hull,
+  cargo hold or fabrication balance, the surface opens and exposes framed,
+  selectable icons in a physical grid. Menus remain appropriate for numeric
+  policy/configuration, never as the primary way to pick a visible object.
 
 ## 2. Color tokens
 
@@ -397,6 +404,91 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
   drift). The delivered population chapter includes the optional medical burn
   and its C/A/S weights from live constants. Spec: `docs/MANUAL_PLAN.md`.
 
+### 5.1 Icon-first command deck (owner directive 2026-07-23)
+
+This is the default interaction language for **management actions only**
+(choose, install, remove, trash/disassemble, activate, deactivate, use,
+load/unload, retrieve). It does not restyle navigation, lore, maps, markets or
+unrelated configuration panels.
+
+**Reference and intent.** The desired feel is the management room in
+*UFO: Enemy Unknown*: a dense, tactile equipment surface where possessions
+occupy obvious cells, selection is amber and the chosen object's actions sit
+beside it. This is an interaction and atmosphere reference, not a pixel copy:
+ATG keeps its groovy-dark palette, type, sprites and semantic colors.
+
+**Resource visibility.**
+
+- Every owned-planet stock surface starts with the full fungible-resource
+  catalogue grouped in this fixed order: basic, crystal, refined, propulsion,
+  salvage. Zero-stock entries remain visible: absence is information.
+- Each stock cell is `icon + canonical name + amount T`; signed flow is a
+  secondary line. The normal command-deck icon is 32–40 px. The planet stats
+  ledger uses the same component at **14–16 px** to preserve density.
+- Any resource named in a building's production route, retool state, limiting
+  input, fabrication/build cost or work order is paired with its icon. Never
+  make the player translate a snake-case identifier before acting.
+
+**Fabricated items.**
+
+- A fabricated item is represented by its own item icon from recipe choice,
+  through the timed fabrication queue, warehouse balance, cargo container and
+  installed slot. The image/key is stable across all five contexts.
+- Until final art exists, a deliberate **item stub** is valid: slot-family
+  silhouette, two-letter key mark, `STUB` micro-label, category-colored edge
+  and accessible full name. A text-only item row is not a valid fallback.
+- Enhanced grade is a visible corner pip and label; state is separate:
+  fabricating = amber scan line, installed = blue corner bolts,
+  active = green lamp, disabled/starved = warning mark, destructive target =
+  danger frame.
+
+**Warehouse modal: separate physical balances.**
+
+- Activating a warehouse's `Open warehouse` control opens a modal command
+  deck. It contains multiple grids because the canon contains separate
+  balances: items grouped by real slot family (`engine`, `armor`, `fuel`,
+  `obs`, `weapon`, `cargo`, `accessory`) and vehicles grouped by S/M/L.
+- Capacity is spatial. Occupied cells show the corresponding icon and count;
+  empty cells remain framed and visibly empty. Large capacities may virtualize
+  or summarize repeated empty cells after at least one representative row;
+  the exact numeric `used/capacity` always stays visible.
+- Selecting a cell opens its action dossier within the same modal. Visibility
+  policy remains a conventional select because it is configuration, not an
+  object choice.
+
+**Ship quick selection versus opened hull.**
+
+- Simple ship selection is the convenience/telemetry view. It always keeps
+  **fuel amount, tank capacity, current fuel drain/gain, hull HP, maximum HP
+  and current hull drain/repair rate visible**, without opening another layer.
+- `Open hull` opens the ship command deck. The hull silhouette is flanked by
+  real slot-family grids sized from the hull catalogue. Installed upgrades and
+  accessories occupy those cells; empty slots are explicit.
+- Cargo is a container grid. Each fungible tonne/container shows its resource
+  icon; a non-fungible item occupies one box with its item icon. Used/total is
+  repeated in text. Ship statistics live in a compact instrument column.
+- The player selects the accessory/item/container they want to interact with;
+  only then does the adjacent dossier reveal legal options (activate,
+  deactivate, use/start/abort, install, remove, unload or dump as applicable).
+  Destructive actions retain danger color and confirmation.
+- Installing onto a warehoused hull is icon-to-slot selection: choose an item
+  in the available-items grid, see compatible family cells illuminate, then
+  confirm. Select-first `<select>` controls are not the primary flow.
+
+**Interaction and layout.**
+
+- Default grid cell: 76–92 px square at desktop; 64–76 px on tablet. Minimum
+  interactive target remains 44×44 px. Use `grid-auto-flow: row` so keyboard
+  order and visual order agree.
+- One selected cell at a time per deck. `Enter`/`Space` selects, arrow keys may
+  move within a grid, `Escape` closes the dossier then modal. Focus returns to
+  the opener. Text labels, counts, grade and state are never encoded by icon or
+  color alone.
+- The visual grammar is: near-black recessed well, thin blue steel frame,
+  corner brackets/rivets, amber selection and scan line, green active lamp,
+  red destructive outline. Avoid ornamental chrome that costs legibility.
+- Empty/loading/error states preserve the grid geometry to avoid layout jumps.
+
 ## 6. Interactive states
 
 Default · hover (`primary.300` tint / accent glow) · active/pressed (darken
@@ -425,6 +517,14 @@ scroll within their own container.
 
 - **Lucide** for all UI icons; single stroke width; no emojis in the
   applicative UI (CLAUDE.md §4).
+- **Resource icons** use the canonical `assets/game/resources/res_{key}.gif`
+  contract. Their DOM wrapper, label and fallback are shared; do not hand-roll
+  per-screen image styles.
+- **Item icons** use the shared item-stub component until dedicated final
+  assets exist. The stub is deterministic per item key and visually anchored
+  to its real slot family, so the same fabricated object remains recognizable
+  in recipe, queue, warehouse, cargo and hull contexts. Replacing a stub must
+  preserve the accessible name and component dimensions.
 - Game sprites per GAMEBOOK §26 pipeline: base + transparent same-size
   overlay layers composited by the engine — the full sizing/naming/companion-
   map contract (bump maps, light maps, light propagation, stub swapping,

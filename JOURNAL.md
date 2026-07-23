@@ -5182,3 +5182,32 @@ gate du 2026-07-21 soldée).
 Preuves : building-partial.test 2/2 ; balayage sériel 382/382 ;
 codex client 12/12 ; typecheck ×3 ; migration 040 appliquée à la
 base dev. LE PROGRAMME W7 EST CLOS (MASTER_PLAN → [x]).
+
+## 2026-07-23 — directive UI : gérer en ouvrant l'objet, command deck icon-first
+
+Le responsable juge les écrans de gestion actuels trop textuels, en
+particulier le panneau vaisseau. Décision persistée AVANT code dans
+`docs/DESIGN_SYSTEM.md` v1.1 (§5.1) et `docs/BACKLOG.md` P0.3 :
+
+- toutes les ressources d'un stock sont visibles avec leur icône et leur
+  quantité (zéro compris), avec une variante compacte 14–16 px dans le ledger
+  de stats ;
+- toute ressource citée dans une route de production, un coût, un travail ou
+  un rééquipage porte son icône ;
+- un item fabriqué garde la même icône depuis sa recette jusqu'à son montage ;
+  les arts finaux manquants utilisent un stub intentionnel par famille de slot,
+  jamais une ligne de texte nue ;
+- le warehouse s'ouvre en modal et matérialise ses balances S/M/L et items en
+  grilles séparées ;
+- sélectionner un vaisseau conserve les télémétries pratiques fuel/hull et
+  leurs drains ; `Open hull` expose les conteneurs, accessoires/upgrades dans
+  leurs vraies familles de slots et les stats ; sélectionner l'objet révèle
+  ses actions ;
+- la référence *UFO: Enemy Unknown* porte sur le geste et la densité de la
+  salle d'équipement (cases, sélection ambre, dossier d'action), sans copier
+  sa peau. La charte ATG « groovy dark » reste souveraine.
+
+Périmètre strict : les interactions de gestion choisir/installer/retirer/
+détruire/activer/désactiver/utiliser/charger. Le reste des écrans ne change
+pas. Accessibilité clavier, libellés complets, confirmations destructives et
+géométrie stable des états vides restent des contrats de livraison.
