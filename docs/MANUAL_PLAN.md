@@ -161,7 +161,15 @@ they have discovered.
    kills** past tolerance/grace; the storage brake. Sources: `efficiency()`,
    `EFFICIENCY_*`, `jobsOptimal`/`BASE_JOBS`/`JOBS_LEVEL_MULT`/`popScale`,
    `UNEMP_*`, `storageBrake`.
-4. Buildings & recipes (policy agents, retooling) — later.
+4. Buildings & recipes (policy agents, retooling) — later. **Spaceport +
+   colonization (owner reform 2026-07-24):** when the colony reform ships, the
+   Spaceport section explains — spoiler-free, only what the screen shows — that
+   the spaceport mints a **colonizer**, that the **first per world is free**
+   (once `colony_program` is unlocked and the spaceport is active), and that
+   more are crafted for a basics cost; the colonization flow (GalaxyMap) covers
+   loading the colonizer + settlers and establishing. Free-grant state and costs
+   render **live** from `@atg/shared` (`free_colonizer_granted`, the colonizer
+   recipe) — never hardcoded. Backlog: *Réforme colonisation anti-soft-lock*.
 5. Movement, travel & fuel — later.
 6. Discovery & telescopes (systems only) — later.
 7. Governance & the personal ship — later.

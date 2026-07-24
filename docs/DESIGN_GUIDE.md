@@ -656,9 +656,11 @@ Civil pilots: settler-risk −2%/level (crew) or landing-wear waiver (governor).
 ## 5. Tech tree (v0 content)
 
 Structure per canon §18. **Placement cost = 50% of unlock cost** unless stated
-[TUNE]. Telescope, probe_pad, depot, mine_basic, **colony_program** are
-**never seed-masked** [colony added in v0.2 — free expansion must never be
-seed-locked].
+[TUNE]. Telescope, probe_pad, depot, mine_basic, **colony_program**, and the
+**base spaceport (`spaceport_S`)** are **never seed-masked** [colony added in
+v0.2; spaceport added v0.3 — owner decision 2026-07-24: free expansion must
+never be seed-locked, and the spaceport is the structure that both embarks
+settlers and mints colonizers (§12). Higher spaceport levels stay maskable].
 
 **T0 (universal, tile rule noted explicitly)**
 - `telescope` — none — 20 ore, 10 silicon — **+200 pc scope/level, max 1
@@ -669,7 +671,9 @@ seed-locked].
 - `mine_basic` — none — 15 ore — extracts basic deposits
 
 **T1 (common mask)**
-- `spaceport_S` — depot — 40 ore, 20 steelL — small docks ×2
+- `spaceport_S` — depot — 40 ore, 20 steelL — small docks ×2; **never
+  seed-masked (owner 2026-07-24); mints colonizer accessories, first per world
+  free (§12)**
 - `workshop` — mine_basic — 30 ore, 10 silicon — repairs; crafts harvest &
   utility accessories (§8.8)
 - `market` — depot — 25 ore, 10 carbon — trading post (§11)
@@ -685,7 +689,9 @@ seed-locked].
   colonization must never be politics-gated], `lab` (medicines),
   `obs_station` (ground OBS), `turret_light` (Militarist), `market_T2`
   (Mercantile: AMM pools + auctions), `fuelcell_plant` (2× refinery rate).
-- `workshop` L2 gains the **terraform core** recipe (§6) — politics-free.
+- `workshop` L2 **no longer gates colonization** (owner 2026-07-24): the
+  terraform-core recipe is retired and the colonizer is minted at the spaceport
+  instead (§6/§12). Workshop keeps repair + harvest/utility accessory crafting.
 
 **T3**
 - `shipyard_M` (Industrialist; bulk/faster M production, prerequisite for L),
@@ -693,7 +699,8 @@ seed-locked].
   (Militarist), `research_center` (Scientific), `diplomatic_district`
   (Diplomatic), `casino` (Mercantile), `residential_T3` (Civic),
   **`colony_program` (never masked; tile-free** — it is a program, not a
-  structure**)** — enables colony fitting.
+  structure**)** — unlocked + an active spaceport L1 arms the **free-first
+  colonizer grant** and the spaceport colonizer recipe (§12).
 
 **T4**
 - `shipyard_L`, `stargate_yard` (§9.3), `terraformer` (Civic; +1 quality grade
@@ -725,8 +732,8 @@ and `market` tech nodes (`spaceport_M`, `shipyard_M/L`, `market_T2`) are the
 | crystal_extractor | T1 | — | climate crystal 8/16/32 T/day |
 | refinery | T1 | — | fuel cells 20/40/80 batches/day |
 | fuelcell_plant | T2 | — | own line: **40/80/160 batches/day × E** (2× same-level refinery); recipe yields unchanged |
-| spaceport | T1 | — | docks cumulative: **L1 = 2 S; L2 = +2 M; L3 = +2 L** [TUNE]; a dock accepts hulls ≤ its size; docks = max simultaneous grounded visitors, reservable |
-| workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories & terraform cores |
+| spaceport | T1 | — | **base node never seed-masked (§5)**; docks cumulative: **L1 = 2 S; L2 = +2 M; L3 = +2 L** [TUNE]; a dock accepts hulls ≤ its size; docks = max simultaneous grounded visitors, reservable; **mints colonizer accessories — first per world free, rest basics-priced (§6/§12)** |
+| workshop | T1 | — | repair 5%/h ×1/2/4; L2+: crafts accessories (terraform core retired 2026-07-24 → colonizer at spaceport) |
 | market | T1 | — (L2+: Mercantile) | **trade slots = level (1/2/3)**; L1 fixed-rate; L2 AMM pools + auctions; L3 **LP fee 25→20 bp** |
 | residential | T1 | (L2+: Civic) | popCap **+15 pp/level, additive** (+45% at L3); UI must project the E(u) trough before build |
 | lab | T2 | — | medicines 10/20/40 batches/day |
@@ -786,8 +793,13 @@ sprite contract in `docs/ASSET_PIPELINE.md`.
   - med×3 = lab: water + (lithium | sulfur | phosphor)
   - **fuel cells: 1 crystal + 1 silicon → 2 cells** [TUNE]; **Nox crystals →
     4 cells** [TUNE]
-  - terraform core (**workshop L2 — politics-free**): 10 steelH + 5 crystal +
-    50 cells [TUNE]
+  - colonizer accessory (**spaceport L1 — politics-free; the "terraform core"
+    item realized**, owner 2026-07-24): **first per planet free** (granted on
+    active spaceport L1 + `colony_program` unlocked, once ever), then crafted for
+    a **basics-only, deposit-biased** cost [TUNE — e.g. 200 ore + 100 of the
+    world's most-abundant rolled basic]. **Never priced in refined resources or
+    crystals** — only the 12 basics are always-mineable (trace fallback), so the
+    price is soft-lock-proof. Replaces the retired workshop-L2 terraform core
   - weapon/accessory items (weapon_foundry): e.g. beamLaser = 4 steelH +
     2 Ignis + 1 gold + 20 cells [TUNE] — **per-unit derived items**
 - **Construction workflow:** unlocked card → pay from on-planet stock → tile
@@ -1230,19 +1242,29 @@ computations (plunder, bonds) but are never enumerated to other players.
 ## 12. Colonization & planet trading
 
 **Colonize (mid-game, canon):**
-1. Prereqs: `colony_program` (T3, never masked); Civil-**M or L** hull (T2
-   common shipyard builds both S and M) + **colony fitting** (1 terraform
-   core + **400 cells + 150 steelL** [TUNE] — civilian-grade steel; the whole
-   chain is politics-free by construction).
-2. Load an explicit **C/A/S manifest totalling ≥ 200 settlers** [TUNE] + seed
-   stock (≥ 30 T food, 30 T water). Counts are bounded by the origin cohorts,
-   but there is no moral/workforce guard; departing actives reduce assigned
-   jobs pro rata.
+1. Prereqs (owner reform 2026-07-24 — replaces colony fitting): unlock
+   `colony_program` (T3, never masked) **and** build an **active spaceport L1**
+   (never masked, §5) on a world you own → the world mints its **first colonizer
+   accessory free**, once ever (persisted flag `bodies.free_colonizer_granted`;
+   no re-grant on demolish/rebuild, and a conquered world keeps the spent flag —
+   "that's life"). Further colonizers are crafted at the spaceport for a
+   **basics-only, deposit-biased** cost (§6). Carry the colonizer on a
+   Civil-**M or L** hull (it is an item; a Civil hull also carries the pax).
+   **No workshop L2, no terraform core, no fitting fee** — the chain is politics-
+   and DNA-free by construction.
+2. Load the **colonizer accessory** + an explicit **C/A/S manifest totalling
+   ≥ 200 settlers** [TUNE] + seed stock (≥ 30 T food, 30 T water). Counts are
+   bounded by the origin cohorts, but there is no moral/workforce guard;
+   departing actives reduce assigned jobs pro rata.
 3. Fly to an **uninhabited planet**; land (colony ships land wild — canon);
    72 h establishment [TUNE]; planet becomes yours: tiles/DNA roll from seed,
-   population/pyramid equals the delivered C/A/S manifest exactly, hull
-   converts into `depot` + `spaceport_S` (the ship is spent) [TUNE].
-4. Settler-risk per §3.2 (civil pilots matter).
+   population/pyramid equals the delivered C/A/S manifest exactly, the
+   **colonizer accessory is consumed**, and the hull converts into `depot` +
+   `spaceport_S` (the ship is spent) [TUNE].
+4. Settler-risk per §3.2 (civil pilots matter). If the colonizer is lost with
+   its ship en route, the origin world simply crafts another (a lost accessory
+   never bricks a planet — the free-first rule guarantees the bootstrap, paid
+   crafting guarantees recovery).
 
 **Planet trading (canon):** planets list like any non-fungible. Ownership
 transfers; **bound governors transfer with the world**; population stays;
@@ -1337,9 +1359,9 @@ policy "engage whatever engages the convoy" — the old gamebook's freighter
 #296/fighter #552, now first-class.
 
 **The colonization arc (mid):** probe/lab surveys (DNA branches, deposits,
-quality) → colony fitting (T3, never masked) → settler run (civil pilot!) →
-establish → the new world's DNA forces a *different* specialization →
-intra-empire logistics begin.
+quality) → build a spaceport → its **free first colonizer** (colony_program
+unlocked) → settler run (civil pilot!) → establish → the new world's DNA forces
+a *different* specialization → intra-empire logistics begin.
 
 **War (mid-late):** L3 intel (manifests, junk/harvest attribution) → toll
 strangulation or siege → turret grind (heavy turrets now bite: 160 ATK) →

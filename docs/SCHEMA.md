@@ -275,10 +275,40 @@ exact command time.
   telescope tile indices back to NULL. That loses chosen board positions, so
   no automatic down migration can be lossless.
 
+## 041_colony_reform (anti-soft-lock colonizer, GB §18/§19.3/§12, DG §5/§6/§12, owner decision 2026-07-24)
+
+- `bodies.free_colonizer_granted boolean NOT NULL DEFAULT false` — the persisted
+  once-ever flag. Set true when the world is first granted its **free colonizer
+  accessory** (active spaceport L1 + `colony_program` unlocked). A demolish/
+  rebuild never re-grants; the flag **rides with the world through ownership
+  transfer** (conquest/trade), so a conquered world that already spent its free
+  colonizer receives no new one. Down: `ALTER TABLE bodies DROP COLUMN
+  free_colonizer_granted`.
+- **No other schema change.** The rest of the reform is code, not data:
+  - `spaceport_S` joins the **never-seed-masked** set in `techtree.ts` — DNA is a
+    pure function of `(DAG, seed)` recomputed at read time (no stored tree), so
+    making the base spaceport universal needs **no migration**.
+  - The **colonizer accessory** is a new item key in the `@atg/shared` catalog,
+    carried in the existing `ships.item_cargo` (migration 039) and held in
+    `planet_items` (migration 031) — **no new table/column**.
+  - The **spaceport colonizer recipe** (producer `spaceport`, minLevel 1,
+    basics-only deposit-biased cost) lives in `recipes.ts`; the retired
+    workshop-L2 terraform-core recipe is removed there.
+  - `ships.colony_kit` (migration 007) is **superseded**: colonize eligibility
+    now checks the hull carries a colonizer accessory item, not the boolean
+    fitting. The column is left in place for a later cleanup (documented, not
+    dropped here).
+- **Dev backfill note.** Preproduction only; no deployed DB. On reseed the rule
+  applies naturally. On an already-simulated dev DB, existing spaceport worlds
+  mint one free colonizer on the next grant check (acceptable — dev data is
+  reseedable, CLAUDE.md §8); a stricter backfill (`free_colonizer_granted = true`
+  for bodies with an active spaceport at migration time) is available if a
+  no-retro-grant dev run is wanted.
+
 ## Rollback
 
 Development-only baseline: rollback = `pnpm resetDb` (drop volume, re-migrate,
 re-seed). Once staging/production exist, each migration must ship its
 documented down-path or an explicit "irreversible" statement
-(`PROD_MIGRATIONS.md`). Migration 025's specific non-lossless board-position
+(`docs/PROD_MIGRATIONS.md`). Migration 025's specific non-lossless board-position
 rollback is documented in its own section above.

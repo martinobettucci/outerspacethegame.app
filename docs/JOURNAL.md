@@ -5241,3 +5241,56 @@ catalogue stock, stats compactes, warehouse peuplé (7 familles + fabrication
 active), coque Cargo-S avec réserve locale ; console applicative 0 erreur
 après authentification. Vérifications : typecheck client ; Vitest 24/24 ;
 build Vite vert (seul avertissement de chunk historique).
+
+## 2026-07-24 — Réforme colonisation : anti-soft-lock (colonisateur au spaceport, premier gratuit par monde)
+
+**Problème.** Question joueur « une fois le colony program débloqué, comment
+coloniser ? ». En traçant la mécanique réelle (code vérifié) : la chaîne exige
+un **workshop L2 actif** pour fabriquer le colonisateur (via terraform core).
+Or l'ADN tech par monde **masque le nœud workshop ~5 %** et **plafonne à L1
+~20 %** des cas restants (`techtree.ts` `DEPTH_CAP_WEIGHTS`) → **~24 % des
+mondes standards ne peuvent JAMAIS atteindre workshop L2**, donc jamais
+fabriquer de colonisateur. Le climat/les tuiles ne bloquent jamais ; seul l'ADN
+bloque. Pire : `rollStarterPlanet` ne garantit que le physique — **aucune
+garantie d'ADN workshop L2 sur le starter** → un joueur peut naître soft-locké,
+sans voie de conquête (P5) en secours.
+
+**Hypothèses vérifiées (sous-agents lecture seule).** (a) Le stockage de base
+existe SANS depot (plancher 800/1000/1200 T, `formulas.ts`) et le depot est
+jamais-masqué → inutile de le donner. (b) Le **spaceport EST masquable** (hors
+ensemble jamais-masqué) — c'est LA porte réelle (embarquement settlers). (c)
+Seuls les **12 basiques** sont toujours payables : mine jamais-masquée + extrait
+n'importe quel basique (plein si gisement, sinon **trace 2 T/j**) ; raffinés et
+**cristaux NON** (bâtiments producteurs masquables ; cristaux non minables en
+trace). Le coût actuel du kit (400 cells + 150 steelL + core à 5 cristaux) est
+donc la PIRE dénomination possible.
+
+**Décisions (responsable, 2026-07-24).** (1) **`spaceport_S` rejoint l'ensemble
+jamais-masqué** (telescope/probe_pad/depot/mine/colony_program/**spaceport**) —
+tout monde possédable pose toujours un spaceport L1. Conséquence acceptée : le
+« monde enclavé sans lancement » disparaît (« meilleur jeu ainsi »). (2) La
+**production du colonisate** migre du workshop au **spaceport L1** (accessoire =
+« terraform core » enfin réalisé). (3) **Premier colonisateur GRATUIT par monde,
+une fois pour toutes** — déclenché quand spaceport L1 actif ET `colony_program`
+débloqué (au second atteint) ; drapeau persisté `bodies.free_colonizer_granted` ;
+pas de re-don au démontage/reconstruction ; **suit la propriété** — un monde
+conquis ayant déjà consommé son gratuit n'en reçoit pas d'autre (« c'est la
+vie »). (4) Colonisateurs suivants **fabriqués au spaceport, prix uniquement en
+12 basiques biaisés aux gisements** (jamais raffinés/cristaux) → toujours
+payable, la perte d'un colonisateur en transit ne bloque jamais (le gratuit
+amorce, le payant récupère). (5) **workshop L2 + terraform core + fitting
+retirés** de la chaîne ; `colonize` lira l'item `item_cargo` au lieu du booléen
+`colony_kit`.
+
+**Conséquences / spec.** Migration **041** = seule `bodies.free_colonizer_granted` ;
+le reste est code (`techtree.ts`, `recipes.ts`, service colonize). Barrière
+d'expansion désormais **pop + logistique** (200 settlers, coque Civile, trajet),
+non plus une loterie d'ADN → toutes valeurs `[TUNE]`, tour d'équilibrage requis.
+Documents amendés : GB §18/§19.3/§12, DG §5/§6/§12, SCHEMA 041, DAT (bloc
+colonisation), BACKLOG (unité dédiée `[ ]`), PROD_MIGRATIONS (ligne 41),
+MANUAL_PLAN §6 (Codex spaceport/colonisation), CHANGELOG.
+
+**Vérifications à ce stade.** Mécanique actuelle tracée dans le code (fichiers
+cités en session) ; docs persistées AVANT tout code (CLAUDE.md §5) ; migration,
+code jamais-masqué, recette spaceport, don unique et tests restent à livrer —
+statut backlog `[ ]`.

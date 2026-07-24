@@ -141,9 +141,17 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    served by `worldTechAvailability` (pure roll with `richness` +
    force-union of standing building keys, cap ≥ inherited level). No new
    tables: bodies/deposits/buildings/planet_stock/config only.
-6. **Colonization (implemented, chunks N + BD):** fit colony kit (Civil M/L,
+6. **Colonization (implemented, chunks N + BD; reform spec'd, owner decision
+   2026-07-24 — not yet coded):** *Current build* = fit colony kit (Civil M/L,
    `colony_program` unlocked + workshop L2 active; cost = fitting +
-   terraform core + provisions) → embark an explicit C/A/S manifest (active
+   terraform core + provisions). *Reform (GB §19.3, DG §12, migration 041):*
+   the base spaceport becomes never-seed-masked; a world's **first colonizer
+   accessory is free** on active spaceport L1 + `colony_program` (persisted
+   `bodies.free_colonizer_granted`, once ever, survives ownership transfer);
+   further colonizers are crafted at the spaceport for a basics-only,
+   deposit-biased cost; workshop L2 and the terraform core drop out of the
+   chain. Below describes the *current* implemented loop.
+   Embark an explicit C/A/S manifest (active
    spaceport, pax caps, available cohorts, no moral guard; assigned staff is
    reduced pro rata when actives leave) → fly to a hovered wild non-poison planet →
    `colonize` (≥ 200 settlers, anti-race lock) → 72 h

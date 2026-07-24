@@ -2,6 +2,30 @@
 
 ## [Non publié]
 
+### Réforme colonisation anti-soft-lock — spec & décision persistées (2026-07-24, docs seulement)
+
+- **Cause racine identifiée (code tracé).** Fabriquer un colonisateur exige
+  aujourd'hui un **workshop L2 actif**, mais l'ADN tech par monde masque le nœud
+  workshop (~5 %) ou le plafonne à L1 (~20 % des restants) → **~24 % des mondes
+  ne peuvent jamais coloniser**, starter compris (aucune garantie d'ADN L2 au
+  spawn) — soft-lock potentiel dès le tour 1.
+- **Décision responsable (2026-07-24).** (1) `spaceport_S` rejoint l'ensemble
+  **jamais-masqué** ; (2) le **colonisateur** (accessoire = terraform core enfin
+  réalisé) est fabriqué au **spaceport L1**, plus au workshop ; (3) **premier
+  colonisateur gratuit par monde, une fois pour toutes** (spaceport L1 actif +
+  `colony_program`), drapeau persisté `bodies.free_colonizer_granted` qui suit la
+  propriété (monde conquis ayant consommé son gratuit → aucun autre) ; (4)
+  colonisateurs suivants au coût **uniquement en 12 basiques biaisés aux
+  gisements** ; (5) workshop L2 + terraform core + fitting retirés.
+- **Documents écrits AVANT tout code (CLAUDE.md §5) :** GB §18/§19.3/§12, DG
+  §5/§6/§12, [`docs/SCHEMA.md`](docs/SCHEMA.md) (migration 041), DAT (bloc
+  colonisation), BACKLOG (unité dédiée), [`docs/PROD_MIGRATIONS.md`](docs/PROD_MIGRATIONS.md)
+  (ligne 41), MANUAL_PLAN §6 (Codex spaceport/colonisation), [`docs/JOURNAL.md`](docs/JOURNAL.md).
+- **Restant :** migration `041_colony_reform.sql`, code (`techtree.ts`
+  jamais-masqué spaceport, `recipes.ts` recette colonisateur + retrait core,
+  `colonize` sur `item_cargo`), tests unit/intégration/E2E, Codex, tour
+  d'équilibrage [TUNE] — backlog `[ ]`, non encore livré.
+
 ### P0.3 — command deck icon-first, gestion en ouvrant l'objet (2026-07-23)
 
 - Stock planète : catalogue COMPLET, zéros compris, groupé par famille avec

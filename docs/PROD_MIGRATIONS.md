@@ -54,6 +54,7 @@ aucun service déployé, aucun secret provisionné. Le site Jekyll historique
 | 38 | `game/packages/server/migrations/038_crusader_fabrication.sql` | W8e : work_orders de BORD (body_id nullable + ship_id) ; `ships.crusader_items` (balance d'items du Crusader) | 032, 033 | DROP COLUMN ship_id + SET NOT NULL body_id ; DROP COLUMN crusader_items |
 | 39 | `game/packages/server/migrations/039_item_cargo.sql` | W6c-b1 : `ships.item_cargo` (fret d'items — 1 conteneur chacun, DG §7) | 031 | DROP COLUMN item_cargo |
 | 40 | `game/packages/server/migrations/040_building_work_orders.sql` | W7-bâtiments : CHECK de work_orders étendu à kind 'building' (usinage partiel du placement/levelup) | 032 | Recréer le CHECK sans 'building' |
+| 41 | `game/packages/server/migrations/041_colony_reform.sql` *(à créer avec le code)* | Réforme colonisation anti-soft-lock (GB §19.3, décision responsable 2026-07-24) : `bodies.free_colonizer_granted boolean NOT NULL DEFAULT false` (don unique du colonisateur gratuit, suit la propriété). Le reste de la réforme est code (spaceport jamais-masqué, recette colonisateur au spaceport, retrait terraform core) — pas de schéma. | 001 | `ALTER TABLE bodies DROP COLUMN free_colonizer_granted` |
 
 ## Services à déployer (au premier déploiement)
 

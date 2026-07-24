@@ -596,9 +596,14 @@ The engine of specialization, progression and production-balancing.
   available — and (b) caps *how deep* you can go per branch. Availability is a
   pure function of `(global DAG, seed)`: recomputable, reproducible, no per-planet
   tree stored.
-- **Telescope and probe are never gated.** They sit at the **very first level of
-  every planet's tree**, always available — this underwrites the starter
-  guarantee (§19).
+- **The never-gated set.** A handful of nodes sit at the **very first level of
+  every planet's tree**, always available regardless of seed: **telescope,
+  probe pad, depot, mine, `colony_program`, and the base spaceport** (owner
+  decision 2026-07-24 added the spaceport). Placement is still paid. This
+  underwrites the starter guarantee (§19); for the spaceport it further
+  guarantees that **every ownable world can always host a launch base and mint
+  a colonizer**, so a poor tech-DNA roll can never soft-lock expansion (§19.3).
+  Higher spaceport levels (M/L docks) remain normal depth-capped tech.
 - **Two phases:**
   1. **Unlock** (once per planet): meet all prerequisites + pay the unlock
      resource cost → the card becomes available on that planet. **Unlock is
@@ -663,11 +668,15 @@ The engine of specialization, progression and production-balancing.
 - **Three ways to expand your holdings:**
   1. **Buy** a planet (fiat) — the **fast pass**, spawns near you (§ spawn rule).
   2. **Colonize** an **uninhabited planet** (§3) with a **colony ship** — the
-     explorer's payoff. **Colony ships are very costly → a mid-game mechanic**,
-     not an early one. Establishing the colony requires **moving population as
-     settlers** from an existing planet (via **Civil** transport), and the trip
-     carries an **accident risk**; a **Civil pilot** in the crew reduces it
-     (§12). This ties expansion to your population economy (§10).
+     explorer's payoff. Building a **spaceport** (never gated, §18) on any world
+     you own mints your **first colonizer for that world free** once the
+     `colony_program` is also unlocked; further colonizers are crafted at the
+     spaceport for resources (§19.3). Establishing the colony requires **moving
+     population as settlers** from an existing planet (via **Civil** transport),
+     and the trip carries an **accident risk**; a **Civil pilot** in the crew
+     reduces it (§12). The barrier is now honest **population + logistics** (200
+     settlers, a Civil hull, a real trip), not a tech-DNA or resource wall — it
+     ties expansion to your population economy (§10).
   3. **Trade** — **planets can be traded between players** (like any non-fungible
      asset, §13), and are also won by **conquest**.
 - **Not pay-to-win:** you buy *board presence and more rolls of tech DNA*, not
@@ -676,6 +685,32 @@ The engine of specialization, progression and production-balancing.
 - **Guardrail (canon):** buying is the *fast* escape from a stuck start, **never
   the only one** — the starter guarantee above ensures a patient free player can
   always eventually reach the network and trade out.
+
+### 19.3 The colony program — the anti-soft-lock reform (canon, owner decision 2026-07-24)
+
+Colonization must never be locked by a planet's tech-DNA roll. Two structural
+rules guarantee it:
+
+- **The base spaceport is never seed-masked (§18).** Every ownable, non-poison
+  world can therefore always build a spaceport L1 — the structure that both
+  embarks settlers and mints colonizers. The old "landlocked world that cannot
+  launch" archetype is retired (owner-accepted trade-off: a better game this
+  way).
+- **The colonizer is minted at the spaceport, not the workshop.** Reaching an
+  **active spaceport L1 while `colony_program` is unlocked** grants **one free
+  colonizer accessory** into that planet's stock — **once per planet, ever**
+  (a persisted flag). Demolishing and rebuilding does **not** re-grant, and a
+  **conquered** world that already spent its free colonizer never gets another
+  ("that's life" — the flag rides with the world through ownership transfer).
+  Additional colonizers are crafted at the spaceport for resources, **priced
+  only in the 12 basic (always-mineable) resources and biased to the planet's
+  own deposits**, so a colonizer is always locally payable and no
+  scarce-resource wall can re-introduce a soft-lock.
+
+A colonizer is a portable item: load it — with the settler manifest and seed
+stock — onto a **Civil M/L** hull, fly to a wild world, and establish (§12); the
+item is consumed on establishment. The **Workshop L2 requirement is removed**;
+the colonizer accessory is the "terraform core" item finally realized.
 
 ---
 
