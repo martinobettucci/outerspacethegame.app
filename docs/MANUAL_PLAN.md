@@ -184,6 +184,13 @@ they have discovered.
 8. Economy: census, trading, pods, auctions — later.
 9. Combat resolution — later.
 10. Getting started (first session flow) — later.
+11. **Audio** (owner request 2026-07-24) — explains only what the player sees
+    and does on the audio control: the mute toggle and the master/music/
+    ambience/sfx sliders, that music plays low under gameplay, that ambience
+    reflects the buildings on the planet, and that a selection sound plays when
+    a unit is picked. Spoiler-free: no unrevealed content. Numbers (default bus
+    levels) render **live** from `@atg/shared` `AUDIO_BUS_DEFAULTS` — never
+    hardcoded. Spec: `docs/AUDIO_PLAN.md`. Delivered with backlog §P0.3-audio.
 
 ## 7. Testing (§15) & verification (§16)
 

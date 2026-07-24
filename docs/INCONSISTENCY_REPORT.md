@@ -105,7 +105,15 @@ this audit.
 - **Impact:** the scripts can only be linked to the broad P0.3 art-direction
   unit; their inputs, mix policy, codecs, quality targets, and regeneration
   contract are not specified.
-- **Status:** unresolved; scripts left unchanged.
+- **Resolution (2026-07-24):** the owner requested a full generated audio layer;
+  `docs/AUDIO_PLAN.md` now specifies the contract (families, generation source
+  `fal-ai/stable-audio`, mix buses, loudness/loop/codec policy, layout,
+  acceptance criteria), tracked by backlog unit §P0.3-audio and documented in
+  DESIGN_SYSTEM §13 / ASSET_PIPELINE §9 / DAT §2. The orphan
+  `assets/tunes/theme.*` + `build-theme.*.sh` are superseded by that pipeline
+  (`game/scripts/genAudio.mjs`); they will be removed or re-homed when the new
+  layer ships.
+- **Status:** resolved (spec written); implementation tracked under §P0.3-audio.
 
 ## IR-009 — Full-suite verification is not isolated consistently
 

@@ -118,6 +118,17 @@ export const t = {
     comingTrading: 'Cross-player trading arrives with phase P4',
     logout: 'Log out',
   },
+  audio: {
+    open: 'Audio mixer',
+    mute: 'Mute audio',
+    unmute: 'Unmute audio',
+    muted: 'Muted',
+    master: 'Master',
+    music: 'Music',
+    ambience: 'Ambience',
+    sfx: 'Effects',
+    hint: 'Music plays low under gameplay. Ambience follows the buildings on the planet; a sound plays when you select a unit.',
+  },
   galaxy: {
     title: 'Known sky',
     fleet: 'Fleet',

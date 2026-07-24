@@ -6,7 +6,8 @@
  * formulae for optimisers. First slice: three chapters.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { Boxes, Building2, Gauge, Pickaxe, Rocket, Users, Wrench } from 'lucide-react';
+import { Boxes, Building2, Gauge, Pickaxe, Rocket, Users, Volume2, Wrench } from 'lucide-react';
+import { AUDIO_BUS_DEFAULTS } from '@atg/shared';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import type { View } from '../state.tsx';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
@@ -22,6 +23,7 @@ export type CodexSectionId =
   | 'buildings'
   | 'cargo'
   | 'gear'
+  | 'audio'
   | 'crusader';
 
 /** Contexte de rendu d'un chapitre (planète actuellement ouverte). */
@@ -309,6 +311,28 @@ function CrusaderBody() {
   );
 }
 
+function AudioBody() {
+  // Live from @atg/shared (anti-drift, MANUAL_PLAN §2/§6.11) — never hardcoded.
+  const lvl = (v: number) => String(Math.round(v * 100));
+  return (
+    <>
+      <p>{c.audio.lead}</p>
+      <p>{c.audio.buses}</p>
+      <p>{c.audio.autoplay}</p>
+      <p>{c.audio.persistence}</p>
+      <ExactRule>
+        <p>{c.audio.exactIntro}</p>
+        <ul className="ls-codex-facts">
+          <Fact label={c.audio.exactMaster} value={lvl(AUDIO_BUS_DEFAULTS.master)} />
+          <Fact label={c.audio.exactMusic} value={lvl(AUDIO_BUS_DEFAULTS.music)} />
+          <Fact label={c.audio.exactAmbience} value={lvl(AUDIO_BUS_DEFAULTS.ambience)} />
+          <Fact label={c.audio.exactSfx} value={lvl(AUDIO_BUS_DEFAULTS.sfx)} />
+        </ul>
+      </ExactRule>
+    </>
+  );
+}
+
 export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'deposits', title: c.deposits.title, icon: <Pickaxe size={16} />, Body: DepositsBody },
   { id: 'population', title: c.population.title, icon: <Users size={16} />, Body: PopulationBody },
@@ -316,6 +340,7 @@ export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'buildings', title: c.buildings.title, icon: <Building2 size={16} />, Body: BuildingsBody },
   { id: 'cargo', title: c.cargo.title, icon: <Boxes size={16} />, Body: CargoBody },
   { id: 'gear', title: c.gear.title, icon: <Wrench size={16} />, Body: GearBody },
+  { id: 'audio', title: c.audio.title, icon: <Volume2 size={16} />, Body: AudioBody },
   { id: 'crusader', title: c.crusader.title, icon: <Rocket size={16} />, Body: CrusaderBody, requires: 'crusader' },
 ];
 

@@ -146,6 +146,21 @@ export const codexEn = {
     exactStep: 'Continuous gear throttles in steps of',
   },
 
+  audio: {
+    title: 'Audio',
+    lead: 'The mixer lives in the top bar. Click the speaker to mute or unmute everything at once; open the panel beside it to balance four independent channels, each keyboard-reachable.',
+    buses:
+      'Master scales the whole mix. Music is the score behind each screen — kept deliberately low so it never covers the action. Ambience is the industrial sound of what you are looking at: on a planet it rises and shifts with the buildings standing on the ground. Effects are the short confirmations, like the sound a ship makes the instant you select it.',
+    autoplay:
+      'Sound waits for you: nothing plays until your first click or keypress, so a freshly opened tab stays silent until you act.',
+    persistence:
+      'Your levels are remembered on this device only once you move a slider or mute — until then the defaults below apply, and audio never blocks anything you do.',
+    exactIntro: 'Default channel levels (0–100):',
+    exactMaster: 'Master',
+    exactMusic: 'Music (background level)',
+    exactAmbience: 'Ambience',
+    exactSfx: 'Effects',
+  },
   crusader: {
     title: 'Flying colony',
     lead: 'A Crusader is a colony that never lands. It is born hovering, carries a quarter of its birth-world\'s people aboard, and everything a settled world does — breathing, eating, aging, working, building — it does from its own hold. There is no ground under it and there never will be.',

@@ -27,3 +27,4 @@ export * from './junk.js';
 export * from './stargates.js';
 export * from './autoTrade.js';
 export * from './popv2.js';
+export * from './audio.js';

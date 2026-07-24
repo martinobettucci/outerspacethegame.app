@@ -50,6 +50,8 @@ import { api, type ApiError, type DerelictView, type GalaxyBody, type JunkFieldV
 import type { PlanetIntel } from '@atg/shared';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
+import { useAudio } from '../audio/useAudio.tsx';
+import type { SelectableKey } from '@atg/shared';
 import { FleetOperations } from '../components/FleetOperations.tsx';
 import { OperationTimer } from '../components/OperationTimer.tsx';
 import { ShipCommandDeck } from '../components/ShipCommandDeck.tsx';
@@ -139,6 +141,7 @@ interface SceneRefs {
 
 export function GalaxyMap() {
   const { setView, refreshMe } = useAppState();
+  const { manager: audio } = useAudio();
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs | null>(null);
   // Niveau de zoom courant (miroir React de camera.zoom) pour les
@@ -155,6 +158,20 @@ export function GalaxyMap() {
   const [selected, setSelected] = useState<GalaxyBody | null>(null);
   const [ships, setShips] = useState<ShipView[]>([]);
   const [selectedShip, setSelectedShip] = useState<ShipView | null>(null);
+
+  // @spec docs/AUDIO_PLAN.md §0/§4 — StarCraft-style one-shot when a ship hull
+  // is selected. Only the 9 combat/cargo/civil hulls carry a stinger; probe and
+  // personal craft are not in the selection manifest (documented, not silent).
+  const selectedHullKey: SelectableKey | null =
+    selectedShip &&
+    selectedShip.hullSize &&
+    ['combat', 'cargo', 'civil'].includes(selectedShip.hullCategory)
+      ? (`${selectedShip.hullCategory}_${selectedShip.hullSize}` as SelectableKey)
+      : null;
+  useEffect(() => {
+    if (selectedHullKey) audio.playSelection(selectedHullKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio, selectedShip?.id, selectedHullKey]);
   const [openHullId, setOpenHullId] = useState<string | null>(null);
   const [targeting, setTargeting] = useState<
     | { kind: 'ship'; shipId: string }

@@ -25,6 +25,7 @@ import type { BuildingKey } from '@atg/shared';
 import { type StargateView, api, type ApiError, type PlanetDetail } from '../api.js';
 import { t } from '../i18n/en.js';
 import { useAppState } from '../state.tsx';
+import { useAudio } from '../audio/useAudio.tsx';
 import { ALL_RESOURCE_IDS, BUILDINGS, INNATE_TRADABLE } from '@atg/shared';
 import { CardHand, type CardAction } from '../components/CardHand.tsx';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
@@ -84,10 +85,25 @@ const isoY = (col: number, row: number) => ((col + row) * TILE_H) / 2;
 
 export function PlanetView({ planetId }: { planetId: string }) {
   const { setView } = useAppState();
+  const { manager: audio } = useAudio();
   const mountRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const boardRef = useRef<Container | null>(null);
   const [planet, setPlanet] = useState<PlanetDetail | null>(null);
+
+  // @spec docs/AUDIO_PLAN.md §4 — industrial ambience follows the DISTINCT
+  // building types on the ground; cleared when leaving the planet view.
+  const ambienceSig = planet
+    ? Array.from(
+        new Set(planet.buildings.filter((b) => b.tileIndex !== null).map((b) => b.key)),
+      )
+        .sort()
+        .join(',')
+    : '';
+  useEffect(() => {
+    audio.setAmbience(ambienceSig ? (ambienceSig.split(',') as BuildingKey[]) : []);
+    return () => audio.setAmbience([]);
+  }, [audio, ambienceSig]);
   const [myPlanets, setMyPlanets] = useState<{ id: string; name: string }[]>([]);
   const [gates, setGates] = useState<StargateView[]>([]);
   const [gateBodyNames, setGateBodyNames] = useState<Record<string, string>>({});

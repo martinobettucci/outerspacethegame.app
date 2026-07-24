@@ -50,6 +50,14 @@
 - [x] Ground-unit sprite size settled by owner: **512×256, placed like buildings**
 - [x] Formats settled by owner: **non-card props = animated GIF** (frame-synced bump/light companions); card art = PNG — pipeline + stubs regenerated (1 602 GIF + 126 PNG)
 
+### P0.3-audio — Audio system (owner request 2026-07-24)
+> Spec: [`docs/AUDIO_PLAN.md`](AUDIO_PLAN.md). Resolves `INCONSISTENCY_REPORT.md` §IR-008.
+> Generated audio via fal (`FAL_KEY`). Enumerable sets delivered exhaustively
+> (CLAUDE.md completeness rule): **3 BGM** contexts + **29** per-building
+> ambience loops + **15** per-unit selection stingers.
+- [~] **A — Audio layer (music + industrial ambience + selection SFX)** — per-screen BGM at background volume (`menu`/`galaxy`/`planet`), looping ambience driven by the buildings on the ground (one loop per `BuildingKey`), StarCraft-style one-shot when a unit/ship/hull is selected. `@atg/shared/audio.ts` manifest (anti-drift, live in Codex), `genAudio.mjs` fal generator, Web-Audio `AudioManager` (buses, autoplay-gesture gate, cross-fade, ambience summing), `AudioControls` UI (mute + per-bus sliders, `localStorage`). Tests: shared completeness (unit) + AudioManager (unit) + E2E (controls/mute + `window.__atgAudio` ambience/selection events). → GAME_BOOK §26; DESIGN_SYSTEM §13; ASSET_PIPELINE §9; MANUAL_PLAN Codex Audio; AUDIO_PLAN §0–§7.
+  **Livré (2026-07-24), non encore committé** : 47 clips générés via fal et vérifiés (3 BGM + 29 ambiances + 15 stingers, 0 invalide, 9,9 Mo ogg/mp3 conservés ; WAV non archivés — régénération via fal)) ; manifeste partagé (test complétude 6/6) ; `AudioManager` (unit 10/10) ; `AudioControls` + `BgmController` ; chapitre Codex Audio (chiffres live). **E2E `audio.spec.ts` VERT 1/1** (mute+persistance localStorage, slider, BGM par vue galaxy→planet, ambiance = bâtiments placés, stinger de sélection cohérent au hull). **§16** : mixeur observé à 1440×900 (popover 4 bus, thème conforme). **Restent avant `[x]`** : (1) commit — DIFFÉRÉ, arbre entremêlé avec le refactor concurrent docs→`docs/` (décision responsable « keep going, commit later ») ; (2) 6 stingers d'unités au sol MAPPÉS mais non câblés — aucune UI de sélection d'unité au sol n'existe encore (câblage = 1 ligne quand elle arrivera, cf. AUDIO_PLAN §0). Note : `tsc` client global échoue actuellement sur `LoginScreen.tsx` (édition du workstream concurrent, sans rapport avec l'audio) ; `vite build` de l'audio est vert.
+
 ### P0.4 Remaining design opens (GAMEBOOK §27)
 - [x] Decide tick-worker language (TS vs Python) with documented trade-off → DAT — **TypeScript (Node 22)**, JOURNAL session 30, DAT §2
 - [x] Decide isometric renderer (Pixi vs canvas) via micro-prototype → DAT — **PixiJS v8 VALIDÉ par le micro-prototype sur la vraie vue planète** (JOURNAL session 30) : GIF animés (pixi.js/gif), halos additifs de propagation depuis les light maps, filtre WebGL de relief bump — captures + vidéo observées

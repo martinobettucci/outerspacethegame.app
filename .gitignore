@@ -8,3 +8,8 @@ tmp
 !.env.example
 __pycache__/
 *.pyc
+
+# Audio pipeline: the shipped ogg/mp3 (client/public/audio) are tracked; raw
+# WAVs are not archived (regenerate via genAudio.mjs). Only the transient
+# generation scratch is ignored.
+game/scripts/.audio-tmp/

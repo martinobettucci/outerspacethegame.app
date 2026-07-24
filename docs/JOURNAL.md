@@ -5242,6 +5242,43 @@ active), coque Cargo-S avec réserve locale ; console applicative 0 erreur
 après authentification. Vérifications : typecheck client ; Vitest 24/24 ;
 build Vite vert (seul avertissement de chunk historique).
 
+---
+
+## 2026-07-24 — Audio layer: décision & spec (BGM + ambiance par bâtiment + stinger de sélection)
+
+**Contexte.** Le responsable rappelle une intention d'audio jamais persistée :
+musique de fond par écran (menu, galaxie, gestion de planète) à *volume de
+fond*, bruits d'ambiance INDUSTRIELS en BOUCLE dépendant des bâtiments au sol,
+et un son spécial à la sélection d'une unité (façon StarCraft). Jeu spatial :
+effets industriels, BGM atmosphérique.
+
+**Constat.** L'audio n'existait qu'à l'état d'orphelin : `assets/tunes/theme.*`
+(un thème unique, non branché nulle part) + scripts de build, sans aucune spec
+produit — c'est exactement `INCONSISTENCY_REPORT.md` §IR-008. La note du
+journal disant « fal bloqué / pas de clé » était PÉRIMÉE : `.env` racine
+contient désormais `FAL_KEY` et `OPENAI_KEY`. Round-trip fal vérifié le
+2026-07-24 : `fal-ai/stable-audio` renvoie un WAV 44,1 kHz stéréo,
+`seconds_total` pilote la durée ; ffmpeg/ffprobe présents.
+
+**Décisions (responsable, 2026-07-24).** (1) Ambiance = **une boucle unique par
+bâtiment** (29), pas de beds de famille. (2) Sélection = **un stinger par type
+d'unité** (6 unités sol + 9 coques = 15). (3) BGM = 3 contextes (`menu`,
+`galaxy`, `planet`) ; `comms`/`market` réutilisent `galaxy`. Musique au **volume
+de fond** (bus `music` par défaut 0,35).
+
+**Conséquences / spec.** `docs/AUDIO_PLAN.md` (contrat complet), unité de
+backlog §P0.3-audio, manifeste anti-dérive `@atg/shared/audio.ts`, générateur
+`game/scripts/genAudio.mjs` (fal), `AudioManager` Web Audio (bus master/music/
+ambience/sfx, garde geste-utilisateur pour l'autoplay, cross-fade, somme des
+ambiances par type présent, one-shot de sélection interruptible), UI
+`AudioControls` (mute + sliders, persistance `localStorage` §11). DoD :
+complétude partagée testée + AudioManager unitaire + E2E (contrôles/mute +
+événements `window.__atgAudio`) + section Codex Audio. IR-008 marqué résolu.
+
+**Vérifications à ce stade.** Round-trip fal OK ; docs persistées AVANT tout
+code (CLAUDE.md §5) ; génération, moteur, câblage et tests restent à livrer —
+statut backlog `[ ]`.
+
 ## 2026-07-24 — Réforme colonisation : anti-soft-lock (colonisateur au spaceport, premier gratuit par monde)
 
 **Problème.** Question joueur « une fois le colony program débloqué, comment

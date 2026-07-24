@@ -624,3 +624,27 @@ panels, yellow signature accent, dense-but-readable management UI all land.
   remain the anchors.
 - The marketing site (Jekyll) may keep its own lighter styling; this system
   governs the **game** UI.
+
+## 13. Audio
+
+Full spec: [`docs/AUDIO_PLAN.md`](AUDIO_PLAN.md). Audio is part of the product
+UX and follows the same intentionality rule as the visuals — diegetic,
+industrial, space-station texture, never generic stock loops.
+
+- **Mix buses & default levels (the "background volume"):** `master` 1.0 ·
+  `music` **0.35** (BGM sits low, under gameplay) · `ambience` 0.50 · `sfx`
+  0.70. Rendered live from `@atg/shared` `AUDIO_BUS_DEFAULTS` — never hardcode.
+- **Three BGM contexts** cross-faded on screen change: `menu`, `galaxy`,
+  `planet` (`comms`/`market` reuse `galaxy`).
+- **Building ambience** loops are summed per **distinct building type present**
+  on the planet, gain-normalized to avoid clipping.
+- **Selection stinger** is a one-shot on `sfx`; a new selection interrupts the
+  previous (StarCraft feel).
+- **Controls:** compact `AudioControls` in the `GameShell` ribbon — Lucide
+  `Volume2` / `VolumeX` mute toggle + per-bus sliders. Keyboard-accessible,
+  focus-visible, labelled (§6, §8). No emoji (§9).
+- **Autoplay:** `AudioContext` starts suspended; the first user gesture resumes
+  it and starts the current BGM — no forced sound before interaction.
+- **Persistence (CLAUDE.md §11):** volumes + mute persist in `localStorage`
+  under `atg.audio` **only after** an explicit slider/mute action; defaults
+  apply otherwise; audio never blocks a feature.

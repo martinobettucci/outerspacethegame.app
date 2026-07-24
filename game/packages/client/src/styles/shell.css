@@ -1693,3 +1693,105 @@
     transform: translate3d(0, 0, 0);
   }
 }
+
+/* @spec docs/BACKLOG.md §P0.3-audio; docs/DESIGN_SYSTEM.md §13 Audio / §6 states /
+   §8 accessibility. Compact ribbon mixer (mute toggle + popover sliders). */
+.ls-audio {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  border-left: 1px solid var(--ls-line);
+}
+.ls-audio__toggle,
+.ls-audio__more {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ls-muted);
+  cursor: pointer;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition:
+    color 180ms var(--ls-ease),
+    background-color 180ms var(--ls-ease),
+    box-shadow 180ms var(--ls-ease);
+}
+.ls-audio__toggle {
+  width: 42px;
+}
+.ls-audio__more {
+  width: 20px;
+  padding-right: 6px;
+}
+.ls-audio__more-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 6px currentColor, 0 -6px currentColor;
+}
+.ls-audio__toggle:hover,
+.ls-audio__more:hover {
+  color: var(--accent-300, #eee477);
+  background: rgba(215, 207, 74, 0.08);
+  box-shadow: inset 0 -2px rgba(215, 207, 74, 0.38);
+}
+.ls-audio__toggle[aria-pressed='true'] {
+  color: var(--danger-400, #ff6868);
+}
+.ls-audio__toggle:focus-visible,
+.ls-audio__more:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--ls-gold-bright);
+  outline-offset: -4px;
+}
+.ls-audio__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 6px;
+  z-index: 40;
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px);
+  background: var(--surface-glass, rgba(10, 17, 31, 0.94));
+  border: 1px solid var(--stroke-subtle, #283857);
+  border-radius: var(--radius-card, 14px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.ls-audio__row {
+  display: grid;
+  grid-template-columns: 68px 1fr 30px;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: 12px;
+  color: var(--text-secondary, #aebbd2);
+}
+.ls-audio__row-label {
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ls-audio__row-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary, #7f8ca8);
+}
+.ls-audio__slider {
+  width: 100%;
+  accent-color: var(--brand-yellow, #d9cf4a);
+  cursor: pointer;
+}
+.ls-audio__slider:focus-visible {
+  outline: 2px solid var(--ls-gold-bright);
+  outline-offset: 3px;
+}
+.ls-audio__hint {
+  margin: var(--space-1, 4px) 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-tertiary, #7f8ca8);
+}

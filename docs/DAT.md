@@ -41,6 +41,19 @@
   Design system: `docs/DESIGN_SYSTEM.md`; DOM contract:
   `docs/design/props/index.html`. Client is **never authoritative**; it
   renders lazily-evaluated server state and interpolates.
+- **Audio subsystem (client-only)** — Web Audio graph
+  `source → voiceGain → busGain → masterGain → destination` with four buses
+  (`master`/`music`/`ambience`/`sfx`). Drives three cross-faded BGM beds by
+  active view, sums per-building-type ambience loops on the planet, and fires
+  one-shot selection stingers. `AudioContext` starts suspended (autoplay
+  policy); the first user gesture resumes it. Assets are generated offline via
+  `game/scripts/genAudio.mjs` (fal `fal-ai/stable-audio`, `FAL_KEY` in root
+  `.env`, never committed) and shipped as `.ogg`+`.mp3` under
+  `client/public/audio/`. The id↔building/unit/context mapping and default bus
+  levels live in `@atg/shared/audio.ts` (anti-drift, also rendered by the
+  Codex). User volume/mute persist in `localStorage` (`atg.audio`) only after an
+  explicit action (CLAUDE.md §11). Spec: `docs/AUDIO_PLAN.md`; pipeline:
+  `docs/ASSET_PIPELINE.md` §9. Client is never authoritative for audio state.
 - **Player Codex (in-app manual, first slice implemented — P2.codex)** — client-only,
   player-facing help reachable from every screen (left-rail entry →
   `useDialogFocus` dialog overlay, contextual deep-link by `view.kind`). Spec:

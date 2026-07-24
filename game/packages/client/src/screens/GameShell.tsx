@@ -28,6 +28,7 @@ import { type CodexSectionId, defaultSectionFor } from '../codex/sections.tsx';
 import { codexEn } from '../codex/strings.ts';
 import { CommsScreen } from './CommsScreen.tsx';
 import { MarketScreen } from './MarketScreen.tsx';
+import { AudioControls } from '../components/AudioControls.tsx';
 
 function RailButton({
   icon,
@@ -115,6 +116,8 @@ export function GameShell() {
             <span>{t.archetypes[me.player.politics]}</span>
           </span>
         </div>
+
+        <AudioControls />
 
         <button
           className="ls-ribbon__logout"

@@ -152,3 +152,22 @@ DESIGN_SYSTEM/prompts → regenerate. Renders live in
 
 **Desktop-first, tablets supported, mobile NOT supported.** Minimum viewport
 1280×800; touch pan/zoom for tablets; no mobile breakpoints anywhere.
+
+## 9. Audio pipeline
+
+Full spec: [`AUDIO_PLAN.md`](AUDIO_PLAN.md). Same secret discipline as the image
+pipeline (§7), different generator. Unlike the image pipeline, **no raw source
+is archived** — only the compressed clips the game loads are kept (owner
+decision 2026-07-24); re-run the generator to rebuild any clip.
+
+- **Generator:** `game/scripts/genAudio.mjs` → fal `fal-ai/stable-audio`
+  (`FAL_KEY` from repo-root `.env`, never committed). Text→WAV, 44.1 kHz stereo,
+  `seconds_total` per family (BGM ≈40 s, ambience ≈10 s, selection ≈1.2 s).
+- **Post-process (ffmpeg):** `loudnorm` → seamless loop crossfade (loops only)
+  → dual encode **`.ogg` (Vorbis) + `.mp3`** (same convention as
+  `assets/tunes/theme.*`). The engine plays the first supported source.
+- **Layout:** shipped under `game/packages/client/public/audio/{bgm,ambience,
+  select}/`. The id↔building/unit/context mapping is `@atg/shared/audio.ts`
+  (anti-drift), not the filenames alone. No raw WAV is kept.
+- **Enumerable coverage:** one loop per `BuildingKey` (29), one stinger per
+  unit/hull (15), three BGM contexts — verified by a shared completeness test.
