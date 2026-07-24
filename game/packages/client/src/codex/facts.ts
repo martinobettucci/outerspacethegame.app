@@ -35,6 +35,9 @@ import {
   ENHANCED_FABRICATOR_LEVEL,
   ENHANCED_RATE_MULT,
   RUN_PCT_STEP,
+  LOAD_SPEED_PENALTY,
+  LOAD_BURN_PENALTY,
+  UPGRADE_EFFECTS,
   CRUSADER,
   crusaderDocks,
   itemCapacity,
@@ -65,6 +68,10 @@ export const CODEX_FACTS = {
   clinicReductionByLevel: CLINIC_REDUCTION,
   overcapDeathsCoef: OVERCAP_DEATHS_COEF,
   starterPop: STARTER_POP,
+  // Cargo & the hold
+  cargoLoadSpeedPenalty: LOAD_SPEED_PENALTY,
+  cargoLoadBurnPenalty: LOAD_BURN_PENALTY,
+  cargoUpgradeMult: UPGRADE_EFFECTS.cargo.containersMult,
   // Ship gear
   gearUninstallHours: UNINSTALL_HOURS,
   gearRefundFraction: DISASSEMBLE_REFUND_FRACTION,

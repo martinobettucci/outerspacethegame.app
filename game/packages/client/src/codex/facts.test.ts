@@ -32,6 +32,9 @@ import {
   ENHANCED_FABRICATOR_LEVEL,
   ENHANCED_RATE_MULT,
   RUN_PCT_STEP,
+  LOAD_SPEED_PENALTY,
+  LOAD_BURN_PENALTY,
+  UPGRADE_EFFECTS,
   CRUSADER,
   crusaderDocks,
   itemCapacity,
@@ -69,6 +72,12 @@ describe('CODEX_FACTS binds live @atg/shared constants (anti-drift)', () => {
     expect(CODEX_FACTS.clinicReductionByLevel).toEqual(CLINIC_REDUCTION);
     expect(CODEX_FACTS.overcapDeathsCoef).toBe(OVERCAP_DEATHS_COEF);
     expect(CODEX_FACTS.starterPop).toBe(STARTER_POP);
+  });
+
+  it('cargo & the hold', () => {
+    expect(CODEX_FACTS.cargoLoadSpeedPenalty).toBe(LOAD_SPEED_PENALTY);
+    expect(CODEX_FACTS.cargoLoadBurnPenalty).toBe(LOAD_BURN_PENALTY);
+    expect(CODEX_FACTS.cargoUpgradeMult).toEqual(UPGRADE_EFFECTS.cargo.containersMult);
   });
 
   it('ship gear (W9d)', () => {

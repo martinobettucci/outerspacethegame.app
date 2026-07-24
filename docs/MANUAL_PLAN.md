@@ -79,10 +79,18 @@ Content authoring surface (client): `src/codex/` — a typed section registry
   (focus trap + Escape + focus return, §22 a11y). Two-pane: section nav +
   content; scrolls internally; responsive (desktop/tablet, §7 of DESIGN_SYSTEM).
 - **Contextual deep-link:** PlanetView maps to deposits, Market to
-  efficiency, and GalaxyMap to the "Ship gear" chapter (W9d — gear lives on
-  the map's ship panels). `view.kind` selects that default; later travel,
-  telescope, census and trading chapters will refine the mapping when they
-  exist.
+  efficiency, and GalaxyMap to the "Cargo & the hold" chapter (the map is where
+  holds are loaded/unloaded and where the load penalty is felt on every course).
+  `view.kind` selects that default; later travel, telescope, census and trading
+  chapters will refine the mapping when they exist.
+- **Cargo & the hold chapter:** the freighter fundamentals — the hold measured
+  in containers (1 T of a single fungible *or* 1 discrete item per box, part-tonnes
+  rounded up to a full box), capacity as a hull property (only cargo hulls widen
+  it via the capacity upgrade), and the weight penalty (a fuller hold flies slower
+  and burns more fuel). All figures LIVE from `@atg/shared` (`LOAD_SPEED_PENALTY`,
+  `LOAD_BURN_PENALTY`, `UPGRADE_EFFECTS.cargo`). Basic behaviour that must always
+  be explained — it now has its own chapter rather than a passing mention inside
+  "Ship gear".
 - **Gated chapters (W8e):** a chapter may declare `requires` (e.g. the
   "Flying colony" chapter requires owning a Crusader) — it only appears in
   the nav once the player's own screens have revealed the capability

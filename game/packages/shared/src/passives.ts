@@ -116,6 +116,15 @@ export function fleeAlarmFraction(
 }
 
 /**
+ * Coefficients de pénalité de charge (DG §8.2). À charge pleine (loadFrac = 1,
+ * sans accessoire), la vitesse chute de `LOAD_SPEED_PENALTY` et la consommation
+ * grimpe de `LOAD_BURN_PENALTY`. Nommés pour que le Codex les rende EN DIRECT
+ * (contrat anti-dérive, facts.ts) — jamais dupliqués en littéral. [TUNE] DG §8.2
+ */
+export const LOAD_SPEED_PENALTY = 0.15;
+export const LOAD_BURN_PENALTY = 0.5;
+
+/**
  * Pénalité de CHARGE (DG §8.2 — livrée avec W9d) : loadFrac =
  * conteneurs utilisés / conteneurs. speedEff = v×(1 − 0,15×f×mult),
  * burnEff = b×(1 + 0,5×f×mult) — trim_vanes divise la pénalité.
@@ -132,8 +141,8 @@ export function loadFracPenalty(
   const mult = loadPenaltyMult(accessories);
   return {
     loadFrac: f,
-    speedMult: 1 - 0.15 * f * mult,
-    burnMult: 1 + 0.5 * f * mult,
+    speedMult: 1 - LOAD_SPEED_PENALTY * f * mult,
+    burnMult: 1 + LOAD_BURN_PENALTY * f * mult,
   };
 }
 

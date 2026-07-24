@@ -5324,3 +5324,34 @@ statut backlog `[ ]`.
   horizontal < 900 px **préexistant** (présent aussi en mode login, deck 1000 px) :
   le panneau épouse la largeur de la grille (550 px) et n'aggrave rien — non
   corrigé, hors périmètre.
+
+## 2026-07-24 — Codex : les soutes deviennent un chapitre à part entière
+
+- **Problème.** À la question « les vaisseaux ont des soutes, comment s'en
+  sert-on exactement ? », le constat : le Codex n'expliquait la soute que par une
+  mention incidente dans « Ship gear » (le fret d'items renvoyait à « un conteneur
+  plein, comme une tonne de minerai »). La mécanique de base — comment se remplit
+  une soute, comment la capacité est comptée, la pénalité de poids — n'avait pas
+  de section.
+- **Directive du responsable (non négociable).** Tout comportement de jeu
+  FONDAMENTAL doit être expliqué explicitement dans le Codex. Toujours. Une
+  mécanique de base non documentée est un livrable « à moitié ».
+- **Décision.** Chapitre Codex dédié « Cargo & the hold », inséré entre
+  « Buildings » et « Ship gear ». Contenu spoiler-free (règle du système, pas la
+  carte à venir) : le conteneur comme unité (1 T d'un seul fongible OU 1 item ;
+  tonnes partielles arrondies), la capacité comme propriété de coque (seules les
+  coques cargo l'élargissent), la pénalité de charge (soute pleine → plus lent et
+  plus gourmand, ressentie sur chaque trajet via l'ETA et le carburant brûlé).
+- **Anti-dérive.** Les coefficients de pénalité (0,15 vitesse / 0,5 conso),
+  jusque-là littéraux dans `loadFracPenalty`, extraits en constantes nommées
+  `LOAD_SPEED_PENALTY`/`LOAD_BURN_PENALTY` (`passives.ts`) pour être importés EN
+  DIRECT par le Codex (`facts.ts`), comme le multiplicateur `UPGRADE_EFFECTS.cargo`.
+  Aucun nombre codé en dur dans la prose.
+- **Porte du Codex respectée.** Ne documente que ce qui est visible/actionnable :
+  la jauge « used/total containers » et « one container per started tonne » sont
+  déjà à l'écran (ShipCommandDeck), la pénalité est ressentie via le carburant et
+  l'ETA de chaque course (GalaxyMap).
+- **Vérifications.** Build shared + client OK ; `passives.test.ts` OK ;
+  `facts.test.ts` (anti-dérive) étendu et vert ; `codex.spec.ts` e2e mis à jour
+  (galaxy ouvre sur « Cargo & the hold », chiffre live +50 %). Vérification
+  visuelle e2e rejouée sur la stack en cours (capture cargo observée).

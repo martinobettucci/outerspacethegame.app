@@ -6,7 +6,7 @@
  * formulae for optimisers. First slice: three chapters.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import { Building2, Gauge, Pickaxe, Rocket, Users, Wrench } from 'lucide-react';
+import { Boxes, Building2, Gauge, Pickaxe, Rocket, Users, Wrench } from 'lucide-react';
 import { EfficiencyCurve } from '../components/EfficiencyCurve.tsx';
 import type { View } from '../state.tsx';
 import { CODEX_FACTS, count, days, pct, perDay } from './facts.ts';
@@ -20,6 +20,7 @@ export type CodexSectionId =
   | 'population'
   | 'efficiency'
   | 'buildings'
+  | 'cargo'
   | 'gear'
   | 'crusader';
 
@@ -221,6 +222,32 @@ function BuildingsBody({ planetId }: CodexBodyContext) {
   );
 }
 
+function CargoBody() {
+  const f = CODEX_FACTS;
+  return (
+    <>
+      <p>{c.cargo.lead}</p>
+      <p>{c.cargo.fungible}</p>
+      <p>{c.cargo.items}</p>
+      <p>{c.cargo.capacity}</p>
+      <p className="ls-codex-warn">{c.cargo.weight}</p>
+      <ExactRule>
+        <p>{c.cargo.exactIntro}</p>
+        <ul className="ls-codex-facts">
+          <Fact label={c.cargo.exactContainer} value="1 T of one resource, or 1 item" />
+          <Fact label={c.cargo.exactCeil} value="round up to a full container" />
+          <Fact
+            label={c.cargo.exactUpgrade}
+            value={f.cargoUpgradeMult.map((m) => `×${m}`).join(' / ')}
+          />
+          <Fact label={c.cargo.exactSpeed} value={`−${pct(f.cargoLoadSpeedPenalty)}`} />
+          <Fact label={c.cargo.exactBurn} value={`+${pct(f.cargoLoadBurnPenalty)}`} />
+        </ul>
+      </ExactRule>
+    </>
+  );
+}
+
 function GearBody() {
   const f = CODEX_FACTS;
   return (
@@ -287,6 +314,7 @@ export const CODEX_SECTIONS: CodexSection[] = [
   { id: 'population', title: c.population.title, icon: <Users size={16} />, Body: PopulationBody },
   { id: 'efficiency', title: c.efficiency.title, icon: <Gauge size={16} />, Body: EfficiencyBody },
   { id: 'buildings', title: c.buildings.title, icon: <Building2 size={16} />, Body: BuildingsBody },
+  { id: 'cargo', title: c.cargo.title, icon: <Boxes size={16} />, Body: CargoBody },
   { id: 'gear', title: c.gear.title, icon: <Wrench size={16} />, Body: GearBody },
   { id: 'crusader', title: c.crusader.title, icon: <Rocket size={16} />, Body: CrusaderBody, requires: 'crusader' },
 ];
@@ -303,7 +331,7 @@ export function defaultSectionFor(kind: View['kind']): CodexSectionId {
     case 'market':
       return 'efficiency';
     case 'galaxy':
-      return 'gear';
+      return 'cargo';
     case 'comms':
     default:
       return 'deposits';

@@ -2,6 +2,23 @@
 
 ## [Non publié]
 
+### Codex — chapitre « Cargo & the hold » (2026-07-24)
+
+- **Nouvelle exigence du responsable** : tout comportement de jeu fondamental
+  DOIT être expliqué explicitement dans le Codex, pas seulement évoqué en
+  passant. Les soutes des vaisseaux — une mécanique de base — n'avaient qu'une
+  mention incidente dans « Ship gear ».
+- **Chapitre dédié ajouté** (`codex/strings.ts`, `sections.tsx`) : la soute
+  comptée en conteneurs (1 T d'un seul fongible **ou** 1 item par conteneur, les
+  tonnes partielles arrondies au conteneur plein), la capacité comme propriété de
+  coque (seules les coques cargo l'élargissent via l'upgrade de capacité), et la
+  pénalité de charge (soute pleine = vaisseau plus lent et plus gourmand). Icône
+  Lucide `Boxes`, deep-link GalaxyMap repointé sur ce chapitre.
+- **Anti-dérive** : coefficients `LOAD_SPEED_PENALTY`/`LOAD_BURN_PENALTY` extraits
+  en constantes nommées dans `@atg/shared` (`passives.ts`) et rendus EN DIRECT
+  dans le Codex ; multiplicateur `UPGRADE_EFFECTS.cargo` idem. Tests : anti-dérive
+  unitaire (`facts.test.ts`) étendu, e2e Codex (`codex.spec.ts`) mis à jour.
+
 ### Écran d'éveil — explication par politique (2026-07-24)
 
 - **Ajout.** Sous la grille des six politiques de l'écran « Awaken a new

@@ -11,6 +11,7 @@
  */
 import { expect, test } from '@playwright/test';
 import {
+  LOAD_BURN_PENALTY,
   MEDICINE_AGE_WEIGHTS,
   POP_NEEDS_PER_1000_PER_DAY,
   TRACE_MINING_T_PER_DAY,
@@ -27,18 +28,31 @@ test('Codex : ouvrable depuis chaque écran, deep-link contextuel, 3 chapitres, 
 }) => {
   await registerSovereign(page, `codex-${Date.now()}@test.local`, 'Archivist');
 
-  // --- From the galaxy (default view): opens on Ship gear (W9d) -----------
+  // --- From the galaxy (default view): opens on Cargo & the hold ----------
   await rail(page).getByRole('button', { name: 'Codex' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('heading', { name: 'Codex' })).toBeVisible();
+  await expect(
+    dialog.getByRole('heading', { name: 'Cargo & the hold' }),
+  ).toBeVisible();
+  // Exact rule discloses a LIVE cargo number from @atg/shared.
+  await dialog.getByText('Exact rule & formula').first().click();
+  await expect(
+    dialog
+      .getByText(`+${Math.round(LOAD_BURN_PENALTY * 100)}%`, { exact: false })
+      .first(),
+  ).toBeVisible();
+  await shot(page, 'codex-07-cargo-from-galaxy');
+
+  // --- Ship gear chapter still exposes its own LIVE figure ----------------
+  await dialog.getByRole('button', { name: 'Ship gear' }).click();
   await expect(dialog.getByRole('heading', { name: 'Ship gear' })).toBeVisible();
-  // Exact rule discloses a LIVE gear number from @atg/shared.
   await dialog.getByText('Exact rule & formula').first().click();
   await expect(
     dialog.getByText(`${UNINSTALL_HOURS} h`, { exact: false }).first(),
   ).toBeVisible();
-  await shot(page, 'codex-07-gear-from-galaxy');
+  await shot(page, 'codex-07b-gear-chapter');
 
   // --- Deposits chapter ----------------------------------------------------
   await dialog.getByRole('button', { name: 'Deposits & mining' }).click();

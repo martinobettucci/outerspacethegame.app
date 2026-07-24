@@ -104,6 +104,25 @@ export const codexEn = {
     availableHere: 'types available on this world',
   },
 
+  cargo: {
+    title: 'Cargo & the hold',
+    lead: 'Every hull has a hold, and its size is counted in containers — the boxes you see fill up on the ship panel. A hull with no hold carries nothing; a freighter carries the most. The number beside the boxes, used over total, is your whole capacity at a glance.',
+    fungible:
+      'Fungible matter is measured in tonnes, and one container holds one tonne of a single resource — but only one resource, and only whole containers. A part-tonne still monopolizes an entire box, and two half-tonnes of different ores never share one: each takes its own. Plan your hauls in whole tonnes, because that is how the hold actually counts.',
+    items:
+      'Discrete items ride the same hold. A single piece of gear — fitted-grade or raw — occupies one full container, exactly like a tonne of ore. A ship can therefore carry a mix: some boxes full of matter, some holding one item each, up to the same total.',
+    capacity:
+      'Capacity is a property of the hull. Freighters hold far more than a warship or a scout, and only a cargo hull can widen its hold further — a dedicated capacity upgrade multiplies its containers. Some accessories add a box or two on top. What a hull cannot do is hold more than its containers allow: a full hold simply refuses the next load.',
+    weight:
+      'A loaded hull pays for what it carries. The fuller the hold, the slower the ship flies and the more fuel it burns to cross the same distance — you feel it on every journey, in the arrival time and the fuel spent. An empty hull is the fastest and the thriftiest; a brimming freighter is neither. Weigh the cargo against the trip.',
+    exactIntro: 'The fixed frame of the hold:',
+    exactContainer: 'One container',
+    exactCeil: 'Part-tonnes and single items',
+    exactUpgrade: 'Cargo-capacity upgrade multiplies a freighter’s containers by',
+    exactSpeed: 'Speed lost at a completely full hold',
+    exactBurn: 'Extra fuel burn at a completely full hold',
+  },
+
   gear: {
     title: 'Ship gear',
     lead: 'Hulls carry gear: accessories you fabricate planet-side, store as items in a warehouse, and bolt onto a warehoused hull. Each piece occupies one slot of its family — and upgrades share those same family slots, so every fitting is an arbitrage between an upgrade and an accessory.',
