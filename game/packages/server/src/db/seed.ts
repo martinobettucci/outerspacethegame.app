@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Seed contract”; GAME_BOOK.md §19; DESIGN_GUIDE.md §2.2; CLAUDE.md §8. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Seed contract”; docs/GAME_BOOK.md §19; docs/DESIGN_GUIDE.md §2.2; CLAUDE.md §8. */
 /**
  * Seed de développement — contrat maintenu (CLAUDE.md §8).
  * Passe par le VRAI flux applicatif (registerPlayer → spawn starter) :
@@ -51,7 +51,7 @@ export function findLuckyDemoEmail(luckPepper: string): string {
   throw new Error('Seed : aucun e-mail chanceux trouvé (balayage 200k)');
 }
 
-async function logDemoPyramid(
+export async function logDemoPyramid(
   pool: ReturnType<typeof createPool>,
   playerId: string,
   starterId: string,
@@ -60,7 +60,17 @@ async function logDemoPyramid(
   const detail = await planetDetail(pool, playerId, starterId);
   const { children, actives, seniors } = detail.pyramid;
   const sum = children + actives + seniors;
-  if (Math.abs(sum - detail.population) > 1e-6) {
+  // À la NAISSANCE, la pyramide (cohortes entières) égale exactement la
+  // population entière : contrat de spawn. Après simulation, `population`
+  // devient continue (naissances/morts fractionnaires) et chaque cohorte
+  // affichée est arrondie indépendamment (planets.ts : Math.round) ; leur
+  // somme reste l'arrondi de la population (écart théorique < 1,5 = trois
+  // arrondis de ±0,5), ce qui n'est PAS une incohérence. On n'exige donc
+  // l'égalité stricte que sur un starter frais ; sinon on borne l'écart pour
+  // détecter une vraie corruption sans casser un seed idempotent sur une base
+  // déjà simulée (sinon `runDev` avorte au seed → API jamais démarrée).
+  const tolerance = fresh ? 1e-6 : 1.5;
+  if (Math.abs(sum - detail.population) > tolerance) {
     throw new Error(
       `Seed incohérent : pyramide ${sum} != population ${detail.population} (${starterId})`,
     );
