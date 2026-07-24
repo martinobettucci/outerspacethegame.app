@@ -15,6 +15,7 @@ import {
   BUILDINGS,
   type Climate,
   CLIMATE_CRYSTAL,
+  COLONIZER_ITEM_KEY,
   colonyGraceUntilMs,
   type CostBundle,
   DEMOLISH_HOURS,
@@ -661,6 +662,52 @@ async function worldTechAvailability(
   return availability;
 }
 
+/**
+ * Réforme colonisation anti-soft-lock (décision responsable 2026-07-24,
+ * GB §19.3, DG §6/§12). Offre le PREMIER colonisateur d'un monde — une fois
+ * pour toutes — dès qu'il réunit les deux conditions : un spaceport L1 ACTIF
+ * (jamais-masqué → toujours posable) ET `colony_program` déverrouillé. Le
+ * drapeau `bodies.free_colonizer_granted` est persisté et SUIT la propriété
+ * (un monde conquis l'ayant déjà consommé n'en reçoit jamais d'autre).
+ *
+ * Idempotent et sûr aux courses (verrou FOR UPDATE). Appelé aux trois points
+ * où les conditions peuvent basculer : fin de construction d'un spaceport,
+ * déverrouillage de `colony_program`, établissement d'une colonie. Le don
+ * contourne volontairement le plafond d'items (amorçage garanti). Retourne
+ * true si le don a eu lieu.
+ */
+export async function maybeGrantFreeColonizer(
+  client: pg.PoolClient,
+  bodyId: string,
+): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT owner_id, free_colonizer_granted FROM bodies WHERE id = $1 FOR UPDATE`,
+    [bodyId],
+  );
+  const body = rows[0];
+  if (!body || !body.owner_id || body.free_colonizer_granted) return false;
+  const { rows: prog } = await client.query(
+    `SELECT 1 FROM tech_unlocks WHERE body_id = $1 AND node_key = 'colony_program'`,
+    [bodyId],
+  );
+  if (!prog[0]) return false;
+  const { rows: port } = await client.query(
+    `SELECT 1 FROM buildings
+     WHERE body_id = $1 AND key = 'spaceport' AND status = 'active' AND level >= 1`,
+    [bodyId],
+  );
+  if (!port[0]) return false;
+  await client.query(
+    `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+    [bodyId, COLONIZER_ITEM_KEY],
+  );
+  await client.query(
+    `UPDATE bodies SET free_colonizer_granted = true WHERE id = $1`,
+    [bodyId],
+  );
+  return true;
+}
+
 /** Déverrouille un nœud tech (une fois par planète) — GB §18 phase 1. */
 export async function unlockNode(
   pool: pg.Pool,
@@ -711,6 +758,12 @@ export async function unlockNode(
       'INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)',
       [bodyId, nodeKey],
     );
+    // Réforme colonisation 2026-07-24 (GB §19.3) : déverrouiller colony_program
+    // peut compléter la condition du colonisateur offert (si un spaceport L1 est
+    // déjà actif). Idempotent — ne donne rien tant que les deux ne coexistent pas.
+    if (nodeKey === 'colony_program') {
+      await maybeGrantFreeColonizer(client, bodyId);
+    }
     await recomputePlanetRates(client, bodyId, nowMs);
     await client.query('COMMIT');
   } catch (err) {

@@ -146,15 +146,35 @@ describe('arbre technologique (GB §18, DG §5)', () => {
     for (const key of ALL_TECH_KEYS) visit(key);
   });
 
-  it('le set jamais-masqué est exactement {telescope, probe_pad, depot, mine, colony_program}', () => {
+  it('le set jamais-masqué est exactement {telescope, probe_pad, depot, mine, colony_program, spaceport}', () => {
+    // Réforme colonisation anti-soft-lock (2026-07-24, GB §19.3) : le spaceport
+    // rejoint l'ensemble jamais-masqué (tout monde possédable pose un spaceport
+    // L1 : embarque les settlers ET fabrique le colonisateur).
     const never = ALL_TECH_KEYS.filter((k) => TECH_NODES[k].neverMasked);
     expect(never.sort()).toEqual([
       'colony_program',
       'depot',
       'mine',
       'probe_pad',
+      'spaceport',
       'telescope',
     ]);
+  });
+
+  it('spaceport est jamais-masqué (toujours disponible) mais DEPTH-CAPPÉ (L1 garanti, pas L3 forcé)', () => {
+    // GB §19.3 : L1 garanti partout, L2/L3 restent une chance de seed. Sur de
+    // nombreux seeds, le spaceport est toujours présent et son plafond couvre
+    // toute la plage [1,3] — la preuve qu'il n'est pas forcé à 3.
+    const caps = new Set<number>();
+    for (let i = 0; i < 400; i++) {
+      const { available, maxLevel } = planetTechAvailability(`sp-${i}`);
+      expect(available.has('spaceport'), `sp-${i}`).toBe(true);
+      const cap = maxLevel.get('spaceport')!;
+      expect(cap).toBeGreaterThanOrEqual(1);
+      caps.add(cap);
+    }
+    // Au moins un monde plafonné sous L3 (sinon le cap serait forcé).
+    expect(caps.has(1) || caps.has(2)).toBe(true);
   });
 
   it('la disponibilité par seed est déterministe et contient toujours le set jamais-masqué', () => {

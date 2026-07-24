@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Settlers & colonization”; docs/GAME_BOOK.md §12/§19; docs/DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Colonisation — GB §19/§14/§12, DG §12/§3.2/§10.3.
  *
@@ -22,6 +22,7 @@ import {
   COLONY_FITTING_COST,
   COLONY_MIN_SETTLERS,
   COLONY_SEED_STOCK,
+  hullCarriesColonizer,
   HULLS,
   ITEMS,
   normalizeDemographicCounters,
@@ -82,6 +83,11 @@ async function lockDockedOwnedWorld(
  * colony_program déverrouillé ET un workshop L2+ actif (le core est un
  * consommable du workshop — v1 paie son coût matière directement, le
  * substrat d'items n'existant pas encore [gap annoncé]).
+ *
+ * DÉPRÉCIÉ par la réforme 2026-07-24 (GB §19.3) : le colonisateur est
+ * désormais un ITEM fabriqué au spaceport (premier offert). Ce chemin est
+ * conservé transitoirement — `colonizeShip` accepte encore le booléen — et
+ * sera retiré avec le nettoyage client/E2E (backlog « Réforme colonisation »).
  */
 export async function fitColonyKit(
   pool: pg.Pool,
@@ -377,8 +383,14 @@ export async function colonizeShip(
     if (!canFitColonyKit({ category: ship.hull_category, size: ship.hull_size })) {
       throw new CommandError('not_available', 'Coque inapte à la colonisation (Civil M/L)');
     }
-    if (!ship.colony_kit) {
-      throw new CommandError('not_available', 'Le fitting colonie manque (DG §12)');
+    // Réforme 2026-07-24 (GB §19.3) : coloniser exige un COLONISATEUR en soute
+    // (item fabriqué au spaceport, premier offert). Le booléen `colony_kit`
+    // reste accepté transitoirement (chemin déprécié — retrait au nettoyage).
+    if (!hullCarriesColonizer(ship.item_cargo) && !ship.colony_kit) {
+      throw new CommandError(
+        'not_available',
+        'Un colonisateur doit être chargé en soute (fabriqué au spaceport, le premier est offert — GB §19.3)',
+      );
     }
     if (ship.settlers < COLONY_MIN_SETTLERS) {
       throw new CommandError(

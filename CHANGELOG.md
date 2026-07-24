@@ -2,6 +2,28 @@
 
 ## [Non publié]
 
+### Réforme colonisation anti-soft-lock — cœur backend LIVRÉ (2026-07-24)
+
+- **Implémentation du spec persisté plus tôt (GB §19.3).** (1) Le `spaceport`
+  rejoint l'ensemble jamais-masqué de `techtree.ts` tout en restant DEPTH-CAPPÉ
+  (nouveau `NEVER_CAPPED` : L1 garanti partout, L2/L3 = chance de seed) ; (2)
+  nouvel item GEAR `colonizer` (fabricant spaceport L1, coût 100 % basiques
+  `200 ore + 100 silicon` [TUNE], `freightOnly` — jamais installé) ; (3)
+  migration **041** `bodies.free_colonizer_granted` ; (4) `maybeGrantFreeColonizer`
+  (planets.ts) câblé sur le déverrouillage de `colony_program`, la fin de
+  construction d'un spaceport et l'établissement d'une colonie — don unique,
+  idempotent, qui **suit la propriété** ; (5) `colonizeShip` accepte un
+  colonisateur en soute (`item_cargo`), le booléen `colony_kit` étant conservé
+  **transitoirement** (chemin déprécié).
+- **Vérifié** : shared 218 (dont `hullCarriesColonizer`, spaceport
+  jamais-masqué/depth-cappé, coût basiques-only), intégration PostgreSQL 383
+  dont 3 neufs (don unique, survie à la conquête par requête §10 directe,
+  colonize par item), typecheck + build verts.
+- **Restant** (unité backlog en `[~]`) : retrait complet de `fitColonyKit`/
+  `colony_kit` (route + client + i18n), UX spaceport dédiée (aujourd'hui
+  atteignable via l'UI gear générique), biais du coût aux gisements [TUNE-GAP],
+  E2E réécrit sur le chemin item, sections Codex, tour d'équilibrage.
+
 ### Codex — chapitre « Cargo & the hold » (2026-07-24)
 
 - **Nouvelle exigence du responsable** : tout comportement de jeu fondamental

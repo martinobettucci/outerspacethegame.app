@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; docs/GAME_BOOK.md §12/§19; docs/DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Unitaires colonisation (chunk N) — DG §3.2 (péage déterministe,
  * accumulateur fractionnaire), §10.3 (grâce 14 j), §8.6 (Civil M/L),
@@ -10,12 +10,25 @@ import {
   canColonizeBody,
   canFitColonyKit,
   colonyGraceUntilMs,
+  COLONIZER_ITEM_KEY,
+  hullCarriesColonizer,
   isInColonyGrace,
   SETTLER_TRIP_RISK_BASE,
   settlerManifestTotal,
   settlerLosses,
   settlerTripRisk,
 } from './colonization.js';
+
+describe('hullCarriesColonizer (réforme anti-soft-lock 2026-07-24, GB §19.3)', () => {
+  it('détecte un colonisateur en soute, sinon refuse', () => {
+    expect(hullCarriesColonizer([COLONIZER_ITEM_KEY])).toBe(true);
+    expect(hullCarriesColonizer(['harvest_rig', COLONIZER_ITEM_KEY])).toBe(true);
+    expect(hullCarriesColonizer(['harvest_rig'])).toBe(false);
+    expect(hullCarriesColonizer([])).toBe(false);
+    expect(hullCarriesColonizer(null)).toBe(false);
+    expect(hullCarriesColonizer(undefined)).toBe(false);
+  });
+});
 
 describe('settlerTripRisk (DG §3.2)', () => {
   it('base 5 % [TUNE] ; les pilotes réduisent, plancher 0', () => {

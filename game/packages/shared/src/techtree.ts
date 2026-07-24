@@ -8,8 +8,14 @@
  * les arêtes marquées [TUNE-GAP] ci-dessous sont des propositions,
  * listées dans TECH_TUNE_GAPS et en attente d'un tour d'équilibrage.
  *
- * Canon intangible : telescope, probe_pad, depot, mine et colony_program
- * ne sont JAMAIS masqués par le seed (garantie du démarrage, GB §18/§19).
+ * Canon intangible : telescope, probe_pad, depot, mine, colony_program ET
+ * spaceport ne sont JAMAIS masqués par le seed (garantie du démarrage,
+ * GB §18/§19 ; spaceport ajouté par la réforme colonisation anti-soft-lock,
+ * décision responsable 2026-07-24 — tout monde possédable peut toujours
+ * poser un spaceport L1 : il embarque les settlers ET fabrique le
+ * colonisateur, GB §19.3). Le spaceport reste DEPTH-CAPPÉ normalement
+ * (seuls telescope/probe_pad/depot/mine/colony_program gardent L3 garanti,
+ * cf. NEVER_CAPPED) : L1 est garanti, L2/L3 restent une chance de seed.
  */
 import { BUILDINGS, type BuildingKey } from './buildings.js';
 import type { CostBundle } from './resources.js';
@@ -39,9 +45,23 @@ const b = (key: BuildingKey, prerequisites: readonly TechNodeKey[]): TechNodeDef
   tier: BUILDINGS[key].tier,
   prerequisites,
   politics: BUILDINGS[key].politics,
-  neverMasked: ['telescope', 'probe_pad', 'depot', 'mine'].includes(key),
+  neverMasked: ['telescope', 'probe_pad', 'depot', 'mine', 'spaceport'].includes(key),
   unlockCost: BUILDINGS[key].unlockCost,
 });
+
+/**
+ * Nœuds jamais-masqués QUI gardent AUSSI un plafond de profondeur L3 garanti
+ * (les T0 originels + colony_program). Le spaceport est jamais-masqué (toujours
+ * disponible, réforme 2026-07-24) mais NON dans ce set : son plafond reste
+ * roulé — L1 garanti, L2/L3 = chance de seed (GB §19.3). [TUNE]
+ */
+const NEVER_CAPPED = new Set<TechNodeKey>([
+  'telescope',
+  'probe_pad',
+  'depot',
+  'mine',
+  'colony_program',
+]);
 
 const u = (
   key: UnitKey,
@@ -199,10 +219,11 @@ export function planetTechAvailability(
       bonus !== null ? p0 + DNA_BONUS_KEEP_FACTOR * richness * (1 - p0) : p0;
     if (node.neverMasked || roll < p) {
       kept.add(key);
-      const base = node.neverMasked ? 3 : capRoll + 1;
+      const guaranteedL3 = NEVER_CAPPED.has(key);
+      const base = guaranteedL3 ? 3 : capRoll + 1;
       maxLevel.set(
         key,
-        Math.min(3, base + (capUplift && !node.neverMasked ? 1 : 0)) as
+        Math.min(3, base + (capUplift && !guaranteedL3 ? 1 : 0)) as
           | 1
           | 2
           | 3,

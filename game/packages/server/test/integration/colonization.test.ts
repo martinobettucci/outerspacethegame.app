@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Settlers & colonization”; docs/GAME_BOOK.md §12/§19; docs/DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Intégration : colonisation (GB §19/§14/§12, DG §12/§3.2/§10.3) sur
  * vraie base — fitting (prérequis + coût provisionné), settlers
@@ -18,7 +18,11 @@ import {
 import { processDueEvents } from '../../src/sim/events.js';
 import { baseHandlers } from '../../src/sim/handlers.js';
 import { registerPlayer } from '../../src/services/players.js';
-import { planetDetail, unlockNode } from '../../src/services/planets.js';
+import {
+  maybeGrantFreeColonizer,
+  planetDetail,
+  unlockNode,
+} from '../../src/services/planets.js';
 import {
   colonizeShip,
   fitColonyKit,
@@ -379,5 +383,86 @@ describe('établissement (DG §12.3, GB §19)', () => {
     // La flotte ne liste plus l'Arche.
     const ships = await fleet(pool, owner);
     expect(ships.some((s) => s.id === colonyShip)).toBe(false);
+  });
+});
+
+describe('réforme colonisation anti-soft-lock (GB §19.3, décision 2026-07-24)', () => {
+  it('premier colonisateur OFFERT dès spaceport L1 actif + colony_program (une fois pour toutes)', async () => {
+    // colony_program a été déverrouillé plus haut sur un starter au spaceport L1
+    // actif → maybeGrantFreeColonizer (hook unlock) a dû délivrer le don.
+    const flag = await pool.query(
+      `SELECT free_colonizer_granted FROM bodies WHERE id = $1`,
+      [starter],
+    );
+    expect(flag.rows[0].free_colonizer_granted).toBe(true);
+    const items = await pool.query(
+      `SELECT count(*)::int AS n FROM planet_items
+       WHERE body_id = $1 AND item_key = 'colonizer'`,
+      [starter],
+    );
+    expect(items.rows[0].n).toBe(1);
+  });
+
+  it('idempotent + survit à la propriété : jamais de re-don (« c\'est la vie »)', async () => {
+    const client = await pool.connect();
+    try {
+      // Re-déclenchement direct : aucun nouveau don (drapeau déjà posé).
+      expect(await maybeGrantFreeColonizer(client, starter)).toBe(false);
+      // Transfert de propriété simulé (conquête) : le drapeau SUIT le monde →
+      // le nouveau propriétaire n'obtient rien.
+      await client.query(`UPDATE bodies SET owner_id = $2 WHERE id = $1`, [
+        starter,
+        intruder,
+      ]);
+      expect(await maybeGrantFreeColonizer(client, starter)).toBe(false);
+      await client.query(`UPDATE bodies SET owner_id = $2 WHERE id = $1`, [
+        starter,
+        owner,
+      ]);
+    } finally {
+      client.release();
+    }
+    const items = await pool.query(
+      `SELECT count(*)::int AS n FROM planet_items
+       WHERE body_id = $1 AND item_key = 'colonizer'`,
+      [starter],
+    );
+    expect(items.rows[0].n).toBe(1);
+  });
+
+  it('coloniser exige un colonisateur en soute (item), sans booléen colony_kit', async () => {
+    const { rows: w } = await pool.query(
+      `SELECT id FROM bodies
+       WHERE owner_id IS NULL AND body_type = 'planet' AND climate <> 'poison'
+         AND tiles > 0 AND id <> $1 LIMIT 1`,
+      [wildId],
+    );
+    expect(w[0]).toBeTruthy();
+    const target = w[0].id as string;
+    await pool.query(
+      `UPDATE bodies SET climate = 'cold', tiles = GREATEST(tiles, 8) WHERE id = $1`,
+      [target],
+    );
+    const { rows: s } = await pool.query<{ id: string }>(
+      `INSERT INTO ships (owner_id, hull_category, hull_size, name, x, y, status,
+                          hover_body_id, fuel, cargo, settlers, settlers_actives)
+       SELECT $1, 'civil', 'm', 'Arche II', x, y, 'hovering', id, '{"cold": 100}',
+              '{}', 200, 200
+       FROM bodies WHERE id = $2 RETURNING id`,
+      [owner, target],
+    );
+    const s2 = s[0]!.id;
+    // Sans colonisateur ni kit → refus (le booléen colony_kit reste false).
+    await expect(colonizeShip(pool, owner, s2, FAST)).rejects.toMatchObject({
+      code: 'not_available',
+    });
+    // Colonisateur chargé en soute → accepté (chemin item, GB §19.3).
+    await pool.query(`UPDATE ships SET item_cargo = $2::jsonb WHERE id = $1`, [
+      s2,
+      JSON.stringify(['colonizer']),
+    ]);
+    const res = await colonizeShip(pool, owner, s2, FAST);
+    expect(res.bodyId).toBe(target);
+    expect((await ship(s2)).status).toBe('colonizing');
   });
 });

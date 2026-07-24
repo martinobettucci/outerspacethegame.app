@@ -68,6 +68,7 @@ import { evalStarFuel, releaseHarvest } from '../services/harvest.js';
 import { depositJunkAt } from '../services/junk.js';
 import { runAutoTrade, scheduleAutoTradeCheck } from '../services/hoverTrade.js';
 import { settleAnchorTransfer, shipPosition } from '../services/ships.js';
+import { maybeGrantFreeColonizer } from '../services/planets.js';
 import { settleConversion } from '../services/conversions.js';
 import { payStep, payStepAboard, WORK_ORDER_RETRY_HOURS } from '../services/workOrders.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipHull, rebaseShipSurvival, shipMaxHp } from './shipDrain.js';
@@ -87,11 +88,17 @@ export const constructionComplete: EventHandler = async (client, event) => {
        SET status = 'active', completes_at = NULL
      WHERE id = $1 AND status = 'constructing'
        AND completes_at <= $2::timestamptz + interval '1 second'
-     RETURNING body_id`,
+     RETURNING body_id, key`,
     [buildingId, event.dueAt],
   );
   if (rows[0]) {
     await recomputePlanetRates(client, rows[0].body_id, event.dueAt.getTime());
+    // Réforme colonisation 2026-07-24 (GB §19.3) : un spaceport qui s'active
+    // peut compléter la condition du colonisateur offert (si colony_program est
+    // déjà déverrouillé). Idempotent, ne concerne que le spaceport.
+    if (rows[0].key === 'spaceport') {
+      await maybeGrantFreeColonizer(client, rows[0].body_id);
+    }
   }
 };
 
@@ -1359,10 +1366,12 @@ export const colonyEstablished: EventHandler = async (client, event) => {
     }
   }
 
-  // Déchargement intégral : provisions du kit (30 food + 30 water — payées
-  // au fitting, [TUNE interp]) + cargo (T) + reliquat de carburant (1 u =
-  // 1 T, réservoir ÉVALUÉ — le drain de survol a pu l'entamer avant le
-  // colonize).
+  // Déchargement intégral : provisions d'amorçage (30 food + 30 water + 20 O2
+  // — un amorçage OFFERT que porte le colonisateur, réforme 2026-07-24 : plus
+  // aucun fitting ne les fait payer [TUNE interp]) + cargo (T) + reliquat de
+  // carburant (1 u = 1 T, réservoir ÉVALUÉ — le drain de survol a pu l'entamer
+  // avant le colonize). Le colonisateur en soute est consommé avec la coque
+  // (« the ship is spent ») : la coque étant supprimée, rien à retirer.
   const cargo: Record<string, number> = ship.cargo ?? {};
   const tank = evalShipFuel(ship, nowMs);
   const unload: Record<string, number> = { ...cargo };
@@ -1404,6 +1413,11 @@ export const colonyEstablished: EventHandler = async (client, event) => {
 
   // Rebase : taux, bords de stockage, pop_daily de la nouvelle colonie.
   await recomputePlanetRates(client, bodyId, nowMs);
+  // Réforme 2026-07-24 (GB §19.3) : la colonie naît avec un spaceport L1 actif.
+  // Si colony_program y est déjà déverrouillé (recolonisation d'un ex-monde),
+  // son colonisateur offert est délivré maintenant ; sinon rien tant qu'il
+  // n'est pas déverrouillé (le drapeau suit la propriété — pas de re-don).
+  await maybeGrantFreeColonizer(client, bodyId);
 };
 
 /**

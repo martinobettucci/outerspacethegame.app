@@ -77,7 +77,10 @@ describe('planetTechAvailability — richesse (DG §2.2b)', () => {
         expect(cap).toBeGreaterThanOrEqual(1);
         expect(cap).toBeLessThanOrEqual(3);
         expect(ALL_TECH_KEYS.includes(key)).toBe(true);
-        if (TECH_NODES[key].neverMasked) expect(cap).toBe(3);
+        // Réforme 2026-07-24 : le spaceport est jamais-masqué mais DEPTH-CAPPÉ
+        // (L1 garanti, L2/L3 = chance de seed, GB §19.3) ; les autres
+        // jamais-masqués gardent L3 garanti.
+        if (TECH_NODES[key].neverMasked && key !== 'spaceport') expect(cap).toBe(3);
       }
     }
   });

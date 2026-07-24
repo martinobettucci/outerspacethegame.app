@@ -14,11 +14,15 @@ import {
   itemCapacity,
   GEAR,
 } from './items.js';
+import { BASIC_RESOURCES } from './resources.js';
 
 describe('W6 — catalogue ITEMS', () => {
   it('EXHAUSTIF : 1 accessoire + 5 familles × 2 niveaux, clés cohérentes', () => {
     expect(ALL_GEAR_KEYS.sort()).toEqual(
       [
+        // Réforme colonisation 2026-07-24 (GB §19.3) : item de fret consommable,
+        // sans grade enhanced.
+        'colonizer',
         'advanced_refueling_system',
         'harvest_rig',
         'junk_collector',
@@ -74,8 +78,18 @@ describe('W6 — catalogue ITEMS', () => {
       const d = GEAR[key]!;
       expect(d.key).toBe(key);
       expect(d.fabricationHours).toBeGreaterThan(0);
-      expect(d.installHours).toBeGreaterThan(0);
+      // Les items de FRET (colonisateur) ne s'installent jamais : pas de coût
+      // ni de durée d'installation (réforme 2026-07-24, GB §19.3).
+      if (!d.freightOnly) expect(d.installHours).toBeGreaterThan(0);
       expect(Object.keys(d.fabricationCost).length).toBeGreaterThan(0);
+    }
+    // Colonisateur : item de fret, fabriqué au spaceport L1, coût 100% basiques.
+    const colonizer = GEAR.colonizer!;
+    expect(colonizer.freightOnly).toBe(true);
+    expect(colonizer.fabricator).toBe('spaceport');
+    expect(colonizer.fabricatorMinLevel ?? 1).toBe(1);
+    for (const res of Object.keys(colonizer.fabricationCost)) {
+      expect(BASIC_RESOURCES).toContain(res);
     }
     // Dormants annoncés : obs/weapon (combat P5).
     expect(GEAR.obs_l2!.dormant).toBe(true);

@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Settlers & colonization”; GAME_BOOK.md §12/§19; DESIGN_GUIDE.md §3.2-v2/§12. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Settlers & colonization”; docs/GAME_BOOK.md §12/§19; docs/DESIGN_GUIDE.md §3.2-v2/§12. */
 /**
  * Colonisation — règles pures (GB §19/§14/§12/§3, DG §12/§3.2/§10.3).
  *
@@ -135,10 +135,25 @@ export function canColonizeBody(body: {
   return { ok: true };
 }
 
-/** La coque peut-elle recevoir le fitting colonie ? (DG §8.6 : Civil M/L.) */
+/** La coque peut-elle porter/utiliser un colonisateur ? (DG §8.6 : Civil M/L.) */
 export function canFitColonyKit(ship: {
   category: HullCategory | string;
   size: HullSize | string | null;
 }): boolean {
   return ship.category === 'civil' && (ship.size === 'm' || ship.size === 'l');
+}
+
+/**
+ * Clé de l'item colonisateur (réforme anti-soft-lock 2026-07-24, GB §19.3).
+ * Le colonisateur remplace le booléen `colony_kit` : coloniser exige que la
+ * coque PORTE un colonisateur en soute (`item_cargo`), fabriqué au spaceport L1
+ * ou reçu gratuitement (le premier par monde).
+ */
+export const COLONIZER_ITEM_KEY = 'colonizer';
+
+/** La soute d'une coque contient-elle au moins un colonisateur ? */
+export function hullCarriesColonizer(
+  itemCargo: readonly string[] | null | undefined,
+): boolean {
+  return Array.isArray(itemCargo) && itemCargo.includes(COLONIZER_ITEM_KEY);
 }

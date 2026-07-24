@@ -36,6 +36,12 @@ export interface GearDef {
   installHours: number;
   /** Effet dormant (combat P5) — fabricable mais sans effet, annoncé. */
   dormant?: boolean;
+  /**
+   * Item de FRET consommable, jamais installé sur un slot (le colonisateur) :
+   * il voyage en soute (`item_cargo`) et se consomme à l'usage. Le montage
+   * est refusé. Réforme colonisation anti-soft-lock (2026-07-24, GB §19.3).
+   */
+  freightOnly?: boolean;
   note: string;
 }
 
@@ -84,6 +90,28 @@ function enhanced(base: GearDef): GearDef {
 }
 
 export const GEAR: Record<string, GearDef> = {
+  /**
+   * Colonisateur (réforme anti-soft-lock, décision responsable 2026-07-24,
+   * GB §19.3 / DG §6/§12) : l'item « terraform core » enfin réalisé. Fabriqué
+   * au SPACEPORT L1 (jamais-masqué → tout monde possédable peut en produire),
+   * coût UNIQUEMENT en basiques toujours minables (jamais raffinés/cristaux —
+   * dénomination anti-soft-lock ; biais aux gisements = [TUNE-GAP] v2). Item de
+   * FRET consommable : chargé en soute, il donne le droit de coloniser (le
+   * premier par monde est OFFERT — cf. bodies.free_colonizer_granted), et il
+   * est consommé quand la coque se dépense à l'établissement. [TUNE]
+   */
+  colonizer: {
+    key: 'colonizer',
+    kind: 'accessory',
+    slot: 'cargo',
+    fabricator: 'spaceport',
+    fabricationCost: { ore: 200, silicon: 100 },
+    fabricationHours: 48,
+    installCost: {},
+    installHours: 0,
+    freightOnly: true,
+    note: 'A terraform seed-core — carry it to a wild world to found a colony. First per world is free.',
+  },
   /** W3 : porte le nombre de sondes ancrées de 1 à 2. */
   advanced_refueling_system: {
     key: 'advanced_refueling_system',
