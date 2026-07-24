@@ -29,8 +29,9 @@ import {
   weightedHeads,
 } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { enqueue } from './events.js';
-import { evalLazy, whenReaches } from './lazy.js';
+import { evalLazy, gameDaysToRealMs, whenReaches } from './lazy.js';
 import {
   computeRates,
   STORAGE_EDGE_FRACTIONS,
@@ -133,6 +134,7 @@ export async function loadProductionSnapshot(
     stocks[r.resource as ResourceId] = evalLazy(
       { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
       nowMs,
+      config.TIME_SCALE,
       { min: 0 },
     );
   }
@@ -148,6 +150,7 @@ export async function loadProductionSnapshot(
     deposits[r.resource as ResourceId] = evalLazy(
       { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
       nowMs,
+      config.TIME_SCALE,
       { min: 0 },
     );
     depositInitial[r.resource as ResourceId] = r.initial_t;
@@ -486,6 +489,7 @@ export async function recomputePlanetRates(
       const at = whenReaches(
         { amount: snap.stocks[res] ?? 0, ratePerDay: rate, asOfMs: nowMs },
         0,
+        config.TIME_SCALE,
       );
       if (at !== null && (earliestStockEdge === null || at < earliestStockEdge)) {
         earliestStockEdge = at;
@@ -502,7 +506,11 @@ export async function recomputePlanetRates(
     for (const f of STORAGE_EDGE_FRACTIONS) {
       const threshold = f * snap.storageCapT;
       if (total < threshold - 1e-9) {
-        const at = nowMs + ((threshold - total) / totalRate) * GAME_DAY_SECONDS * 1000;
+        const at =
+          nowMs +
+          (((threshold - total) / totalRate) / Math.max(config.TIME_SCALE, 1e-9)) *
+            GAME_DAY_SECONDS *
+            1000;
         if (earliestStockEdge === null || at < earliestStockEdge) {
           earliestStockEdge = at;
         }
@@ -522,6 +530,7 @@ export async function recomputePlanetRates(
       const at = whenReaches(
         { amount: remaining ?? 0, ratePerDay: rate, asOfMs: nowMs },
         0,
+        config.TIME_SCALE,
       );
       if (at !== null && (earliestDry === null || at < earliestDry.at)) {
         earliestDry = { at, resource: res };
@@ -548,7 +557,7 @@ export async function recomputePlanetRates(
       await enqueue(
         client,
         'pop_daily',
-        new Date(base + GAME_DAY_SECONDS * 1000),
+        new Date(base + gameDaysToRealMs(1, config.TIME_SCALE)),
         { bodyId },
       );
     }

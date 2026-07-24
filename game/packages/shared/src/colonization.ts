@@ -110,12 +110,24 @@ export function allocateSettlerDeaths(
   };
 }
 
-export function colonyGraceUntilMs(colonizedAtMs: number): number {
-  return colonizedAtMs + COLONY_GRACE_DAYS * 24 * 3600 * 1000;
+/**
+ * Fin de la grâce de colonie (échéance RÉELLE en ms). La grâce dure
+ * `COLONY_GRACE_DAYS` jours de JEU : sous l'horloge unifiée (DG §1), la
+ * durée réelle est divisée par `timeScale` (game-secondes par seconde
+ * réelle ; 1 = production, comportement historique). Le serveur passe
+ * `config.TIME_SCALE` ; les appels sans échelle restent en temps réel.
+ */
+export function colonyGraceUntilMs(colonizedAtMs: number, timeScale = 1): number {
+  const scale = Math.max(timeScale, 1e-9);
+  return colonizedAtMs + (COLONY_GRACE_DAYS * 24 * 3600 * 1000) / scale;
 }
 
-export function isInColonyGrace(colonizedAtMs: number, nowMs: number): boolean {
-  return nowMs < colonyGraceUntilMs(colonizedAtMs);
+export function isInColonyGrace(
+  colonizedAtMs: number,
+  nowMs: number,
+  timeScale = 1,
+): boolean {
+  return nowMs < colonyGraceUntilMs(colonizedAtMs, timeScale);
 }
 
 /**

@@ -2,6 +2,40 @@
 
 ## [Non publié]
 
+### Horloge de jeu unifiée — `TIME_SCALE` accélère TOUTE la simulation en dev (2026-07-24)
+
+- **Cause.** En développement, `TIME_SCALE` n'accélérait que les minuteries
+  d'action (chantier, retool, voyage). L'économie continue
+  ([`sim/lazy.ts`](game/packages/server/src/sim/lazy.ts) : gisements, stocks,
+  carburant d'étoile, drain de vaisseau) et la simulation à cadence quotidienne
+  (`pop_daily`, `crusader_daily`, horloges de mort eau/vivres, grâce de colonie)
+  tournaient en jours RÉELS. À vitesse élevée le monde devenait incohérent
+  (bâtiment en secondes, mais ressources/population figées), rendant le test
+  impossible. Décision responsable 2026-07-24 (JOURNAL, DG §1).
+- **Correctif.** `evalLazy`/`whenReaches`/`rebase` prennent désormais un
+  `timeScale` explicite (écoulé réel × échelle = temps de jeu ; échéances
+  renvoyées en ms réelles = durée-jeu ÷ échelle) ; nouvel helper
+  `gameDaysToRealMs(days, scale)` pour les cadences quotidiennes. Tous les
+  sites serveur (39 lectures paresseuses + cadences quotidiennes +
+  `survivalForecasts` + grâce de colonie `@atg/shared`) branchés sur
+  `config.TIME_SCALE`. Horodatages stockés en ms RÉELLES inchangés (aucune
+  migration) ; à `timeScale=1` comportement historique identique (prod
+  inchangée). Les minuteries SOCIALES (âge de compte, TTL d'offres, sessions)
+  restent en temps réel — principe déjà énoncé (`manualTrade.ts`).
+- **Instance dev.** [`scripts/runDev.sh`](game/scripts/runDev.sh) exporte
+  `TIME_SCALE=3600` (1 s réelle = 1 h-jeu ; jour de jeu = 24 s) et
+  `TICK_MS=1000` (matérialisation sous ~1 s), surchargeables depuis
+  l'environnement du shell. Documenté dans `game/.env.example`, `README.md`
+  (variables + commandes) et `docs/DAT.md` (note du modèle de temps mise à
+  jour).
+- **Tests.** [`lazy.test.ts`](game/packages/server/test/unit/lazy.test.ts)
+  (écoulé ×timeScale, `whenReaches`/`gameDaysToRealMs` en ms réelles, rétro-compat
+  échelle 1), [`population.test.ts`](game/packages/server/test/unit/population.test.ts)
+  (échéances de survie compressées),
+  [`colonization.test.ts`](game/packages/shared/src/colonization.test.ts) (grâce
+  compressée). Typecheck workspace OK ; 61 tests unitaires serveur + 219 tests
+  shared verts.
+
 ### Réforme colonisation anti-soft-lock — cœur backend LIVRÉ (2026-07-24)
 
 - **Implémentation du spec persisté plus tôt (GB §19.3).** (1) Le `spaceport`

@@ -53,14 +53,16 @@ import {
   UNEMP_TOLERANCE,
   unemploymentDeathsPerDay,
   unemploymentRate,
+  isInColonyGrace,
   type DemographicCounters,
   type Pyramid,
   type SettlerManifest,
 } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { aggregateCensus } from './census.js';
 import { enqueue, type EventHandler } from './events.js';
-import { whenReaches } from './lazy.js';
+import { gameDaysToRealMs, whenReaches } from './lazy.js';
 import { recomputePlanetRates } from './rebase.js';
 import { populationIndicators } from './population.js';
 import { extinguishPlanet } from './extinction.js';
@@ -515,7 +517,7 @@ export const crusaderDaily: EventHandler = async (client, event) => {
     const shorted = served[family] < needs[family] - 1e-9;
     if (shorted) {
       if (!clocks[family]) {
-        clocks[family] = nowMs + CLOCK_DAYS[family] * 86_400_000;
+        clocks[family] = nowMs + gameDaysToRealMs(CLOCK_DAYS[family], config.TIME_SCALE);
       }
       clockDeaths += Math.min(
         popBefore,
@@ -591,7 +593,7 @@ export const crusaderDaily: EventHandler = async (client, event) => {
   );
   // 7. Demain, même heure (tant que le bord vit).
   if (pyr.children + pyr.actives + pyr.seniors > 1e-9) {
-    await enqueue(client, 'crusader_daily', new Date(nowMs + 86_400_000), {
+    await enqueue(client, 'crusader_daily', new Date(nowMs + gameDaysToRealMs(1, config.TIME_SCALE)), {
       shipId,
     });
   }
@@ -852,7 +854,7 @@ export const popDaily: EventHandler = async (client, event) => {
   const tau = unemploymentRate(staffSum, pyr.actives);
   const inColonyGrace =
     snap.colonizedAtMs !== null &&
-    nowMs < snap.colonizedAtMs + 14 * 86_400_000;
+    isInColonyGrace(snap.colonizedAtMs, nowMs, config.TIME_SCALE);
   let unempOverDays = snap.unempOverDays;
   let unempDeaths = 0;
   if (!inColonyGrace && tau > UNEMP_TOLERANCE) {
@@ -905,7 +907,7 @@ export const popDaily: EventHandler = async (client, event) => {
   for (const family of ['water', 'food'] as const) {
     if (starving(family)) {
       if (!clocks[family]) {
-        const deadline = nowMs + CLOCK_DAYS[family] * 86_400_000;
+        const deadline = nowMs + gameDaysToRealMs(CLOCK_DAYS[family], config.TIME_SCALE);
         clocks[family] = new Date(deadline).toISOString();
         await enqueue(client, 'pop_clock', new Date(deadline), {
           bodyId,
@@ -991,7 +993,7 @@ export const popDaily: EventHandler = async (client, event) => {
   await client.query(
     `INSERT INTO events (due_at, kind, payload)
      VALUES (to_timestamp($1 / 1000.0), 'pop_daily', $2)`,
-    [nowMs + 86_400_000, JSON.stringify({ bodyId })],
+    [nowMs + gameDaysToRealMs(1, config.TIME_SCALE), JSON.stringify({ bodyId })],
   );
 };
 
@@ -1683,7 +1685,7 @@ export const shipBuilt: EventHandler = async (client, event) => {
       await enqueue(
         client,
         'crusader_daily',
-        new Date(event.dueAt.getTime() + 86_400_000),
+        new Date(event.dueAt.getTime() + gameDaysToRealMs(1, config.TIME_SCALE)),
         { shipId: born[0].id },
       );
     }
@@ -1698,7 +1700,9 @@ function evalLazyStock(
   return Math.max(
     0,
     Number(row.amount_t) +
-      (Number(row.rate_t_per_day) * (nowMs - new Date(row.as_of).getTime())) /
+      (Number(row.rate_t_per_day) *
+        (nowMs - new Date(row.as_of).getTime()) *
+        config.TIME_SCALE) /
         86_400_000,
   );
 }
@@ -1998,6 +2002,7 @@ export const starSupernova: EventHandler = async (client, event) => {
       const at = whenReaches(
         { amount: remaining, ratePerDay: rate, asOfMs: nowMs },
         0,
+        config.TIME_SCALE,
       );
       if (at !== null) {
         await enqueue(client, 'star_supernova', new Date(Math.ceil(at) + 2), {

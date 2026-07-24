@@ -35,6 +35,7 @@ import {
   survivalCapacityMult,
   survivalDrainMult } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { enqueue } from './events.js';
 import { evalLazy, whenReaches } from './lazy.js';
 
@@ -88,6 +89,7 @@ export function evalShipFuel(
         asOfMs: new Date(ship.fuel_as_of).getTime(),
       },
       nowMs,
+      config.TIME_SCALE,
       { min: 0 },
     ),
   };
@@ -162,7 +164,7 @@ export async function rebaseShipDrain(
     [ship.id],
   );
   if (rate < 0) {
-    const at = whenReaches({ amount: units, ratePerDay: rate, asOfMs: nowMs }, 0);
+    const at = whenReaches({ amount: units, ratePerDay: rate, asOfMs: nowMs }, 0, config.TIME_SCALE);
     if (at !== null) {
       await enqueue(client, 'ship_fuel_out', new Date(at), { shipId: ship.id });
     }
@@ -194,7 +196,7 @@ export function evalShipSurvival(
   const evalOne = (amount: number) =>
     asOf === null || rate === 0
       ? Math.max(0, amount)
-      : Math.max(0, evalLazy({ amount, ratePerDay: rate, asOfMs: asOf }, nowMs, { min: 0 }));
+      : Math.max(0, evalLazy({ amount, ratePerDay: rate, asOfMs: asOf }, nowMs, config.TIME_SCALE, { min: 0 }));
   return {
     food: evalOne(Number(raw.food ?? 0)),
     water: evalOne(Number(raw.water ?? 0)),
@@ -289,12 +291,12 @@ export async function rebaseShipSurvival(
       capPerRes * fleeAlarmFraction(survAccessories, SURVIVAL_ALARM_FRACTION);
     const worst = Math.min(food, water);
     if (worst > alarmAt && alarmAt > 0) {
-      const at = whenReaches({ amount: worst, ratePerDay: rate, asOfMs: nowMs }, alarmAt);
+      const at = whenReaches({ amount: worst, ratePerDay: rate, asOfMs: nowMs }, alarmAt, config.TIME_SCALE);
       if (at !== null) {
         await enqueue(client, 'survival_low', new Date(at), { shipId: ship.id });
       }
     }
-    const dead = whenReaches({ amount: worst, ratePerDay: rate, asOfMs: nowMs }, 0);
+    const dead = whenReaches({ amount: worst, ratePerDay: rate, asOfMs: nowMs }, 0, config.TIME_SCALE);
     if (dead !== null) {
       await enqueue(client, 'survival_out', new Date(dead), { shipId: ship.id });
     }
@@ -340,6 +342,7 @@ export function evalShipHull(
             asOfMs: new Date(ship.hull_as_of).getTime(),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: floor },
         ),
       ),
@@ -408,6 +411,7 @@ export async function rebaseShipHull(
                 asOfMs: new Date(h.star_fuel_as_of).getTime(),
               },
               nowMs,
+              config.TIME_SCALE,
               { min: 0 },
             )
           : Number(h.star_fuel_stock ?? 0);
@@ -513,7 +517,7 @@ export async function rebaseShipHull(
     [ship.id],
   );
   if (rate > 0) {
-    const at = whenReaches({ amount: hp, ratePerDay: rate, asOfMs: nowMs }, maxHp);
+    const at = whenReaches({ amount: hp, ratePerDay: rate, asOfMs: nowMs }, maxHp, config.TIME_SCALE);
     if (at !== null) {
       await enqueue(client, 'hull_repaired', new Date(Math.ceil(at) + 2), {
         shipId: ship.id,

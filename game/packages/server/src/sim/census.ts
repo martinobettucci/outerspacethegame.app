@@ -14,6 +14,7 @@
  * le dépassement résiduel est borné par la latence d'un tick (annoncé).
  */
 import { ALL_RESOURCE_IDS, type ResourceId } from '@atg/shared';
+import { config } from '../config.js';
 import { evalLazy } from './lazy.js';
 
 export interface CensusTotals {
@@ -47,6 +48,7 @@ export function aggregateCensus(
     bucket.planetStockT += evalLazy(
       { amount: row.amountT, ratePerDay: row.ratePerDayT, asOfMs: row.asOfMs },
       nowMs,
+      config.TIME_SCALE,
       { min: 0 },
     );
   }

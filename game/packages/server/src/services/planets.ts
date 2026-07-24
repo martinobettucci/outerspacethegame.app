@@ -54,6 +54,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
+import { config } from '../config.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { enqueue } from '../sim/events.js';
 import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
@@ -247,7 +248,7 @@ export async function planetDetail(
     const snap = await loadProductionSnapshot(client, bodyId, nowMs);
     if (!snap) throw new CommandError('not_found', 'Planète inconnue');
     const demographics = populationIndicators(snap);
-    const survival = survivalForecasts(snap, nowMs);
+    const survival = survivalForecasts(snap, nowMs, config.TIME_SCALE);
 
     const { rows: buildingRows } = await client.query(
       `SELECT id, key, level, tile_index, status, completes_at, recipe,
@@ -438,9 +439,16 @@ export async function planetDetail(
         : null,
       graceUntil:
         body.colonized_at &&
-        isInColonyGrace(new Date(body.colonized_at).getTime(), nowMs)
+        isInColonyGrace(
+          new Date(body.colonized_at).getTime(),
+          nowMs,
+          config.TIME_SCALE,
+        )
           ? new Date(
-              colonyGraceUntilMs(new Date(body.colonized_at).getTime()),
+              colonyGraceUntilMs(
+                new Date(body.colonized_at).getTime(),
+                config.TIME_SCALE,
+              ),
             ).toISOString()
           : null,
       stock,
@@ -456,6 +464,7 @@ export async function planetDetail(
               ? whenReaches(
                   { amount: remaining ?? 0, ratePerDay: rate, asOfMs: nowMs },
                   0,
+                  config.TIME_SCALE,
                 )
               : null;
           return {
@@ -572,6 +581,7 @@ export async function payCost(
             asOfMs: toMs(rows[0].as_of),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;
@@ -1287,6 +1297,7 @@ async function creditBundle(
             asOfMs: toMs(rows[0].as_of),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;

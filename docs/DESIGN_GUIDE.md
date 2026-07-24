@@ -58,6 +58,24 @@ deep void [TUNE].
 missions executed, stocks moved, populations grown/shrunk, and an inbox of
 alerts — with zero simulation drift vs. a player who watched live.
 
+- **`TIME_SCALE` — the single game-clock accelerator (dev/test only).** Game
+  time maps to real time by `TIME_SCALE` (game-seconds per real-second),
+  `1` in production (game ≡ real). It is the *one* knob that accelerates the
+  **whole** simulation, uniformly: discrete action timers (build/retool/craft/
+  travel/census), the continuous lazy economy (`evalLazy`/`whenReaches`:
+  deposits, planet stock, star fuel, ship drain, harvest), **and** the
+  daily-cadence sim (`pop_daily`, `crusader_daily`, `pop_clock` death clocks,
+  colony grace). Every duration is scaled the same way — real elapsed × scale
+  when reading, real duration ÷ scale when scheduling — so a world run at scale
+  N is state-identical to one run at scale 1 fast-forwarded N×. **Social /
+  real-world timers are deliberately excluded** (manual-offer TTL & daily
+  quota, sessions): they measure human wall-clock, not simulation, so they stay
+  real (see `manualTrade.ts`). Determinism (above) holds per fixed scale:
+  `TIME_SCALE` is one deployment constant shared by API and worker, so
+  `evalLazy` stays a pure, reader-independent function of `(value, rate, t0,
+  scale)`. Dev instance runs `TIME_SCALE=3600` (1 real second = 1 game-hour)
+  with a `TICK_MS=1000` worker cadence; production keeps `1`. (Canon.)
+
 ---
 
 ## 2. Universe generation & new-player spawn

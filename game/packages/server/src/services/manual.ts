@@ -32,6 +32,7 @@ import {
   type ResourceId,
 } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { CommandError } from './planets.js';
@@ -170,6 +171,7 @@ export async function browseWarehouse(
               asOfMs: toMs(r.as_of),
             },
             nowMs,
+            config.TIME_SCALE,
             { min: 0 },
           ) * 10,
         ) / 10,

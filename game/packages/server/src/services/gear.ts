@@ -26,6 +26,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { CommandError } from './planets.js';
 import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
@@ -58,6 +59,7 @@ async function payStock(
             asOfMs: toMs(rows[0].as_of),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;

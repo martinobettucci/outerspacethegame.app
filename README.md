@@ -63,6 +63,10 @@ pnpm install
 pnpm runDev        # builds @atg/shared, then DB container + migrations +
                    # seed + API + worker + client
                    # client: http://localhost:5173 — API: http://localhost:8080
+                   # runs an ACCELERATED game clock (TIME_SCALE=3600: 1 real
+                   # second = 1 game-hour) so actions settle in seconds; the
+                   # whole simulation is scaled, not just build timers.
+                   # Override with e.g. TIME_SCALE=1 pnpm runDev.
 pnpm resetDb       # recreate + migrate + seed the dev database
 pnpm stopDev       # stop the dev database container
 ```
@@ -122,25 +126,51 @@ pipeline and requirements.
 
 ## Environment variables
 
-| Variable | Role | Required | Notes |
+The authoritative, fully-commented list lives in `game/.env.example` (copy to
+`game/.env`; no real secret ever enters the repository). Defaults below are the
+dev placeholders — staging/production get their own dedicated values.
+
+### Game runtime (`game/.env`)
+
+| Variable | Role | Required | Dev default / notes |
 |---|---|---|---|
-| `OPEN_AI_KEY` | OpenAI Images key for UI prototypes (preproduction only) | Optional | Never committed; provided by the cloud-worker environment |
+| `DATABASE_URL` | PostgreSQL connection (game source of truth) | Yes | `postgres://atg:atg@localhost:55432/atg` (docker-compose.dev.yml) |
+| `API_PORT` | Fastify HTTP listen port | No | `8080` |
+| `CLIENT_ORIGIN` | Allowed client origin (CORS) | No | `http://localhost:5173` |
+| `SESSION_SECRET` | Session-cookie signing secret (≥ 32 chars) | Yes outside dev | Dev placeholder shipped; replace in staging/prod |
+| `UNIVERSE_SEED` | Deterministic universe generation (hex) | Yes | One value per environment; prod never reuses dev's |
+| `LUCK_PEPPER` | Secret pepper for pocket-luck `HMAC(LUCK_PEPPER, email)` (≥ 16 chars, §2.2b) | Yes outside dev | Anti-abuse; rotatable without regenerating pockets |
+| `TICK_MS` | Tick-worker cadence in ms (how often due events settle; canon DG §0) | No | `60000`; **`pnpm runDev` lowers to `1000`**; E2E may lower it |
+| `CENSUS_PER_DAY` | Supply-census snapshots per game-day (GB §13) | No | `4` `[TUNE]` |
+| `TIME_SCALE` | Game-clock accelerator (game-seconds per real second) — scales the **whole** simulation: action timers, continuous economy AND daily population sim (social/session timers excluded) | No | `1`; **`pnpm runDev` uses `3600`** (1 real s = 1 game-hour); **always `1` in production** |
 | `ATG_TEST_ENDPOINTS` | Enables E2E-only test instrumentation (`/test/grant`) | Never in production | Set to `1` by the Playwright config only |
 
-Game-runtime variables (database, Stripe, chain relayer) will be documented in
-`docs/DAT.md` when implementation starts.
+### Tooling / asset generation (root `.env`, preproduction only)
+
+| Variable | Role | Required | Notes |
+|---|---|---|---|
+| `OPENAI_KEY` | OpenAI Images key read by the local asset scripts (`genSoil.mjs`, `genUiTextures.mjs`) | Optional | Root `.env`, never committed; only needed to regenerate textures |
+| `OPEN_AI_KEY` | OpenAI Images key for the cloud-worker UI-prototype pipeline | Optional | Never committed; provided by the cloud-worker environment |
+
+Fiat (Stripe) and the opt-in NFT-bridge relayer variables are not present yet;
+they will be added to `game/.env.example` and `docs/DAT.md` when those later
+phases are implemented.
 
 ## Repository structure
 
 ```
-├── CLAUDE.md            # working conventions + project specifics
-├── README.md / CHANGELOG.md
-├── GAME_BOOK.md          # rule canon
-├── GAME_BIBLE.md        # lore
-├── DESIGN_GUIDE.md      # mechanics & formulae
-├── BALANCE_LOG.md       # balancing loop record
-├── JOURNAL.md           # decision journal (docs/JOURNAL.md equivalent)
+├── CLAUDE.md            # working conventions + project specifics (stays at root)
+├── README.md / CHANGELOG.md   # stay at root by convention
+├── runDev / runStaging / runProd  # root launch scripts (dev boots the game;
+│                                  # staging/prod are honest stubs until built)
 ├── docs/
+│   ├── GAME_BOOK.md     # rule canon
+│   ├── GAME_BIBLE.md    # lore
+│   ├── DESIGN_GUIDE.md  # mechanics & formulae
+│   ├── BALANCE_LOG.md   # balancing loop record
+│   ├── JOURNAL.md       # decision journal
+│   ├── PROD_MIGRATIONS.md      # deployment contract
+│   ├── INCONSISTENCY_REPORT.md # tracked spec/code contradictions
 │   ├── DAT.md           # architecture dossier
 │   ├── BACKLOG.md       # full backlog
 │   ├── DESIGN_SYSTEM.md # UI design system

@@ -20,6 +20,7 @@ import {
 } from '@atg/shared';
 import { evalStarFuel } from './harvest.js';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { CommandError, governingArchetypes } from './planets.js';
 
@@ -304,6 +305,7 @@ export async function bodyIntel(
         asOfMs: new Date(d.as_of).getTime(),
       },
       nowMs,
+      config.TIME_SCALE,
       { min: 0 },
     );
     const dryMs =
@@ -311,6 +313,7 @@ export async function bodyIntel(
         ? whenReaches(
             { amount: remaining, ratePerDay: Number(d.rate_t_per_day), asOfMs: nowMs },
             0,
+            config.TIME_SCALE,
           )
         : null;
     return {

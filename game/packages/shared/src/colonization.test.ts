@@ -81,11 +81,26 @@ describe('allocateSettlerDeaths — manifeste C/A/S déterministe (BD)', () => {
 });
 
 describe('grâce colonie (DG §10.3)', () => {
-  it('14 jours après colonized_at, puis expire', () => {
+  it('14 jours après colonized_at, puis expire (échelle 1 = temps réel)', () => {
     const t0 = 1_000_000;
     expect(colonyGraceUntilMs(t0)).toBe(t0 + 14 * 24 * 3600 * 1000);
     expect(isInColonyGrace(t0, t0 + 1)).toBe(true);
     expect(isInColonyGrace(t0, colonyGraceUntilMs(t0))).toBe(false);
+  });
+
+  it('horloge de jeu unifiée : la grâce se compresse par timeScale (DG §1)', () => {
+    const t0 = 1_000_000;
+    const DAY = 24 * 3600 * 1000;
+    // Échelle 3600 : 14 jours-JEU = 14 jours réels / 3600.
+    expect(colonyGraceUntilMs(t0, 3600)).toBeCloseTo(t0 + (14 * DAY) / 3600, 6);
+    // Juste avant l'échéance réelle compressée : encore en grâce.
+    const until = colonyGraceUntilMs(t0, 3600);
+    expect(isInColonyGrace(t0, until - 1, 3600)).toBe(true);
+    expect(isInColonyGrace(t0, until, 3600)).toBe(false);
+    // À échelle 3600, une colonie de 1 jour réel a DÉJÀ dépassé la grâce
+    // (14 j-jeu ≈ 336 s réelles), contrairement à l'échelle 1.
+    expect(isInColonyGrace(t0, t0 + DAY, 3600)).toBe(false);
+    expect(isInColonyGrace(t0, t0 + DAY, 1)).toBe(true);
   });
 });
 

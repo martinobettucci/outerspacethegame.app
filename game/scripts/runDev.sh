@@ -20,6 +20,23 @@ pnpm --filter @atg/server migrate
 echo "[runDev] Seed (idempotent)…"
 pnpm --filter @atg/server seed
 
+# Instance dev : horloge de jeu ACCÉLÉRÉE (DG §1 « TIME_SCALE », JOURNAL
+# 2026-07-24). En développement, les actions doivent se régler en secondes au
+# lieu de plusieurs heures de jeu, sinon on ne peut pas tester. TIME_SCALE
+# (game-secondes par seconde réelle) accélère TOUTE la simulation de façon
+# cohérente — minuteries d'action, économie continue (evalLazy) ET cadence
+# quotidienne (population, horloges de mort). TICK_MS cadence le worker pour
+# qu'il matérialise les échéances sous ~1 s (aligné sur l'horloge client).
+# Défaut dev : 3600 (1 s réelle = 1 h-jeu ; jour de jeu = 24 s). Surchargeable
+# depuis l'environnement du shell — ex. `TIME_SCALE=1 pnpm runDev` pour la
+# vitesse canonique de production. La prod garde TIME_SCALE=1 (jamais runDev).
+# NB : après un changement d'échelle sur une base déjà simulée, `pnpm resetDb`
+# repart d'un état propre (les horodatages réels antérieurs précèdent le
+# changement).
+export TIME_SCALE="${TIME_SCALE:-3600}"
+export TICK_MS="${TICK_MS:-1000}"
+echo "[runDev] Horloge dev : TIME_SCALE=${TIME_SCALE} (1 s réelle = ${TIME_SCALE} s-jeu), worker TICK_MS=${TICK_MS} ms."
+
 echo "[runDev] Lancement API + worker + client (Ctrl-C pour tout arrêter)…"
 trap 'kill 0' INT TERM
 pnpm --filter @atg/server dev:api &

@@ -13,6 +13,7 @@
 import { BUILDINGS, type BuildingKey } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 
 /** Cadence de retry d'un ordre affamé (h-jeu). [TUNE] */
@@ -111,6 +112,7 @@ export async function payStep(
             asOfMs: new Date(rows[0].as_of).getTime(),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;

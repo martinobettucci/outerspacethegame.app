@@ -161,7 +161,14 @@ export interface SurvivalForecast {
 export function survivalForecasts(
   snap: ProductionSnapshot,
   nowMs: number,
+  // Horloge de jeu unifiée (DG §1) : les échéances rendues sont en temps
+  // RÉEL (durée-jeu ÷ timeScale) pour que le compte à rebours client suive
+  // exactement la vitesse de simulation. Défaut 1 = temps réel (inchangé) ;
+  // le serveur passe config.TIME_SCALE.
+  timeScale = 1,
 ): Record<SurvivalFamily, SurvivalForecast | null> {
+  const scale = Math.max(timeScale, 1e-9);
+  const GAME_DAY_MS = 86_400_000;
   const amountOf = (family: readonly ResourceId[]): number =>
     family.reduce(
       (sum, resource) => sum + (snap.stocks[resource] ?? 0),
@@ -184,7 +191,8 @@ export function survivalForecasts(
       family === 'oxygen' ? undefined : snap.clockDeadlines[family];
     if (activeDeadline) {
       const deathMs = new Date(activeDeadline).getTime();
-      const dryMs = deathMs - CLOCK_DAYS[family as 'water' | 'food'] * 86_400_000;
+      const dryMs =
+        deathMs - (CLOCK_DAYS[family as 'water' | 'food'] * GAME_DAY_MS) / scale;
       return {
         family,
         amountT,
@@ -199,10 +207,10 @@ export function survivalForecasts(
       const dryMs =
         amountT <= 1e-9
           ? nowMs
-          : nowMs + (amountT / -ratePerDay) * 86_400_000;
+          : nowMs + ((amountT / -ratePerDay) * GAME_DAY_MS) / scale;
       const deathMs = instantDeath
         ? dryMs
-        : dryMs + CLOCK_DAYS[family as 'water' | 'food'] * 86_400_000;
+        : dryMs + (CLOCK_DAYS[family as 'water' | 'food'] * GAME_DAY_MS) / scale;
       return {
         family,
         amountT,

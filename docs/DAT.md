@@ -193,9 +193,20 @@ Authoritative tables (details in `DESIGN_GUIDE.md`):
    `transfer-fuel` (own hulls, ≤ 1 pc [TUNE-GAP], same fuel type,
    instantaneous [TUNE-v1]). Departure auto-load fills the FULL tank
    from an owned world's stock and rebases the departed world.
-   IMPORTANT time-model note: TIME_SCALE accelerates EVENTS only — lazy
-   drift (stocks, tanks, population) runs in real days (JOURNAL
-   2026-07-13).
+   IMPORTANT time-model note (UPDATED — unified game clock, JOURNAL
+   2026-07-24): TIME_SCALE now accelerates the WHOLE simulation
+   consistently. Lazy drift (stocks, tanks, star fuel, population) scales
+   too — `evalLazy`/`whenReaches`/`rebase` take a `timeScale` (elapsed real
+   time × scale = game time; deadlines returned in real ms = game duration ÷
+   scale), and the daily-cadence sim (`pop_daily`, `crusader_daily`,
+   `pop_clock` death clocks, colony grace) reschedules via
+   `gameDaysToRealMs(days, scale)`. Timestamps stay stored in REAL ms (no
+   migration); at `timeScale=1` every formula reduces to the historical
+   real-time behavior (prod unchanged). Only SOCIAL/real-world timers stay
+   real: account age (45 d), manual-offer TTL/quota, sessions. Dev runs
+   `TIME_SCALE=3600` + `TICK_MS=1000` via `runDev.sh`; the value is one
+   deployment constant shared by API and worker, preserving the
+   reader-independent determinism of DG §1.
 8. **Recruitment pods (implemented, chunk R):** priced against the
    latest census (S_r minus pod tons paid since the snapshot — immediate
    impact), paid PHYSICALLY from an owned world's stock (co-location;

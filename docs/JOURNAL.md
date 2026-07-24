@@ -5392,3 +5392,86 @@ statut backlog `[ ]`.
   `facts.test.ts` (anti-dérive) étendu et vert ; `codex.spec.ts` e2e mis à jour
   (galaxy ouvre sur « Cargo & the hold », chiffre live +50 %). Vérification
   visuelle e2e rejouée sur la stack en cours (capture cargo observée).
+
+---
+
+## 2026-07-24 — Horloge de jeu unifiée : `TIME_SCALE` doit accélérer TOUTE la simulation (instance dev)
+
+- **Problème (rapporté par le responsable).** En développement, les actions
+  doivent pouvoir s'exécuter en quelques secondes, sinon on ne peut pas tester
+  (« EVERYTHING should be tied to the game day ticker, tune it for dev
+  instance »). Le mécanisme `TIME_SCALE` (config serveur, défaut 1) existe déjà
+  et divise la durée RÉELLE des actions à la commande.
+- **Investigation (code tracé).** `TIME_SCALE` n'était que PARTIELLEMENT
+  branché. Trois familles de temps coexistaient :
+  1. **Minuteries d'action discrètes** (construction, retool, build de vaisseau,
+     stargate, conversions, voyage, `census_run`) — DÉJÀ divisées par
+     `timeScale` à la planification (`nowMs + HEURES*3_600_000/timeScale`) :
+     convention CORRECTE.
+  2. **Économie continue** — le cœur `evalLazy(value, rate, t0)`
+     ([`sim/lazy.ts`](../game/packages/server/src/sim/lazy.ts)) qui pilote
+     gisements, stocks de planète, carburant d'étoile, drain de vaisseau,
+     récolte : calculait l'écoulé à partir du temps RÉEL, `elapsedDays =
+     (atMs − asOfMs)/86_400_000`, SANS `timeScale`. → NON accéléré.
+  3. **Simulation à cadence quotidienne** — `pop_daily`, `crusader_daily`,
+     `pop_clock` (horloges de mort eau 3 j / vivres 10 j), grâce de colonie
+     14 j : re-planifiées à `nowMs + 86_400_000` BRUT (jour réel), SANS
+     `timeScale`. → NON accéléré.
+- **Conséquence démontrée.** À `TIME_SCALE` élevé, un bâtiment se termine en
+  quelques secondes MAIS les ressources ne se vident pas et la population ne
+  bouge pas : le monde devient INCOHÉRENT en accéléré, et le test « correct »
+  reste impossible pour tout ce qui dépend de l'économie ou de la population.
+  L'accélération actuelle n'est que cosmétique (minuteries de chantier).
+- **Principe directeur retenu (déjà énoncé dans le code).**
+  [`manualTrade.ts`](../game/packages/shared/src/manualTrade.ts) : « TIME_SCALE
+  n'accélère que les événements » — les minuteries SOCIALES (TTL des offres
+  manuelles, quotas /24 h, sessions) restent en temps RÉEL, mais toute la
+  SIMULATION (économie continue + démographie) doit suivre l'horloge de jeu.
+  Les familles 2 et 3 sont donc des LACUNES, pas un choix.
+- **Décision du responsable (via AskUserQuestion, 2026-07-24).**
+  1. **Unification complète de l'horloge de jeu** : une seule échelle
+     `TIME_SCALE` accélère toute la simulation, de façon cohérente.
+  2. **Vitesse dev = 1 heure-jeu par seconde réelle** → `TIME_SCALE=3600`
+     (bâtiment 6 h = 6 s, upgrade 24 h = 24 s, jour de jeu = 24 s).
+- **Approche technique (mise à l'échelle de l'écoulé, base réelle conservée).**
+  Toutes les colonnes d'horodatage RESTENT en ms RÉELLES (aucune migration,
+  aucun changement de sémantique de stockage). L'échelle s'applique aux DURÉES
+  écoulées au moment du calcul, exactement comme les minuteries d'action déjà
+  correctes :
+  - `evalLazy(q, atMs, timeScale)` : `elapsedGameDays = max(0, atMs −
+    q.asOfMs)/86_400_000 × timeScale`.
+  - `whenReaches(q, target, timeScale)` : renvoie l'instant RÉEL où la cible est
+    atteinte = `q.asOfMs + (gameDays/timeScale)×86_400_000` → se branche
+    directement sur `enqueue(due_at)` SANS conversion supplémentaire (les sites
+    `enqueue` en aval de `whenReaches` ne changent donc PAS).
+  - `rebase(q, atMs, rate, ..., timeScale)` : matérialise via `evalLazy`.
+  - Cadences quotidiennes : `due_at = nowMs + 86_400_000/timeScale` ;
+    échéances de mort `nowMs + CLOCK_DAYS×86_400_000/timeScale` ; grâce colonie
+    `nowMs < colonizedAtMs + 14×86_400_000/timeScale`.
+  - **Rétro-compatibilité prouvée par construction** : à `timeScale=1` chaque
+    formule se réduit au comportement actuel → tous les tests existants passent
+    sans modification, la production (toujours 1) est inchangée.
+- **Déterminisme / rattrapage hors-ligne (DG §1) préservés.** `timeScale` est
+  UNE constante de déploiement lue depuis `config.TIME_SCALE`, identique dans
+  l'API et le worker (runDev l'exporte aux deux). `evalLazy` reste une fonction
+  PURE de `(q, atMs, timeScale)` — recalcul bit-identique quel que soit le
+  lecteur à `timeScale` donné. Le rattrapage traite les événements en retard en
+  ordre, chaque handler évaluant l'écoulé de jeu à sa propre échéance : zéro
+  dérive API/worker.
+- **Instance dev.** `runDev.sh` exporte `TIME_SCALE=3600` et `TICK_MS=1000`
+  (le worker matérialise sous ~1 s, aligné sur l'horloge client à 1 s), sauf
+  surcharge explicite dans l'environnement du shell. Prod/tests conservent 1.
+  Après un changement d'échelle sur une base dev déjà simulée, `pnpm resetDb`
+  est la voie propre (les horodatages réels antérieurs précèdent le changement)
+  — documenté.
+- **Portée / découpage persistés (chunks).** (1) docs (cette entrée +
+  DESIGN_GUIDE §1 + BACKLOG) ; (2) cœur `evalLazy`/`whenReaches`/`rebase` +
+  branchement de `timeScale` sur tous les sites non-test + tests unitaires ;
+  (3) cadences quotidiennes (`pop_daily`/`crusader_daily`/`pop_clock`/grâce)
+  + test d'intégration ; (4) réglage dev (`runDev`/`.env.example`/README/DAT)
+  + CHANGELOG. Push après chaque commit cohérent.
+- **Vérifications prévues.** Test unitaire `lazy` (écoulé ×timeScale,
+  `whenReaches` renvoie l'instant réel divisé) ; audit grep « aucun appel
+  non-test à `evalLazy`/`whenReaches` sans `timeScale` » ; test d'intégration
+  `pop_daily` (cadence divisée) ; typecheck + build ; vérification fonctionnelle
+  sur l'instance dev (bâtiment posé qui se termine en secondes, stock qui bouge).

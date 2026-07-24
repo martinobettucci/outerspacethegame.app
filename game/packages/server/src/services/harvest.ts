@@ -21,6 +21,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import { CommandError } from './planets.js';
 import { evalShipFuel, rebaseShipDrain, rebaseShipHull, type ShipRow } from '../sim/shipDrain.js';
@@ -57,6 +58,7 @@ export function evalStarFuel(star: Row, nowMs: number): number {
       asOfMs: new Date(star.star_fuel_as_of).getTime(),
     },
     nowMs,
+    config.TIME_SCALE,
     { min: 0 },
   );
 }
@@ -88,7 +90,7 @@ export async function settleStarHarvest(
     [star.id],
   );
   if (clamped < 0) {
-    const at = whenReaches({ amount: stock, ratePerDay: clamped, asOfMs: nowMs }, 0);
+    const at = whenReaches({ amount: stock, ratePerDay: clamped, asOfMs: nowMs }, 0, config.TIME_SCALE);
     if (at !== null) {
       await enqueue(client, 'star_supernova', new Date(at), { bodyId: star.id });
     }
@@ -176,6 +178,7 @@ export async function startHarvest(
     const fullAt = whenReaches(
       { amount: units, ratePerDay: netPerDay, asOfMs: nowMs },
       tankU,
+      config.TIME_SCALE,
     );
     if (fullAt !== null) {
       await enqueue(client, 'harvest_full', new Date(fullAt), { shipId });

@@ -87,6 +87,7 @@ describe('boucle colonie', () => {
         asOfMs: now,
       },
       now + 3 * DAY,
+      1,
     );
     expect(in3d).toBeCloseTo(after.amount_t + 3 * after.rate_t_per_day, 6);
 
@@ -668,7 +669,7 @@ describe('boucle colonie', () => {
       ratePerDay: row.rate_t_per_day,
       asOfMs: toMs(row.as_of),
     };
-    const direct = evalLazy(q, q.asOfMs + 2 * DAY);
+    const direct = evalLazy(q, q.asOfMs + 2 * DAY, 1);
     // Chemin « spectateur » : matérialisation intermédiaire à J+1 puis J+2.
     const client = await pool.connect();
     try {
@@ -686,6 +687,7 @@ describe('boucle colonie', () => {
         asOfMs: toMs(mid.as_of),
       },
       q.asOfMs + 2 * DAY,
+      1,
     );
     expect(stepped).toBeCloseTo(direct, 6);
   });

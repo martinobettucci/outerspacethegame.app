@@ -37,6 +37,7 @@ import {
   type SlotInput,
 } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { CommandError, governingArchetypes } from './planets.js';
@@ -203,6 +204,7 @@ export async function listMarkets(
       evalLazy(
         { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
         nowMs,
+        config.TIME_SCALE,
         { min: 0 },
       ),
     );
@@ -1255,6 +1257,7 @@ export async function listInnateOffers(
       evalLazy(
         { amount: r.amount_t, ratePerDay: r.rate_t_per_day, asOfMs: toMs(r.as_of) },
         nowMs,
+        config.TIME_SCALE,
         { min: 0 },
       ),
     );

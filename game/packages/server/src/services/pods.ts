@@ -19,6 +19,7 @@ import {
   type ResourceId,
 } from '@atg/shared';
 import type pg from 'pg';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { recomputePlanetRates } from '../sim/rebase.js';
 import { CommandError } from './planets.js';
@@ -184,6 +185,7 @@ export async function openPod(
             asOfMs: new Date(stockRows[0].as_of).getTime(),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;

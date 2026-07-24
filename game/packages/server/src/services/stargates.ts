@@ -22,6 +22,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { rebaseShipDrain } from '../sim/shipDrain.js';
 import { releaseClaim } from './junk.js';
@@ -283,6 +284,7 @@ export async function traverseStargate(
               asOfMs: new Date(stockRows[0].as_of).getTime(),
             },
             nowMs,
+            config.TIME_SCALE,
             { min: 0 },
           )
         : 0;

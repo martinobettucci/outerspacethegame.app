@@ -27,6 +27,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy, whenReaches } from '../sim/lazy.js';
 import {
   evalShipFuel,
@@ -184,6 +185,7 @@ export async function runAutoTrade(
                 asOfMs: new Date(giveStock[0].as_of).getTime(),
               },
               nowMs,
+              config.TIME_SCALE,
               { min: 0 },
             )
           : 0;
@@ -215,6 +217,7 @@ export async function runAutoTrade(
                 asOfMs: new Date(counterStock[0].as_of).getTime(),
               },
               nowMs,
+              config.TIME_SCALE,
               { min: 0 },
             )
           : 0;
@@ -336,7 +339,7 @@ export async function scheduleAutoTradeCheck(
       break;
     }
     if (ratePerDay < -1e-12) {
-      const at = whenReaches({ amount, ratePerDay, asOfMs: nowMs }, rule.belowT);
+      const at = whenReaches({ amount, ratePerDay, asOfMs: nowMs }, rule.belowT, config.TIME_SCALE);
       if (at !== null && (earliest === null || at < earliest)) earliest = at;
     }
   }

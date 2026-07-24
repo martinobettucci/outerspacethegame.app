@@ -92,4 +92,19 @@ describe('survivalForecasts', () => {
     expect(water.deathAt).toBe(deadline);
     expect(new Date(water.dryAt!).getTime()).toBe(now - 86_400_000);
   });
+
+  it('horloge de jeu unifiée : les échéances RÉELLES se compressent par timeScale (DG §1)', () => {
+    const now = Date.UTC(2026, 6, 20);
+    // 100 u d'oxygène à −1/jour ⇒ 100 jours-JEU à sec. À échelle 3600,
+    // l'échéance RÉELLE = 100 jours réels / 3600 (compte à rebours client
+    // aligné sur la simulation accélérée).
+    const oxy = survivalForecasts(snapshot(), now, 3600).oxygen!;
+    expect(new Date(oxy.dryAt!).getTime()).toBeCloseTo(
+      now + (100 * 86_400_000) / 3600,
+      3,
+    );
+    // Échelle 1 : comportement historique inchangé.
+    const oxy1 = survivalForecasts(snapshot(), now, 1).oxygen!;
+    expect(new Date(oxy1.dryAt!).getTime()).toBe(now + 100 * 86_400_000);
+  });
 });
