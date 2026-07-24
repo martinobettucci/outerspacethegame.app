@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# @spec Implements: docs/BACKLOG.md §P0.2 "Reconcile repo to standards"; CLAUDE.md §3
+#       (commandes runDev/runStaging/runProd) + §9 (sécurité production) + §12
+#       (contrat de déploiement); README.md §"Run the game from the repository root"
+#       + §"Known limitations"; docs/DAT.md §6; docs/PROD_MIGRATIONS.md.
+# HONEST STUB — the production environment is not built yet, and production is a
+# source of truth (CLAUDE.md §9): this script must never fabricate a deployment.
+# It states the real status and exits non-zero. Any real prod launch will require
+# an explicit human deployment following docs/PROD_MIGRATIONS.md.
+set -euo pipefail
+
+cat >&2 <<'EOF'
+[runProd] L'environnement de PRODUCTION n'existe pas encore.
+
+  La production est une source de vérité (CLAUDE.md §9) : aucun démarrage ni
+  aucune migration ne sera automatisé ici. Le déploiement réel passera par une
+  instruction humaine explicite suivant le contrat :
+
+    - docs/PROD_MIGRATIONS.md   (baseline, migrations en attente, ordre, rollback)
+    - docs/DAT.md §6            (cible : environnements & déploiement)
+    - README.md §"Known limitations"
+
+  Pour développer en local, utiliser :  ./runDev
+EOF
+exit 1

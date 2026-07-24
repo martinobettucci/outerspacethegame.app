@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# @spec Implements: docs/BACKLOG.md §P0.2 "Reconcile repo to standards"; CLAUDE.md §3
+#       (commandes runDev/runStaging/runProd) + §12 (contrat de déploiement);
+#       README.md §"Run the game from the repository root" + §"Known limitations";
+#       docs/DAT.md §6 "Environments & deployment"; docs/PROD_MIGRATIONS.md.
+# HONEST STUB — the staging environment is not built yet. This script must NOT
+# pretend to succeed (CLAUDE.md §18 "ne pas simuler un succès"). It states the
+# real status and exits non-zero so nothing downstream assumes staging is up.
+set -euo pipefail
+
+cat >&2 <<'EOF'
+[runStaging] L'environnement de STAGING n'existe pas encore.
+
+  Il manque : un docker-compose.staging.yml, les variables/secrets dédiés
+  (SESSION_SECRET, UNIVERSE_SEED, LUCK_PEPPER… propres à staging) et le
+  pipeline de déploiement.
+
+  À faire avant que ce script puisse démarrer quoi que ce soit :
+    - docs/DAT.md §6            (cible : environnements & déploiement)
+    - docs/PROD_MIGRATIONS.md   (contrat de déploiement, migrations en attente)
+    - README.md §"Known limitations"
+
+  Pour développer en local, utiliser :  ./runDev
+EOF
+exit 1
