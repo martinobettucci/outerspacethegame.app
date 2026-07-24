@@ -35,8 +35,13 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [politics, setPolitics] = useState<Archetype>('industrialist');
+  // Role hovered/focused for preview; falls back to the committed selection.
+  const [previewPolitics, setPreviewPolitics] = useState<Archetype | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const shownPolitics = previewPolitics ?? politics;
+  const shownDetail = t.archetypeDescriptions[shownPolitics];
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -175,13 +180,21 @@ export function LoginScreen() {
                 {ARCHETYPES.map((a) => {
                   const ArchetypeIcon = ARCHETYPE_ICONS[a];
                   return (
-                    <label key={a} className="ls-archetype" data-archetype={a}>
+                    <label
+                      key={a}
+                      className="ls-archetype"
+                      data-archetype={a}
+                      onMouseEnter={() => setPreviewPolitics(a)}
+                      onMouseLeave={() => setPreviewPolitics(null)}
+                    >
                       <input
                         type="radio"
                         name="politics"
                         value={a}
                         checked={politics === a}
                         onChange={() => setPolitics(a)}
+                        onFocus={() => setPreviewPolitics(a)}
+                        onBlur={() => setPreviewPolitics(null)}
                       />
                       <span className="ls-archetype__surface">
                         <span className="ls-archetype__icon" aria-hidden="true">
@@ -194,6 +207,17 @@ export function LoginScreen() {
                   );
                 })}
               </div>
+              <p
+                className="ls-archetype-detail"
+                data-archetype={shownPolitics}
+                aria-live="polite"
+              >
+                <span className="ls-archetype-detail__name">
+                  {t.archetypes[shownPolitics]}
+                  <span className="ls-archetype-detail__motto">{shownDetail.motto}</span>
+                </span>
+                <span className="ls-archetype-detail__body">{shownDetail.body}</span>
+              </p>
             </fieldset>
           )}
 

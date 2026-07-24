@@ -2,6 +2,28 @@
 
 ## [Non publié]
 
+### Écran d'éveil — explication par politique (2026-07-24)
+
+- **Ajout.** Sous la grille des six politiques de l'écran « Awaken a new
+  Sovereign » ([`LoginScreen.tsx`](game/packages/client/src/screens/LoginScreen.tsx)),
+  un panneau de détail explique la politique **sélectionnée** ; au **survol** ou
+  au **focus clavier** d'une autre carte, le panneau prévisualise cette
+  politique sans changer le choix, puis revient à la sélection. Devise + corps
+  par archétype centralisés dans [`i18n/en.ts`](game/packages/client/src/i18n/en.ts)
+  (`archetypeDescriptions`), fidèles à `docs/DESIGN_GUIDE.md` §4.1 (masques
+  allow/deny + privilèges innés), sans spoiler de contenu non découvert.
+- **UI.** Nouveau composant `.ls-archetype-detail` (thème par `data-archetype`,
+  bordure gauche colorée, `aria-live="polite"`) — documenté dans
+  [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
+- **Tests.** [`LoginScreen.archetypes.test.ts`](game/packages/client/src/screens/LoginScreen.archetypes.test.ts)
+  vérifie l'exhaustivité (les six politiques ont libellé + devise + corps non
+  vides). Typecheck OK, 48 tests verts, build OK, vérif visuelle Playwright
+  (desktop 1440×900 : panneau rendu/thémé, survol-vs-sélection confirmés).
+- **Limite connue (préexistante, hors périmètre).** L'écran d'auth déborde
+  horizontalement en < 900 px (déjà présent en mode login, pont deck 1000 px) ;
+  le panneau ajouté épouse exactement la largeur de la grille (550 px) et
+  n'aggrave pas ce débordement. Non corrigé ici : sans rapport avec la tâche.
+
 ### Réforme colonisation anti-soft-lock — spec & décision persistées (2026-07-24, docs seulement)
 
 - **Cause racine identifiée (code tracé).** Fabriquer un colonisateur exige

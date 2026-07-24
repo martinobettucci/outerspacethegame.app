@@ -5294,3 +5294,33 @@ MANUAL_PLAN §6 (Codex spaceport/colonisation), CHANGELOG.
 cités en session) ; docs persistées AVANT tout code (CLAUDE.md §5) ; migration,
 code jamais-masqué, recette spaceport, don unique et tests restent à livrer —
 statut backlog `[ ]`.
+
+---
+
+## 2026-07-24 — Écran d'éveil : explication par politique
+
+- **Problème.** L'écran « Awaken a new Sovereign » fait choisir une politique
+  **permanente** parmi six, mais n'en explique aucune : le joueur choisit à
+  l'aveugle un engagement irréversible (icône + libellé d'un mot, rien de plus).
+- **Décision.** Ajouter un panneau de détail sous la grille. Il explique la
+  politique **sélectionnée** ; au survol souris ou au focus clavier d'une autre
+  carte, il **prévisualise** cette politique puis revient à la sélection au
+  départ/blur. Choix retenu plutôt qu'un tooltip pur-survol : accessible clavier
+  et tactile, et toujours visible pour le choix engagé (état `previewPolitics`
+  ?? `politics`, `aria-live="polite"`).
+- **Source du texte.** Devise + corps par archétype centralisés dans
+  `i18n/en.ts` (`archetypeDescriptions`), fidèles à DG §4.1 (masques allow/deny
+  + privilèges innés). Spoiler-free : on décrit le style de jeu et le trait inné,
+  jamais un contenu non découvert (noms de mondes, cristaux, techs non atteintes).
+  Pas de gate Codex : l'écran est pré-login, hors manuel in-game.
+- **Anti-dérive / exhaustivité.** Les six politiques proviennent de
+  `ARCHETYPES` (`@atg/shared`) ; test `LoginScreen.archetypes.test.ts` garantit
+  que chacune a libellé + devise + corps non vides (échoue si une politique est
+  ajoutée sans description).
+- **Vérifications.** Typecheck OK, 48 tests verts, build client OK. Vérif
+  visuelle Playwright (desktop 1440×900) : panneau rendu et thémé par
+  `data-archetype`, comportement survol-vs-sélection confirmé (Militarist
+  sélectionné, survol Diplomatic prévisualise sans changer le choix). Débordement
+  horizontal < 900 px **préexistant** (présent aussi en mode login, deck 1000 px) :
+  le panneau épouse la largeur de la grille (550 px) et n'aggrave rien — non
+  corrigé, hors périmètre.

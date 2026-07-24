@@ -121,6 +121,15 @@ unknown/lore/others' territory. Climate hues on maps: hot `#E86A4A`, cold
 - **Governance preview** — candidate governor set → resulting allow/deny mask
   matrix, diff-styled, with the permanence warning pattern (irreversible
   action = typed confirmation, never a simple OK).
+- **Politics selector + detail panel (Awaken screen)** — the register flow's
+  permanent-choice radio grid (`.ls-archetype`, 3-col → 2-col ≤620 px), each
+  card icon-first and themed by a per-archetype accent (`data-archetype`).
+  Below it, a **detail panel** (`.ls-archetype-detail`, colored left border +
+  faint accent wash, `aria-live="polite"`) explains the **selected** politics;
+  hovering or keyboard-focusing another card previews that politics and reverts
+  to the selection on leave/blur. Copy (motto + body) is rendered live from
+  `i18n` `archetypeDescriptions` — never hard-coded — and stays spoiler-free
+  (playstyle + innate trait, no undiscovered content).
 - **Market/trade tables** — dense rows, pair badges, AMM depth bar,
   double-fee disclosure, mask disclosure on planet listings.
 - **Mission/policy editor** — the instruction-block builder (predefined

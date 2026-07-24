@@ -4,6 +4,8 @@
  * anglais (continuité des documents de conception) ; le français arrive avec
  * la fondation i18n (backlog P7).
  */
+import type { Archetype } from '@atg/shared';
+
 export const t = {
   appName: 'ATG — Across The Galaxies',
   tagline: 'Explore, harvest and conquer: fuel your ambitions.',
@@ -72,6 +74,37 @@ export const t = {
     civic: 'Civic',
     diplomatic: 'Diplomatic',
   } as Record<string, string>,
+  /**
+   * Blurb per politics, shown on the Awaken screen when a role is hovered,
+   * focused or selected. Grounded in docs/DESIGN_GUIDE.md §4.1 (allow/deny
+   * masks + innate privileges) — playstyle + trade-off, no forward spoilers.
+   */
+  archetypeDescriptions: {
+    militarist: {
+      motto: 'Rule by force.',
+      body: 'Your flagship commands armies. Unlocks the military branch, ground units, weapon foundries and conquest operations, and holds a monopoly on unit and weapon production. Closes the door on casinos and diplomatic districts.',
+    },
+    industrialist: {
+      motto: 'The forge never cools.',
+      body: 'A builder-sovereign. Heavy industry, advanced refineries and the artificial-planet yard. Worlds you govern retool instantly and build 25% faster. Casinos stay shut.',
+    },
+    mercantile: {
+      motto: 'Everything has a price.',
+      body: 'Rule through commerce. Advanced markets, toll routes and auction houses, plus innate survival-and-fuel trading that keeps a protected floor even on foreign soil. Forgoes the military branch.',
+    },
+    scientific: {
+      motto: 'Knowledge is reach.',
+      body: "See further than anyone. Research centers, higher-tier labs and advanced scanners; your deep-sight scans reveal a world's tech branches, deposits and quality one intel tier beyond the rest. Casinos and top-tier military stay off the table.",
+    },
+    civic: {
+      motto: 'A haven for your people.',
+      body: 'Govern for the governed. Housing, medicine, terraforming and settler programs; on your worlds illness fades twice as fast, travel is safer and visitors land without wear. Weapon foundries are renounced.',
+    },
+    diplomatic: {
+      motto: 'Neutral ground.',
+      body: 'Power through connection. Diplomatic districts, faction halls, treaties and shared routes; ships may dock and trade at your worlds without prior contact, and you host multi-party mediation channels. Top-tier military is set aside.',
+    },
+  } as Record<Archetype, { motto: string; body: string }>,
   nav: {
     galaxy: 'Galaxy',
     planets: 'Planets',

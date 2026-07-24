@@ -768,6 +768,69 @@
   box-shadow: 0 0 8px color-mix(in srgb, var(--ls-archetype) 70%, transparent);
 }
 
+.ls-archetype-detail {
+  --ls-archetype: var(--ls-blue);
+  display: grid;
+  gap: 6px;
+  margin: 11px 0 0;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--ls-archetype) 34%, var(--ls-line));
+  border-left: 2px solid var(--ls-archetype);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ls-archetype) 9%, transparent), transparent 70%),
+    rgba(5, 12, 23, 0.72);
+  color: var(--ls-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+  text-align: left;
+  transition:
+    border-color 220ms var(--ls-ease),
+    background-color 220ms var(--ls-ease);
+}
+
+.ls-archetype-detail[data-archetype='militarist'] {
+  --ls-archetype: #ff7f72;
+}
+.ls-archetype-detail[data-archetype='industrialist'] {
+  --ls-archetype: #e7d66a;
+}
+.ls-archetype-detail[data-archetype='mercantile'] {
+  --ls-archetype: #69d59a;
+}
+.ls-archetype-detail[data-archetype='scientific'] {
+  --ls-archetype: #8bd8ff;
+}
+.ls-archetype-detail[data-archetype='civic'] {
+  --ls-archetype: #b49cff;
+}
+.ls-archetype-detail[data-archetype='diplomatic'] {
+  --ls-archetype: #f2aede;
+}
+
+.ls-archetype-detail__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ls-text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.ls-archetype-detail__motto {
+  color: var(--ls-archetype);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+.ls-archetype-detail__body {
+  color: var(--ls-muted);
+}
+
 .ls-auth-form__error {
   margin: -4px 0 0;
   padding: 10px 12px;
