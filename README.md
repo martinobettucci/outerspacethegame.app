@@ -4,23 +4,23 @@ A space exploration, colony-management and inter-player commerce game by
 **P2Enjoy Studio**. Single persistent universe, no in-game currency, real game
 first (#P2Enjoy — not a "gamified Ponzi").
 
-> **Project status: PREPRODUCTION.** This repository currently holds the
-> historical Jekyll marketing site and the complete game-design corpus. There
-> is **no game application code yet** — the current deliverable is the design
-> foundation.
+> **Project status: IMPLEMENTATION (P1) since 2026-07-12** on explicit owner
+> go. This repository holds the historical Jekyll marketing site, the complete
+> game-design corpus, and the game application under construction in `game/`
+> (pnpm monorepo: shared / server / client / e2e).
 
 ## Purpose
 
 - Preserve and evolve the **design canon** of the game.
 - Host the public marketing/whitepaper site (legacy Jekyll).
-- Serve as the working repository for preproduction (design system, backlog,
-  architecture dossier) until implementation begins.
+- Serve as the working repository for design, architecture, implementation,
+  verification and release history.
 
 ## Design corpus (read in this order)
 
 | Document | Role |
 |---|---|
-| `GAMEBOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
+| `GAME_BOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
 | `GAME_BIBLE.md` | Lore & world (the Silence, the three peoples, places, tone) |
 | `DESIGN_GUIDE.md` | Complete mechanical spec with formulae — all invented values tagged `[TUNE]` |
 | `BALANCE_LOG.md` | Simulated-campaign balancing loop: findings & applied patches |
@@ -32,70 +32,166 @@ first (#P2Enjoy — not a "gamified Ponzi").
 
 ## Stack
 
-- **Current (site):** Jekyll (Ruby), deployed historically on `gh-pages`.
-- **Target (game — designed, not yet built):** PostgreSQL-authoritative server
-  + tick worker; web client with three.js star field (2D navigation, 3D style)
-  and an isometric 2D planet renderer; opt-in NFT bridge (Polygon PoS, existing
-  Foundry contracts in the sibling `.blockchain` repo); Stripe for fiat planet
-  purchases. See `docs/DAT.md`.
+- **Site:** Jekyll (Ruby), deployed historically on `gh-pages`.
+- **Game (in construction, `game/`):** PostgreSQL 16 (authoritative, in
+  Docker) · TypeScript/Node 22 — Fastify API + tick worker · React + Vite
+  client (three.js star field; PixiJS v8 isometric planet renderer) ·
+  Playwright E2E. Opt-in NFT bridge (Polygon PoS, contracts in the sibling
+  `.blockchain` repo) and Stripe fiat purchases come in later phases. See
+  `docs/DAT.md`.
 
-## Prerequisites (site only)
+## Prerequisites
 
-- Ruby ≥ 3.0, Bundler.
+- Site: Ruby ≥ 3.0, Bundler.
+- Game: Node ≥ 22, pnpm ≥ 10, Docker + Compose.
 
-## Install & run (site)
+## Install & run — site
 
 ```bash
 bundle install
 bundle exec jekyll serve      # http://127.0.0.1:4000
-```
-
-## Build (site)
-
-```bash
 bundle exec jekyll build      # outputs to _site/
 ```
 
-## Tests
+## Install & run — game (from `game/`)
 
-No automated tests exist yet (preproduction; no application code). The test
-strategy for the game is defined in `CLAUDE.md` §15 and per-task in
-`docs/BACKLOG.md`.
+Prerequisites: **Node.js ≥ 22** (verified on 22 and 24), **pnpm ≥ 10**,
+**Docker** (dev database container). Everything runs locally.
+
+```bash
+pnpm install
+pnpm runDev        # builds @atg/shared, then DB container + migrations +
+                   # seed + API + worker + client
+                   # client: http://localhost:5173 — API: http://localhost:8080
+                   # runs an ACCELERATED game clock (TIME_SCALE=3600: 1 real
+                   # second = 1 game-hour) so actions settle in seconds; the
+                   # whole simulation is scaled, not just build timers.
+                   # Override with e.g. TIME_SCALE=1 pnpm runDev.
+pnpm resetDb       # recreate + migrate + seed the dev database
+pnpm stopDev       # stop the dev database container
+```
+
+Running individual services by hand (`pnpm --filter @atg/server dev:api`,
+`seed`, …) requires `pnpm --filter @atg/shared build` once after cloning:
+the workspace package exports its compiled `dist/` — `runDev`/`resetDb`
+do it for you.
+
+Environment variables are documented in `game/.env.example` (copy to
+`game/.env` to customize; no real secret ever enters the repository).
+
+### Demo accounts (dev seed — never valid outside local dev)
+
+| Email | Password | Politics | Purpose |
+|---|---|---|---|
+| `demo@atg.local` | `demo-password-1` | industrialist | main demo Sovereign |
+| `neighbor@atg.local` | `demo-password-2` | mercantile | guaranteed 150–240 pc neighbor; publishes an innate hospitality offer (water @ 2 ore/T, floor 10 T) |
+| `lucky-N@atg.local` | `demo-password-3` | civic | §2.2b pocket-luck demo: `N` is scanned deterministically (same secret luck stream `HMAC(LUCK_PEPPER, email)` as production) until the first e-mail rolling **≥ 2 starter planets** — the multi-starter spawn is demonstrated through the real flow, never fabricated (with the default `LUCK_PEPPER`, `N = 142`) |
+
+The seed goes through the real registration flow (`registerPlayer` →
+starter spawn), is idempotent, and is recreated by `pnpm resetDb`. Its
+deterministic tech DNA includes the waterworks → lab → clinic chain, so the
+demo account can exercise the Population v2 clinic, ledger, optional medicine
+chain and projected survival alarms through the real UI. The seed also
+validates and logs the starter pyramid produced by that real path
+(`C/A/S 64/191/95`, total 350);
+colonies likewise receive the exact manifest carried by their ship, without
+injecting fictitious demographic history.
+
+## Tests (game, from `game/`)
+
+```bash
+pnpm test               # unit tests (all packages)
+pnpm test:integration   # server integration tests (real local DB required)
+pnpm test:e2e           # Playwright E2E (starts API + client; DB must be up)
+pnpm build              # build all packages
+```
+
+The comms E2E ("the Silence breaks") drives the seeded demo pair; the ping
+quota is 20/day per player, so after ~20 same-day reruns run `pnpm resetDb`.
+
+## Asset generation (climate soils)
+
+`node game/scripts/genSoil.mjs` (from the repo root) regenerates the
+per-climate soil textures through OpenAI Images (`gpt-image-2`, falls
+back to `gpt-image-1`). Requires `OPENAI_KEY` in the root `.env` (never
+committed) and `ffmpeg` (webp 768² conversion). Outputs:
+`game/packages/client/public/generated/soil-<climate>.webp` (served
+asset) and `docs/design/prototypes/soil-<climate>.png` (full-size
+archive). Missing textures are harmless — the planet view falls back to
+the procedural slab.
+
+`node game/scripts/genUiTextures.mjs` regenerates the four UI chrome
+backgrounds (`ui-panel`, `ui-card`, `ui-shell`, `ui-veil`) with the same
+pipeline and requirements.
 
 ## Environment variables
 
+The authoritative, fully-commented list lives in `game/.env.example` (copy to
+`game/.env`; no real secret ever enters the repository). Defaults below are the
+dev placeholders — staging/production get their own dedicated values.
+
+### Game runtime (`game/.env`)
+
+| Variable | Role | Required | Dev default / notes |
+|---|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection (game source of truth) | Yes | `postgres://atg:atg@localhost:55432/atg` (docker-compose.dev.yml) |
+| `API_PORT` | Fastify HTTP listen port | No | `8080` |
+| `CLIENT_ORIGIN` | Allowed client origin (CORS) | No | `http://localhost:5173` |
+| `SESSION_SECRET` | Session-cookie signing secret (≥ 32 chars) | Yes outside dev | Dev placeholder shipped; replace in staging/prod |
+| `UNIVERSE_SEED` | Deterministic universe generation (hex) | Yes | One value per environment; prod never reuses dev's |
+| `LUCK_PEPPER` | Secret pepper for pocket-luck `HMAC(LUCK_PEPPER, email)` (≥ 16 chars, §2.2b) | Yes outside dev | Anti-abuse; rotatable without regenerating pockets |
+| `TICK_MS` | Tick-worker cadence in ms (how often due events settle; canon DG §0) | No | `60000`; **`pnpm runDev` lowers to `1000`**; E2E may lower it |
+| `CENSUS_PER_DAY` | Supply-census snapshots per game-day (GB §13) | No | `4` `[TUNE]` |
+| `TIME_SCALE` | Game-clock accelerator (game-seconds per real second) — scales the **whole** simulation: action timers, continuous economy AND daily population sim (social/session timers excluded) | No | `1`; **`pnpm runDev` uses `3600`** (1 real s = 1 game-hour); **always `1` in production** |
+| `ATG_TEST_ENDPOINTS` | Enables E2E-only test instrumentation (`/test/grant`) | Never in production | Set to `1` by the Playwright config only |
+
+### Tooling / asset generation (root `.env`, preproduction only)
+
 | Variable | Role | Required | Notes |
 |---|---|---|---|
-| `OPEN_AI_KEY` | OpenAI Images key for UI prototypes (preproduction only) | Optional | Never committed; provided by the cloud-worker environment |
+| `OPENAI_KEY` | OpenAI Images key read by the local asset scripts (`genSoil.mjs`, `genUiTextures.mjs`) | Optional | Root `.env`, never committed; only needed to regenerate textures |
+| `OPEN_AI_KEY` | OpenAI Images key for the cloud-worker UI-prototype pipeline | Optional | Never committed; provided by the cloud-worker environment |
 
-Game-runtime variables (database, Stripe, chain relayer) will be documented in
-`docs/DAT.md` when implementation starts.
+Fiat (Stripe) and the opt-in NFT-bridge relayer variables are not present yet;
+they will be added to `game/.env.example` and `docs/DAT.md` when those later
+phases are implemented.
 
 ## Repository structure
 
 ```
-├── CLAUDE.md            # working conventions + project specifics
-├── README.md / CHANGELOG.md
-├── GAMEBOOK.md          # rule canon
-├── GAME_BIBLE.md        # lore
-├── DESIGN_GUIDE.md      # mechanics & formulae
-├── BALANCE_LOG.md       # balancing loop record
-├── JOURNAL.md           # decision journal (docs/JOURNAL.md equivalent)
+├── CLAUDE.md            # working conventions + project specifics (stays at root)
+├── README.md / CHANGELOG.md   # stay at root by convention
+├── runDev / runStaging / runProd  # root launch scripts (dev boots the game;
+│                                  # staging/prod are honest stubs until built)
 ├── docs/
+│   ├── GAME_BOOK.md     # rule canon
+│   ├── GAME_BIBLE.md    # lore
+│   ├── DESIGN_GUIDE.md  # mechanics & formulae
+│   ├── BALANCE_LOG.md   # balancing loop record
+│   ├── JOURNAL.md       # decision journal
+│   ├── PROD_MIGRATIONS.md      # deployment contract
+│   ├── INCONSISTENCY_REPORT.md # tracked spec/code contradictions
 │   ├── DAT.md           # architecture dossier
 │   ├── BACKLOG.md       # full backlog
 │   ├── DESIGN_SYSTEM.md # UI design system
 │   └── design/prototypes/  # generated UI prototypes (art direction)
+├── game/                # THE GAME (pnpm monorepo, P1 in progress)
+│   ├── packages/shared/     # shared types, constants, design data
+│   ├── packages/server/     # Fastify API + tick worker + SQL migrations
+│   ├── packages/client/     # React + Vite (three.js galaxy, Pixi planet)
+│   ├── packages/e2e/        # Playwright E2E + visual captures
+│   └── docker-compose.dev.yml, scripts/, .env.example
 ├── _config.yml, _layouts, _includes, _posts, _economics, _mechanics
-├── assets/              # legacy art: icons (ships, planets, factions), palette
+├── assets/              # legacy art + assets/game/ sprite stubs (swap contract)
 └── engine/              # legacy jekyll-hyperstack plugin (not a game engine)
 ```
 
 ## Known limitations
 
-- No game code, no schema, no tests yet — by design (preproduction).
+- The game is under active construction; `docs/BACKLOG.md` is the source of
+  truth for what is done (`[x]`), in progress (`[~]`) and not started (`[ ]`).
 - The Jekyll site content (whitepaper, economics pages) predates the 2026
   redesign and partially contradicts the current canon; it will be reconciled
   when the site is refreshed (see backlog P0).
-- UI prototypes are static concept images (art direction), not running
-  screens; running-app captures replace them from P2 onward.
+- Staging/production Compose files and deployment do not exist yet; they
+  arrive with the first deployment (DAT §6, PROD contract per CLAUDE.md §12).

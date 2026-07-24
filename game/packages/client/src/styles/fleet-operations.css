@@ -1,0 +1,181 @@
+/* @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”, “Free flight”, and “Hovering”; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §7–§9. */
+.fleet-operations {
+  position: absolute;
+  z-index: 9;
+  top: 18px;
+  left: 50%;
+  width: min(470px, calc(100% - 720px));
+  min-width: 360px;
+  overflow: hidden;
+  border: 1px solid rgba(103, 146, 218, 0.26);
+  border-radius: 2px 12px 2px 12px;
+  color: var(--text-primary);
+  background:
+    linear-gradient(150deg, rgba(14, 27, 50, 0.92), rgba(5, 10, 21, 0.95));
+  box-shadow: var(--elevation-raised);
+  backdrop-filter: blur(9px);
+  transform: translateX(-50%);
+}
+
+.fleet-operations__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 6px 10px 6px 12px;
+  border-bottom: 1px solid rgba(103, 146, 218, 0.14);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fleet-operations__header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fleet-operations__header svg {
+  color: var(--primary-300);
+}
+
+.fleet-operations__header strong {
+  color: var(--primary-300);
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.fleet-operations__list {
+  display: grid;
+  gap: 1px;
+  max-height: 218px;
+  overflow-y: auto;
+}
+
+.fleet-operation {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 132px;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  min-height: 60px;
+  padding: 7px 9px;
+  border: 0;
+  border-bottom: 1px solid rgba(103, 146, 218, 0.1);
+  border-radius: 0;
+  color: var(--text-primary);
+  background: rgba(4, 9, 19, 0.35);
+  text-align: left;
+}
+
+.fleet-operation:hover,
+.fleet-operation[data-selected] {
+  background:
+    linear-gradient(90deg, rgba(87, 144, 237, 0.12), transparent),
+    rgba(8, 16, 31, 0.72);
+}
+
+.fleet-operation[data-selected] {
+  box-shadow: inset 2px 0 var(--accent-300);
+}
+
+.fleet-operation__icon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(139, 181, 251, 0.24);
+  border-radius: 50%;
+  color: var(--primary-300);
+  background: rgba(87, 144, 237, 0.07);
+}
+
+.fleet-operation__route {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.fleet-operation__route strong {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fleet-operation__route > span:not(.fleet-operation__progress) {
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fleet-operation__route i {
+  color: var(--accent-300);
+  font-style: normal;
+}
+
+.fleet-operation__progress {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: var(--radius-chip);
+  background: rgba(110, 150, 232, 0.14);
+}
+
+.fleet-operation__progress i {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--primary-500), var(--accent-300));
+  box-shadow: 0 0 8px rgba(87, 144, 237, 0.42);
+}
+
+.fleet-operation .ls-operation-timer {
+  width: 132px;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+
+.fleet-operation .ls-operation-timer__label {
+  font-size: 7px;
+}
+
+.fleet-operation .ls-operation-timer__value {
+  font-size: 10px;
+}
+
+.fleet-operation .ls-operation-timer__deadline {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .fleet-operations {
+    width: 390px;
+    min-width: 0;
+  }
+
+  .fleet-operation {
+    grid-template-columns: 26px minmax(0, 1fr) 116px;
+  }
+
+  .fleet-operation .ls-operation-timer {
+    width: 116px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fleet-operation__progress i {
+    box-shadow: none;
+  }
+}

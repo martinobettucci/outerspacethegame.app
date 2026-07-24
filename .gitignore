@@ -1,28 +1,15 @@
-/_site
-*.yml.bam
 *.bak
-*.gem
-*.rbc
-.bundle
-.config
-.yardoc
-Gemfile.lock
-InstalledFiles
-_yardoc
-coverage
-doc/
-lib/bundler/man
-pkg
-rdoc
-spec/reports
-spec/dest
-test/tmp
-test/version_tmp
 tmp
-*.bundle
-*.so
-*.o
-*.a
-mkmf.log
-.jekyll-cache/
 /projects
+
+# Secrets locaux — ne jamais commiter
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+
+# Audio pipeline: the shipped ogg/mp3 (client/public/audio) are tracked; raw
+# WAVs are not archived (regenerate via genAudio.mjs). Only the transient
+# generation scratch is ignored.
+game/scripts/.audio-tmp/

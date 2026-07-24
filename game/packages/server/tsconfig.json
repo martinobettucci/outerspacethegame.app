@@ -1,0 +1,11 @@
+// @spec This server compiler contract implements: docs/BACKLOG.md §P1 “Monorepo/app scaffolding”; docs/DAT.md §2.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "references": [{ "path": "../shared" }]
+}

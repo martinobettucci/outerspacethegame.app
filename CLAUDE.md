@@ -125,6 +125,13 @@ Tout projet comportant une interface maintient un fichier :
 
 "docs/DESIGN_SYSTEM.md"
 
+Avant toute modification, revue ou commit qui touche l'UI ou l'UX, lire
+**intégralement** le fichier local "docs/DESIGN_SYSTEM.md". Vérifier ensuite le
+diff UI/UX contre ce document avant de commit. Cette lecture et cette
+vérification sont obligatoires même pour une correction visuelle jugée
+mineure ; le commit maintient le design system dans le même changement si une
+nouvelle règle, un nouveau composant ou un écart est introduit.
+
 Ce document décrit au minimum :
 
 - les couleurs ;
@@ -180,6 +187,72 @@ Les documents suivants doivent exister ou avoir un équivalent clairement identi
 La documentation fait partie du produit.
 
 Une tâche n'est pas terminée si le code et la documentation ne décrivent plus le même fonctionnement.
+
+Traçabilité obligatoire entre spécification, backlog et code
+
+Toute ligne de code maintenue dans le dépôt doit être couverte par un commentaire
+de traçabilité vers sa spécification. Cette règle s'applique au code applicatif,
+aux classes, fonctions, algorithmes, composants, routes API, migrations, scripts,
+styles, générateurs et tests.
+
+- Chaque fichier de code commence par un commentaire de portée fichier au format
+  `@spec` qui nomme au minimum l'unité exacte de `docs/BACKLOG.md` (ou de
+  `docs/MASTER_PLAN.md` lorsqu'elle est l'index d'exécution autoritatif) ET le ou
+  les fichiers documentaires pertinents avec leur chapitre ou section :
+  `GAME_BOOK.md`, `GAME_BIBLE.md`, `DESIGN_GUIDE.md`, `docs/DAT.md`,
+  `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`, `docs/MANUAL_PLAN.md`, etc.
+- Le commentaire de portée fichier couvre explicitement toutes les déclarations,
+  fonctions auxiliaires et algorithmes du fichier qui partagent les mêmes
+  références. Lorsqu'un fichier met en œuvre plusieurs unités fonctionnelles,
+  chaque classe, fonction publique ou bloc algorithmique concerné reçoit un
+  commentaire `@spec` plus proche et limité à ses propres références.
+- Chaque fichier de test utilise `@verifies` et cite l'unité de backlog ainsi que
+  les chapitres dont il prouve le contrat. Un test ne référence pas seulement le
+  fichier de code testé.
+- Une migration cite `docs/SCHEMA.md` et l'unité fonctionnelle correspondante ;
+  une règle d'interface cite aussi `docs/DESIGN_SYSTEM.md` ; une fonctionnalité
+  visible cite aussi le chapitre concerné du Player Codex (`docs/MANUAL_PLAN.md`).
+- `CHANGELOG.md` et `JOURNAL.md` peuvent compléter la trace, mais ne remplacent
+  jamais la spécification ni l'unité de backlog.
+- Aucun code d'une nouvelle fonctionnalité ne peut être écrit tant que son unité
+  de backlog et sa spécification ne possèdent pas de référence stable. Toute
+  modification ultérieure maintient les commentaires `@spec` / `@verifies` dans
+  le même changement que le code et la documentation.
+- Si la relecture révèle une contradiction ou une référence absente, ne pas la
+  résoudre implicitement : la consigner dans `INCONSISTENCY_REPORT.md`, laisser
+  le comportement inchangé et demander l'arbitrage du responsable lorsque la
+  correction dépasse la tâche autorisée.
+
+Persistance immédiate des décisions (règle non négociable du responsable)
+
+Dès qu'une spécification, une décision de conception ou un résultat de
+brainstorm est validé par le responsable, TOUS les artefacts documentaires
+correspondants doivent être écrits ET committés IMMÉDIATEMENT, AVANT
+d'écrire la moindre ligne de code.
+
+Cela concerne notamment, sans s'y limiter :
+
+- la spécification validée (guide de conception, canon, sections chiffrées) ;
+- le journal d'exploration et de décision ("JOURNAL.md" ou équivalent) ;
+- les schémas de données et d'architecture ("docs/SCHEMA.md", "docs/DAT.md") ;
+- le backlog ("docs/BACKLOG.md") ;
+- le changelog, le contrat de déploiement, et tout document impacté.
+
+Motif : une décision ou un brainstorm du responsable ne doit JAMAIS
+n'exister que dans la mémoire de contexte de l'agent. Cette conversation
+peut être supprimée à tout instant ; une décision non persistée est une
+décision perdue. Laisser une spécification validée ou un journal
+uniquement en mémoire de contexte constitue une faute grave.
+
+Règles d'application :
+
+- committer les documents AVANT de commencer l'implémentation, dans un
+  commit dédié si le code n'est pas encore prêt ;
+- ne jamais reporter la persistance documentaire « à la fin du chunk » ;
+- lorsqu'un découpage en étapes/chunks est décidé, le plan de découpage
+  lui-même est un artefact documentaire à persister, pas seulement une
+  narration de conversation ;
+- pousser le commit immédiatement après sa création (cf. §13).
 
 README
 
@@ -692,6 +765,8 @@ Une tâche n'est terminée que lorsque toutes les conditions applicables sont sa
 - le changelog a été mis à jour sous "[Non publié]" ;
 - le contrat de déploiement a été mis à jour si nécessaire ;
 - le backlog reflète le véritable état ;
+- chaque fichier et unité d'implémentation possède ses commentaires de
+  traçabilité `@spec` / `@verifies` vers le backlog et les chapitres pertinents ;
 - les modifications distantes ont été récupérées ;
 - les tests ont été rejoués après synchronisation ;
 - le commit cohérent a été créé ;
@@ -929,21 +1004,23 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 
 ## Spécificités du projet
 
-- **Nature du dépôt.** ATG / Across The Galaxies ("Outerspace, The gamE") est en
-  **préproduction** : ce dépôt contient le site Jekyll historique (vitrine) et
-  les documents de conception du jeu. Aucun code applicatif du jeu n'existe
-  encore ; ne pas en écrire sans instruction explicite.
+- **Nature du dépôt.** ATG / Across The Galaxies ("Outerspace, The gamE") :
+  ce dépôt contient le site Jekyll historique (vitrine), les documents de
+  conception du jeu et, depuis le GO du responsable (2026-07-12, session 30),
+  l'application du jeu en construction dans `game/` (monorepo pnpm :
+  `shared`, `server`, `client`, `e2e`). Phase P1 entamée.
 - **Documents de conception (à la racine, ordre de préséance) :**
-  1. `GAMEBOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
+  1. `GAME_BOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
   2. `GAME_BIBLE.md` — lore et univers ;
   3. `DESIGN_GUIDE.md` — spécification mécanique chiffrée (valeurs `[TUNE]`) ;
   4. `BALANCE_LOG.md` — journal de la boucle d'équilibrage par simulation.
 - **Équivalences documentaires (§5) :** `JOURNAL.md` à la racine est
   l'équivalent officiel de `docs/JOURNAL.md` (historique préexistant conservé).
 - **Branche de travail.** Exception au §13, sur instruction du responsable via
-  l'environnement d'exécution : le travail de préproduction se fait sur la
-  branche de session dédiée (`claude/atg-architecture-brainstorm-hvqn29`),
-  jamais sur `main`. Ne pas créer d'autres branches.
+  l'environnement d'exécution : le travail se fait sur la branche de session
+  dédiée (actuellement `claude/game-build-progress-i77mxo` ; historique de
+  préproduction : `claude/atg-architecture-brainstorm-hvqn29`), jamais sur
+  `main`. Ne pas créer d'autres branches.
 - **Langues.** Documents de conception et docs techniques : anglais (continuité
   de l'existant). Messages de commit : français (§13). CLAUDE.md : français.
 - **Thème.** Exception documentée au §4 « thème clair » : le jeu utilise un
@@ -968,3 +1045,17 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
   annoncé est une faute. Toute valeur ou contenu non testé reste `[TUNE]` et
   déclenche un tour d'équilibrage/vérification avant d'être considéré fiable.
   En cas de doute sur le périmètre : demander, jamais réduire en silence.
+- **Player Codex — porte de la Definition of Done (exigence du responsable).**
+  Le jeu embarque un manuel joueur in-game (« le Codex », `game/packages/client/src/codex/`,
+  spec `docs/MANUAL_PLAN.md`). **Tout chunk qui change ce que le joueur VOIT ou
+  FAIT sur un écran** (un champ, panneau, bouton, statut, ressource, coût,
+  minuterie, prévision, graphe, alerte, ou une règle ressentie via eux) **met à
+  jour la section Codex de cet écran dans le MÊME commit** — fait partie de la
+  DoD (§17). La mise à jour **préserve le lore et la découverte** : spoiler-free,
+  elle explique uniquement ce que le joueur peut déjà voir et faire *sur l'écran
+  courant*. Expliquer le SYSTÈME, jamais la carte à venir : aucun contenu non
+  découvert (types de planètes, cristaux, factions, techs non atteintes, mondes
+  cachés, révélations de lore), aucune référence en avant vers une mécanique
+  qu'un écran n'a pas encore fait apparaître. Les chiffres sont rendus EN DIRECT
+  depuis `@atg/shared` (jamais codés en dur — anti-dérive). Un refactor backend
+  sans différence à l'écran ne déclenche pas la porte. Détail : `MANUAL_PLAN.md` §5.

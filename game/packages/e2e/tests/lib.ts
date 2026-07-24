@@ -1,0 +1,312 @@
+/** @spec All declarations and algorithms in this file implement: CLAUDE.md §15/§16; docs/DAT.md §6. */
+/**
+ * Aides E2E partagées (§15) : choix d'e-mail par ADN de compte (seed pur
+ * universe:starter:email — précomputable, zéro roll perdu), inscription,
+ * géométrie EXACTE du plateau isométrique (mêmes formules que PlanetView)
+ * et poses vérifiées par l'ÉTAT de l'API — jamais par une notice.
+ */
+import { expect, type Locator, type Page } from '@playwright/test';
+import { planetTechAvailability, SeededStream } from '@atg/shared';
+import { mkdirSync } from 'node:fs';
+
+export const CAPTURES = new URL('../captures/', import.meta.url).pathname;
+mkdirSync(CAPTURES, { recursive: true });
+
+export const E2E_PASSWORD = 'motdepasse-e2e-solide';
+
+export interface FleetContact {
+  id: string;
+  name: string;
+  hullCategory: string;
+  status: string;
+}
+
+/**
+ * Étiquette d'un corps sur la carte galaxie. Depuis la refonte UI (bouton
+ * « Inspect X » + index de contacts contenant les mêmes noms), le texte nu
+ * est ambigu (strict mode) : ce bouton est LE localisateur stable, et sa
+ * bounding box reste l'ancrage écran du corps (centre ≈ top − 26 px).
+ */
+export function galaxyLabel(page: Page, bodyName: string) {
+  return page.getByRole('button', { name: `Inspect ${bodyName}` });
+}
+
+/**
+ * Sélectionne une coque par le vrai index de contacts de la carte. Les
+ * marqueurs Three.js sont volontairement déployés en éventail : leur pixel
+ * dépend de l'ordre de flotte et ne constitue donc pas un contrat E2E.
+ */
+export async function selectFleetShip(
+  page: Page,
+  predicate: (ship: FleetContact) => boolean,
+): Promise<FleetContact> {
+  let ship: FleetContact | undefined;
+  await expect
+    .poll(async () => {
+      const fleet = (await page.request
+        .get('/api/fleet')
+        .then((response) => response.json())) as { ships: FleetContact[] };
+      ship = fleet.ships.find(predicate);
+      return ship?.id ?? null;
+    })
+    .not.toBeNull();
+
+  const contactIndex = page.getByLabel('Galaxy contact index');
+  await expect(async () => {
+    await contactIndex.selectOption(`ship:${ship!.id}`);
+    await expect(
+      page.getByRole('complementary', { name: ship!.name }),
+    ).toBeVisible({ timeout: 1_500 });
+  }).toPass({ timeout: 20_000 });
+  return ship!;
+}
+
+export const shot = (page: Page, name: string) =>
+  page.screenshot({ path: `${CAPTURES}/${name}.jpeg`, type: 'jpeg', quality: 90 });
+
+/** Vise la tranche AO de 64 px avant l'action interne de la carte. */
+export async function revealCard(card: Locator): Promise<void> {
+  // Une carte dépliée passe volontairement au-dessus des suivantes. Comme
+  // un vrai pointeur, sortir d'abord du deck fait retomber la carte précédente
+  // avant d'entrer par la tranche visible de la cible.
+  await card.page().mouse.move(2, 2);
+  await card.hover({ position: { x: 16, y: 120 } });
+  await expect(card).toHaveCSS('z-index', '6');
+}
+
+/**
+ * n-ième e-mail `<prefix>-<i>@test.local` dont l'ADN tech du starter
+ * satisfait le prédicat (le seed du starter est une fonction PURE de
+ * l'e-mail — l'ADN se lit AVANT d'inscrire).
+ */
+export function pickEmailByDna(
+  prefix: string,
+  predicate: (av: ReturnType<typeof planetTechAvailability>) => boolean,
+  nth: number,
+): string {
+  let seen = 0;
+  for (let i = 0; i < 800; i++) {
+    const email = `${prefix}-${i}@test.local`;
+    if (predicate(planetTechAvailability(`atg-dev-universe-0001:starter:${email}`))) {
+      if (seen === nth) return email;
+      seen++;
+    }
+  }
+  throw new Error(`aucun e-mail candidat pour ${prefix}`);
+}
+
+/**
+ * Premier e-mail dont le roll de taille du starter satisfait la cible.
+ * Le serveur utilise exactement ce seed et ce stream (gen/rolls.ts) : le
+ * préchoix est donc déterministe et n'inscrit aucun compte jetable.
+ */
+export function pickEmailByStarterSize(
+  prefix: string,
+  target: 's' | 'm',
+): string {
+  for (let i = 0; i < 800; i++) {
+    const email = `${prefix}-${i}@test.local`;
+    const seed = `atg-dev-universe-0001:starter:${email}`;
+    const size = new SeededStream(seed, 'starter-roll').float() < 0.5 ? 's' : 'm';
+    if (size === target) return email;
+  }
+  throw new Error(`aucun starter ${target} pour ${prefix}`);
+}
+
+/** Inscription d'un Souverain neuf ; retourne l'id du monde starter. */
+export async function registerSovereign(
+  page: Page,
+  email: string,
+  displayName: string,
+  politics: string = 'Industrialist',
+): Promise<string> {
+  await page.goto('/');
+  await page
+    .getByRole('button', { name: 'No account? Awaken a new Sovereign' })
+    .click();
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByLabel('Password').fill(E2E_PASSWORD);
+  await page.getByLabel('Sovereign name').fill(displayName);
+  await page.getByLabel(politics).check();
+  await page.getByRole('button', { name: 'Awaken' }).click();
+  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible({
+    timeout: 10_000,
+  });
+  const me = (await page.request.get('/api/me').then((r) => r.json())) as {
+    planets: { id: string }[];
+  };
+  return me.planets[0]!.id;
+}
+
+export interface BoardHelpers {
+  tilePx: (index: number) => readonly [number, number];
+  hand: ReturnType<Page['getByRole']>;
+  panel: ReturnType<Page['getByRole']>;
+  unlockCard: (key: string) => Promise<void>;
+  placeCard: (key: string, tile: readonly [number, number]) => Promise<void>;
+  openPanel: (tile: readonly [number, number], text: RegExp) => Promise<void>;
+  hasBuilding: (key: string) => Promise<boolean>;
+}
+
+/**
+ * Aides du plateau : à appeler UNE fois la vue planète affichée
+ * (planet-canvas visible). La géométrie reproduit exactement PlanetView —
+ * le nombre de tuiles varie par starter, on ne devine jamais les pixels.
+ */
+export async function boardHelpers(
+  page: Page,
+  planetId: string,
+): Promise<BoardHelpers> {
+  await expect(page.getByTestId('planet-canvas')).toBeVisible();
+  const box = (await page.getByTestId('planet-canvas').boundingBox())!;
+  const detail0 = (await page.request
+    .get(`/api/planets/${planetId}`)
+    .then((r) => r.json())) as { tiles: number };
+
+  const tilePx = (index: number): readonly [number, number] => {
+    const TILE_W = 148;
+    const TILE_H = 74;
+    const cols = Math.ceil(Math.sqrt(detail0.tiles));
+    const rows = Math.ceil(detail0.tiles / cols);
+    const isoX = (c: number, r: number) => ((c - r) * TILE_W) / 2;
+    const isoY = (c: number, r: number) => ((c + r) * TILE_H) / 2;
+    const centerX = isoX(cols - 1, 0) / 2 + isoX(0, rows - 1) / 2;
+    const centerY = isoY(cols - 1, rows - 1) / 2;
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    return [
+      box.x + box.width / 2 - centerX + isoX(col, row),
+      box.y + box.height / 2 - centerY - 20 + isoY(col, row),
+    ] as const;
+  };
+
+  const hand = page.getByRole('region', { name: 'Construction cards' });
+  const panel = page.getByRole('region', { name: 'Building settings' });
+
+  const unlockCard = async (key: string) => {
+    // Le titre de carte affiche les underscores en espaces : la CLÉ API
+    // reste l'argument, le filtre matche le libellé rendu.
+    const card = hand
+      .getByRole('article')
+      .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
+      .first();
+    await expect(async () => {
+      // AO final : une carte non finale n'expose que sa tranche de 64 px.
+      // La viser d'abord reproduit le vrai geste pointeur et la met au-dessus
+      // du paquet avant de cliquer son action complète.
+      await revealCard(card);
+      const btn = card.getByRole('button', { name: 'Unlock' });
+      if (await btn.isVisible().catch(() => false)) {
+        await btn.click().catch(() => undefined);
+      }
+      await expect(card.getByRole('button', { name: 'Place' })).toBeVisible({
+        timeout: 3_000,
+      });
+    }).toPass({ timeout: 30_000 });
+  };
+
+  const hasBuilding = async (key: string) => {
+    const d = (await page.request
+      .get(`/api/planets/${planetId}`)
+      .then((r) => r.json())) as { buildings: { key: string }[] };
+    return d.buildings.some((b) => b.key === key);
+  };
+
+  // Pose vérifiée par l'ÉTAT (API), jamais par la notice : le texte
+  // « Construction started. » persiste d'une pose à l'autre et un clic
+  // tombé pendant la reconstruction du plateau passerait inaperçu.
+  const placeCard = async (key: string, tile: readonly [number, number]) => {
+    await expect(async () => {
+      if (!(await hasBuilding(key))) {
+        const card = hand
+          .getByRole('article')
+          .filter({ hasText: new RegExp(`^${key.replace(/_/g, ' ')}`) })
+          .first();
+        await revealCard(card);
+        const btn = card.getByRole('button', { name: 'Place' });
+        if ((await btn.getAttribute('aria-pressed')) !== 'true') {
+          await btn.click().catch(() => undefined);
+        }
+        await page.mouse.click(tile[0], tile[1]);
+        await page.waitForTimeout(400);
+      }
+      expect(await hasBuilding(key)).toBe(true);
+    }).toPass({ timeout: 40_000 });
+  };
+
+  const openPanel = async (tile: readonly [number, number], text: RegExp) => {
+    await expect(async () => {
+      await page.mouse.click(tile[0], tile[1]);
+      await expect(panel.getByText(text)).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 40_000 });
+  };
+
+  return { tilePx, hand, panel, unlockCard, placeCard, openPanel, hasBuilding };
+}
+
+/**
+ * Erratum 2026-07-22 : les rigs sont des ACCESSOIRES du pipeline — pour
+ * les parcours AVAL, on grante l'item (§15) puis on l'installe par les
+ * VRAIES commandes : entrepôt → install (12 h-jeu ÷ 7200 = 6 s) →
+ * redéploiement à quai.
+ */
+export async function installRigViaPipeline(
+  page: Page,
+  planetId: string,
+  shipId: string,
+  itemKey: string,
+): Promise<void> {
+  const g = await page.request.post('/api/test/grant-item', {
+    data: { planetId, itemKey },
+  });
+  if (!g.ok()) throw new Error(`grant-item: ${await g.text()}`);
+  const wh = await page.request.post(`/api/ships/${shipId}/warehouse`);
+  if (!wh.ok()) throw new Error(`warehouse: ${await wh.text()}`);
+  // W9a : le cargo_s naît avec la MÉTAMORPHOSE d'office sur son unique
+  // slot — on ARBITRE (démontage réel) avant de monter le rig.
+  const strip = await page.request.post(`/api/ships/${shipId}/uninstall`, {
+    data: { itemKey: 'metamorphic_hull' },
+  });
+  if (strip.ok()) {
+    await expect
+      .poll(
+        async () => {
+          const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+            ships: { id: string; installingItem: string | null }[];
+          };
+          return f.ships.find((x) => x.id === shipId)?.installingItem ?? null;
+        },
+        { timeout: 60_000 },
+      )
+      .toBe(null);
+  }
+  const inst = await page.request.post(`/api/ships/${shipId}/install`, {
+    data: { itemKey },
+  });
+  if (!inst.ok()) throw new Error(`install: ${await inst.text()}`);
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; installingItem: string | null; accessories: string[] }[];
+        };
+        const s = f.ships.find((x) => x.id === shipId);
+        return s?.installingItem === null && s.accessories.includes(itemKey);
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(true);
+  const ret = await page.request.post(`/api/ships/${shipId}/retrieve`);
+  if (!ret.ok()) throw new Error(`retrieve: ${await ret.text()}`);
+  await expect
+    .poll(
+      async () => {
+        const f = (await page.request.get('/api/fleet').then((r) => r.json())) as {
+          ships: { id: string; status: string }[];
+        };
+        return f.ships.find((x) => x.id === shipId)?.status;
+      },
+      { timeout: 60_000 },
+    )
+    .toBe('docked');
+}

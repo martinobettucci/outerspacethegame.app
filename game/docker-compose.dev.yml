@@ -1,0 +1,26 @@
+# @spec All service declarations in this file implement: docs/BACKLOG.md §P1 “Monorepo/app scaffolding”; docs/DAT.md §2/§6; README.md §Install & run — game.
+# ATG — environnement de développement (base de données seule ; API, worker et
+# client tournent en processus locaux via `pnpm runDev` pour le hot-reload).
+# Staging/production auront leurs fichiers Compose dédiés (CLAUDE.md §3).
+services:
+  db:
+    # Surcharge ATG_DB_IMAGE pour les environnements dont l'egress bloque le
+    # CDN Docker Hub (ex. mirror.gcr.io/library/postgres:16-alpine).
+    image: ${ATG_DB_IMAGE:-postgres:16-alpine}
+    container_name: atg-dev-db
+    environment:
+      POSTGRES_USER: atg
+      POSTGRES_PASSWORD: atg
+      POSTGRES_DB: atg
+    ports:
+      - "55432:5432"
+    volumes:
+      - atg-dev-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atg -d atg"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  atg-dev-db-data:

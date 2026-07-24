@@ -1,0 +1,10 @@
+// @spec This shared-rules compiler contract implements: docs/BACKLOG.md §P1 “Monorepo/app scaffolding”; docs/DAT.md §2 “Shared package”.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
+}

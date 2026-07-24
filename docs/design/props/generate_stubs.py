@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §5–§7; docs/DESIGN_SYSTEM.md §5/§10–§11.
 """Génère les images stub du pipeline d'assets ATG (voir docs/ASSET_PIPELINE.md).
 
 COUVERTURE COMPLÈTE du catalogue v0 (DESIGN_GUIDE §5.1/§8/§10, GAMEBOOK §25) :
@@ -140,6 +141,7 @@ BUILDINGS = {  # key: description de l'art attendu
     "spaceport": "spaceport landing pads (dock size grows w/ level)",
     "workshop": "repair workshop, sparks and cranes", "market": "market hall with stalls",
     "residential": "residential habitat blocks", "lab": "medical/science lab",
+    "clinic": "public health clinic, treatment bays and triage lights",
     "obs_station": "ground OBS targeting dome", "shipyard": "shipyard gantry (hull size grows w/ level)",
     "military_district": "military district, barracks and banners",
     "weapon_foundry": "weapon foundry, beam-laser parts", "research_center": "research center, antennae",
@@ -250,6 +252,8 @@ RESOURCES = {
     # énergie
     "fuel_cells": "glowing yellow fuel cell",
     "fuel_cold": "cold propulsion fuel", "fuel_hot": "hot propulsion fuel", "fuel_gas": "gas propulsion fuel",
+    # salvage (catalogue partagé — chunk AI)
+    "junk": "salvageable compressed space junk",
 }
 for key, desc in RESOURCES.items():
     full(f"resources/res_{key}.png", 256, 256, f"RES {key}", desc)
@@ -261,14 +265,16 @@ with open(os.path.join(REPO, "docs", "design", "props", "manifest.json"), "w") a
 groups = {}
 for m in manifest:
     groups.setdefault(m["file"].split("/")[2], []).append(m)
-html = ["<!doctype html><html><head><meta charset='utf-8'><title>ATG — Full asset gallery</title>",
+html = ["<!doctype html>",
+        "<!-- @spec All generated gallery markup implements: docs/BACKLOG.md §P0.3; docs/ASSET_PIPELINE.md §5–§7; docs/DESIGN_SYSTEM.md §5/§10–§11. -->",
+        "<html><head><meta charset='utf-8'><title>ATG — Full asset gallery</title>",
         "<style>body{background:#060810;color:#F2F4FA;font:13px Inter,sans-serif;padding:24px;min-width:1280px}",
         "h1{color:#D9CF4A;font-family:Orbitron,sans-serif}h2{color:#6E96E8;margin-top:40px;font-family:Orbitron,sans-serif}",
         ".g{display:flex;flex-wrap:wrap;gap:12px}figure{margin:0;background:#111A30;border:1px solid #24314F;",
         "border-radius:8px;padding:6px}figcaption{font-size:10px;color:#A9B4CE;max-width:260px}",
         "img{display:block;image-rendering:pixelated;background:#0D0D0D}</style></head><body>",
         "<h1>ATG — FULL ASSET GALLERY (auto-generated)</h1>",
-        f"<p>{len(manifest)} assets ×3 files (base + bump + light). Swap any stub at the same path; ",
+        f"<p>{len(manifest)} assets ×3 files (base + bump + light). Swap any stub at the same path; "
         "regenerate this page with generate_stubs.py. Preview capped at 256px — files are native size.</p>"]
 for g in sorted(groups):
     html.append(f"<h2>{g} ({len(groups[g])})</h2><div class='g'>")

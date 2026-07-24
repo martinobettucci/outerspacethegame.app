@@ -1,0 +1,1529 @@
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Tech tree runtime”/“Building catalog”/“Industry”; GAME_BOOK.md §9/§10/§18; DESIGN_GUIDE.md §3/§5/§6. */
+/**
+ * Lecture & commandes planète — GB §9/§18, DG §5/§6.
+ * Toutes les règles d'accès sont appliquées ICI (CLAUDE.md §10) : la
+ * propriété, le masque de gouvernance, l'ADN tech du seed, les tuiles,
+ * les recettes/gisements et les coûts sont vérifiés côté serveur, dans
+ * des transactions ; chaque commande rebase les débits de la planète.
+ */
+import {
+  type AmmSlot,
+  type Archetype,
+  BASIC_RESOURCES,
+  BUILD_HOURS_BY_LEVEL,
+  type BuildingKey,
+  BUILDINGS,
+  type Climate,
+  CLIMATE_CRYSTAL,
+  COLONIZER_ITEM_KEY,
+  colonyGraceUntilMs,
+  type CostBundle,
+  DEMOLISH_HOURS,
+  DEMOLISH_REFUND_RATIO,
+  DOCK_DWELL_HOURS_DEFAULT,
+  DOCK_DWELL_HOURS_MAX,
+  DOCK_DWELL_HOURS_MIN,
+  DOCK_RESERVED_SELF_DEFAULT,
+  DOCK_RESERVED_SELF_MAX,
+  effectiveMask,
+  FOOD_RESOURCES,
+  INSTANT_RETOOL_WINDOW_HOURS,
+  isAmmSlot,
+  isInColonyGrace,
+  type MarketSlot,
+  type NpcRole,
+  occupiesDock,
+  type PlanetSize,
+  planetTechAvailability,
+  type PlanetTechAvailability,
+  popCap,
+  type Quality,
+  type RecipeId,
+  recipeEngine,
+  RECIPES,
+  resolveCost,
+  type ResourceBundle,
+  type ResourceId,
+  RETOOL_HOURS,
+  ROLE_TO_ARCHETYPE,
+  spaceportDocks,
+  TECH_NODES,
+  type TechNodeKey,
+  vehicleCapacity,
+  jobsOptimal,
+} from '@atg/shared';
+import type pg from 'pg';
+import { BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL } from './world.js';
+import { config } from '../config.js';
+import { evalLazy, whenReaches } from '../sim/lazy.js';
+import { enqueue } from '../sim/events.js';
+import { createWorkOrder, hasL3Factory, pickL3Factory } from './workOrders.js';
+// Cycle planets↔governance assumé : governance n'emprunte que
+// CommandError (liaison vive, usage différé) — sûr en ESM.
+import { governanceOf } from './governance.js';
+import {
+  loadProductionSnapshot,
+  recomputePlanetRates,
+} from '../sim/rebase.js';
+import {
+  populationIndicators,
+  survivalForecasts,
+  type PopulationIndicators,
+  type SurvivalFamily,
+  type SurvivalForecast,
+} from '../sim/population.js';
+
+export class CommandError extends Error {
+  constructor(
+    public readonly code:
+      | 'not_found'
+      | 'forbidden'
+      | 'not_available'
+      | 'not_unlocked'
+      | 'already_unlocked'
+      | 'prereq_missing'
+      | 'mask_denied'
+      | 'tile_invalid'
+      | 'tile_taken'
+      | 'max_instances'
+      | 'insufficient_resources'
+      | 'unbuildable'
+      | 'recipe_invalid'
+      | 'deposit_taken'
+      | 'workforce_invalid'
+      | 'max_level',
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** Archétypes gouvernant effectivement la planète (gouverneurs + vaisseau personnel). */
+export async function governingArchetypes(
+  client: pg.PoolClient | pg.Pool,
+  bodyId: string,
+  ownerId: string,
+): Promise<Archetype[]> {
+  const out: Archetype[] = [];
+  const { rows: govs } = await client.query(
+    `SELECT role FROM npcs
+     WHERE bound_host_type = 'planet' AND bound_host_id = $1`,
+    [bodyId],
+  );
+  for (const g of govs) out.push(ROLE_TO_ARCHETYPE[g.role as NpcRole]);
+  const { rows: ps } = await client.query(
+    `SELECT p.politics FROM ships s JOIN players p ON p.id = s.owner_id
+     WHERE s.hull_category = 'personal' AND s.docked_body_id = $1
+       AND s.owner_id = $2`,
+    [bodyId, ownerId],
+  );
+  if (ps[0]) out.push(ps[0].politics as Archetype);
+  return out;
+}
+
+const toMs = (d: Date | string) => new Date(d).getTime();
+
+export interface PlanetDetail {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  size: PlanetSize;
+  climate: Climate;
+  quality: Quality;
+  tiles: number;
+  isStarter: boolean;
+  population: number;
+  /** Pyramide v2 (DG §3.2-v2 a) — population = total. */
+  pyramid: { children: number; actives: number; seniors: number };
+  /** Horloges de mort en cours (échéance ISO par famille de survie). */
+  clockDeadlines: Partial<Record<'water' | 'food', string>>;
+  popCap: number;
+  illness: number;
+  /** Facteurs démographiques calculés par le même code que pop_daily. */
+  demographics: PopulationIndicators;
+  /** Projections serveur des stocks de survie (oxygen null en tempéré). */
+  survivalForecasts: Record<SurvivalFamily, SurvivalForecast | null>;
+  planetEfficiency: number;
+  storageUsedT: number;
+  storageCapT: number;
+  storageU: number;
+  workforceAssigned: number;
+  workforceAssignable: number;
+  stock: Record<string, { amount: number; ratePerDay: number }>;
+  deposits: {
+    resource: string;
+    remainingT: number;
+    initialT: number;
+    ratePerDay: number;
+    dryAt: string | null;
+  }[];
+  buildings: {
+    id: string;
+    key: BuildingKey;
+    level: number;
+    tileIndex: number | null;
+    status: string;
+    completesAt: string | null;
+    recipe: string | null;
+    workforce: number;
+    runPct: number;
+    effBatchesPerDay: number | null;
+    workforceOptimal: number;
+    workforceU: number | null;
+    limiting: string | null;
+    landing: 'self' | 'everyone' | null;
+    dwellHours: number | null;
+    reservedForSelf: number | null;
+    visibility: 'public' | 'private' | null;
+    marketSlots: (MarketSlot | AmmSlot | null)[] | null;
+  }[];
+  /** Nudge triade (DG §11.2) : true si ce monde a un marché ACTIF mais
+   * qu'AUCUNE paire FOOD (fixe ou AMM) n'existe dans la portée télescope
+   * du propriétaire ; null si le monde n'a pas de marché actif. */
+  triadNudge: boolean | null;
+  /** Docks agrégés des spaceports ACTIFS (null si aucun). */
+  docks: {
+    total: { s: number; m: number; l: number };
+    occupied: { s: number; m: number; l: number };
+    visitors: number;
+    reservedForSelf: number;
+    dwellHours: number;
+  } | null;
+  /** Entrepôt de véhicules (GB §9) : balances par taille — Σ warehouses
+   * actifs × mult(niveau) + tampon au sol 2M/2S (jamais de L sans
+   * warehouse). Détail propriétaire uniquement (comme le reste). */
+  vehicles: {
+    capacity: { s: number; m: number; l: number };
+    stored: { s: number; m: number; l: number };
+  };
+  /** Gouvernance (GB §11) : exigence, sièges, G, vaisseau parqué. */
+  governance: {
+    required: number;
+    max: number;
+    governors: {
+      id: string;
+      role: NpcRole;
+      rarity: string;
+      people: string;
+      archetype: Archetype;
+    }[];
+    personalShipParked: boolean;
+    g: number;
+    fullyGoverned: boolean;
+  };
+  colonizedAt: string | null;
+  graceUntil: string | null;
+  tech: {
+    available: TechNodeKey[];
+    maxLevel: Record<string, number>;
+    unlocked: TechNodeKey[];
+    maskAllowed: TechNodeKey[];
+    governingArchetypes: Archetype[];
+  };
+}
+
+export async function planetDetail(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  nowMs = Date.now(),
+): Promise<PlanetDetail> {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT id, name, x, y, seed, size, climate, quality, tiles, owner_id,
+              is_starter, population, illness, colonized_at, config
+       FROM bodies WHERE id = $1 AND body_type = 'planet'`,
+      [bodyId],
+    );
+    const body = rows[0];
+    if (!body) throw new CommandError('not_found', 'Planète inconnue');
+    // Autorisation : le détail complet est réservé au propriétaire (le
+    // niveau d'intel télescope pour les tiers arrive en P3).
+    if (body.owner_id !== playerId) {
+      throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
+    }
+
+    const snap = await loadProductionSnapshot(client, bodyId, nowMs);
+    if (!snap) throw new CommandError('not_found', 'Planète inconnue');
+    const demographics = populationIndicators(snap);
+    const survival = survivalForecasts(snap, nowMs, config.TIME_SCALE);
+
+    const { rows: buildingRows } = await client.query(
+      `SELECT id, key, level, tile_index, status, completes_at, recipe,
+              workforce, run_pct, config
+       FROM buildings WHERE body_id = $1 ORDER BY created_at, id`,
+      [bodyId],
+    );
+    const rateByBuilding = new Map(
+      snap.rates.industries.map((i) => [i.buildingId, i]),
+    );
+
+    const availability = await worldTechAvailability(
+      client,
+      body,
+      buildingRows.map((b) => ({ key: b.key, level: b.level })),
+    );
+    const { rows: unlockRows } = await client.query(
+      'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
+      [bodyId],
+    );
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    const mask = effectiveMask(archetypes);
+
+    // Docks des spaceports actifs (DG §5.1) : capacité cumulée, coques à
+    // quai par taille (les exemptions n'occupent pas), visiteurs, dwell le
+    // plus généreux et docks réservés (mêmes règles que landShip).
+    const activePorts = buildingRows.filter(
+      (b) => b.key === 'spaceport' && b.status === 'active',
+    );
+    let docks: PlanetDetail['docks'] = null;
+    if (activePorts.length > 0) {
+      const total = { s: 0, m: 0, l: 0 };
+      let reservedForSelf = 0;
+      for (const p of activePorts) {
+        const d = spaceportDocks(Number(p.level));
+        total.s += d.s;
+        total.m += d.m;
+        total.l += d.l;
+        reservedForSelf += Math.max(
+          0,
+          Math.min(
+            DOCK_RESERVED_SELF_MAX,
+            Number(p.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT),
+          ),
+        );
+      }
+      const { rows: dockedRows } = await client.query(
+        `SELECT hull_category, hull_size, owner_id FROM ships
+         WHERE docked_body_id = $1 AND status = 'docked'`,
+        [bodyId],
+      );
+      const occ = dockedRows.filter((o) =>
+        occupiesDock(o.hull_category, o.hull_size),
+      );
+      const occupied = { s: 0, m: 0, l: 0 };
+      for (const o of occ) {
+        occupied[o.hull_size as 's' | 'm' | 'l'] += 1;
+      }
+      docks = {
+        total,
+        occupied,
+        visitors: occ.filter((o) => o.owner_id !== body.owner_id).length,
+        reservedForSelf,
+        dwellHours: Math.max(
+          ...activePorts.map((p) =>
+            Number(p.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT),
+          ),
+        ),
+      };
+    }
+
+    // Entrepôt de véhicules (GB §9, chunk AD) : balances SÉPARÉES par
+    // taille — pas de débordement S→M→L, contrairement aux docks.
+    const vehicleCap = vehicleCapacity(
+      buildingRows
+        .filter((b) => b.key === 'warehouse' && b.status === 'active')
+        .map((b) => Number(b.level)),
+    );
+    const { rows: warehousedRows } = await client.query(
+      `SELECT hull_size, count(*)::int AS n FROM ships
+       WHERE docked_body_id = $1 AND status = 'warehoused'
+       GROUP BY hull_size`,
+      [bodyId],
+    );
+    const vehiclesStored = { s: 0, m: 0, l: 0 };
+    for (const r of warehousedRows) {
+      vehiclesStored[r.hull_size as 's' | 'm' | 'l'] = Number(r.n);
+    }
+
+    // Nudge triade (DG §11.2) : les hubs veulent food/cells + water/cells
+    // + fuel/cells — on alerte quand AUCUNE paire FOOD n'existe dans la
+    // portée TÉLESCOPE du propriétaire (canon : « within telescope range »
+    // — la vision des coques n'entre pas ; l'hospitalité innée n'est pas
+    // une paire de marché [interp, JOURNAL]).
+    let triadNudge: boolean | null = null;
+    if (
+      buildingRows.some((b) => b.key === 'market' && b.status === 'active')
+    ) {
+      const { rows: marketCfgs } = await client.query(
+        `WITH scopes AS (
+           SELECT b.x, b.y,
+                  $2::float + COALESCE((
+                    SELECT max($3::float * t.level) FROM buildings t
+                    WHERE t.body_id = b.id AND t.key = 'telescope'
+                      AND t.status = 'active'
+                  ), 0) AS radius
+           FROM bodies b WHERE b.owner_id = $1
+         )
+         SELECT m.config FROM buildings m
+         JOIN bodies b ON b.id = m.body_id
+         WHERE m.key = 'market' AND m.status = 'active'
+           AND EXISTS (
+             SELECT 1 FROM scopes s
+             WHERE (b.x - s.x)^2 + (b.y - s.y)^2 <= s.radius^2
+           )`,
+        [playerId, BASE_SKY_PC, TELESCOPE_SCOPE_PC_PER_LEVEL],
+      );
+      const foods = new Set<string>(FOOD_RESOURCES as readonly string[]);
+      const hasFoodPair = marketCfgs.some((m) => {
+        const slots = Array.isArray(m.config?.slots) ? m.config.slots : [];
+        return slots.some((slot: unknown) => {
+          if (!slot) return false;
+          if (isAmmSlot(slot)) {
+            return foods.has(slot.pool.x) || foods.has(slot.pool.y);
+          }
+          const fixed = slot as { give?: string; get?: string };
+          return (
+            (!!fixed.give && foods.has(fixed.give)) ||
+            (!!fixed.get && foods.has(fixed.get))
+          );
+        });
+      });
+      triadNudge = !hasFoodPair;
+    }
+
+    const cap = popCap(snap.size, snap.quality);
+    // Les réserves AMM occupent le stockage physique (DG §3.3b).
+    const storageUsed =
+      Object.values(snap.stocks).reduce((s, v) => s + (v ?? 0), 0) +
+      snap.pooledT;
+    const workforceAssigned = demographics.employedActives;
+
+    const stock: PlanetDetail['stock'] = {};
+    const allRes = new Set<string>([
+      ...Object.keys(snap.stocks),
+      ...Object.keys(snap.rates.stockRates),
+    ]);
+    for (const res of allRes) {
+      stock[res] = {
+        amount:
+          Math.floor(((snap.stocks[res as ResourceId] ?? 0) as number) * 100) / 100,
+        ratePerDay:
+          Math.round(((snap.rates.stockRates[res as ResourceId] ?? 0) as number) * 100) /
+          100,
+      };
+    }
+
+    return {
+      id: body.id,
+      name: body.name,
+      x: body.x,
+      y: body.y,
+      size: snap.size,
+      climate: body.climate,
+      quality: snap.quality,
+      tiles: body.tiles,
+      isStarter: body.is_starter,
+      population: snap.population,
+      pyramid: {
+        children: Math.round(snap.pyramid.children),
+        actives: Math.round(snap.pyramid.actives),
+        seniors: Math.round(snap.pyramid.seniors),
+      },
+      clockDeadlines: snap.clockDeadlines,
+      popCap: cap,
+      illness: snap.illness,
+      demographics,
+      survivalForecasts: survival,
+      // v2 : Ē staff-pondéré des bâtiments actifs (E_planet supprimé).
+      planetEfficiency: demographics.meanEfficiency,
+      storageUsedT: Math.round(storageUsed * 100) / 100,
+      storageCapT: snap.storageCapT,
+      storageU: Math.round(snap.rates.storageU * 1000) / 1000,
+      workforceAssigned,
+      workforceAssignable: Math.floor(snap.pyramid.actives),
+      colonizedAt: body.colonized_at
+        ? new Date(body.colonized_at).toISOString()
+        : null,
+      graceUntil:
+        body.colonized_at &&
+        isInColonyGrace(
+          new Date(body.colonized_at).getTime(),
+          nowMs,
+          config.TIME_SCALE,
+        )
+          ? new Date(
+              colonyGraceUntilMs(
+                new Date(body.colonized_at).getTime(),
+                config.TIME_SCALE,
+              ),
+            ).toISOString()
+          : null,
+      stock,
+      triadNudge,
+      docks,
+      vehicles: { capacity: vehicleCap, stored: vehiclesStored },
+      governance: await governanceOf(client, bodyId, snap.size, playerId),
+      deposits: Object.entries(snap.deposits)
+        .map(([resource, remaining]) => {
+          const rate = snap.rates.depositRates[resource as ResourceId] ?? 0;
+          const dryMs =
+            rate < -1e-9
+              ? whenReaches(
+                  { amount: remaining ?? 0, ratePerDay: rate, asOfMs: nowMs },
+                  0,
+                  config.TIME_SCALE,
+                )
+              : null;
+          return {
+            resource,
+            remainingT: Math.floor((remaining ?? 0) * 100) / 100,
+            initialT: snap.depositInitial[resource as ResourceId] ?? 0,
+            ratePerDay: Math.round(rate * 100) / 100,
+            dryAt: dryMs ? new Date(dryMs).toISOString() : null,
+          };
+        })
+        .sort((a, b) => a.resource.localeCompare(b.resource)),
+      buildings: buildingRows.map((b) => {
+        const r = rateByBuilding.get(b.id);
+        const optimal = jobsOptimal(
+          b.key,
+          b.level as 1 | 2 | 3,
+          snap.population,
+        );
+        const workforceU =
+          b.status === 'active' && optimal > 0
+            ? Number(b.workforce ?? 0) / optimal
+            : null;
+        return {
+          id: b.id,
+          key: b.key,
+          level: b.level,
+          tileIndex: b.tile_index,
+          status: b.status,
+          completesAt: b.completes_at
+            ? new Date(b.completes_at).toISOString()
+            : null,
+          recipe: b.recipe,
+          workforce: b.workforce,
+          runPct: b.run_pct,
+          effBatchesPerDay: r ? Math.round(r.effBatchesPerDay * 100) / 100 : null,
+          workforceOptimal: Math.round(optimal * 10) / 10,
+          workforceU:
+            workforceU === null
+              ? null
+              : Math.round(workforceU * 1000) / 1000,
+          limiting: r
+            ? r.limiting
+            : b.status === 'active'
+              ? workforceU !== null && workforceU < 0.35
+                ? 'understaffed'
+                : 'ok'
+              : null,
+          landing:
+            b.key === 'spaceport'
+              ? b.config?.landing === 'everyone'
+                ? ('everyone' as const)
+                : ('self' as const)
+              : null,
+          dwellHours:
+            b.key === 'spaceport'
+              ? Number(b.config?.dwellHours ?? DOCK_DWELL_HOURS_DEFAULT)
+              : null,
+          reservedForSelf:
+            b.key === 'spaceport'
+              ? Number(b.config?.reservedForSelf ?? DOCK_RESERVED_SELF_DEFAULT)
+              : null,
+          // Défaut PRIVÉ [TUNE-v1, JOURNAL] : jamais de fuite accidentelle.
+          visibility:
+            b.key === 'warehouse'
+              ? b.config?.visibility === 'public'
+                ? ('public' as const)
+                : ('private' as const)
+              : null,
+          marketSlots:
+            b.key === 'market'
+              ? Array.isArray(b.config?.slots)
+                ? (b.config.slots as (MarketSlot | AmmSlot | null)[])
+                : []
+              : null,
+        };
+      }),
+      tech: {
+        available: [...availability.available],
+        maxLevel: Object.fromEntries(availability.maxLevel),
+        unlocked: unlockRows.map((r) => r.node_key),
+        maskAllowed: [...mask],
+        governingArchetypes: archetypes,
+      },
+    };
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Paie un coût depuis le stock de la planète (transaction appelante).
+ * Tout-ou-rien : lève insufficient_resources si un poste manque.
+ */
+export async function payCost(
+  client: pg.PoolClient,
+  bodyId: string,
+  climate: Climate,
+  cost: CostBundle,
+  nowMs: number,
+): Promise<void> {
+  const resolved: ResourceBundle = resolveCost(cost, climate);
+  for (const [resource, amount] of Object.entries(resolved)) {
+    if (!amount) continue;
+    const { rows } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [bodyId, resource],
+    );
+    const current = rows[0]
+      ? evalLazy(
+          {
+            amount: rows[0].amount_t,
+            ratePerDay: rows[0].rate_t_per_day,
+            asOfMs: toMs(rows[0].as_of),
+          },
+          nowMs,
+          config.TIME_SCALE,
+          { min: 0 },
+        )
+      : 0;
+    if (current < amount) {
+      throw new CommandError(
+        'insufficient_resources',
+        `Ressource insuffisante : ${resource} (${Math.floor(current)}/${amount})`,
+      );
+    }
+    await client.query(
+      `UPDATE planet_stock
+       SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)
+       WHERE body_id = $1 AND resource = $2`,
+      [bodyId, resource, current - amount, nowMs],
+    );
+  }
+}
+
+async function loadOwnedPlanet(
+  client: pg.PoolClient,
+  playerId: string,
+  bodyId: string,
+): Promise<{
+  seed: string;
+  climate: Climate;
+  size: PlanetSize;
+  tiles: number;
+  population: number;
+  config: unknown;
+}> {
+  const { rows } = await client.query(
+    `SELECT seed, climate, size, tiles, owner_id, population, config
+     FROM bodies
+     WHERE id = $1 AND body_type = 'planet' FOR UPDATE`,
+    [bodyId],
+  );
+  if (!rows[0]) throw new CommandError('not_found', 'Planète inconnue');
+  if (rows[0].owner_id !== playerId) {
+    throw new CommandError('forbidden', 'Cette planète ne vous appartient pas');
+  }
+  return rows[0];
+}
+
+/**
+ * Richesse d'ADN d'un monde bonus (§2.2b) — figée au spawn dans
+ * bodies.config.bonus.rhoEff ; 0 pour tout monde standard.
+ */
+function bonusDnaRho(config: unknown): number {
+  const rho = (config as { bonus?: { rhoEff?: number } } | null)?.bonus
+    ?.rhoEff;
+  return typeof rho === 'number' && rho > 0 ? Math.min(1, rho) : 0;
+}
+
+/**
+ * ADN tech EFFECTIF d'un monde (§2.2b) : le roll pur (seed + richesse
+ * bonus) UNION les clés des bâtiments déjà debout — une ruine héritée ou
+ * un bâtiment du kit de colonisation est un savoir de fait : il apparaît
+ * dans l'ADN et son plafond couvre au moins son niveau atteint.
+ */
+async function worldTechAvailability(
+  client: pg.PoolClient,
+  body: { id: string; seed: string; config?: unknown },
+  prefetched?: { key: string; level: number }[],
+): Promise<PlanetTechAvailability> {
+  const availability = planetTechAvailability(
+    body.seed,
+    bonusDnaRho(body.config),
+  );
+  const standing =
+    prefetched ??
+    (
+      await client.query<{ key: string; level: number }>(
+        `SELECT key, max(level)::int AS level FROM buildings
+         WHERE body_id = $1 GROUP BY key`,
+        [body.id],
+      )
+    ).rows;
+  for (const row of standing) {
+    const key = row.key as TechNodeKey;
+    if (!TECH_NODES[key]) continue;
+    availability.available.add(key);
+    const cap = availability.maxLevel.get(key) ?? 1;
+    availability.maxLevel.set(
+      key,
+      Math.max(cap, Math.min(3, Number(row.level))) as 1 | 2 | 3,
+    );
+  }
+  return availability;
+}
+
+/**
+ * Réforme colonisation anti-soft-lock (décision responsable 2026-07-24,
+ * GB §19.3, DG §6/§12). Offre le PREMIER colonisateur d'un monde — une fois
+ * pour toutes — dès qu'il réunit les deux conditions : un spaceport L1 ACTIF
+ * (jamais-masqué → toujours posable) ET `colony_program` déverrouillé. Le
+ * drapeau `bodies.free_colonizer_granted` est persisté et SUIT la propriété
+ * (un monde conquis l'ayant déjà consommé n'en reçoit jamais d'autre).
+ *
+ * Idempotent et sûr aux courses (verrou FOR UPDATE). Appelé aux trois points
+ * où les conditions peuvent basculer : fin de construction d'un spaceport,
+ * déverrouillage de `colony_program`, établissement d'une colonie. Le don
+ * contourne volontairement le plafond d'items (amorçage garanti). Retourne
+ * true si le don a eu lieu.
+ */
+export async function maybeGrantFreeColonizer(
+  client: pg.PoolClient,
+  bodyId: string,
+): Promise<boolean> {
+  const { rows } = await client.query(
+    `SELECT owner_id, free_colonizer_granted FROM bodies WHERE id = $1 FOR UPDATE`,
+    [bodyId],
+  );
+  const body = rows[0];
+  if (!body || !body.owner_id || body.free_colonizer_granted) return false;
+  const { rows: prog } = await client.query(
+    `SELECT 1 FROM tech_unlocks WHERE body_id = $1 AND node_key = 'colony_program'`,
+    [bodyId],
+  );
+  if (!prog[0]) return false;
+  const { rows: port } = await client.query(
+    `SELECT 1 FROM buildings
+     WHERE body_id = $1 AND key = 'spaceport' AND status = 'active' AND level >= 1`,
+    [bodyId],
+  );
+  if (!port[0]) return false;
+  await client.query(
+    `INSERT INTO planet_items (body_id, item_key) VALUES ($1, $2)`,
+    [bodyId, COLONIZER_ITEM_KEY],
+  );
+  await client.query(
+    `UPDATE bodies SET free_colonizer_granted = true WHERE id = $1`,
+    [bodyId],
+  );
+  return true;
+}
+
+/** Déverrouille un nœud tech (une fois par planète) — GB §18 phase 1. */
+export async function unlockNode(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  nodeKey: TechNodeKey,
+  nowMs = Date.now(),
+): Promise<void> {
+  const node = TECH_NODES[nodeKey];
+  if (!node) throw new CommandError('not_found', `Nœud inconnu : ${nodeKey}`);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const availability = await worldTechAvailability(client, {
+      id: bodyId,
+      seed: planet.seed,
+      config: planet.config,
+    });
+    if (!availability.available.has(nodeKey)) {
+      throw new CommandError(
+        'not_available',
+        "Ce nœud n'existe pas dans l'ADN tech de cette planète",
+      );
+    }
+    const { rows: unlocked } = await client.query(
+      'SELECT node_key FROM tech_unlocks WHERE body_id = $1',
+      [bodyId],
+    );
+    const unlockedSet = new Set(unlocked.map((r) => r.node_key));
+    if (unlockedSet.has(nodeKey)) {
+      throw new CommandError('already_unlocked', 'Nœud déjà déverrouillé');
+    }
+    for (const p of node.prerequisites) {
+      if (!unlockedSet.has(p)) {
+        throw new CommandError('prereq_missing', `Prérequis manquant : ${p}`);
+      }
+    }
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    if (!effectiveMask(archetypes).has(nodeKey)) {
+      throw new CommandError(
+        'mask_denied',
+        'Le masque de gouvernance de cette planète interdit ce nœud',
+      );
+    }
+    await payCost(client, bodyId, planet.climate, node.unlockCost, nowMs);
+    await client.query(
+      'INSERT INTO tech_unlocks (body_id, node_key) VALUES ($1, $2)',
+      [bodyId, nodeKey],
+    );
+    // Réforme colonisation 2026-07-24 (GB §19.3) : déverrouiller colony_program
+    // peut compléter la condition du colonisateur offert (si un spaceport L1 est
+    // déjà actif). Idempotent — ne donne rien tant que les deux ne coexistent pas.
+    if (nodeKey === 'colony_program') {
+      await maybeGrantFreeColonizer(client, bodyId);
+    }
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Valide la recette demandée pour un bâtiment-industrie. */
+async function validateRecipe(
+  client: pg.PoolClient,
+  bodyId: string,
+  buildingKey: BuildingKey,
+  recipe: string | null,
+  opts: { excludeBuildingId?: string } = {},
+): Promise<string | null> {
+  const def = BUILDINGS[buildingKey];
+  if (!def.batchesPerDayByLevel) {
+    if (recipe) {
+      throw new CommandError('recipe_invalid', 'Ce bâtiment ne prend pas de recette');
+    }
+    return null;
+  }
+  if (!recipe) {
+    throw new CommandError(
+      'recipe_invalid',
+      'Une industrie mint exactement une chose : choisir la recette à la construction (canon GB §9)',
+    );
+  }
+  if (recipe.startsWith('extract:')) {
+    if (buildingKey !== 'mine' && buildingKey !== 'crystal_extractor') {
+      throw new CommandError('recipe_invalid', 'Seuls mine et crystal_extractor extraient');
+    }
+    const resource = recipe.slice('extract:'.length) as ResourceId;
+    const isBasic = (BASIC_RESOURCES as readonly string[]).includes(resource);
+    const isCrystal = Object.values(CLIMATE_CRYSTAL).includes(
+      resource as (typeof CLIMATE_CRYSTAL)[Climate],
+    );
+    if (buildingKey === 'mine' && !isBasic) {
+      throw new CommandError('recipe_invalid', 'Une mine extrait un matériau de base');
+    }
+    if (buildingKey === 'crystal_extractor' && !isCrystal) {
+      throw new CommandError('recipe_invalid', 'Un extracteur de cristal extrait un cristal');
+    }
+    const { rows: dep } = await client.query(
+      'SELECT amount_t FROM deposits WHERE body_id = $1 AND resource = $2',
+      [bodyId, resource],
+    );
+    if (buildingKey === 'crystal_extractor' && !dep[0]) {
+      throw new CommandError(
+        'recipe_invalid',
+        'Aucun gisement de ce cristal ici (les cristaux ne se minent pas en trace)',
+      );
+    }
+    if (dep[0]) {
+      // Max 1 extracteur par gisement (DG §3.3) — toute instance non démolie.
+      const { rows: taken } = await client.query(
+        `SELECT 1 FROM buildings
+         WHERE body_id = $1 AND recipe = $2 AND status <> 'demolishing'
+           AND ($3::uuid IS NULL OR id <> $3) LIMIT 1`,
+        [bodyId, recipe, opts.excludeBuildingId ?? null],
+      );
+      if (taken[0]) {
+        throw new CommandError(
+          'deposit_taken',
+          'Ce gisement a déjà son extracteur (max 1 par gisement)',
+        );
+      }
+    }
+    return recipe;
+  }
+  const r = RECIPES[recipe as RecipeId];
+  if (!r || r.extraction || !r.buildings.includes(buildingKey)) {
+    throw new CommandError('recipe_invalid', `Recette invalide pour ${buildingKey}`);
+  }
+  return recipe;
+}
+
+/** Place un bâtiment (GB §18 phase 2) : coût + tuile + chantier + événement. */
+export async function placeBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingKey: BuildingKey,
+  tileIndex: number | null,
+  opts: { nowMs?: number; timeScale?: number; recipe?: string | null } = {},
+): Promise<{ buildingId: string; completesAt: Date }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = opts.timeScale ?? 1;
+  const def = BUILDINGS[buildingKey];
+  if (!def) throw new CommandError('not_found', `Bâtiment inconnu : ${buildingKey}`);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    if (planet.tiles === 0) {
+      throw new CommandError(
+        'unbuildable',
+        'Monde toxique : aucune tuile constructible (canon GB §3)',
+      );
+    }
+    const { rows: unlocked } = await client.query(
+      'SELECT 1 FROM tech_unlocks WHERE body_id = $1 AND node_key = $2',
+      [bodyId, buildingKey],
+    );
+    if (!unlocked[0]) {
+      throw new CommandError('not_unlocked', 'Carte non déverrouillée sur cette planète');
+    }
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    if (!effectiveMask(archetypes).has(buildingKey)) {
+      throw new CommandError('mask_denied', 'Masque de gouvernance : construction interdite');
+    }
+    // Le plafond est indépendant de la tuile proposée et constitue le refus
+    // le plus fort : une UI doit pouvoir annoncer « max 1 » même sur un monde
+    // également plein, sans laisser croire qu'une tuile libérée suffirait.
+    if (def.maxInstances) {
+      const { rows: count } = await client.query(
+        'SELECT count(*)::int AS n FROM buildings WHERE body_id = $1 AND key = $2',
+        [bodyId, buildingKey],
+      );
+      if (count[0].n >= def.maxInstances) {
+        throw new CommandError('max_instances', `Maximum ${def.maxInstances} instances`);
+      }
+    }
+    if (def.usesTile) {
+      if (
+        tileIndex === null ||
+        !Number.isInteger(tileIndex) ||
+        tileIndex < 0 ||
+        tileIndex >= planet.tiles
+      ) {
+        throw new CommandError('tile_invalid', 'Tuile invalide');
+      }
+      const { rows: taken } = await client.query(
+        'SELECT 1 FROM buildings WHERE body_id = $1 AND tile_index = $2',
+        [bodyId, tileIndex],
+      );
+      if (taken[0]) throw new CommandError('tile_taken', 'Tuile déjà occupée');
+    } else if (tileIndex !== null) {
+      throw new CommandError('tile_invalid', 'Ce bâtiment est une infrastructure sans tuile');
+    }
+    const recipe = await validateRecipe(client, bodyId, buildingKey, opts.recipe ?? null);
+
+    // Workforce par défaut : 0,7 × optimal si la population le permet
+    // [TUNE — réglable ensuite ; le point idéal E(0,7) = 1].
+    // Emploi universel (BB) : toute nouvelle unité, industrie ou service,
+    // reçoit par défaut le point doux 0,7 si les actifs sont disponibles.
+    const { rows: wf } = await client.query(
+      'SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings WHERE body_id = $1',
+      [bodyId],
+    );
+    const { rows: pyrRow } = await client.query(
+      `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
+      [bodyId],
+    );
+    const actives = Math.max(
+      0,
+      Number(pyrRow[0]?.population ?? 0) -
+        Number(pyrRow[0]?.pop_children ?? 0) -
+        Number(pyrRow[0]?.pop_seniors ?? 0),
+    );
+    const workforce = Math.max(
+      0,
+      Math.min(
+        Math.round(
+          0.7 * jobsOptimal(buildingKey, 1, Number(pyrRow[0]?.population ?? 0)),
+        ),
+        Math.floor(actives) - wf[0].assigned,
+      ),
+    );
+
+    // W7-bâtiments : sur un monde à industrie L3 ACTIVE, le placement
+    // bascule en USINAGE PARTIEL — rien d'avance, 20 paliers de 5 %
+    // payés au stock, investedPaid n'enregistre QUE le déjà-payé
+    // (PATCH 10-4). Sinon : chemin historique (paiement à la commande).
+    const partial = await hasL3Factory(client, bodyId);
+    if (!partial) {
+      await payCost(client, bodyId, planet.climate, def.placementCost, nowMs);
+    }
+    const buildMs =
+      (BUILD_HOURS_BY_LEVEL[0] * 3_600_000) / Math.max(timeScale, 1e-9);
+    const completesAt = new Date(nowMs + buildMs);
+    const { rows: created } = await client.query<{ id: string }>(
+      `INSERT INTO buildings (body_id, key, level, tile_index, status,
+          completes_at, recipe, workforce, config)
+       VALUES ($1, $2, 1, $3, 'constructing', $4, $5, $6, $7::jsonb)
+       RETURNING id`,
+      // investedPaid = ce que le propriétaire A RÉELLEMENT payé (PATCH
+      // 10-4) : la démolition ne rembourse que là-dessus. Les ruines de
+      // spawn et les bâtiments du kit de colonisation enregistrent {}.
+      [bodyId, buildingKey, tileIndex, completesAt, recipe, workforce,
+       JSON.stringify({ investedPaid: partial ? {} : def.placementCost })],
+    );
+    if (partial) {
+      const factoryId = await pickL3Factory(client, bodyId);
+      await createWorkOrder(client, {
+        bodyId,
+        factoryBuildingId: factoryId,
+        kind: 'building',
+        payload: { buildingId: created[0]!.id },
+        cost: def.placementCost as Record<string, number>,
+        totalHours: BUILD_HOURS_BY_LEVEL[0]!,
+        nowMs,
+        timeScale,
+      });
+    } else {
+      await enqueue(client, 'construction_complete', completesAt, {
+        buildingId: created[0]!.id,
+      });
+    }
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { buildingId: created[0]!.id, completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Rééquipage d'une industrie (DG §5.1 : « re-targeting = 24 h retool »
+ * [TUNE]) : la nouvelle recette est écrite immédiatement mais la
+ * production S'ARRÊTE (statut `retooling`, le rebase ne compte que les
+ * industries actives) jusqu'à retool_complete. Gouvernance TOUTE
+ * Industrialist (DG §4.1) : retool INSTANTANÉ, ≤ 1 switch par fenêtre de
+ * 24 h — au-delà, le retool standard s'applique [TUNE-v1 interp]. Les
+ * réductions de durée du monde-forge (−25/40/50 %) arrivent avec la
+ * spécialisation (annoncé).
+ */
+export async function retoolBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  recipe: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ instant: boolean; completesAt: Date | null }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = Math.max(opts.timeScale ?? 1, 1e-9);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status, recipe, config FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    const b = rows[0];
+    if (!b) throw new CommandError('not_found', 'Bâtiment inconnu');
+    const def = BUILDINGS[b.key as BuildingKey];
+    // W2 : le CHANTIER NAVAL s'outille pour un type moteur via le même
+    // patron (recipe `engine_<type>`, retool 24 h, instantané
+    // toute-Industrialist) — recipe NULL = accordé à l'étoile natale.
+    const isYard = b.key === 'shipyard';
+    if (!def?.batchesPerDayByLevel && !isYard) {
+      throw new CommandError('not_available', 'Seule une industrie se rééquipe');
+    }
+    if (b.status !== 'active') {
+      throw new CommandError(
+        'not_available',
+        'Le bâtiment doit être actif pour se rééquiper',
+      );
+    }
+    if (b.recipe === recipe) {
+      throw new CommandError('recipe_invalid', 'Cette recette est déjà montée');
+    }
+    if (isYard) {
+      if (!recipeEngine(recipe)) {
+        throw new CommandError(
+          'recipe_invalid',
+          'Outillage chantier inconnu (engine_cold | engine_hot | engine_gas)',
+        );
+      }
+    } else {
+      await validateRecipe(client, bodyId, b.key as BuildingKey, recipe, {
+        excludeBuildingId: buildingId,
+      });
+    }
+
+    // Chemin instantané : gouvernance TOUTE Industrialist, fenêtre libre.
+    const archetypes = await governingArchetypes(client, bodyId, playerId);
+    const allIndustrialist =
+      archetypes.length > 0 && archetypes.every((a) => a === 'industrialist');
+    const windowMs =
+      (INSTANT_RETOOL_WINDOW_HOURS * 3_600_000) / timeScale;
+    const lastInstantMs = Number(b.config?.lastInstantRetoolMs ?? 0);
+    if (allIndustrialist && nowMs - lastInstantMs >= windowMs) {
+      await client.query(
+        `UPDATE buildings
+           SET recipe = $2,
+               config = config || jsonb_build_object('lastInstantRetoolMs', $3::bigint)
+         WHERE id = $1`,
+        [buildingId, recipe, nowMs],
+      );
+      await recomputePlanetRates(client, bodyId, nowMs);
+      await client.query('COMMIT');
+      return { instant: true, completesAt: null };
+    }
+
+    const completesAt = new Date(
+      nowMs + (RETOOL_HOURS * 3_600_000) / timeScale,
+    );
+    await client.query(
+      `UPDATE buildings
+         SET status = 'retooling', recipe = $2, completes_at = $3
+       WHERE id = $1`,
+      [buildingId, recipe, completesAt],
+    );
+    await enqueue(client, 'retool_complete', completesAt, { buildingId });
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { instant: false, completesAt };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Réglages d'un bâtiment : workforce et % de cadence (GB §9/§10). */
+export async function setBuildingSettings(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  settings: {
+    workforce?: number;
+    runPct?: number;
+    landing?: string;
+    dwellHours?: number;
+    reservedForSelf?: number;
+    visibility?: string;
+  },
+  nowMs = Date.now(),
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, workforce, run_pct FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+
+    // Politique d'atterrissage (GB §9) — réservée au spaceport, v1
+    // self|everyone (friends/neighbours avec les factions, P4).
+    if (settings.landing !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'La politique d\'atterrissage se règle sur un spaceport',
+        );
+      }
+      if (!['self', 'everyone'].includes(settings.landing)) {
+        throw new CommandError('workforce_invalid', 'Politique inconnue');
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('landing', $2::text)
+         WHERE id = $1`,
+        [buildingId, settings.landing],
+      );
+    }
+
+    // Visibilité du warehouse (GB §9 : public = browsable à quai ET fuite ;
+    // privé = réserve stratégique cachée). Warehouse uniquement.
+    if (settings.visibility !== undefined) {
+      if (rows[0].key !== 'warehouse') {
+        throw new CommandError(
+          'not_available',
+          'La visibilité se règle sur un warehouse',
+        );
+      }
+      if (!['public', 'private'].includes(settings.visibility)) {
+        throw new CommandError('workforce_invalid', 'Visibilité inconnue');
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('visibility', $2::text)
+         WHERE id = $1`,
+        [buildingId, settings.visibility],
+      );
+    }
+
+    // Séjour au sol max avant éviction (docks, DG §8.6) — spaceport only.
+    if (settings.dwellHours !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'Le séjour au sol se règle sur un spaceport',
+        );
+      }
+      if (
+        !Number.isInteger(settings.dwellHours) ||
+        settings.dwellHours < DOCK_DWELL_HOURS_MIN ||
+        settings.dwellHours > DOCK_DWELL_HOURS_MAX
+      ) {
+        throw new CommandError(
+          'workforce_invalid',
+          `Séjour au sol invalide (${DOCK_DWELL_HOURS_MIN}–${DOCK_DWELL_HOURS_MAX} h)`,
+        );
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('dwellHours', $2::int)
+         WHERE id = $1`,
+        [buildingId, settings.dwellHours],
+      );
+    }
+
+    // Docks réservés pour soi (« ready to depart », GB §9) — spaceport only.
+    if (settings.reservedForSelf !== undefined) {
+      if (rows[0].key !== 'spaceport') {
+        throw new CommandError(
+          'not_available',
+          'Les docks réservés se règlent sur un spaceport',
+        );
+      }
+      if (
+        !Number.isInteger(settings.reservedForSelf) ||
+        settings.reservedForSelf < 0 ||
+        settings.reservedForSelf > DOCK_RESERVED_SELF_MAX
+      ) {
+        throw new CommandError(
+          'workforce_invalid',
+          `Docks réservés invalides (0–${DOCK_RESERVED_SELF_MAX})`,
+        );
+      }
+      await client.query(
+        `UPDATE buildings
+           SET config = config || jsonb_build_object('reservedForSelf', $2::int)
+         WHERE id = $1`,
+        [buildingId, settings.reservedForSelf],
+      );
+    }
+
+    const workforce = settings.workforce ?? rows[0].workforce;
+    const runPct = settings.runPct ?? rows[0].run_pct;
+    if (
+      !Number.isInteger(workforce) ||
+      workforce < 0 ||
+      !Number.isInteger(runPct) ||
+      runPct < 0 ||
+      runPct > 100
+    ) {
+      throw new CommandError('workforce_invalid', 'Réglages invalides');
+    }
+    const { rows: wf } = await client.query(
+      `SELECT COALESCE(sum(workforce), 0)::int AS assigned FROM buildings
+       WHERE body_id = $1 AND id <> $2`,
+      [bodyId, buildingId],
+    );
+    // v2 (chunk BB) : la main-d'œuvre assignable = les ACTIFS seuls.
+    const { rows: pyrRow } = await client.query(
+      `SELECT population, pop_children, pop_seniors FROM bodies WHERE id = $1`,
+      [bodyId],
+    );
+    const assignable = Math.floor(
+      Math.max(
+        0,
+        Number(pyrRow[0]?.population ?? 0) -
+          Number(pyrRow[0]?.pop_children ?? 0) -
+          Number(pyrRow[0]?.pop_seniors ?? 0),
+      ),
+    );
+    if (wf[0].assigned + workforce > assignable) {
+      throw new CommandError(
+        'workforce_invalid',
+        `Workforce assignable dépassée (${wf[0].assigned + workforce}/${assignable} — actifs seulement)`,
+      );
+    }
+    await client.query(
+      'UPDATE buildings SET workforce = $2, run_pct = $3 WHERE id = $1',
+      [buildingId, workforce, runPct],
+    );
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/** Crédite un panier au stock (remboursements) — l'overfill est permis
+ * (physique §3.3b : seules les productions s'arrêtent au cap). */
+async function creditBundle(
+  client: pg.PoolClient,
+  bodyId: string,
+  climate: Climate,
+  bundle: CostBundle,
+  ratio: number,
+  nowMs: number,
+): Promise<ResourceBundle> {
+  const resolved = resolveCost(bundle, climate);
+  const credited: ResourceBundle = {};
+  for (const [resource, amount] of Object.entries(resolved)) {
+    if (!amount) continue;
+    const credit = Math.floor(amount * ratio * 100) / 100;
+    if (credit <= 0) continue;
+    credited[resource as ResourceId] = credit;
+    const { rows } = await client.query(
+      `SELECT amount_t, rate_t_per_day, as_of FROM planet_stock
+       WHERE body_id = $1 AND resource = $2 FOR UPDATE`,
+      [bodyId, resource],
+    );
+    const current = rows[0]
+      ? evalLazy(
+          {
+            amount: rows[0].amount_t,
+            ratePerDay: rows[0].rate_t_per_day,
+            asOfMs: toMs(rows[0].as_of),
+          },
+          nowMs,
+          config.TIME_SCALE,
+          { min: 0 },
+        )
+      : 0;
+    await client.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))
+       ON CONFLICT (body_id, resource)
+       DO UPDATE SET amount_t = $3, as_of = to_timestamp($4 / 1000.0)`,
+      [bodyId, resource, current + credit, nowMs],
+    );
+  }
+  return credited;
+}
+
+/** Coût total investi dans une instance (placement + montées de niveau). */
+function investedCost(def: (typeof BUILDINGS)[BuildingKey], level: number): CostBundle {
+  const out: CostBundle = { ...def.placementCost };
+  for (let l = 2; l <= level; l++) {
+    const step = def.levelUpCost[l - 2]!;
+    for (const [res, qty] of Object.entries(step)) {
+      out[res as keyof CostBundle] =
+        ((out[res as keyof CostBundle] as number | undefined) ?? 0) + (qty as number);
+    }
+  }
+  return out;
+}
+
+/** Somme de deux paniers de coûts (immuable). */
+function addBundles(a: CostBundle, b: CostBundle): CostBundle {
+  const out: CostBundle = { ...a };
+  for (const [res, qty] of Object.entries(b)) {
+    out[res as keyof CostBundle] =
+      ((out[res as keyof CostBundle] as number | undefined) ?? 0) + (qty as number);
+  }
+  return out;
+}
+
+/**
+ * Investissement RÉELLEMENT payé par le propriétaire, lu depuis
+ * buildings.config.investedPaid (PATCH 10-4). Absent (bâtiments d'avant le
+ * patch) → panier vide : la démolition ne rembourse rien, ce qui est le
+ * comportement voulu pour les ruines héritées et le kit de colonisation.
+ */
+function readInvestedPaid(config: unknown): CostBundle {
+  const paid = (config as { investedPaid?: CostBundle } | null)?.investedPaid;
+  return paid && typeof paid === 'object' ? (paid as CostBundle) : {};
+}
+
+/**
+ * Montée de niveau sur place (GB §18, DG §5.1) : coût du palier, plafond
+ * de profondeur de l'ADN du seed, politique de niveau (intersection),
+ * chantier aux heures du niveau cible.
+ */
+export async function levelUpBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; newLevel: number }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = opts.timeScale ?? 1;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status, config FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+    if (rows[0].status !== 'active') {
+      throw new CommandError('not_available', 'Le bâtiment doit être actif pour monter de niveau');
+    }
+    const key = rows[0].key as BuildingKey;
+    const def = BUILDINGS[key];
+    const level = rows[0].level as number;
+    if (level >= 3) {
+      throw new CommandError('max_level', 'Niveau maximal atteint (3)');
+    }
+    const targetLevel = level + 1;
+    // Plafond de profondeur roulé par le seed (GB §18) — §2.2b : richesse
+    // bonus + union des bâtiments debout (une ruine L3 reste montable L3).
+    const availability = await worldTechAvailability(client, {
+      id: bodyId,
+      seed: planet.seed,
+      config: planet.config,
+    });
+    const cap = availability.maxLevel.get(key) ?? 3;
+    if (targetLevel > cap) {
+      throw new CommandError(
+        'max_level',
+        `L'ADN tech de ce monde plafonne ${key} au niveau ${cap}`,
+      );
+    }
+    // Politique de niveau (ex. market L2+ Mercantile) : intersection —
+    // TOUS les archétypes gouvernants doivent la porter.
+    if (def.politicsFromLevel && targetLevel >= def.politicsFromLevel.level) {
+      const archetypes = await governingArchetypes(client, bodyId, playerId);
+      const required = def.politicsFromLevel.archetype;
+      if (archetypes.length === 0 || !archetypes.every((a) => a === required)) {
+        throw new CommandError(
+          'mask_denied',
+          `Le niveau ${targetLevel} de ${key} exige une gouvernance ${required}`,
+        );
+      }
+    }
+    const stepCost = def.levelUpCost[targetLevel - 2]!;
+    // W7-bâtiments : industrie L3 active → montée en USINAGE PARTIEL
+    // (les paliers alimentent investedPaid au fil de l'eau — le handler
+    // work_step cumule) ; sinon paiement à la commande + cumul immédiat.
+    const partial = await hasL3Factory(client, bodyId);
+    if (!partial) {
+      await payCost(client, bodyId, planet.climate, stepCost, nowMs);
+    }
+    const buildMs =
+      (BUILD_HOURS_BY_LEVEL[targetLevel - 1]! * 3_600_000) /
+      Math.max(timeScale, 1e-9);
+    const completesAt = new Date(nowMs + buildMs);
+    // Montée EN PLACE : la production s'interrompt pendant le chantier
+    // [TUNE interp — JOURNAL session 30]. On CUMULE le palier payé dans
+    // config.investedPaid (PATCH 10-4) : la démolition rembourse ce cumul.
+    const prevPaid = readInvestedPaid(rows[0].config);
+    const newPaid = partial ? prevPaid : addBundles(prevPaid, stepCost);
+    await client.query(
+      `UPDATE buildings SET level = $2, status = 'constructing',
+         completes_at = $3,
+         config = jsonb_set(coalesce(config, '{}'::jsonb), '{investedPaid}', $4::jsonb)
+       WHERE id = $1`,
+      [buildingId, targetLevel, completesAt, JSON.stringify(newPaid)],
+    );
+    if (partial) {
+      const factoryId = await pickL3Factory(client, bodyId);
+      await createWorkOrder(client, {
+        bodyId,
+        factoryBuildingId: factoryId,
+        kind: 'building',
+        payload: { buildingId },
+        cost: stepCost as Record<string, number>,
+        totalHours: BUILD_HOURS_BY_LEVEL[targetLevel - 1]!,
+        nowMs,
+        timeScale,
+      });
+    } else {
+      await enqueue(client, 'construction_complete', completesAt, { buildingId });
+    }
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { completesAt, newLevel: targetLevel };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Démolition (DG §6) : remboursement 50 % de l'investi crédité au
+ * lancement, tuile libérée à l'issue (6 h), production stoppée aussitôt.
+ */
+export async function demolishBuilding(
+  pool: pg.Pool,
+  playerId: string,
+  bodyId: string,
+  buildingId: string,
+  opts: { nowMs?: number; timeScale?: number } = {},
+): Promise<{ completesAt: Date; refunded: ResourceBundle }> {
+  const nowMs = opts.nowMs ?? Date.now();
+  const timeScale = opts.timeScale ?? 1;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const planet = await loadOwnedPlanet(client, playerId, bodyId);
+    const { rows } = await client.query(
+      `SELECT id, key, level, status, config FROM buildings
+       WHERE id = $1 AND body_id = $2 FOR UPDATE`,
+      [buildingId, bodyId],
+    );
+    if (!rows[0]) throw new CommandError('not_found', 'Bâtiment inconnu');
+    if (rows[0].status === 'demolishing') {
+      throw new CommandError('not_available', 'Démolition déjà en cours');
+    }
+    const def = BUILDINGS[rows[0].key as BuildingKey];
+    // PATCH 10-4 : rembourse 50 % de l'investi RÉELLEMENT PAYÉ (config), pas
+    // du coût théorique. Ruines héritées / kit de colonisation (investedPaid
+    // = {}) → 0. Repli sur le coût théorique UNIQUEMENT pour les bâtiments
+    // d'avant le patch (config sans investedPaid), pour ne pas léser un
+    // propriétaire légitime — un bâtiment posé via placeBuilding porte
+    // toujours investedPaid, donc ce repli ne touche pas les ruines.
+    const paid = rows[0].config?.investedPaid
+      ? readInvestedPaid(rows[0].config)
+      : investedCost(def, rows[0].level);
+    const refunded = await creditBundle(
+      client,
+      bodyId,
+      planet.climate,
+      paid,
+      DEMOLISH_REFUND_RATIO,
+      nowMs,
+    );
+    const completesAt = new Date(
+      nowMs + (DEMOLISH_HOURS * 3_600_000) / Math.max(timeScale, 1e-9),
+    );
+    await client.query(
+      `UPDATE buildings SET status = 'demolishing', completes_at = $2
+       WHERE id = $1`,
+      [buildingId, completesAt],
+    );
+    // W7-bâtiments : un ordre d'usinage en cours meurt avec le chantier
+    // (les paliers DÉJÀ payés sont dans investedPaid → remboursés à 50 %
+    // ci-dessus ; les paliers non payés ne le seront jamais).
+    await client.query(
+      `DELETE FROM work_orders
+       WHERE kind = 'building' AND payload->>'buildingId' = $1`,
+      [buildingId],
+    );
+    await enqueue(client, 'demolition_complete', completesAt, { buildingId });
+    await recomputePlanetRates(client, bodyId, nowMs);
+    await client.query('COMMIT');
+    return { completesAt, refunded };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}

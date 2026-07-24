@@ -1,0 +1,327 @@
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Ship hulls”, “Free flight”, and “Hovering”; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §7–§9. */
+/**
+ * Intégration : vol libre & sondes (GB §6/§14/§21, DG §8) sur vraie base.
+ */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type pg from 'pg';
+import { randomUUID } from 'node:crypto';
+import { processDueEvents } from '../../src/sim/events.js';
+import { baseHandlers } from '../../src/sim/handlers.js';
+import { registerPlayer } from '../../src/services/players.js';
+import { placeBuilding } from '../../src/services/planets.js';
+import { fleet, buildProbe, scoopProbeFuel, sendProbe, setProbeFuelOrder, moveShip, shipPosition } from '../../src/services/ships.js';
+import { visibleBodies } from '../../src/services/world.js';
+import { createTestPool } from './helpers.js';
+
+let pool: pg.Pool;
+const run = randomUUID().slice(0, 8);
+let playerId = '';
+let starterId = '';
+let cargoId = '';
+let personalId = '';
+let wildId = '';
+
+const FAST = { timeScale: 1_000_000 };
+
+/** Attend l'arrivée d'un vaisseau (trajets ≈ 0,1–3 s à cette échelle). */
+async function waitArrived(shipId: string): Promise<void> {
+  for (let i = 0; i < 80; i++) {
+    await new Promise((res) => setTimeout(res, 60));
+    await processDueEvents(pool, baseHandlers());
+    const { rows } = await pool.query('SELECT status FROM ships WHERE id = $1', [shipId]);
+    if (rows[0].status !== 'transit') return;
+  }
+  throw new Error('arrivée jamais traitée');
+}
+
+beforeAll(async () => {
+  pool = await createTestPool();
+  const r = await registerPlayer(pool, {
+    email: `nav-${run}@test.local`,
+    password: 'motdepasse-solide-1',
+    displayName: 'Navigator',
+    politics: 'scientific',
+    universeSeed: `nav-universe-${run}`,
+  });
+  playerId = r.playerId;
+  starterId = r.spawn.starterPlanetId;
+  cargoId = r.spawn.cargoShipId;
+  personalId = r.spawn.personalShipId;
+  wildId = r.spawn.wildPlanetIds[0]!;
+  // Grants de test : 5 sondes coûtent 75 ore + 50 silicon (on teste les
+  // commandes, pas la rareté) — calibrés sous 0,7 × cap.
+  for (const [res, qty] of [['ore', 150], ['silicon', 100]] as const) {
+    await pool.query(
+      `INSERT INTO planet_stock (body_id, resource, amount_t, as_of)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (body_id, resource)
+       DO UPDATE SET amount_t = planet_stock.amount_t + $3`,
+      [starterId, res, qty],
+    );
+  }
+});
+
+afterAll(async () => {
+  await pool.end();
+});
+
+describe('vol libre (GB §6)', () => {
+  it('cargo vers une planète sauvage : auto-chargement du fuel planétaire, transit interpolé, arrivée en survol', async () => {
+    const t0 = Date.now();
+    const { rows: fuelBefore } = await pool.query(
+      `SELECT resource, amount_t FROM planet_stock WHERE body_id = $1 AND resource LIKE 'fuel_%'`,
+      [starterId],
+    );
+    expect(Number(fuelBefore[0].amount_t)).toBe(150);
+
+    const r = await moveShip(pool, playerId, cargoId, { bodyId: wildId }, { nowMs: t0, ...FAST });
+    expect(r.distancePc).toBeGreaterThan(15);
+    expect(r.distancePc).toBeLessThanOrEqual(61);
+    // Cargo-S : 0.25 u/pc.
+    expect(r.fuelBurned).toBeCloseTo(r.distancePc * 0.25, 4);
+    const { rows: fuelAfter } = await pool.query(
+      `SELECT amount_t FROM planet_stock WHERE body_id = $1 AND resource = $2`,
+      [starterId, fuelBefore[0].resource],
+    );
+    // Auto-chargement PLEIN réservoir (GB §7 — chunk O : arriver au trajet
+    // près échouerait la coque au premier survol) : 60 u (tank Cargo-S)
+    // chargés, le trajet se pré-brûle ensuite depuis le réservoir.
+    expect(Number(fuelAfter[0].amount_t)).toBeCloseTo(150 - 60, 2);
+
+    // Position interpolée à mi-parcours (fonction pure).
+    const { rows: shipRows } = await pool.query('SELECT * FROM ships WHERE id = $1', [cargoId]);
+    const ship = shipRows[0];
+    expect(ship.status).toBe('transit');
+    const midMs = (new Date(ship.departed_at).getTime() + new Date(ship.arrives_at).getTime()) / 2;
+    const mid = shipPosition(ship, midMs);
+    // IN (...) ne garantit AUCUN ordre : on résout chaque corps par id.
+    const { rows: bodyRows } = await pool.query(
+      'SELECT id, x, y FROM bodies WHERE id IN ($1, $2)',
+      [starterId, wildId],
+    );
+    const starterB = bodyRows.find((b) => b.id === starterId)!;
+    const wildB = bodyRows.find((b) => b.id === wildId)!;
+    const dTotal = Math.hypot(starterB.x - wildB.x, starterB.y - wildB.y);
+    const dFromStart = Math.hypot(mid.x - ship.origin_x, mid.y - ship.origin_y);
+    expect(dFromStart / dTotal).toBeGreaterThan(0.45);
+    expect(dFromStart / dTotal).toBeLessThan(0.55);
+
+    // Arrivée par événement — survol d'un monde SAUVAGE : le réservoir
+    // paie le loitering (GB §7, chunk O).
+    await waitArrived(cargoId);
+    const ships = await fleet(pool, playerId);
+    const cargo = ships.find((s) => s.id === cargoId)!;
+    expect(cargo.status).toBe('hovering');
+    expect(cargo.x).toBeCloseTo(wildB.x, 6);
+    expect(cargo.fuelRatePerDay).toBeCloseTo(-0.2, 9);
+    expect(cargo.fuel[cargo.fuelType]).toBeCloseTo(60 - r.fuelBurned, 1);
+  });
+
+  it('carburant insuffisant (loin, hors monde possédé) : refus explicite, rien ne part', async () => {
+    // Le cargo survole la sauvage (pas de recharge possible) : cible lointaine.
+    await expect(
+      moveShip(pool, playerId, cargoId, { x: 500_000, y: 500_000 }, FAST),
+    ).rejects.toMatchObject({ code: 'insufficient_resources' });
+    const ships = await fleet(pool, playerId);
+    expect(ships.find((s) => s.id === cargoId)!.status).toBe('hovering');
+  });
+
+  it('vaisseau personnel : refuse le vide et les mondes étrangers (canon §21)', async () => {
+    await expect(
+      moveShip(pool, playerId, personalId, { x: 500_000, y: 500_000 }, FAST),
+    ).rejects.toMatchObject({ code: 'forbidden' });
+    await expect(
+      moveShip(pool, playerId, personalId, { bodyId: wildId }, FAST),
+    ).rejects.toMatchObject({ code: 'forbidden' });
+  });
+
+  it("autorisation : on ne pilote pas le vaisseau d'un autre (requête directe)", async () => {
+    const other = await registerPlayer(pool, {
+      email: `nav-other-${run}@test.local`,
+      password: 'motdepasse-solide-2',
+      displayName: 'Pirate',
+      politics: 'militarist',
+      universeSeed: `nav-universe-${run}`,
+    });
+    await expect(
+      moveShip(pool, other.playerId, cargoId, { bodyId: wildId }, FAST),
+    ).rejects.toMatchObject({ code: 'forbidden' });
+  });
+});
+
+describe('sondes & vision (GB §4, DG §8.1 — refonte 2026-07-20)', () => {
+  it('build → la sonde SURVOLE son monde ; send → la PREMIÈRE part et étend la vision', async () => {
+    // Sans probe_pad : ni build ni send.
+    await expect(buildProbe(pool, playerId, starterId)).rejects.toMatchObject({
+      code: 'not_available',
+    });
+    await expect(
+      sendProbe(pool, playerId, starterId, { x: 500_100, y: 500_100 }, FAST),
+    ).rejects.toMatchObject({ code: 'not_available' }); // aucune sonde en survol
+
+    await placeBuilding(pool, playerId, starterId, 'probe_pad', null, FAST);
+    await new Promise((res) => setTimeout(res, 60));
+    await processDueEvents(pool, baseHandlers());
+
+    // Build découplé : la sonde née SURVOLE le monde d'origine, en L1
+    // (pad L1), avec 25 % de plein puisé au stock (v3, 2026-07-20).
+    const built = await buildProbe(pool, playerId, starterId);
+    expect(built.level).toBe(1); // pad L1 → sonde L1
+    const hovering = (await fleet(pool, playerId)).find(
+      (s) => s.id === built.probeId,
+    )!;
+    expect(hovering.status).toBe('hovering');
+    expect(hovering.hoverBodyId).toBe(starterId);
+    expect(hovering.probeLevel).toBe(1);
+    // 25 % du réservoir (70 u × 0,25 = 17,5) — le stock starter (150 u)
+    // couvre largement.
+    const units = Object.values(hovering.fuel)[0] ?? 0;
+    expect(units).toBeCloseTo(0.25 * 70, 1);
+    // L2 refusée tant que le pad n'est pas L2+.
+    await expect(
+      buildProbe(pool, playerId, starterId, { level: 2 }),
+    ).rejects.toMatchObject({ code: 'not_available' });
+
+    // Cible : le starter du voisin (à 150–300 pc) — invisible sans scope.
+    const { rows: foreign } = await pool.query(
+      `SELECT id, x, y FROM bodies WHERE owner_id IS NOT NULL AND owner_id <> $1 AND is_starter LIMIT 1`,
+      [playerId],
+    );
+    const before = await visibleBodies(pool, playerId);
+    expect(before.some((b) => b.id === foreign[0].id)).toBe(false);
+
+    // Send : c'est LA sonde en survol (la première) qui part.
+    const sent = await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: foreign[0].x, y: foreign[0].y },
+      FAST,
+    );
+    expect(sent.probeId).toBe(built.probeId);
+    await waitArrived(sent.probeId);
+    const ships = await fleet(pool, playerId);
+    expect(ships.find((s) => s.id === sent.probeId)!.status).toBe('idle');
+
+    // La Silence se lève : le monde du voisin entre dans le ciel connu.
+    const after = await visibleBodies(pool, playerId);
+    expect(after.some((b) => b.id === foreign[0].id)).toBe(true);
+  });
+
+
+  it('W1 multi-fuel : ordre configuré, bascule à sec du slot actif, pré-brûlage ordonné', async () => {
+    // Sonde neuve (cap du jour : voir tests précédents — on reste ≤ 5).
+    const { probeId } = await buildProbe(pool, playerId, starterId);
+    // Injecte un réservoir multi-type et un ordre : hot d'abord, puis cold.
+    await pool.query(
+      `UPDATE ships SET fuel = '{"hot": 2, "cold": 10}',
+          fuel_order = '["hot","cold"]', fuel_rate_u_per_day = 0,
+          fuel_as_of = now() WHERE id = $1`,
+      [probeId],
+    );
+    // Le slot ACTIF est hot (premier de l'ordre avec du stock) ; le
+    // total vaut 12.
+    const view = (await fleet(pool, playerId)).find((s) => s.id === probeId)!;
+    expect(view.fuel.hot).toBeCloseTo(2, 6);
+    expect(view.fuel.cold).toBeCloseTo(10, 6);
+    // Pré-brûlage ORDONNÉ : un trajet de 100 pc coûte 5 u — 2 pris sur
+    // hot (épuisé), 3 sur cold.
+    const { rows: home } = await pool.query(
+      `SELECT x, y FROM bodies WHERE id = $1`,
+      [starterId],
+    );
+    await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: Number(home[0].x) + 100, y: Number(home[0].y) },
+      FAST,
+    );
+    const after = (await fleet(pool, playerId)).find((s) => s.id === probeId)!;
+    expect(after.fuel.hot ?? 0).toBeCloseTo(0, 6);
+    expect(after.fuel.cold).toBeCloseTo(7, 6);
+    // Ordre invalide refusé (§10 : doublons/types inconnus).
+    await expect(
+      setProbeFuelOrder(pool, playerId, probeId, ['hot', 'hot']),
+    ).rejects.toMatchObject({ code: 'not_available' });
+  });
+
+  it('scoop stellaire : plein à 70 u contre 10 HP ; le 5e scoop détruit la sonde', async () => {
+    // Une sonde en survol du starter est à 40 pc de l'étoile (> 8 pc) :
+    // scoop refusé. On l'envoie SUR l'étoile puis on scoope à l'arrêt.
+    const { rows: star } = await pool.query(
+      `SELECT id, x, y FROM bodies WHERE body_type = 'star'
+         AND star_fuel_type IS NOT NULL
+       ORDER BY (x - (SELECT x FROM bodies WHERE id = $1))^2
+              + (y - (SELECT y FROM bodies WHERE id = $1))^2 LIMIT 1`,
+      [starterId],
+    );
+    const probeId = (await buildProbe(pool, playerId, starterId)).probeId;
+    await expect(
+      scoopProbeFuel(pool, playerId, probeId),
+    ).rejects.toMatchObject({ code: 'not_available' }); // trop loin (40 pc)
+    await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: Number(star[0].x), y: Number(star[0].y) },
+      FAST,
+    );
+    await waitArrived(probeId);
+    const first = await scoopProbeFuel(pool, playerId, probeId);
+    expect(first.destroyed).toBe(false);
+    expect(first.fuelUnits).toBe(70); // plein
+    // W5 : la sonde a TRAVERSÉ le champ climatique de l'étoile
+    // (0,5 × r_nova) sans bouclier — péage de bord ≈ rayon/120 × 2,5 HP/j
+    // en sus des 10 HP du scoop.
+    expect(first.hp).toBeLessThanOrEqual(50 - 10);
+    expect(first.hp).toBeGreaterThan(50 - 10 - 2);
+    // 3 scoops de plus → 10 HP ; le 5e fait céder la coque : PERDUE.
+    for (let i = 0; i < 3; i++) await scoopProbeFuel(pool, playerId, probeId);
+    const last = await scoopProbeFuel(pool, playerId, probeId);
+    expect(last.destroyed).toBe(true);
+    const { rows: gone } = await pool.query(
+      `SELECT 1 FROM ships WHERE id = $1`,
+      [probeId],
+    );
+    expect(gone).toHaveLength(0);
+  });
+
+  it('ordre FIFO du send, cap de production 5/j/pad, aucune limite de flotte', async () => {
+    // Cap 5/j compté sur les sondes VIVANTES nées aujourd'hui [TUNE-v1
+    // annoncé : une sonde détruite « rembourse » son slot du jour]. Ici :
+    // 3 construites (dont W1), 1 détruite au scoop → 3 de plus = 5.
+    const builtIds: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      builtIds.push((await buildProbe(pool, playerId, starterId)).probeId);
+    }
+    await expect(buildProbe(pool, playerId, starterId)).rejects.toMatchObject({
+      code: 'not_available', // cap de PRODUCTION du jour — pas de flotte max
+    });
+    // Toutes survolent le monde en attendant (aucune limite de flotte).
+    const flotte = await fleet(pool, playerId);
+    for (const id of builtIds) {
+      expect(flotte.find((s) => s.id === id)!.status).toBe('hovering');
+    }
+    // Send = la PREMIÈRE construite disponible (FIFO par created_at) —
+    // vers une cible DANS l'autonomie du plein de naissance (25 % de
+    // 70 u ÷ 0,05 u/pc = 350 pc ; on vise 200 pc).
+    const { rows: home } = await pool.query(
+      `SELECT x, y FROM bodies WHERE id = $1`,
+      [starterId],
+    );
+    const sent = await sendProbe(
+      pool,
+      playerId,
+      starterId,
+      { x: Number(home[0].x) + 200, y: Number(home[0].y) },
+      FAST,
+    );
+    expect(sent.probeId).toBe(builtIds[0]);
+    // Trajet réellement FACTURÉ : 200 pc × 0,05 = 10 u pré-brûlées.
+    const after = (await fleet(pool, playerId)).find(
+      (s) => s.id === sent.probeId,
+    )!;
+    expect(Object.values(after.fuel)[0] ?? 0).toBeCloseTo(17.5 - 10, 1);
+  });
+});
