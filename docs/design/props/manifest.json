@@ -1688,6 +1688,78 @@
   "expected_art": "transparent cold-climate adaptation only"
  },
  {
+  "file": "assets/game/buildings/building_clinic_l1.gif",
+  "size": "512x256",
+  "label": "BLDG clinic L1",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "public health clinic, treatment bays and triage lights (level 1)"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l1.ov.hot.gif",
+  "size": "512x256",
+  "label": "clinic L1 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l1.ov.cold.gif",
+  "size": "512x256",
+  "label": "clinic L1 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l2.gif",
+  "size": "512x256",
+  "label": "BLDG clinic L2",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "public health clinic, treatment bays and triage lights (level 2)"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l2.ov.hot.gif",
+  "size": "512x256",
+  "label": "clinic L2 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l2.ov.cold.gif",
+  "size": "512x256",
+  "label": "clinic L2 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l3.gif",
+  "size": "512x256",
+  "label": "BLDG clinic L3",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "public health clinic, treatment bays and triage lights (level 3)"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l3.ov.hot.gif",
+  "size": "512x256",
+  "label": "clinic L3 hot",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent hot-climate adaptation only"
+ },
+ {
+  "file": "assets/game/buildings/building_clinic_l3.ov.cold.gif",
+  "size": "512x256",
+  "label": "clinic L3 cold",
+  "overlay": true,
+  "animated": true,
+  "expected_art": "transparent cold-climate adaptation only"
+ },
+ {
   "file": "assets/game/buildings/building_obs_station_l1.gif",
   "size": "512x256",
   "label": "BLDG obs_station L1",
@@ -4224,6 +4296,14 @@
   "expected_art": "medical/science lab card art"
  },
  {
+  "file": "assets/game/cards/card_building_clinic.png",
+  "size": "512x512",
+  "label": "CARD clinic",
+  "overlay": false,
+  "animated": false,
+  "expected_art": "public health clinic, treatment bays and triage lights card art"
+ },
+ {
   "file": "assets/game/cards/card_building_obs_station.png",
   "size": "512x512",
   "label": "CARD obs_station",
@@ -4686,5 +4766,13 @@
   "overlay": false,
   "animated": true,
   "expected_art": "gas propulsion fuel"
+ },
+ {
+  "file": "assets/game/resources/res_junk.gif",
+  "size": "256x256",
+  "label": "RES junk",
+  "overlay": false,
+  "animated": true,
+  "expected_art": "salvageable compressed space junk"
  }
 ]

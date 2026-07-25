@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# @spec Implements: docs/BACKLOG.md §P0.2 "Reconcile repo to standards"; CLAUDE.md §3
+#       (commandes de lancement runDev/runStaging/runProd) + §14; README.md §"Run
+#       the game from the repository root"; docs/DAT.md §6 "Environments & deployment".
+# Root convenience launcher: boots the FULL local dev stack (Postgres container,
+# migrations, seed, API, tick worker, Vite client) by delegating to the game/
+# monorepo. Runnable from the repository root — no `cd game` needed.
+set -euo pipefail
+
+here="$(cd "$(dirname "$0")" && pwd)"
+cd "$here/game"
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[runDev] pnpm introuvable. Installe pnpm >= 10 (voir README §Prerequisites)." >&2
+  exit 1
+fi
+
+# Premier lancement sur un clone frais : installer les dépendances du monorepo.
+if [ ! -d node_modules ]; then
+  echo "[runDev] node_modules absent — installation des dépendances (pnpm install)…"
+  pnpm install
+fi
+
+echo "[runDev] Démarrage de l'environnement de développement ATG…"
+exec pnpm runDev

@@ -1,0 +1,29 @@
+{
+  "name": "atg-game",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ATG — Across The Galaxies (Outerspace, The gamE) — application monorepo",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "scripts": {
+    "runDev": "bash scripts/runDev.sh",
+    "runDev:db": "docker compose -f docker-compose.dev.yml up -d db --wait",
+    "stopDev": "bash scripts/stopDev.sh",
+    "migrate": "pnpm --filter @atg/server migrate",
+    "seed": "pnpm --filter @atg/server seed",
+    "resetDb": "bash scripts/resetDb.sh",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:integration": "pnpm --filter @atg/server test:integration",
+    "test:e2e": "pnpm --filter @atg/e2e test"
+  }
+}
