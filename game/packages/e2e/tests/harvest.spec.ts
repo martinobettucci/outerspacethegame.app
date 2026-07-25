@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; docs/GAME_BOOK.md §22; docs/DESIGN_GUIDE.md §8.8. */
 /**
  * E2E — récolte stellaire & Starfall (GB §22, DG §8.8) : rig monté à
  * l'atelier (vraie commande, coût payé), vol RÉEL jusqu'à ~1 pc de

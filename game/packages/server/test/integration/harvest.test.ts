@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Star harvest & Starfall”; docs/GAME_BOOK.md §22; docs/DESIGN_GUIDE.md §8.8. */
 /**
  * Intégration récolte stellaire (GB §22, DG §8.8) sur vraie base : rig
  * monté à l'atelier (coût payé), récolte IMMOBILE à ≤ 8 pc (gradient

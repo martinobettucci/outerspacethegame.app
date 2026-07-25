@@ -3,7 +3,7 @@
 > **Plan persisté (CLAUDE.md §5).** Demandé par le responsable le
 > 2026-07-21 : l'inventaire TOTAL de ce qui a été validé et attend
 > d'être codé, plus ce qui reste au stade de discussion. Sources de
-> vérité : `JOURNAL.md` (décisions datées), `docs/BACKLOG.md` (statuts
+> vérité : `docs/JOURNAL.md` (décisions datées), `docs/BACKLOG.md` (statuts
 > détaillés), `docs/POP_V2_PLAN.md` (population v2). Ce fichier est
 > l'index d'exécution — tenu à jour à chaque chunk.
 

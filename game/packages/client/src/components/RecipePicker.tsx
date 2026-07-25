@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P2 “Industry”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3/§5.1/§6; docs/DESIGN_SYSTEM.md §5.1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P2 “Industry”; docs/GAME_BOOK.md §9; docs/DESIGN_GUIDE.md §3.3/§5.1/§6; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Choix de recette à la construction — canon GB §9 : « une industrie mint
  * exactement une chose », choisie en posant la carte.

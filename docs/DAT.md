@@ -3,7 +3,7 @@
 > Living architecture dossier for ATG (Across The Galaxies). The application
 > is under active implementation in `game/`; this document distinguishes the
 > implemented state from remaining target architecture. Mechanics and numbers
-> live in `DESIGN_GUIDE.md`; rules canon in `GAME_BOOK.md`.
+> live in `docs/DESIGN_GUIDE.md`; rules canon in `docs/GAME_BOOK.md`.
 
 ## 1. System overview
 
@@ -66,7 +66,7 @@
   real shared functions. A unit test
   asserts each documented value equals its live constant, so a balance change
   can never leave the manual stale. Distinct from the developer canon
-  (`GAME_BOOK.md`/`DESIGN_GUIDE.md`): zero internal references, spoiler-free
+  (`docs/GAME_BOOK.md`/`docs/DESIGN_GUIDE.md`): zero internal references, spoiler-free
   (systems only, never enumerating discoverable content).
 - **Game API** — stateless service; auth, commands (place card, set policy,
   launch mission, trade, ping), reads. Every authorization rule is enforced
@@ -99,7 +99,7 @@
 
 ## 3. Data model (principal aggregates)
 
-Authoritative tables (details in `DESIGN_GUIDE.md`):
+Authoritative tables (details in `docs/DESIGN_GUIDE.md`):
 
 - `players` (account, politics archetype, personal ship), `factions`,
   `npcs` (people, role, rarity, binding host + account-bind timers).
@@ -537,7 +537,7 @@ bodies; `/planets/:id` stays owner-only even at tier 4.
 Per CLAUDE.md §3: dev / staging / prod, containerized (Compose), documented
 `runDev`/`runStaging`/`runProd` equivalents. Dev must be fully local:
 Postgres in a container, recreatable database, reproducible seed
-(`DESIGN_GUIDE.md` §2.2 starter generator doubles as the seed source), local
+(`docs/DESIGN_GUIDE.md` §2.2 starter generator doubles as the seed source), local
 Stripe/webhook and chain-relayer mocks with documented contracts. E2E:
 Playwright.
 

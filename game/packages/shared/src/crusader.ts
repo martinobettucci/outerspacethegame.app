@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8; GAME_BOOK.md §14; DESIGN_GUIDE.md §8. */
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8; docs/GAME_BOOK.md §14; docs/DESIGN_GUIDE.md §8. */
 /**
  * W8 — le CRUSADER, petite planète volante (MASTER_PLAN W8, décisions
  * responsable 2026-07-21) : le combat_l ne se pose JAMAIS. Il naît en

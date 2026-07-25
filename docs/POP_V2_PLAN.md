@@ -1,8 +1,8 @@
 # Population & Employment v2 — implementation plan (chunks BA → BD)
 
 > **Persisted plan (owner rule, CLAUDE.md §5 « Persistance immédiate des
-> décisions »).** The design spec is `DESIGN_GUIDE.md §3.2-v2` (canon
-> `GAME_BOOK.md §10`, balancing `BALANCE_LOG.md` Round 9 → guide v0.10).
+> décisions »).** The design spec is `docs/DESIGN_GUIDE.md §3.2-v2` (canon
+> `docs/GAME_BOOK.md §10`, balancing `docs/BALANCE_LOG.md` Round 9 → guide v0.10).
 > This document is the *implementation decomposition* of that single
 > spec into shippable chunks — it is an artifact in its own right, not
 > conversation narration. Backlog sub-items live in `docs/BACKLOG.md`

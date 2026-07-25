@@ -3,18 +3,18 @@
 > **What this document is.** The complete mechanical specification: every
 > system with concrete rules, numbers and formulae, plus the workflows and
 > expected behaviors around them. It implements the decision canon in
-> `GAME_BOOK.md` and the world in `GAME_BIBLE.md`.
+> `docs/GAME_BOOK.md` and the world in `docs/GAME_BIBLE.md`.
 >
 > **Version v0.10** — Population & Employment v2 (§3.2-v2, owner canon
 > 2026-07-19) simulated & patched by **Round 9** (numerical simulator,
 > all six anchors green), with the owner-approved medicine-age addendum
 > implemented 2026-07-20 ; previously: sanctuary = earned status
 > (owner-approved F1d) + rounds 1–2 system patches + round-4 content
-> patches + the **build ≠ install** keystone — see `BALANCE_LOG.md`.
+> patches + the **build ≠ install** keystone — see `docs/BALANCE_LOG.md`.
 >
 > **Convention:** every invented number/formula is tagged **[TUNE]** — a
 > deliberate, visible placeholder, simulation-tested but not sacred. Untagged
-> rules are canon. Changes here must not contradict `GAME_BOOK.md`; if they
+> rules are canon. Changes here must not contradict `docs/GAME_BOOK.md`; if they
 > must, change the GAMEBOOK first.
 
 ---
@@ -1426,4 +1426,4 @@ left.
 - No strategy > 60% win-share in sim cohorts [TARGET]
 - New-player 7-day retention path never blocked by another player [HARD]
 
-*Findings & patch history: `BALANCE_LOG.md`.*
+*Findings & patch history: `docs/BALANCE_LOG.md`.*

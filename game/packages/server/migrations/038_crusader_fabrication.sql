@@ -1,4 +1,4 @@
--- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8 (W8e); JOURNAL 2026-07-22 (plan W8e persisté); PROD_MIGRATIONS.md §« Migrations en attente ».
+-- @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W8 (W8e); JOURNAL 2026-07-22 (plan W8e persisté); docs/PROD_MIGRATIONS.md §« Migrations en attente ».
 -- 038 : W8e — fabrication À BORD du Crusader. Les work-orders peuvent
 -- viser un VAISSEAU (le Crusader) au lieu d'un monde ; la balance
 -- d'items de bord vit dans ships.crusader_items (carte clé → compte).

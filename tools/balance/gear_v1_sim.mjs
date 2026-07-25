@@ -1,4 +1,4 @@
-/** @spec This simulation implements: BALANCE_LOG.md Round 11 (W9f accessory tuning); docs/GEAR_CATALOG.md. */
+/** @spec This simulation implements: docs/BALANCE_LOG.md Round 11 (W9f accessory tuning); docs/GEAR_CATALOG.md. */
 /**
  * Round 11 — W9f : économie du catalogue d'accessoires.
  *

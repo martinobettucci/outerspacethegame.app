@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and implemented §P2–§P4 event-backed units; docs/MASTER_PLAN.md §W8; GAME_BOOK.md §10/§15; DESIGN_GUIDE.md §1/§3.2-v2. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and implemented §P2–§P4 event-backed units; docs/MASTER_PLAN.md §W8; docs/GAME_BOOK.md §10/§15; docs/DESIGN_GUIDE.md §1/§3.2-v2. */
 /**
  * Handlers d'événements de simulation. Chaque handler est idempotent
  * (at-least-once) et ne manipule que l'état passé par sa transaction.

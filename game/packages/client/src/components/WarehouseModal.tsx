@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P2 “Warehouse”; GAME_BOOK.md §9; DESIGN_GUIDE.md §6; docs/DESIGN_SYSTEM.md §5.1/§8/§9. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P2 “Warehouse”; docs/GAME_BOOK.md §9; docs/DESIGN_GUIDE.md §6; docs/DESIGN_SYSTEM.md §5.1/§8/§9. */
 import { useMemo, useState } from 'react';
 import { Boxes, Rocket, Trash2, Warehouse, X } from 'lucide-react';
 import { createPortal } from 'react-dom';

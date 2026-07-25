@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8; GAME_BOOK.md §14; DESIGN_GUIDE.md §8. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8; docs/GAME_BOOK.md §14; docs/DESIGN_GUIDE.md §8. */
 /** W8 — Crusader : ventilation des migrants (proportions d'âges, cap). */
 import { describe, expect, it } from 'vitest';
 import { CRUSADER, crusaderMigrants, isCrusader } from './crusader.js';

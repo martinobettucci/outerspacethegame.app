@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; docs/GAME_BOOK.md §14; docs/DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * E2E — W6 pipeline accessoires & upgrades-items (MASTER_PLAN W6,
  * 2026-07-21) : workshop + warehouse posés (vraies commandes), le

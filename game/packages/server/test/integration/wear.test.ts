@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; GAME_BOOK.md §27; DESIGN_GUIDE.md §8.7/§8.8. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W5; docs/BACKLOG.md §P3 “Hull wear & shields”; docs/GAME_BOOK.md §27; docs/DESIGN_GUIDE.md §8.7/§8.8. */
 /**
  * Intégration usure de coque & adaptations (GB §27 SETTLED, DG §8.8 ;
  * W5 2026-07-21) sur vraie base : coque MORPHIQUE (adaptation = temps

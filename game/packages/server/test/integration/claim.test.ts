@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; docs/GAME_BOOK.md §6/§22; docs/DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * Intégration claim rig & salvage (GB §6 « no honor », DG §8.8) sur vraie
  * base : rig monté à l'atelier L2 (coût 25 steelL + 5 gold), réclamation

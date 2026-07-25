@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; GAME_BOOK.md §14; DESIGN_GUIDE.md §8.2/§8.8. */
+/** @spec All declarations and algorithms in this file implement: docs/MASTER_PLAN.md §W6; docs/BACKLOG.md §P3 “Ship hulls”; docs/GAME_BOOK.md §14; docs/DESIGN_GUIDE.md §8.2/§8.8. */
 /**
  * ITEMS non-fongibles (W6, MASTER_PLAN — décisions responsable
  * 2026-07-21) : accessoires et upgrades fabriqués comme des OBJETS

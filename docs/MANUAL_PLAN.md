@@ -18,7 +18,7 @@ code** — e.g. a depleted deposit yields **0 forever** and does *not* fall back
 to trace mining, while a never-seeded basic mines a flat trace rate forever.
 Nothing player-facing explains these. The Codex closes that gap.
 
-The internal canon (`GAME_BOOK.md`, `DESIGN_GUIDE.md`) is developer-facing and
+The internal canon (`docs/GAME_BOOK.md`, `docs/DESIGN_GUIDE.md`) is developer-facing and
 references implementation (Postgres, ticks, handlers). The Codex is a distinct
 deliverable: **player language, zero internal references, always reachable.**
 
@@ -205,7 +205,7 @@ they have discovered.
 
 ## 8. Resolved related defect (2026-07-20)
 
-The canonical filename is `GAME_BOOK.md`. All live references in the working
+The canonical filename is `docs/GAME_BOOK.md`. All live references in the working
 rules and design documentation now use that path; the doc-integrity item is
 closed in BACKLOG. Historical commit messages are immutable and are not live
 links.

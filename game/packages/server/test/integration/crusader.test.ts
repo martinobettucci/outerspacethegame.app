@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8 (W8a+W8b) ; GAME_BOOK.md §14 (amendé 2026-07-21) ; DESIGN_GUIDE.md §8.1. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §W8 (W8a+W8b) ; docs/GAME_BOOK.md §14 (amendé 2026-07-21) ; docs/DESIGN_GUIDE.md §8.1. */
 /**
  * Intégration W8a : naissance du CRUSADER (MASTER_PLAN W8, JOURNAL
  * 2026-07-21) sur vraie base — le combat_l naît EN SURVOL (jamais à

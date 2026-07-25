@@ -20,11 +20,11 @@ first (#P2Enjoy — not a "gamified Ponzi").
 
 | Document | Role |
 |---|---|
-| `GAME_BOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
-| `GAME_BIBLE.md` | Lore & world (the Silence, the three peoples, places, tone) |
-| `DESIGN_GUIDE.md` | Complete mechanical spec with formulae — all invented values tagged `[TUNE]` |
-| `BALANCE_LOG.md` | Simulated-campaign balancing loop: findings & applied patches |
-| `JOURNAL.md` | Chronological decision log (equivalent of `docs/JOURNAL.md`) |
+| `docs/GAME_BOOK.md` | **Rule canon** — every settled design decision; wins on conflict |
+| `docs/GAME_BIBLE.md` | Lore & world (the Silence, the three peoples, places, tone) |
+| `docs/DESIGN_GUIDE.md` | Complete mechanical spec with formulae — all invented values tagged `[TUNE]` |
+| `docs/BALANCE_LOG.md` | Simulated-campaign balancing loop: findings & applied patches |
+| `docs/JOURNAL.md` | Chronological decision log |
 | `docs/BACKLOG.md` | Full project backlog with verification statuses |
 | `docs/DAT.md` | Technical architecture dossier (target architecture) |
 | `docs/DESIGN_SYSTEM.md` | UI design system (dark "groovy" direction, P2Enjoy palette) |
@@ -52,6 +52,25 @@ bundle install
 bundle exec jekyll serve      # http://127.0.0.1:4000
 bundle exec jekyll build      # outputs to _site/
 ```
+
+## Run the game from the repository root
+
+Three convenience launchers live at the repo root — no `cd game` needed:
+
+```bash
+./runDev        # boots the FULL local dev stack (installs deps on first run,
+                # then delegates to `pnpm runDev` in game/): Postgres container +
+                # migrations + seed + API + tick worker + Vite client.
+                # client: http://localhost:5173 — API: http://localhost:8080
+./runStaging    # honest stub — staging env is not built yet; prints what is
+                # missing (see docs/DAT.md §6) and exits non-zero.
+./runProd       # honest stub — production is not built yet; production is a
+                # source of truth (CLAUDE.md §9), so nothing is automated here.
+                # Real deploys follow docs/PROD_MIGRATIONS.md by explicit human action.
+```
+
+`./runDev` requires **pnpm ≥ 10**, **Node ≥ 22** and **Docker**. It is a thin
+wrapper: the underlying `pnpm` scripts below still work from inside `game/`.
 
 ## Install & run — game (from `game/`)
 

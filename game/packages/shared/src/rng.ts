@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; GAME_BOOK.md §15/§19; DESIGN_GUIDE.md §1/§2.2b. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core” and §P2 “Pocket luck”; docs/GAME_BOOK.md §15/§19; docs/DESIGN_GUIDE.md §1/§2.2b. */
 /**
  * RNG déterministe seedé — utilisé UNIQUEMENT aux moments de génération
  * (roll de planète, ouverture de pod, scatter de sortie de porte…).

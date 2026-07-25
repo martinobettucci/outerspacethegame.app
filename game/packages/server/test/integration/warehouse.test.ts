@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Vehicle warehouse” and §P4 “Manual channel”; GAME_BOOK.md §9; DESIGN_GUIDE.md §3.3b/§6. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Vehicle warehouse” and §P4 “Manual channel”; docs/GAME_BOOK.md §9; docs/DESIGN_GUIDE.md §3.3b/§6. */
 /**
  * Intégration entrepôt de véhicules (GB §9, DG §6 round 6) sur vraie base :
  * balances SÉPARÉES par taille (tampon au sol 2M/2S, jamais de L sans

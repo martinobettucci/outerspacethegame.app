@@ -10,7 +10,7 @@
 > Done, CLAUDE.md §17).
 >
 > **Functional reference rule (owner directive):** every implementation unit
-> cites its canon sections — `GB §x` = GAME_BOOK.md, `DG §y` = DESIGN_GUIDE.md
+> cites its canon sections — `GB §x` = docs/GAME_BOOK.md, `DG §y` = docs/DESIGN_GUIDE.md
 > (v0.9.2). **The unit's Definition of Done INCLUDES verifying the delivered
 > behavior against the cited sections** (rules conformity review + the §15
 > tests + §16 visual checks). An item with no reference may not start.
@@ -24,12 +24,12 @@
 ## P0 — Préproduction (current phase)
 
 ### P0.1 Design canon
-- [x] GAME_BOOK.md — reconciled rule canon (27 sections; conflicts resolved)
-- [x] JOURNAL.md — decision log, rebuildable history (10 sessions)
+- [x] docs/GAME_BOOK.md — reconciled rule canon (27 sections; conflicts resolved)
+- [x] docs/JOURNAL.md — decision log, rebuildable history (10 sessions)
 - [x] Archaeology sweeps — all branches of all 3 repos + 2021/2022 artist briefs salvaged
-- [x] GAME_BIBLE.md — lore canon (the Silence, three peoples, places, substances, tone)
-- [x] DESIGN_GUIDE.md — full mechanical spec, formulae, `[TUNE]` convention (now v0.9.2 after 8 balance rounds)
-- [x] Balance loop — 3 rounds, 7 simulated campaigns, 55 patches, verdict SATISFACTORY (BALANCE_LOG.md)
+- [x] docs/GAME_BIBLE.md — lore canon (the Silence, three peoples, places, substances, tone)
+- [x] docs/DESIGN_GUIDE.md — full mechanical spec, formulae, `[TUNE]` convention (now v0.9.2 after 8 balance rounds)
+- [x] Balance loop — 3 rounds, 7 simulated campaigns, 55 patches, verdict SATISFACTORY (docs/BALANCE_LOG.md)
 
 ### P0.2 Standards & repository compliance (CLAUDE.md)
 - [x] Register CLAUDE.md + « Spécificités du projet » local block
@@ -79,7 +79,7 @@
 ## P1 — Fondations techniques (**GO responsable donné le 2026-07-12** — JOURNAL session 30)
 
 - [~] Monorepo/app scaffolding + containerized dev env (Compose: Postgres, API, worker, client; runDev/runStaging/runProd) → GB §1; DAT §2/§6 — dev opérationnel et vérifié (build + unit + intégration + E2E + captures observées) ; **reste : Compose staging/prod** (avec le premier déploiement)
-- [~] Migrations framework + baseline schema from docs/SCHEMA.md + PROD_MIGRATIONS.md → GB §1; DAT §3 — runner transactionnel + 001_baseline appliqué + PROD_MIGRATIONS créé ; tests intégration OK ; preuve E2E complète au premier parcours P2
+- [~] Migrations framework + baseline schema from docs/SCHEMA.md + docs/PROD_MIGRATIONS.md → GB §1; DAT §3 — runner transactionnel + 001_baseline appliqué + PROD_MIGRATIONS créé ; tests intégration OK ; preuve E2E complète au premier parcours P2
 - [x] Deterministic sim core: tick 60 s, event queue, lazy (value, rate, t0) evaluation, seeded-hash generation-RNG, offline catch-up → GB §15; DG §1 — file d'événements (SKIP LOCKED, idempotence, concurrence testée), evalLazy/whenReaches/rebase, SeededStream (34 tests shared + 15 server) ; rattrapage hors-ligne prouvé en intégration (zéro dérive) ; preuve E2E de bout en bout LIVRÉE (chunk AC, offline-catchup.spec.ts)
 - [ ] Unified game clock — `TIME_SCALE` accelerates the WHOLE simulation (dev/test) → GB §15; DG §1 — objectif : une seule échelle accélère minuteries d'action (déjà OK), économie continue `evalLazy`/`whenReaches`/`rebase` (LACUNE : temps réel non scalé) ET cadence quotidienne `pop_daily`/`crusader_daily`/`pop_clock`/grâce colonie 14 j (LACUNE : `nowMs + 86_400_000` brut). Approche : mise à l'échelle de l'écoulé, horodatages stockés en ms RÉELLES inchangés, `timeScale=1` ⇒ comportement identique (rétro-compat par construction, prod inchangée). Instance dev : `TIME_SCALE=3600` (1 s réelle = 1 h-jeu) + `TICK_MS=1000` via `runDev.sh`. DoD : test unitaire `lazy` (écoulé ×scale, `whenReaches` renvoie l'instant réel divisé), audit grep (aucun appel non-test sans `timeScale`), test d'intégration `pop_daily` (cadence divisée), typecheck+build, vérif fonctionnelle instance dev (action en secondes + stock qui bouge). Décision responsable 2026-07-24 (JOURNAL). — voir aussi §P1 « Deterministic sim core »
 - [ ] Spatial index (grid hash) + segment-circle interception solver → GB §2/§6; DG §9.2
@@ -173,7 +173,7 @@
 - [x] Section: Population (three ages, natality, rations, oxygen, optional medicine, death clocks, over-capacity) → GB §10; DG §3.2-v2 — rédigée + pyramide et poids médicaux live, frontière stock/flux/surplus expliquée, vérifiée visuellement et parcourue par l'E2E dédié
 - [x] Section: Efficiency & employment (E(u) curve, drifting optimum, unemployment kills, storage brake) → GB §10; DG §3.4 — rédigée + `EfficiencyCurve` réutilisé (courbe live), vérifiée visuellement et parcourue par l'E2E dédié
 - [x] Codex E2E (opens from Galaxy/Planet/Market, contextual default section, sections render, disclosure toggles, medicine facts live, 1280×800 bounds) → CLAUDE.md §15/§16 — `e2e/tests/codex.spec.ts` revalidé post-médecine dans le balayage complet **39/39**, puis seul **1/1**, sur bases recréées, un worker, zéro retry
-- [x] Doc-integrity: tous les liens vivants utilisent le vrai fichier canonique `GAME_BOOK.md`; l'ancien chemin sans underscore ne subsiste que dans la trace de résolution (les messages de commits historiques sont immuables) — corrigé 2026-07-20
+- [x] Doc-integrity: tous les liens vivants utilisent le vrai fichier canonique `docs/GAME_BOOK.md`; l'ancien chemin sans underscore ne subsiste que dans la trace de résolution (les messages de commits historiques sont immuables) — corrigé 2026-07-20
 
 ## P3 — Galaxie & mouvement
 

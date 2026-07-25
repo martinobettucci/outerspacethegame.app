@@ -2,7 +2,7 @@
 
 > **Status:** living document. This file is the single source of truth for game
 > rules and architecture decisions. When a rule changes, edit it *here* so the
-> canon never contradicts itself. Raw, dated decisions live in `JOURNAL.md`;
+> canon never contradicts itself. Raw, dated decisions live in `docs/JOURNAL.md`;
 > this file is the reconciled result and can be rebuilt from that journal.
 >
 > Anything marked **(OPEN)** is not yet settled — do not treat it as canon.
@@ -921,4 +921,4 @@ to build:**
 
 ---
 
-*Last reconciled from `JOURNAL.md` through the 2026-07-11 brainstorm session.*
+*Last reconciled from `docs/JOURNAL.md` through the 2026-07-11 brainstorm session.*

@@ -1,7 +1,7 @@
 # ATG — Decision JOURNAL (raw log)
 
 > Append-only, chronological log of raw design decisions as they were made.
-> `GAME_BOOK.md` is the reconciled canon; it can be rebuilt from this journal.
+> `docs/GAME_BOOK.md` is the reconciled canon; it can be rebuilt from this journal.
 > Each entry: date · topic · decision · rationale/notes. Newest at the bottom.
 
 ---
@@ -133,7 +133,7 @@ ERC721s, `Material/Cristal/Fuel` ERC20s, an on-chain `GameEngine.sol`);
   isometric 2D tiles + card hand (renderer TBD; Pixi/canvas likely).
 
 ### Process
-- **Created `GAME_BOOK.md` (canon) and `JOURNAL.md` (raw log).** Journal is the
+- **Created `docs/GAME_BOOK.md` (canon) and `docs/JOURNAL.md` (raw log).** Journal is the
   rebuildable source of truth for decisions.
 
 ### Still open (carried forward)
@@ -576,18 +576,18 @@ pipeline doc, not GAMEBOOK).
 ## 2026-07-12 — Session 10 (Game Bible, Design Guide, simulation balancing loop)
 
 ### New documents
-- **GAME_BIBLE.md** — lore canon: the Silence (Fermi), the Starfall Wars &
+- **docs/GAME_BIBLE.md** — lore canon: the Silence (Fermi), the Starfall Wars &
   Scattering, three peoples (Humans / the Forged / the Vess — always rich),
   the Sovereign & personal-ship incarnation, places/substances/society lore,
   crystal names (Glace/Ignis/Virid/Nox), "cells" as the spice, themes & tone.
-- **DESIGN_GUIDE.md** — complete mechanical spec: every system given concrete
+- **docs/DESIGN_GUIDE.md** — complete mechanical spec: every system given concrete
   formulae & numbers (all invented values tagged [TUNE]): tick/lazy-eval sim,
   universe gen & spawn, population/illness/efficiency formulas, deposits &
   depletion, governance masks, v0 tech tree & recipes, hull tables, fuel
   matrix, movement/interception, deterministic combat + hijack/conquest,
   AMM/auctions/pods economy, colonization, artificial planets, NFT bridge,
   monetization, player journeys, anti-abuse, balance targets.
-- **BALANCE_LOG.md** — the balancing loop record.
+- **docs/BALANCE_LOG.md** — the balancing loop record.
 
 ### Simulation balancing loop (subagent campaigns)
 - **Round 1:** 4 archetype campaigns (Industrialist, Corsair, Voyager,
@@ -621,7 +621,7 @@ finalizing. Still preproduction — no app code.
 ### Decisions & work
 - **CLAUDE.md registered verbatim** + « Spécificités du projet » local block:
   preproduction status, design-doc precedence (GAMEBOOK > BIBLE > GUIDE),
-  root JOURNAL.md = docs/JOURNAL.md equivalent, mandated session branch as a
+  root docs/JOURNAL.md = docs/JOURNAL.md equivalent, mandated session branch as a
   documented §13 exception, English docs / French commits, dark-theme
   exception to §4, balancing-sims as the sole subagent exception.
 - **Compliance docs created:** README.md (status, corpus map, stack, limits),
@@ -1188,7 +1188,7 @@ d'événements, lazy eval, RNG seedé) + catalogue de contenu complet dans
   lazy (amount, rate_per_day, as_of), buildings (1 tuile = contrainte UNIQUE,
   statuts constructing/active/demolishing), tech_unlocks, npcs (stat_rolls
   individuels), ships, events. docs/SCHEMA.md (conventions et pourquoi) +
-  PROD_MIGRATIONS.md (contrat §12, baseline « jamais déployé »).
+  docs/PROD_MIGRATIONS.md (contrat §12, baseline « jamais déployé »).
 - **Sim core** : evalLazy/whenReaches/rebase (pur, borné min/max) ; file
   d'événements avec réclamation FOR UPDATE SKIP LOCKED, transaction par lot,
   handlers idempotents (construction/demolition), garde anti-boucle sur
@@ -2090,7 +2090,7 @@ refus directs §10) ; E2E 18/18 ; captures dock-01…05 observées (§16) :
 usage S 1/2, réglages 48 h + 1 réservé appliqués, overfill chantier
 S 3/2, refus « Docks saturés : aucun dock libre pour une coque S »
 visible en notice, L2 avec S 3/2 · M 0/2 (débordement S en dock M).
-Migration 011 appliquée en dev uniquement (PROD_MIGRATIONS.md : 011 en
+Migration 011 appliquée en dev uniquement (docs/PROD_MIGRATIONS.md : 011 en
 attente d'instruction humaine).
 ## 2026-07-17 — Réparation E2E après synchronisation (§13)
 
@@ -2174,7 +2174,7 @@ manual.spec.ts à deux comptes réels ; captures man-01…05 observées
 (§16) : visibilité publique appliquée, browse à quai avec stock, refus
 du doublon visible en notice, boîte de réception Accept/Decline, fret
 « ore · 2.0 T » à bord de l'acheteur. Migration 012 appliquée en dev
-uniquement (PROD_MIGRATIONS.md : 012 en attente).
+uniquement (docs/PROD_MIGRATIONS.md : 012 en attente).
 
 ## 2026-07-18 — Chunk U : pools AMM du marché L2 (GB §9/§13, DG §11.2)
 
@@ -2375,7 +2375,7 @@ retool.spec.ts (instantané → fenêtre occupée → 24 h minutées à ×7200,
 captures ret-01…03 observées — le retard d'affichage des badges de
 chantier après l'éveil est consigné dans SUGGESTIONS.md) ; suite
 complète en cours au moment du commit, résultat au compte rendu.
-Migration 013 appliquée en dev uniquement (PROD_MIGRATIONS.md : 013 en
+Migration 013 appliquée en dev uniquement (docs/PROD_MIGRATIONS.md : 013 en
 attente).
 
 ## 2026-07-19 — Chunk Z : sols générés par climat (gpt-image-2)
@@ -3286,7 +3286,7 @@ client unit 11/11 ; intégration PostgreSQL 288/288 ; build production ; E2E
 
 ## 2026-07-20 — Intégrité documentaire : nom du canon et statuts Codex
 
-- Le fichier canonique présent sur disque est `GAME_BOOK.md`. Tous les liens
+- Le fichier canonique présent sur disque est `docs/GAME_BOOK.md`. Tous les liens
   vivants qui visaient le chemin inexistant `GAMEBOOK.md` ont été corrigés
   dans les règles d'agent et les volumes de conception. Les mentions
   conceptuelles « GAMEBOOK §… » restent valides ; les anciens messages de
@@ -5332,36 +5332,6 @@ cités en session) ; docs persistées AVANT tout code (CLAUDE.md §5) ; migratio
 code jamais-masqué, recette spaceport, don unique et tests restent à livrer —
 statut backlog `[ ]`.
 
----
-
-## 2026-07-24 — Écran d'éveil : explication par politique
-
-- **Problème.** L'écran « Awaken a new Sovereign » fait choisir une politique
-  **permanente** parmi six, mais n'en explique aucune : le joueur choisit à
-  l'aveugle un engagement irréversible (icône + libellé d'un mot, rien de plus).
-- **Décision.** Ajouter un panneau de détail sous la grille. Il explique la
-  politique **sélectionnée** ; au survol souris ou au focus clavier d'une autre
-  carte, il **prévisualise** cette politique puis revient à la sélection au
-  départ/blur. Choix retenu plutôt qu'un tooltip pur-survol : accessible clavier
-  et tactile, et toujours visible pour le choix engagé (état `previewPolitics`
-  ?? `politics`, `aria-live="polite"`).
-- **Source du texte.** Devise + corps par archétype centralisés dans
-  `i18n/en.ts` (`archetypeDescriptions`), fidèles à DG §4.1 (masques allow/deny
-  + privilèges innés). Spoiler-free : on décrit le style de jeu et le trait inné,
-  jamais un contenu non découvert (noms de mondes, cristaux, techs non atteintes).
-  Pas de gate Codex : l'écran est pré-login, hors manuel in-game.
-- **Anti-dérive / exhaustivité.** Les six politiques proviennent de
-  `ARCHETYPES` (`@atg/shared`) ; test `LoginScreen.archetypes.test.ts` garantit
-  que chacune a libellé + devise + corps non vides (échoue si une politique est
-  ajoutée sans description).
-- **Vérifications.** Typecheck OK, 48 tests verts, build client OK. Vérif
-  visuelle Playwright (desktop 1440×900) : panneau rendu et thémé par
-  `data-archetype`, comportement survol-vs-sélection confirmé (Militarist
-  sélectionné, survol Diplomatic prévisualise sans changer le choix). Débordement
-  horizontal < 900 px **préexistant** (présent aussi en mode login, deck 1000 px) :
-  le panneau épouse la largeur de la grille (550 px) et n'aggrave rien — non
-  corrigé, hors périmètre.
-
 ## 2026-07-24 — Codex : les soutes deviennent un chapitre à part entière
 
 - **Problème.** À la question « les vaisseaux ont des soutes, comment s'en
@@ -5391,7 +5361,37 @@ statut backlog `[ ]`.
 - **Vérifications.** Build shared + client OK ; `passives.test.ts` OK ;
   `facts.test.ts` (anti-dérive) étendu et vert ; `codex.spec.ts` e2e mis à jour
   (galaxy ouvre sur « Cargo & the hold », chiffre live +50 %). Vérification
-  visuelle e2e rejouée sur la stack en cours (capture cargo observée).
+  visuelle e2e à rejouer sur la stack complète.
+
+---
+
+## 2026-07-24 — Écran d'éveil : explication par politique
+
+- **Problème.** L'écran « Awaken a new Sovereign » fait choisir une politique
+  **permanente** parmi six, mais n'en explique aucune : le joueur choisit à
+  l'aveugle un engagement irréversible (icône + libellé d'un mot, rien de plus).
+- **Décision.** Ajouter un panneau de détail sous la grille. Il explique la
+  politique **sélectionnée** ; au survol souris ou au focus clavier d'une autre
+  carte, il **prévisualise** cette politique puis revient à la sélection au
+  départ/blur. Choix retenu plutôt qu'un tooltip pur-survol : accessible clavier
+  et tactile, et toujours visible pour le choix engagé (état `previewPolitics`
+  ?? `politics`, `aria-live="polite"`).
+- **Source du texte.** Devise + corps par archétype centralisés dans
+  `i18n/en.ts` (`archetypeDescriptions`), fidèles à DG §4.1 (masques allow/deny
+  + privilèges innés). Spoiler-free : on décrit le style de jeu et le trait inné,
+  jamais un contenu non découvert (noms de mondes, cristaux, techs non atteintes).
+  Pas de gate Codex : l'écran est pré-login, hors manuel in-game.
+- **Anti-dérive / exhaustivité.** Les six politiques proviennent de
+  `ARCHETYPES` (`@atg/shared`) ; test `LoginScreen.archetypes.test.ts` garantit
+  que chacune a libellé + devise + corps non vides (échoue si une politique est
+  ajoutée sans description).
+- **Vérifications.** Typecheck OK, 48 tests verts, build client OK. Vérif
+  visuelle Playwright (desktop 1440×900) : panneau rendu et thémé par
+  `data-archetype`, comportement survol-vs-sélection confirmé (Militarist
+  sélectionné, survol Diplomatic prévisualise sans changer le choix). Débordement
+  horizontal < 900 px **préexistant** (présent aussi en mode login, deck 1000 px) :
+  le panneau épouse la largeur de la grille (550 px) et n'aggrave rien — non
+  corrigé, hors périmètre.
 
 ---
 

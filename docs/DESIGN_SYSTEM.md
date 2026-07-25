@@ -12,7 +12,7 @@
 
 **« Groovy dark »** — the *Out There* mood crossed with the game's own 2021
 visual identity (deep blacks, dark purples, vivid yellows — see
-`GAME_BIBLE.md` §9 and `assets/palette.jpeg`), rebuilt on the P2Enjoy chart,
+`docs/GAME_BIBLE.md` §9 and `assets/palette.jpeg`), rebuilt on the P2Enjoy chart,
 shaded darker (documented exception to the light-theme default, CLAUDE.md §4
 — owner decision).
 

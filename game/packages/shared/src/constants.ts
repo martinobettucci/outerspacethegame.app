@@ -1,6 +1,6 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; DESIGN_GUIDE.md §0/§1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; docs/DESIGN_GUIDE.md §0/§1. */
 /**
- * Constantes globales du jeu — DESIGN_GUIDE.md §0 (v0.9.2).
+ * Constantes globales du jeu — docs/DESIGN_GUIDE.md §0 (v0.9.2).
  *
  * Toute valeur marquée [TUNE] dans le guide reste centralisée ici (jamais
  * codée en dur ailleurs) ; un tour d'équilibrage peut la modifier sans

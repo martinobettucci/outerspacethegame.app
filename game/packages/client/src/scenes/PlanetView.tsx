@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Isometric planet view”/“Building catalog”/“Industry” and §P2.pop; GAME_BOOK.md §9/§10/§17/§18/§26; DESIGN_GUIDE.md §3/§5/§6; docs/ASSET_PIPELINE.md §1–§3; docs/DESIGN_SYSTEM.md §5/§5.1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Isometric planet view”/“Building catalog”/“Industry” and §P2.pop; docs/GAME_BOOK.md §9/§10/§17/§18/§26; docs/DESIGN_GUIDE.md §3/§5/§6; docs/ASSET_PIPELINE.md §1–§3; docs/DESIGN_SYSTEM.md §5/§5.1. */
 /**
  * Vue planète isométrique — GB §17 : grille de tuiles iso PixiJS (décision
  * P0.4), sprites 512×256 posés sur les tuiles, overlays climat, main de

@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Telescope intel”; GAME_BOOK.md §4/§20; DESIGN_GUIDE.md §4.1. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Telescope intel”; docs/GAME_BOOK.md §4/§20; docs/DESIGN_GUIDE.md §4.1. */
 /**
  * E2E — intel par paliers (GB §20, DG §4.1) : un Souverain SCIENTIFIQUE
  * observe un monde sauvage de sa propre poche (déterministe — la

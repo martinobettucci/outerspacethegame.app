@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P3 “Ship hulls”; GAME_BOOK.md §14/§26; DESIGN_GUIDE.md §7–§8.8; docs/DESIGN_SYSTEM.md §5.1/§8/§9. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck” and §P3 “Ship hulls”; docs/GAME_BOOK.md §14/§26; docs/DESIGN_GUIDE.md §7–§8.8; docs/DESIGN_SYSTEM.md §5.1/§8/§9. */
 import { useMemo, useState } from 'react';
 import {
   Activity,

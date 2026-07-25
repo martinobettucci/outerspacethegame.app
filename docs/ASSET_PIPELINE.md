@@ -99,7 +99,7 @@ assets/game/            # non-card files are .gif (animated)
 
 - Companions always: `{name}.bump.{gif|png}`, `{name}.light.{gif|png}` —
   same folder and the same extension as the base file.
-- Names are lowercase snake_case; keys match `DESIGN_GUIDE.md` identifiers.
+- Names are lowercase snake_case; keys match `docs/DESIGN_GUIDE.md` identifiers.
 - `docs/design/props/manifest.json` lists every expected file with a human
   description of what the art must depict (kept in sync with stubs).
 

@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; docs/GAME_BOOK.md §6/§22; docs/DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * E2E — claim rig & salvage (GB §6 « no honor », DG §8.8) : une VRAIE
  * épave naît du survival-out (pilote granté §15, survol sauvage,

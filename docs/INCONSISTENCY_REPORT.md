@@ -12,9 +12,9 @@ this audit.
 
 ## IR-001 — Design Guide version declarations disagree
 
-- **Evidence A:** `DESIGN_GUIDE.md` opens with **Version v0.10**, Round 9.
-- **Evidence B:** `BALANCE_LOG.md` §Round 10 says the Round 10 patches were
-  applied to `DESIGN_GUIDE.md` §2.2b as **v0.11**.
+- **Evidence A:** `docs/DESIGN_GUIDE.md` opens with **Version v0.10**, Round 9.
+- **Evidence B:** `docs/BALANCE_LOG.md` §Round 10 says the Round 10 patches were
+  applied to `docs/DESIGN_GUIDE.md` §2.2b as **v0.11**.
 - **Evidence C:** `docs/BACKLOG.md` introductory traceability rule and P0.1 still
   identify the Design Guide as **v0.9.2**.
 - **Impact:** code comments can cite stable section numbers, but cannot name one
@@ -23,10 +23,10 @@ this audit.
 
 ## IR-002 — Canon still calls climate protection an accessory
 
-- **Evidence A:** `GAME_BOOK.md` §14 lists shields among special accessories.
-- **Evidence B:** `GAME_BOOK.md` §27 closes the climate/shield question with a
+- **Evidence A:** `docs/GAME_BOOK.md` §14 lists shields among special accessories.
+- **Evidence B:** `docs/GAME_BOOK.md` §27 closes the climate/shield question with a
   “matching shield accessory”.
-- **Evidence C:** `DESIGN_GUIDE.md` §8.8 says W5's morphic hull explicitly
+- **Evidence C:** `docs/DESIGN_GUIDE.md` §8.8 says W5's morphic hull explicitly
   supersedes the workshop accessory and requires one active, time-only hull
   chemistry rather than a fitted item.
 - **Evidence D:** `docs/MASTER_PLAN.md` §W5 marks the morphic-hull behavior
@@ -41,7 +41,7 @@ this audit.
   `docs/MASTER_PLAN.md` §W3 describe and mark delivered an L3 tanker probe.
 - **Evidence B:** the adjacent `docs/BACKLOG.md` §P3 “Sondes v3 : le carburant”
   text still says “2 niveaux” / “DEUX niveaux” and enumerates only L1 and L2.
-- **Evidence C:** `DESIGN_GUIDE.md` §8.1-v3 says “Three levels” and enumerates
+- **Evidence C:** `docs/DESIGN_GUIDE.md` §8.1-v3 says “Three levels” and enumerates
   L1, L2, and L3.
 - **Impact:** the backlog gives mutually exclusive acceptance boundaries for
   probe construction and pad-level gating.
@@ -54,7 +54,7 @@ this audit.
 - **Evidence B:** the repository contains migrations 026–033 for probe levels,
   probe fuel order, engine types, L3 transfer, star fields/morphing, gear items,
   work orders, and the Crusader W8a schema.
-- **Evidence C:** `PROD_MIGRATIONS.md` already lists migrations 026–033, and
+- **Evidence C:** `docs/PROD_MIGRATIONS.md` already lists migrations 026–033, and
   `docs/MASTER_PLAN.md` §W1–§W8 describes their functional contracts.
 - **Impact:** `docs/SCHEMA.md` is no longer a complete description of the
   authoritative PostgreSQL schema, despite CLAUDE.md §24 requiring schema
@@ -91,7 +91,7 @@ this audit.
   whitepaper and economics pages contradict the 2026 canon and leaves their
   reconciliation unchecked.
 - **Impact:** public-facing legacy material may describe rules or economics that
-  differ from `GAME_BOOK.md` and `DESIGN_GUIDE.md`.
+  differ from `docs/GAME_BOOK.md` and `docs/DESIGN_GUIDE.md`.
 - **Status:** known and already backlog-tracked; legacy content left unchanged.
 
 ## IR-008 — Theme-audio build scripts have no dedicated product specification
@@ -100,7 +100,7 @@ this audit.
   `assets/tunes/build-theme.ogg.sh` mix seven source stems into the shipped
   theme formats.
 - **Evidence B:** no audio/music contract, acceptance criteria, or named audio
-  backlog unit exists in `GAME_BOOK.md`, `DESIGN_GUIDE.md`,
+  backlog unit exists in `docs/GAME_BOOK.md`, `docs/DESIGN_GUIDE.md`,
   `docs/ASSET_PIPELINE.md`, or `docs/BACKLOG.md`.
 - **Impact:** the scripts can only be linked to the broad P0.3 art-direction
   unit; their inputs, mix policy, codecs, quality targets, and regeneration
@@ -140,15 +140,15 @@ this audit.
 ## IR-010 — W8 implementation claims a GAME_BOOK amendment that is absent
 
 - **Evidence A:** migration `033_crusader.sql` and
-  `server/test/integration/crusader.test.ts` describe `GAME_BOOK.md` as amended
+  `server/test/integration/crusader.test.ts` describe `docs/GAME_BOOK.md` as amended
   on 2026-07-21 for the Crusader's never-land rule.
-- **Evidence B:** the W8a commit `e594787` changed `CHANGELOG.md`, `JOURNAL.md`,
-  `PROD_MIGRATIONS.md`, and `docs/MASTER_PLAN.md`, but did not change
-  `GAME_BOOK.md` or `DESIGN_GUIDE.md`.
+- **Evidence B:** the W8a commit `e594787` changed `CHANGELOG.md`, `docs/JOURNAL.md`,
+  `docs/PROD_MIGRATIONS.md`, and `docs/MASTER_PLAN.md`, but did not change
+  `docs/GAME_BOOK.md` or `docs/DESIGN_GUIDE.md`.
 - **Evidence C:** the subsequent W8b commit `f38b188` added the live onboard
   population simulation and changed `docs/MASTER_PLAN.md`, but again did not
-  amend `GAME_BOOK.md`; the master plan itself now says “GB à amender”.
-- **Evidence D:** `GAME_BOOK.md` §14 only identifies “star crusader” as a Combat
+  amend `docs/GAME_BOOK.md`; the master plan itself now says “GB à amender”.
+- **Evidence D:** `docs/GAME_BOOK.md` §14 only identifies “star crusader” as a Combat
   role/loadout; it does not specify the W8 fixed infrastructure, onboard
   population, never-land rule, 25% migration, or follower-fleet behavior.
 - **Impact:** implementation and tests cite a canonical amendment that cannot be

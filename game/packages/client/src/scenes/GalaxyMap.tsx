@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Universe gen”, §P3 “Galaxy map”/“Free flight”/“Telescope intel”/“Junk fields”/“Stargates”, and §P4 “Ping/ping-back”/“Manual channel”; docs/MASTER_PLAN.md §W4/§W5; GAME_BOOK.md §2/§4–§7/§13/§22; DESIGN_GUIDE.md §2/§4.1/§7–§10.4; docs/DESIGN_SYSTEM.md §5.1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Universe gen”, §P3 “Galaxy map”/“Free flight”/“Telescope intel”/“Junk fields”/“Stargates”, and §P4 “Ping/ping-back”/“Manual channel”; docs/MASTER_PLAN.md §W4/§W5; docs/GAME_BOOK.md §2/§4–§7/§13/§22; docs/DESIGN_GUIDE.md §2/§4.1/§7–§10.4; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Carte galaxie — GB §17 : champ d'étoiles three.js stylé 3D, navigation
  * 2D (pan/zoom), corps en pixel-sprites (DESIGN_SYSTEM §11.3), brouillard

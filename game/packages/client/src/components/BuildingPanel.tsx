@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Building catalog”/“Industry” and §P4 “Markets”/“Docks”/“Manual channel”; docs/MASTER_PLAN.md §W2/§W6/§W7; GAME_BOOK.md §9/§13/§14/§25; DESIGN_GUIDE.md §5.1/§6/§8/§11; docs/DESIGN_SYSTEM.md §5.1. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”, §P2 “Building catalog”/“Industry” and §P4 “Markets”/“Docks”/“Manual channel”; docs/MASTER_PLAN.md §W2/§W6/§W7; docs/GAME_BOOK.md §9/§13/§14/§25; docs/DESIGN_GUIDE.md §5.1/§6/§8/§11; docs/DESIGN_SYSTEM.md §5.1. */
 /**
  * Building command inspector. Every simulation control and payload remains
  * unchanged; the presentation groups them into readable instrument modules

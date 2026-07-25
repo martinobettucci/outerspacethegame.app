@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Star harvest & Starfall”; GAME_BOOK.md §22; DESIGN_GUIDE.md §8.8. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Star harvest & Starfall”; docs/GAME_BOOK.md §22; docs/DESIGN_GUIDE.md §8.8. */
 /**
  * Récolte stellaire (GB §22, DG §8.8) — le rig s'équipe à l'atelier, la
  * récolte se fait IMMOBILE (statut idle [interp annoncée : l'image canon

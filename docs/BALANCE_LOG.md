@@ -1,7 +1,7 @@
 # BALANCE_LOG — simulated-campaign findings & applied patches
 
 > Round-based log of the balancing loop: simulated long-run campaigns by
-> archetype agents against `DESIGN_GUIDE.md`, findings, and the patches
+> archetype agents against `docs/DESIGN_GUIDE.md`, findings, and the patches
 > applied. The guide always reflects the latest round.
 
 ---

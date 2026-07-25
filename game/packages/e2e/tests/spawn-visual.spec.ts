@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §R4 (E2E visuel du spawn); DESIGN_GUIDE.md §2.2/§3.2-v2; GAME_BOOK.md §12. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §R4 (E2E visuel du spawn); docs/DESIGN_GUIDE.md §2.2/§3.2-v2; docs/GAME_BOOK.md §12. */
 /**
  * E2E — R4, le SPAWN vu par le joueur (contrat visuel, §16) : un compte
  * neuf arrive sur un monde natal vivant — population 350 sur la

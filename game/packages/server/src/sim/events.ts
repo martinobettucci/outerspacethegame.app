@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; GAME_BOOK.md §15; DESIGN_GUIDE.md §1; docs/DAT.md §2/§4. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P1 “Deterministic sim core”; docs/GAME_BOOK.md §15; docs/DESIGN_GUIDE.md §1; docs/DAT.md §2/§4. */
 /**
  * File d'événements de simulation — DESIGN_GUIDE §1.
  * Le worker réclame les événements échus (FOR UPDATE SKIP LOCKED : sûr

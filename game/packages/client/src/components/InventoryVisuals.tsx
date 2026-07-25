@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”; GAME_BOOK.md §8/§9/§26; DESIGN_GUIDE.md §6–§8.8; docs/DESIGN_SYSTEM.md §5.1/§9. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P0.3 “Icon-first command deck”; docs/GAME_BOOK.md §8/§9/§26; docs/DESIGN_GUIDE.md §6–§8.8; docs/DESIGN_SYSTEM.md §5.1/§9. */
 import type { CSSProperties, ReactNode } from 'react';
 import {
   Boxes,

@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Global census”; GAME_BOOK.md §13; DESIGN_GUIDE.md §11.5. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P4 “Global census”; docs/GAME_BOOK.md §13; docs/DESIGN_GUIDE.md §11.5. */
 /**
  * Unit : agrégation du census (DG §11.5) — sommes exactes, évaluation
  * lazy à l'instant du snapshot, clamp min 0, soutes tous statuts,

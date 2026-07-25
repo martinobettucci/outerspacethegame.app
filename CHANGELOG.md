@@ -2,6 +2,28 @@
 
 ## [Non publié]
 
+### Réforme colonisation anti-soft-lock — cœur backend LIVRÉ (2026-07-24)
+
+- **Implémentation du spec persisté plus tôt (GB §19.3).** (1) Le `spaceport`
+  rejoint l'ensemble jamais-masqué de `techtree.ts` tout en restant DEPTH-CAPPÉ
+  (nouveau `NEVER_CAPPED` : L1 garanti partout, L2/L3 = chance de seed) ; (2)
+  nouvel item GEAR `colonizer` (fabricant spaceport L1, coût 100 % basiques
+  `200 ore + 100 silicon` [TUNE], `freightOnly` — jamais installé) ; (3)
+  migration **041** `bodies.free_colonizer_granted` ; (4) `maybeGrantFreeColonizer`
+  (planets.ts) câblé sur le déverrouillage de `colony_program`, la fin de
+  construction d'un spaceport et l'établissement d'une colonie — don unique,
+  idempotent, qui **suit la propriété** ; (5) `colonizeShip` accepte un
+  colonisateur en soute (`item_cargo`), le booléen `colony_kit` étant conservé
+  **transitoirement** (chemin déprécié).
+- **Vérifié** : shared 218 (dont `hullCarriesColonizer`, spaceport
+  jamais-masqué/depth-cappé, coût basiques-only), intégration PostgreSQL 383
+  dont 3 neufs (don unique, survie à la conquête par requête §10 directe,
+  colonize par item), typecheck + build verts.
+- **Restant** (unité backlog en `[~]`) : retrait complet de `fitColonyKit`/
+  `colony_kit` (route + client + i18n), UX spaceport dédiée (aujourd'hui
+  atteignable via l'UI gear générique), biais du coût aux gisements [TUNE-GAP],
+  E2E réécrit sur le chemin item, sections Codex, tour d'équilibrage.
+
 ### Horloge de jeu unifiée — `TIME_SCALE` accélère TOUTE la simulation en dev (2026-07-24)
 
 - **Cause.** En développement, `TIME_SCALE` n'accélérait que les minuteries
@@ -35,45 +57,6 @@
   [`colonization.test.ts`](game/packages/shared/src/colonization.test.ts) (grâce
   compressée). Typecheck workspace OK ; 61 tests unitaires serveur + 219 tests
   shared verts.
-
-### Réforme colonisation anti-soft-lock — cœur backend LIVRÉ (2026-07-24)
-
-- **Implémentation du spec persisté plus tôt (GB §19.3).** (1) Le `spaceport`
-  rejoint l'ensemble jamais-masqué de `techtree.ts` tout en restant DEPTH-CAPPÉ
-  (nouveau `NEVER_CAPPED` : L1 garanti partout, L2/L3 = chance de seed) ; (2)
-  nouvel item GEAR `colonizer` (fabricant spaceport L1, coût 100 % basiques
-  `200 ore + 100 silicon` [TUNE], `freightOnly` — jamais installé) ; (3)
-  migration **041** `bodies.free_colonizer_granted` ; (4) `maybeGrantFreeColonizer`
-  (planets.ts) câblé sur le déverrouillage de `colony_program`, la fin de
-  construction d'un spaceport et l'établissement d'une colonie — don unique,
-  idempotent, qui **suit la propriété** ; (5) `colonizeShip` accepte un
-  colonisateur en soute (`item_cargo`), le booléen `colony_kit` étant conservé
-  **transitoirement** (chemin déprécié).
-- **Vérifié** : shared 218 (dont `hullCarriesColonizer`, spaceport
-  jamais-masqué/depth-cappé, coût basiques-only), intégration PostgreSQL 383
-  dont 3 neufs (don unique, survie à la conquête par requête §10 directe,
-  colonize par item), typecheck + build verts.
-- **Restant** (unité backlog en `[~]`) : retrait complet de `fitColonyKit`/
-  `colony_kit` (route + client + i18n), UX spaceport dédiée (aujourd'hui
-  atteignable via l'UI gear générique), biais du coût aux gisements [TUNE-GAP],
-  E2E réécrit sur le chemin item, sections Codex, tour d'équilibrage.
-
-### Codex — chapitre « Cargo & the hold » (2026-07-24)
-
-- **Nouvelle exigence du responsable** : tout comportement de jeu fondamental
-  DOIT être expliqué explicitement dans le Codex, pas seulement évoqué en
-  passant. Les soutes des vaisseaux — une mécanique de base — n'avaient qu'une
-  mention incidente dans « Ship gear ».
-- **Chapitre dédié ajouté** (`codex/strings.ts`, `sections.tsx`) : la soute
-  comptée en conteneurs (1 T d'un seul fongible **ou** 1 item par conteneur, les
-  tonnes partielles arrondies au conteneur plein), la capacité comme propriété de
-  coque (seules les coques cargo l'élargissent via l'upgrade de capacité), et la
-  pénalité de charge (soute pleine = vaisseau plus lent et plus gourmand). Icône
-  Lucide `Boxes`, deep-link GalaxyMap repointé sur ce chapitre.
-- **Anti-dérive** : coefficients `LOAD_SPEED_PENALTY`/`LOAD_BURN_PENALTY` extraits
-  en constantes nommées dans `@atg/shared` (`passives.ts`) et rendus EN DIRECT
-  dans le Codex ; multiplicateur `UPGRADE_EFFECTS.cargo` idem. Tests : anti-dérive
-  unitaire (`facts.test.ts`) étendu, e2e Codex (`codex.spec.ts`) mis à jour.
 
 ### Écran d'éveil — explication par politique (2026-07-24)
 
@@ -120,6 +103,94 @@
   jamais-masqué spaceport, `recipes.ts` recette colonisateur + retrait core,
   `colonize` sur `item_cargo`), tests unit/intégration/E2E, Codex, tour
   d'équilibrage [TUNE] — backlog `[ ]`, non encore livré.
+
+### Codex — chapitre « Cargo & the hold » (2026-07-24)
+
+- **Nouvelle exigence du responsable** : tout comportement de jeu fondamental
+  DOIT être expliqué explicitement dans le Codex, pas seulement évoqué en
+  passant. Les soutes des vaisseaux — une mécanique de base — n'avaient qu'une
+  mention incidente dans « Ship gear ».
+- **Chapitre dédié ajouté** (`codex/strings.ts`, `sections.tsx`) : la soute
+  comptée en conteneurs (1 T d'un seul fongible **ou** 1 item par conteneur, les
+  tonnes partielles arrondies au conteneur plein), la capacité comme propriété de
+  coque (seules les coques cargo l'élargissent via l'upgrade de capacité), et la
+  pénalité de charge (soute pleine = vaisseau plus lent et plus gourmand). Icône
+  Lucide `Boxes`, deep-link GalaxyMap repointé sur ce chapitre.
+- **Anti-dérive** : coefficients `LOAD_SPEED_PENALTY`/`LOAD_BURN_PENALTY` extraits
+  en constantes nommées dans `@atg/shared` (`passives.ts`) et rendus EN DIRECT
+  dans le Codex ; multiplicateur `UPGRADE_EFFECTS.cargo` idem. Tests : anti-dérive
+  unitaire (`facts.test.ts`) étendu, e2e Codex (`codex.spec.ts`) mis à jour.
+
+### Audio — spec & décision persistées (2026-07-24, docs seulement)
+
+- **Couche audio décidée par le responsable** : musique de fond par écran
+  (`menu`/`galaxy`/`planet`) au **volume de fond**, ambiances industrielles en
+  **boucle par bâtiment au sol** (une par `BuildingKey`, 29), **stinger de
+  sélection** par type d'unité façon StarCraft (6 unités + 9 coques = 15).
+  Génération via fal (`FAL_KEY`, round-trip `fal-ai/stable-audio` vérifié).
+- **Documents écrits AVANT tout code** (CLAUDE.md §5) :
+  [`docs/AUDIO_PLAN.md`](docs/AUDIO_PLAN.md) (contrat complet), unité de backlog
+  §P0.3-audio, entrée [`docs/JOURNAL.md`](docs/JOURNAL.md), section
+  [DESIGN_SYSTEM §13 Audio](docs/DESIGN_SYSTEM.md), composant DAT « Audio
+  subsystem », [ASSET_PIPELINE §9](docs/ASSET_PIPELINE.md), note Codex Audio
+  ([MANUAL_PLAN](docs/MANUAL_PLAN.md)). **`INCONSISTENCY_REPORT.md` §IR-008
+  marqué résolu** (les scripts `assets/tunes/*.sh` ont enfin une spec produit).
+- **Restant** : manifeste `@atg/shared/audio.ts`, générateur `genAudio.mjs`,
+  moteur Web Audio + UI, câblage écrans/bâtiments/sélection, tests, assets
+  générés — backlog `[ ]`, non encore livré.
+
+### Correctif — seed idempotent sur base déjà simulée (2026-07-24)
+
+- **Cause racine de « impossible de lancer / de se connecter ».** Le garde
+  `logDemoPyramid` (seed) exigeait `somme_pyramide === population` à 1e-6 près
+  pour TOUT starter. Après un tick, `population` devient continue (ex. 346,834)
+  alors que les cohortes affichées sont arrondies (somme 347) : le seed levait
+  « Seed incohérent », `pnpm seed` sortait en erreur et — `runDev.sh` étant en
+  `set -e` — l'API/worker/client ne démarraient jamais. La page de login ne
+  pouvait donc pas joindre l'API.
+- **Fix** ([seed.ts](game/packages/server/src/db/seed.ts)) : l'égalité stricte
+  n'est exigée que sur un starter FRAIS ; sinon l'écart est borné à < 1,5
+  (trois arrondis de ±0,5) — tolère la dérive normale, détecte encore une vraie
+  corruption. `logDemoPyramid` exporté pour test.
+- **Preuves** (§18) : test de régression
+  [seed-pyramid.test.ts](game/packages/server/test/integration/seed-pyramid.test.ts)
+  (échoue avant, passe après) ; suite d'intégration complète 383/383 verte ;
+  reproduction réelle — base dev « driftée » à P=349,834 puis `pnpm seed`
+  exit 0 ; login end-to-end via le proxy client HTTP 200 (`/api/me` 200).
+
+### Lancement — scripts racine runDev / runStaging / runProd (2026-07-24)
+
+- Ajout de trois lanceurs à la RACINE du dépôt (CLAUDE.md §3) :
+  - `./runDev` — démarre la stack de dev complète (install au 1er run, puis
+    délègue à `pnpm runDev` de `game/` : Postgres, migrations, seed, API,
+    worker, client Vite). Vérifié : client `HTTP 200` sur `:5173`, API
+    `/health HTTP 200` sur `:8080`, tick worker actif.
+  - `./runStaging`, `./runProd` — stubs HONNÊTES : l'environnement n'existe pas
+    encore, ils affichent ce qui manque (docs/DAT.md §6, docs/PROD_MIGRATIONS.md)
+    et sortent en code non nul ; aucun faux succès (CLAUDE.md §9/§18).
+- README : nouvelle section « Run the game from the repository root ».
+
+### Docs — 7 documents racine déplacés dans docs/ (2026-07-24)
+
+- `GAME_BOOK.md`, `GAME_BIBLE.md`, `DESIGN_GUIDE.md`, `BALANCE_LOG.md`,
+  `JOURNAL.md`, `PROD_MIGRATIONS.md`, `INCONSISTENCY_REPORT.md` → `docs/`
+  (via `git mv`, historique préservé). Restent à la racine : `CLAUDE.md`,
+  `README.md`, `CHANGELOG.md`.
+- 542 références réécrites `NOM.md` → `docs/NOM.md` sur 246 fichiers
+  (commentaires `@spec`/`@verifies` et prose ; aucune chaîne runtime touchée —
+  vérifié). README (corpus + arbre) et CLAUDE.md (« à la racine » → « dans
+  docs/ ») mis à jour. Typecheck monorepo vert (shared/server/client).
+
+### Docs — README « Environment variables » resynchronisé (2026-07-24)
+
+- La section listait encore « les variables de runtime seront documentées quand
+  l'implémentation commencera » : périmée. Elle décrit désormais l'ensemble
+  COMPLET des variables réellement lues (`game/.env.example` faisant foi) —
+  runtime jeu (`DATABASE_URL`, `API_PORT`, `CLIENT_ORIGIN`, `SESSION_SECRET`,
+  `UNIVERSE_SEED`, `LUCK_PEPPER`, `TICK_MS`, `CENSUS_PER_DAY`, `TIME_SCALE`,
+  `ATG_TEST_ENDPOINTS`) et outillage (`OPENAI_KEY` local vs `OPEN_AI_KEY`
+  cloud-worker, jusque-là confondus/absents du tableau).
+- Fiat (Stripe) et relayer NFT explicitement notés « pas encore présents ».
 
 ### P0.3 — command deck icon-first, gestion en ouvrant l'objet (2026-07-23)
 
@@ -884,7 +955,7 @@
   impactés committés avant code : MANUAL_PLAN.md, BACKLOG (§P2.codex + garde-fou
   DoD permanent), DAT (composant Codex), DESIGN_SYSTEM (§5). Le défaut
   d'intégrité documentaire relevé au passage est désormais corrigé : tous les
-  chemins vivants pointent vers le vrai fichier `GAME_BOOK.md` (les anciens
+  chemins vivants pointent vers le vrai fichier `docs/GAME_BOOK.md` (les anciens
   messages de commit restent naturellement immuables).
 
 ### Implémentation P1 (démarrée 2026-07-12 sur GO du responsable)
@@ -1656,7 +1727,7 @@
 - **Noyau de simulation (chunk B)** : schéma baseline PostgreSQL
   (001_baseline.sql — joueurs/sessions, corps, gisements, stock lazy,
   bâtiments, unlocks, NPC, vaisseaux, file d'événements) + docs/SCHEMA.md +
-  PROD_MIGRATIONS.md ; évaluation paresseuse (value, rate, t0) ; file
+  docs/PROD_MIGRATIONS.md ; évaluation paresseuse (value, rate, t0) ; file
   d'événements SKIP LOCKED idempotente (concurrence testée) ; worker qui
   traite les échéances ; RNG seedé de génération (SeededStream, flux par
   label).
@@ -1687,10 +1758,10 @@
 - Enregistrement de `CLAUDE.md` (conventions de travail + spécificités projet).
 - Mise en conformité documentaire : `README.md`, `CHANGELOG.md`, `docs/DAT.md`,
   `docs/BACKLOG.md`, `docs/DESIGN_SYSTEM.md`.
-- Corpus de conception complet : `GAME_BOOK.md` (canon des règles),
-  `GAME_BIBLE.md` (lore), `DESIGN_GUIDE.md` v0.3 (spécification mécanique
-  chiffrée), `BALANCE_LOG.md` (boucle d'équilibrage par simulation, 3 tours,
-  55 correctifs), `JOURNAL.md` (journal des décisions).
+- Corpus de conception complet : `docs/GAME_BOOK.md` (canon des règles),
+  `docs/GAME_BIBLE.md` (lore), `docs/DESIGN_GUIDE.md` v0.3 (spécification mécanique
+  chiffrée), `docs/BALANCE_LOG.md` (boucle d'équilibrage par simulation, 3 tours,
+  55 correctifs), `docs/JOURNAL.md` (journal des décisions).
 - Design system FINALISÉ v1 (« groovy dark », identité pixel-sprite) validé
   par 4 prototypes d'interface générés (gpt-image-2) et observés
   visuellement ; prototypes archivés dans `docs/design/prototypes/`.

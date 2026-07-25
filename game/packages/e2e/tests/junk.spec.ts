@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; docs/GAME_BOOK.md §6/§22; docs/DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * E2E — champs de junk (GB §22, DG §10.4) : collecteur monté à l'atelier
  * L2 (vraies commandes), fret chargé, vol dans le VIDE (> 50 pc des

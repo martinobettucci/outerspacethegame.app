@@ -199,7 +199,7 @@ styles, générateurs et tests.
   `@spec` qui nomme au minimum l'unité exacte de `docs/BACKLOG.md` (ou de
   `docs/MASTER_PLAN.md` lorsqu'elle est l'index d'exécution autoritatif) ET le ou
   les fichiers documentaires pertinents avec leur chapitre ou section :
-  `GAME_BOOK.md`, `GAME_BIBLE.md`, `DESIGN_GUIDE.md`, `docs/DAT.md`,
+  `docs/GAME_BOOK.md`, `docs/GAME_BIBLE.md`, `docs/DESIGN_GUIDE.md`, `docs/DAT.md`,
   `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`, `docs/MANUAL_PLAN.md`, etc.
 - Le commentaire de portée fichier couvre explicitement toutes les déclarations,
   fonctions auxiliaires et algorithmes du fichier qui partagent les mêmes
@@ -212,14 +212,14 @@ styles, générateurs et tests.
 - Une migration cite `docs/SCHEMA.md` et l'unité fonctionnelle correspondante ;
   une règle d'interface cite aussi `docs/DESIGN_SYSTEM.md` ; une fonctionnalité
   visible cite aussi le chapitre concerné du Player Codex (`docs/MANUAL_PLAN.md`).
-- `CHANGELOG.md` et `JOURNAL.md` peuvent compléter la trace, mais ne remplacent
+- `CHANGELOG.md` et `docs/JOURNAL.md` peuvent compléter la trace, mais ne remplacent
   jamais la spécification ni l'unité de backlog.
 - Aucun code d'une nouvelle fonctionnalité ne peut être écrit tant que son unité
   de backlog et sa spécification ne possèdent pas de référence stable. Toute
   modification ultérieure maintient les commentaires `@spec` / `@verifies` dans
   le même changement que le code et la documentation.
 - Si la relecture révèle une contradiction ou une référence absente, ne pas la
-  résoudre implicitement : la consigner dans `INCONSISTENCY_REPORT.md`, laisser
+  résoudre implicitement : la consigner dans `docs/INCONSISTENCY_REPORT.md`, laisser
   le comportement inchangé et demander l'arbitrage du responsable lorsque la
   correction dépasse la tâche autorisée.
 
@@ -233,7 +233,7 @@ d'écrire la moindre ligne de code.
 Cela concerne notamment, sans s'y limiter :
 
 - la spécification validée (guide de conception, canon, sections chiffrées) ;
-- le journal d'exploration et de décision ("JOURNAL.md" ou équivalent) ;
+- le journal d'exploration et de décision ("docs/JOURNAL.md" ou équivalent) ;
 - les schémas de données et d'architecture ("docs/SCHEMA.md", "docs/DAT.md") ;
 - le backlog ("docs/BACKLOG.md") ;
 - le changelog, le contrat de déploiement, et tout document impacté.
@@ -539,7 +539,7 @@ Toute évolution susceptible de modifier la posture de consentement doit être d
 
 Lorsqu'un projet nécessite des opérations manuelles avant ou pendant le déploiement, maintenir un document dédié, par exemple :
 
-"PROD_MIGRATIONS.md"
+"docs/PROD_MIGRATIONS.md"
 
 Ce document décrit précisément ce que l'humain doit appliquer.
 
@@ -1009,13 +1009,16 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
   conception du jeu et, depuis le GO du responsable (2026-07-12, session 30),
   l'application du jeu en construction dans `game/` (monorepo pnpm :
   `shared`, `server`, `client`, `e2e`). Phase P1 entamée.
-- **Documents de conception (à la racine, ordre de préséance) :**
-  1. `GAME_BOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
-  2. `GAME_BIBLE.md` — lore et univers ;
-  3. `DESIGN_GUIDE.md` — spécification mécanique chiffrée (valeurs `[TUNE]`) ;
-  4. `BALANCE_LOG.md` — journal de la boucle d'équilibrage par simulation.
-- **Équivalences documentaires (§5) :** `JOURNAL.md` à la racine est
-  l'équivalent officiel de `docs/JOURNAL.md` (historique préexistant conservé).
+- **Documents de conception (dans `docs/`, ordre de préséance) :** (déplacés de
+  la racine vers `docs/` le 2026-07-24 sur instruction du responsable ; seuls
+  `CLAUDE.md`, `README.md` et `CHANGELOG.md` restent à la racine)
+  1. `docs/GAME_BOOK.md` — canon des règles (toute contradiction se résout ici d'abord) ;
+  2. `docs/GAME_BIBLE.md` — lore et univers ;
+  3. `docs/DESIGN_GUIDE.md` — spécification mécanique chiffrée (valeurs `[TUNE]`) ;
+  4. `docs/BALANCE_LOG.md` — journal de la boucle d'équilibrage par simulation.
+- **Équivalences documentaires (§5) :** `docs/JOURNAL.md` est l'équivalent
+  officiel du `docs/JOURNAL.md` mentionné dans les règles générales
+  (historique préexistant conservé).
 - **Branche de travail.** Exception au §13, sur instruction du responsable via
   l'environnement d'exécution : le travail se fait sur la branche de session
   dédiée (actuellement `claude/game-build-progress-i77mxo` ; historique de
@@ -1028,7 +1031,7 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
   `docs/DESIGN_SYSTEM.md`) sur décision du responsable. La charte P2Enjoy reste
   la base chromatique, assombrie.
 - **Sous-agents.** Exception ponctuelle au §1 accordée par le responsable pour
-  les **simulations d'équilibrage** (campagnes simulées, cf. `BALANCE_LOG.md`)
+  les **simulations d'équilibrage** (campagnes simulées, cf. `docs/BALANCE_LOG.md`)
   uniquement ; tout le reste du travail est séquentiel et direct.
 - **Site Jekyll (existant).** Lancement : `bundle install && bundle exec jekyll
   serve`. Le déploiement historique est la branche `gh-pages`.

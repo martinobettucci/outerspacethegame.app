@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen”/“Pocket luck”; GAME_BOOK.md §2/§3/§22; DESIGN_GUIDE.md §2.1/§2.2b. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P2 “Universe gen”/“Pocket luck”; docs/GAME_BOOK.md §2/§3/§22; docs/DESIGN_GUIDE.md §2.1/§2.2b. */
 /**
  * Rolls de génération des corps célestes — DESIGN_GUIDE §2.1.
  * Fonctions PURES de (seed) : re-calculables, jamais stockées en dehors

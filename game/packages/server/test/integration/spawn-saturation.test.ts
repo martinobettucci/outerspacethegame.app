@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/MASTER_PLAN.md §R4 (cas « univers saturé »); DESIGN_GUIDE.md §2.2b; JOURNAL 2026-07-22. */
+/** @verifies This test file verifies: docs/MASTER_PLAN.md §R4 (cas « univers saturé »); docs/DESIGN_GUIDE.md §2.2b; JOURNAL 2026-07-22. */
 /**
  * Intégration R4 — le cas « UNIVERS SATURÉ » : quand le placement de
  * spawn n'a plus de place valide, l'inscription échoue PROPREMENT —

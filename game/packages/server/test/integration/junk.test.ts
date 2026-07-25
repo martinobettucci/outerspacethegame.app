@@ -1,4 +1,4 @@
-/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; GAME_BOOK.md §6/§22; DESIGN_GUIDE.md §8.8/§10.4. */
+/** @verifies This test file verifies: docs/BACKLOG.md §P3 “Junk fields” and “Salvage claims”; docs/GAME_BOOK.md §6/§22; docs/DESIGN_GUIDE.md §8.8/§10.4. */
 /**
  * Intégration champs de junk (GB §22, DG §10.4) sur vraie base : largage
  * (zone starter 50 pc interdite, quota 5/jour, trou noir = puits propre,
