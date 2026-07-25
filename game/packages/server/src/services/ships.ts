@@ -1,4 +1,4 @@
-/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”/“Free flight”/“Hovering”/“Sondes L3”/“Vehicle warehouse”/“Survival clocks”; docs/MASTER_PLAN.md §W1–§W6; GAME_BOOK.md §6/§7/§14/§21; DESIGN_GUIDE.md §3.5/§7–§9. */
+/** @spec All declarations and algorithms in this file implement: docs/BACKLOG.md §P3 “Ship hulls”/“Free flight”/“Hovering”/“Sondes L3”/“Vehicle warehouse”/“Survival clocks”; docs/MASTER_PLAN.md §W1–§W6; docs/GAME_BOOK.md §6/§7/§14/§21; docs/DESIGN_GUIDE.md §3.5/§7–§9. */
 /**
  * Flotte & vol libre — GB §6/§14/§21, DG §8/§9.1.
  *
@@ -65,6 +65,7 @@ import {
 } from '@atg/shared';
 import type pg from 'pg';
 import { enqueue } from '../sim/events.js';
+import { config } from '../config.js';
 import { evalLazy } from '../sim/lazy.js';
 import { loadProductionSnapshot, recomputePlanetRates } from '../sim/rebase.js';
 import { evalShipFuel, evalShipHull, evalShipSurvival, rebaseShipDrain, rebaseShipSurvival, type ShipRow } from '../sim/shipDrain.js';
@@ -773,6 +774,7 @@ export async function moveShip(
                   asOfMs: toMs(stockRows[0].as_of),
                 },
                 nowMs,
+                config.TIME_SCALE,
                 { min: 0 },
               )
             : 0;
@@ -966,6 +968,7 @@ export async function buildProbe(
               asOfMs: toMs(stockRows[0].as_of),
             },
             nowMs,
+            config.TIME_SCALE,
             { min: 0 },
           )
         : 0;
@@ -1005,6 +1008,7 @@ export async function buildProbe(
           asOfMs: toMs(fuelStock[0].as_of),
         },
         nowMs,
+        config.TIME_SCALE,
         { min: 0 },
       );
       birthUnits = Math.min(birthTarget, available);
@@ -2071,6 +2075,7 @@ export async function refuelShip(
             asOfMs: new Date(stockRows[0].as_of).getTime(),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         )
       : 0;
@@ -2199,6 +2204,7 @@ export async function provisionShip(
             asOfMs: new Date(stockRows[0].as_of).getTime(),
           },
           nowMs,
+          config.TIME_SCALE,
           { min: 0 },
         );
         const take = Math.min(want - drawn, available);
@@ -2805,6 +2811,7 @@ export async function transferCargo(
               asOfMs: toMs(stockRows[0].as_of),
             },
             nowMs,
+            config.TIME_SCALE,
             { min: 0 },
           )
         : 0;
@@ -3080,6 +3087,7 @@ export async function buildShip(
               asOfMs: toMs(stockRows[0].as_of),
             },
             nowMs,
+            config.TIME_SCALE,
             { min: 0 },
           )
         : 0;
