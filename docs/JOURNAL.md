@@ -5475,3 +5475,32 @@ statut backlog `[ ]`.
   non-test à `evalLazy`/`whenReaches` sans `timeScale` » ; test d'intégration
   `pop_daily` (cadence divisée) ; typecheck + build ; vérification fonctionnelle
   sur l'instance dev (bâtiment posé qui se termine en secondes, stock qui bouge).
+
+## 2026-07-25 — Arbitrages du responsable : barème d'acier lourd, gel levé, marché d'items
+
+Trois décisions FERMES (persistées avant tout code, §5) :
+
+1. **Réparation W9g — barème de l'acier LOURD VALIDÉ** : 0,05 T/HP
+   (moitié du léger, 0,1 T/HP). Le `[TUNE-proposé]` de
+   `REPAIR_STEEL_H_T_PER_HP` devient un `[TUNE]` ordinaire — plus
+   d'arbitrage en attente. Ordre inchangé : léger d'abord, le lourd
+   couvre le manque.
+2. **Gel de `PlanetView.tsx` LEVÉ** — le chantier @spec du responsable
+   est commité (3b2c309). R3 (sprites de stock du HUD) et le reliquat
+   R6 (capture BuildingPanel, qui exige un hook DOM de tuile) sont de
+   nouveau ouverts.
+3. **Marché des ITEMS (W6c-b2) VALIDÉ — canal MANUEL, tel quel** :
+   « le manuel fonctionne en simple offre et demande : je propose et ça
+   finit au marché et l'autre accepte ou pas ». Donc : une offre
+   d'item = une proposition publiée (patron `manual_offers` existant,
+   épinglée au vaisseau à quai, TTL 48 h), l'autre partie ACCEPTE ou
+   REFUSE — aucun appariement automatique, aucun prix imposé, aucun
+   AMM. Les paires possibles restent à cadrer au moment du chunk
+   (item ↔ tonnage fongible, et item ↔ item si le responsable le
+   souhaite — à confirmer en ouvrant le chunk).
+
+Restent DEUX questions ouvertes, développées au responsable dans la
+même réponse : R7 (compteur du cap de sondes) et le gating staffing
+des non-industries (options A/B, exemples chiffrés). Le point 6
+(arbre ADN dédié des accessoires) a reçu « ça nécessite un update je
+crois » — inclination NOTÉE, périmètre à cadrer avant tout code.
